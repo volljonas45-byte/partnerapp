@@ -1,0 +1,330 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background-color: #F5F5F7;
+    color: #1D1D1F;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text',
+      'Helvetica Neue', Arial, sans-serif;
+    font-size: 15px;
+    line-height: 1.47059;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    letter-spacing: -0.022em;
+    font-weight: 600;
+    color: #1D1D1F;
+  }
+
+  /* Minimal Apple-style scrollbar */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(0,0,0,0.15);
+    border-radius: 99px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(0,0,0,0.25);
+  }
+
+  /* Apple blue focus ring */
+  :focus-visible {
+    outline: 2px solid #0071E3;
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+}
+
+@layer components {
+
+  /* ── Inputs ─────────────────────────────────────────────────────────────── */
+  .input {
+    width: 100%;
+    padding: 9px 14px;
+    font-size: 14px;
+    font-family: inherit;
+    background: rgba(118, 118, 128, 0.12);
+    color: #1D1D1F;
+    border: none;
+    border-radius: 10px;
+    outline: none;
+    transition: background 0.15s ease, box-shadow 0.15s ease;
+  }
+  .input::placeholder {
+    color: #86868B;
+  }
+  .input:hover:not(:disabled) {
+    background: rgba(118, 118, 128, 0.16);
+  }
+  .input:focus {
+    background: #FFFFFF;
+    box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.25), 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .input:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  select.input {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2386868B' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+  }
+
+  /* ── Buttons ────────────────────────────────────────────────────────────── */
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 18px;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: inherit;
+    background: #0071E3;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 980px;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.1s ease, opacity 0.15s ease;
+    white-space: nowrap;
+    letter-spacing: -0.01em;
+  }
+  .btn-primary:hover:not(:disabled) {
+    background: #0077ED;
+  }
+  .btn-primary:active:not(:disabled) {
+    transform: scale(0.97);
+    background: #006ACE;
+  }
+  .btn-primary:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: inherit;
+    background: rgba(118, 118, 128, 0.12);
+    color: #1D1D1F;
+    border: none;
+    border-radius: 980px;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.1s ease;
+    white-space: nowrap;
+  }
+  .btn-secondary:hover:not(:disabled) {
+    background: rgba(118, 118, 128, 0.18);
+  }
+  .btn-secondary:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+
+  .btn-danger {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: inherit;
+    background: rgba(255, 59, 48, 0.10);
+    color: #FF3B30;
+    border: none;
+    border-radius: 980px;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.1s ease;
+  }
+  .btn-danger:hover {
+    background: rgba(255, 59, 48, 0.16);
+  }
+  .btn-danger:active {
+    transform: scale(0.97);
+  }
+
+  /* ── Card ───────────────────────────────────────────────────────────────── */
+  .card {
+    background: #FFFFFF;
+    border-radius: 18px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.05);
+  }
+
+  /* ── Labels ─────────────────────────────────────────────────────────────── */
+  .label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: #6E6E73;
+    margin-bottom: 6px;
+    letter-spacing: -0.01em;
+  }
+
+  /* ── Page header ────────────────────────────────────────────────────────── */
+  .page-header {
+    @apply flex items-center justify-between mb-7;
+  }
+  .page-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1D1D1F;
+    letter-spacing: -0.022em;
+  }
+  .page-subtitle {
+    font-size: 13px;
+    color: #86868B;
+    margin-top: 2px;
+    letter-spacing: -0.01em;
+  }
+
+  /* ── Table styles ───────────────────────────────────────────────────────── */
+  .table-header-cell {
+    padding: 10px 18px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    color: #86868B;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    background: rgba(118,118,128,0.06);
+  }
+  .table-row {
+    border-bottom: 1px solid rgba(0,0,0,0.04);
+    transition: background 0.12s ease;
+    cursor: pointer;
+  }
+  .table-row:last-child {
+    border-bottom: none;
+  }
+  .table-row:hover {
+    background: rgba(0,113,227,0.03);
+  }
+  .table-cell {
+    padding: 12px 18px;
+  }
+
+  /* ── Status / badge chips ───────────────────────────────────────────────── */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 980px;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+
+  /* ── Skeleton shimmer ───────────────────────────────────────────────────── */
+  @keyframes shimmer {
+    0%   { background-position: -600px 0; }
+    100% { background-position:  600px 0; }
+  }
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      rgba(118,118,128,0.08) 25%,
+      rgba(118,118,128,0.14) 50%,
+      rgba(118,118,128,0.08) 75%
+    );
+    background-size: 800px 100%;
+    animation: shimmer 1.6s ease-in-out infinite;
+    border-radius: 8px;
+  }
+
+  /* ── Animations ─────────────────────────────────────────────────────────── */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px) scale(0.99); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .animate-fade-in {
+    animation: fadeIn 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+  }
+  .animate-slide-up {
+    animation: slideUp 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+  }
+
+  /* ── Config helpers ─────────────────────────────────────────────────────── */
+  .config-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: #6E6E73;
+    margin-bottom: 5px;
+    letter-spacing: -0.01em;
+  }
+  .config-input {
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 13px;
+    font-family: inherit;
+    background: rgba(118, 118, 128, 0.10);
+    color: #1D1D1F;
+    border: none;
+    border-radius: 10px;
+    outline: none;
+    transition: background 0.15s ease, box-shadow 0.15s ease;
+  }
+  .config-input:focus {
+    background: #FFFFFF;
+    box-shadow: 0 0 0 3px rgba(0,113,227,0.22);
+  }
+  .config-select {
+    padding: 8px 12px;
+    font-size: 13px;
+    font-family: inherit;
+    background: rgba(118, 118, 128, 0.10);
+    color: #1D1D1F;
+    border: none;
+    border-radius: 10px;
+    outline: none;
+    transition: background 0.15s ease, box-shadow 0.15s ease;
+    appearance: none;
+  }
+  .config-select:focus {
+    background: #FFFFFF;
+    box-shadow: 0 0 0 3px rgba(0,113,227,0.22);
+  }
+  .config-textarea {
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 13px;
+    font-family: inherit;
+    background: rgba(118, 118, 128, 0.10);
+    color: #1D1D1F;
+    border: none;
+    border-radius: 10px;
+    outline: none;
+    resize: none;
+    transition: background 0.15s ease, box-shadow 0.15s ease;
+  }
+  .config-textarea:focus {
+    background: #FFFFFF;
+    box-shadow: 0 0 0 3px rgba(0,113,227,0.22);
+  }
+}
