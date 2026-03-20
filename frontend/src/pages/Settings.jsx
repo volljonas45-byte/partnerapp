@@ -345,13 +345,6 @@ export default function Settings() {
               </div>
             </div>
 
-            {/* Bankdaten */}
-            <div className="card space-y-4">
-              <h2 className="text-sm font-semibold text-gray-700">Bankdaten</h2>
-              {field('bank_name', 'Bank', 'text', 'Deutsche Bank')}
-              {field('iban', 'IBAN', 'text', 'DE89 3704 0044 0532 0130 00')}
-              {field('bic', 'BIC', 'text', 'DEUTDEDB')}
-            </div>
 
             <div className="flex justify-end">
               <button type="submit" disabled={updateMutation.isPending} className="btn-primary">
@@ -391,6 +384,14 @@ export default function Settings() {
                   <p className="text-xs text-gray-400 mt-1">Wird bei neuen Rechnungen vorausgefüllt</p>
                 </div>
               </div>
+            </div>
+
+            {/* Bankdaten */}
+            <div className="card space-y-4">
+              <h2 className="text-sm font-semibold text-gray-700">Bankdaten</h2>
+              {field('bank_name', 'Bank', 'text', 'Deutsche Bank')}
+              {field('iban', 'IBAN', 'text', 'DE89 3704 0044 0532 0130 00')}
+              {field('bic', 'BIC', 'text', 'DEUTDEDB')}
             </div>
 
             {/* Kleinunternehmer */}
