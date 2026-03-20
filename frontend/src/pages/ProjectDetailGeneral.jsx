@@ -4,11 +4,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowLeft, Plus, Trash2, Circle, CheckCircle2,
   Calendar, StickyNote, ChevronDown, Pencil, Check, X,
-  Flag, Link as LinkIcon, ExternalLink, CheckSquare,
+  Flag, Link as LinkIcon, ExternalLink, CheckSquare, GitBranch,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { projectsApi } from '../api/projects';
 import { useConfirm } from '../hooks/useConfirm';
+import WorkflowPanel from '../components/workflow/WorkflowPanel';
 
 const STATUS_OPTIONS = [
   { value: 'planned',   label: 'Geplant',       color: '#6E6E73', bg: 'rgba(118,118,128,0.12)' },
@@ -94,6 +95,7 @@ export default function ProjectDetailGeneral() {
   const qc = useQueryClient();
   const { confirm, ConfirmDialogNode } = useConfirm();
 
+  const [activeTab, setActiveTab]         = useState('workflow');
   const [addingTask, setAddingTask]       = useState(false);
   const [editingName, setEditingName]     = useState(false);
   const [editName, setEditName]           = useState('');
@@ -272,6 +274,43 @@ export default function ProjectDetailGeneral() {
           </div>
         </div>
 
+        {/* ── Tabs ── */}
+        <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid #E5E5EA', marginBottom: '20px' }}>
+          {[
+            { key: 'workflow', label: 'Workflow', icon: GitBranch },
+            { key: 'overview', label: 'Übersicht' },
+          ].map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '5px',
+                padding: '8px 16px',
+                fontSize: '14px',
+                fontWeight: activeTab === tab.key ? 600 : 400,
+                color: activeTab === tab.key ? '#1D1D1F' : '#8E8E93',
+                background: 'none',
+                border: 'none',
+                borderBottom: `2px solid ${activeTab === tab.key ? '#1D1D1F' : 'transparent'}`,
+                marginBottom: '-1px',
+                cursor: 'pointer',
+                transition: 'color 0.15s',
+              }}
+            >
+              {tab.icon && <tab.icon size={13} />}
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* ── WORKFLOW ── */}
+        {activeTab === 'workflow' && (
+          <WorkflowPanel projectId={id} />
+        )}
+
+        {/* ── OVERVIEW ── */}
+        {activeTab === 'overview' && <>
+
         {/* ── Tasks ── */}
         <Section title="Aufgaben" icon={CheckSquare} color="#0071E3"
           action={
@@ -395,6 +434,8 @@ export default function ProjectDetailGeneral() {
           ))}
           {notes.length === 0 && !newNote && <p style={{ fontSize: '13px', color: '#C7C7CC', margin: '4px 0', textAlign: 'center' }}>Noch keine Notizen.</p>}
         </Section>
+
+        </>}
       </div>
     </div>
   );
