@@ -345,25 +345,23 @@ export default function Settings() {
               </div>
             </div>
 
-            {/* Kleinunternehmer */}
-            <div className="card">
-              <div className="flex items-start gap-3">
-                <input id="kleinunternehmer" type="checkbox"
-                  className="mt-0.5 h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
-                  checked={!!form.kleinunternehmer} onChange={e => setField('kleinunternehmer', e.target.checked)} />
-                <div>
-                  <label htmlFor="kleinunternehmer" className="text-sm font-medium text-gray-900 cursor-pointer">Kleinunternehmerregelung (§ 19 UStG)</label>
-                  <p className="text-xs text-gray-500 mt-0.5">Es wird keine Umsatzsteuer ausgewiesen. Auf Dokumenten erscheint: „Gemäß §19 UStG wird keine Umsatzsteuer berechnet."</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Bankdaten */}
+            {/* Bankdaten + Kleinunternehmer */}
             <div className="card space-y-4">
-              <h2 className="text-sm font-semibold text-gray-700">Bankdaten</h2>
+              <h2 className="text-sm font-semibold text-gray-700">Bankdaten & Steuer</h2>
               {field('bank_name', 'Bank', 'text', 'Deutsche Bank')}
               {field('iban', 'IBAN', 'text', 'DE89 3704 0044 0532 0130 00')}
               {field('bic', 'BIC', 'text', 'DEUTDEDB')}
+              <div className="border-t border-gray-100 pt-4">
+                <div className="flex items-start gap-3">
+                  <input id="kleinunternehmer" type="checkbox"
+                    className="mt-0.5 h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+                    checked={!!form.kleinunternehmer} onChange={e => setField('kleinunternehmer', e.target.checked)} />
+                  <div>
+                    <label htmlFor="kleinunternehmer" className="text-sm font-medium text-gray-900 cursor-pointer">Kleinunternehmerregelung (§ 19 UStG)</label>
+                    <p className="text-xs text-gray-500 mt-0.5">Es wird keine Umsatzsteuer ausgewiesen. Auf Dokumenten erscheint: „Gemäß §19 UStG wird keine Umsatzsteuer berechnet."</p>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div className="flex justify-end">
