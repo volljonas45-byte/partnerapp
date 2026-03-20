@@ -6,13 +6,15 @@ import {
   FileText, ChevronRight, CheckCircle2,
   AlertCircle, ChevronDown, UserCheck, TrendingUp,
   MessageSquare, PlayCircle, Zap,
-  CalendarClock, BadgeCheck, Send,
+  CalendarClock, BadgeCheck, Send, Bell,
 } from 'lucide-react';
 import { projectsApi } from '../api/projects';
 import { invoicesApi } from '../api/invoices';
 import { onboardingApi } from '../api/onboarding';
+import { workflowApi } from '../api/workflow';
 import { formatCurrency, formatDate, isPast } from '../utils/formatters';
 import toast from 'react-hot-toast';
+import ReminderCard from '../components/workflow/ReminderCard';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -237,6 +239,17 @@ export default function Dashboard() {
     queryFn: () => onboardingApi.listTemplates().then(r => r.data),
   });
 
+  const { data: workflowReminders = [] } = useQuery({
+    queryKey: ['workflow-reminders'],
+    queryFn: () => workflowApi.getDashboardReminders().then(r => r.data),
+  });
+
+  const doneReminderMutation = useMutation({
+    mutationFn: ({ projectId, id }) => workflowApi.updateReminder(projectId, id, { done: true }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['workflow-reminders'] }),
+    onError: () => toast.error('Fehler'),
+  });
+
   const updateProject = useMutation({
     mutationFn: ({ id, data }) => projectsApi.update(id, data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['projects'] }),
@@ -258,6 +271,20 @@ export default function Dashboard() {
   const openInvoices  = invoices
     .filter(i => ['sent', 'unpaid', 'overdue'].includes(i.status))
     .slice(0, 5);
+
+  // ── Workflow Reminders ────────────────────────────────────────────────────────
+
+  const today0 = new Date(); today0.setHours(0, 0, 0, 0);
+  const dueTodayReminders = workflowReminders.filter(r => {
+    if (r.done) return false;
+    const d = new Date(r.due_date); d.setHours(0, 0, 0, 0);
+    return d <= today0;
+  });
+  const upcomingReminders = workflowReminders.filter(r => {
+    if (r.done) return false;
+    const d = new Date(r.due_date); d.setHours(0, 0, 0, 0);
+    return d > today0;
+  });
 
   // ── "Heute" items ─────────────────────────────────────────────────────────────
 
@@ -318,6 +345,19 @@ export default function Dashboard() {
       title: `${overdueInvoiceCount} überfällige ${overdueInvoiceCount === 1 ? 'Rechnung' : 'Rechnungen'}`,
       subtitle: 'Zahlungserinnerung versenden',
       onClick: () => navigate('/invoices?filter=overdue'),
+    });
+  }
+
+  if (dueTodayReminders.length > 0) {
+    todayItems.push({
+      key: 'reminders-due',
+      borderColor: 'border-purple-400',
+      bg: 'bg-purple-50',
+      icon: Bell,
+      iconColor: 'text-purple-600',
+      title: `${dueTodayReminders.length} ${dueTodayReminders.length === 1 ? 'Follow-up fällig' : 'Follow-ups fällig'}`,
+      subtitle: dueTodayReminders[0]?.project_name ? `u.a. ${dueTodayReminders[0].project_name}` : 'Kunden nachfassen',
+      onClick: () => navigate('/projects'),
     });
   }
 
@@ -581,6 +621,31 @@ export default function Dashboard() {
               </div>
             )}
           </div>
+
+          {/* Reminders */}
+          {(dueTodayReminders.length > 0 || upcomingReminders.length > 0) && (
+            <div className="card">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-1.5">
+                  <Bell size={14} className="text-purple-500" />
+                  Erinnerungen
+                </h3>
+                <span className="text-[11px] text-gray-400">
+                  {workflowReminders.filter(r => !r.done).length} offen
+                </span>
+              </div>
+              <div className="space-y-2">
+                {[...dueTodayReminders, ...upcomingReminders].slice(0, 5).map(r => (
+                  <ReminderCard
+                    key={r.id}
+                    reminder={r}
+                    onDone={() => doneReminderMutation.mutate({ projectId: r.project_id, id: r.id })}
+                    onClick={() => navigate(`/projects/${r.project_id}?tab=workflow`)}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Finance mini */}
           <div className="card">

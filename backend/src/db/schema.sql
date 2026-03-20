@@ -384,3 +384,45 @@ CREATE TABLE IF NOT EXISTS project_areas (
   created_at TIMESTAMP DEFAULT NOW(),
   FOREIGN KEY (user_id) REFERENCES users(id)
 );
+
+-- ── WORKFLOW SYSTEM ────────────────────────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS project_workflow (
+  id            SERIAL PRIMARY KEY,
+  project_id    INTEGER NOT NULL UNIQUE,
+  user_id       INTEGER NOT NULL,
+  current_phase TEXT    NOT NULL DEFAULT 'demo',
+  phase_data    TEXT    NOT NULL DEFAULT '{}',
+  decisions     TEXT    NOT NULL DEFAULT '{}',
+  completed_at  TIMESTAMP DEFAULT NULL,
+  created_at    TIMESTAMP DEFAULT NOW(),
+  updated_at    TIMESTAMP DEFAULT NOW(),
+  FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id)    REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS workflow_reminders (
+  id          SERIAL PRIMARY KEY,
+  project_id  INTEGER NOT NULL,
+  user_id     INTEGER NOT NULL,
+  type        TEXT    NOT NULL DEFAULT 'followup',
+  title       TEXT    NOT NULL,
+  due_date    TEXT    NOT NULL,
+  note        TEXT    DEFAULT '',
+  done        INTEGER NOT NULL DEFAULT 0,
+  done_at     TIMESTAMP DEFAULT NULL,
+  created_at  TIMESTAMP DEFAULT NOW(),
+  FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id)    REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS user_tools (
+  id         SERIAL PRIMARY KEY,
+  user_id    INTEGER NOT NULL,
+  name       TEXT    NOT NULL,
+  url        TEXT    DEFAULT '',
+  category   TEXT    NOT NULL DEFAULT 'other',
+  position   INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMP DEFAULT NOW(),
+  FOREIGN KEY (user_id) REFERENCES users(id)
+);

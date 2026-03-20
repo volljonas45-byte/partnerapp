@@ -7,7 +7,7 @@ import {
   CalendarDays, Euro, Building2, Globe, Server, Shield,
   CreditCard, Lock, Link as LinkIcon, MessageSquare,
   Activity, User, AlertTriangle, CheckCircle2, Clock,
-  ChevronRight, Send, ChevronDown,
+  ChevronRight, Send, ChevronDown, GitBranch,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { projectsApi } from '../api/projects';
@@ -16,6 +16,7 @@ import { formatCurrency, formatDate, isPast } from '../utils/formatters';
 import StatusBadge from '../components/StatusBadge';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useConfirm } from '../hooks/useConfirm';
+import WorkflowPanel from '../components/workflow/WorkflowPanel';
 
 // ── Health + Next Step ────────────────────────────────────────────────────────
 
@@ -139,6 +140,7 @@ const CHECKLIST_LABELS = {
 };
 
 const TABS = [
+  { key: 'workflow',  label: 'Workflow',  icon: GitBranch },
   { key: 'overview',  label: 'Übersicht' },
   { key: 'setup',     label: 'Setup'     },
   { key: 'tasks',     label: 'Aufgaben'  },
@@ -210,7 +212,7 @@ export default function ProjectDetail() {
   const qc       = useQueryClient();
   const { confirm, ConfirmDialogNode } = useConfirm();
 
-  const [activeTab,         setActiveTab]         = useState('overview');
+  const [activeTab,         setActiveTab]         = useState('workflow');
   const [newTask,           setNewTask]           = useState('');
   const [newNote,           setNewNote]           = useState('');
   const [newChecklistItem,  setNewChecklistItem]  = useState('');
@@ -471,12 +473,13 @@ export default function ProjectDetail() {
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px ${
+            className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px flex items-center gap-1.5 ${
               activeTab === tab.key
                 ? 'border-gray-900 text-gray-900'
                 : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
+            {tab.icon && <tab.icon size={13} />}
             {tab.label}
             {tab.key === 'tasks' && tasks.length > 0 && (
               <span className="ml-1.5 text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full">
@@ -486,6 +489,11 @@ export default function ProjectDetail() {
           </button>
         ))}
       </div>
+
+      {/* ── WORKFLOW ──────────────────────────────────────────────────────── */}
+      {activeTab === 'workflow' && (
+        <WorkflowPanel projectId={id} />
+      )}
 
       {/* ── OVERVIEW ──────────────────────────────────────────────────────── */}
       {activeTab === 'overview' && (
