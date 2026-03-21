@@ -1,324 +1,447 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Building2, User, Mail, Phone, MapPin, Globe, ChevronRight, ChevronLeft,
-  Check, Sparkles, Layers, Settings, DollarSign, FileText, Zap, X,
+  User, Mail, Phone, Globe, Check, Sparkles, X,
+  ChevronRight, ChevronLeft, Plus, Building2,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { clientsApi } from '../api/clients';
 import { projectsApi } from '../api/projects';
 import { workflowApi } from '../api/workflow';
 
-// ── Constants ─────────────────────────────────────────────────────────────────
+// ── Constants ──────────────────────────────────────────────────────────────────
 
 const INDUSTRIES = [
-  { value: 'handwerk',    label: 'Handwerk' },
-  { value: 'coaching',    label: 'Coaching' },
-  { value: 'ecommerce',   label: 'E-Commerce' },
-  { value: 'gastronomie', label: 'Gastronomie' },
-  { value: 'immobilien',  label: 'Immobilien' },
-  { value: 'medizin',     label: 'Medizin / Gesundheit' },
-  { value: 'recht',       label: 'Recht / Kanzlei' },
-  { value: 'it',          label: 'IT / Software' },
-  { value: 'marketing',   label: 'Marketing / Agentur' },
-  { value: 'bildung',     label: 'Bildung / Training' },
-  { value: 'beauty',      label: 'Beauty / Wellness' },
-  { value: 'sonstiges',   label: 'Sonstiges' },
+  'Handwerk', 'Coaching', 'E-Commerce', 'Gastronomie', 'Immobilien',
+  'Medizin / Gesundheit', 'Recht / Kanzlei', 'IT / Software',
+  'Marketing / Agentur', 'Bildung / Training', 'Beauty / Wellness',
 ];
 
 const PROJECT_TYPES = [
-  { value: 'website_code', label: 'Website (Code)',    desc: 'React, Next.js, HTML/CSS' },
-  { value: 'website_wix',  label: 'Website (Wix)',     desc: 'Wix Editor / Wix Studio' },
-  { value: 'webflow',      label: 'Website (Webflow)', desc: 'Webflow Designer' },
-  { value: 'funnel',       label: 'Sales Funnel',      desc: 'Landing Page + Conversion' },
+  { value: 'website_code', label: 'Website (Code)',    desc: 'React, Next.js, HTML/CSS',      emoji: '💻' },
+  { value: 'website_wix',  label: 'Website (Wix)',     desc: 'Wix Editor / Wix Studio',       emoji: '🌐' },
+  { value: 'webflow',      label: 'Website (Webflow)', desc: 'Webflow Designer',               emoji: '🎨' },
+  { value: 'funnel',       label: 'Sales Funnel',      desc: 'Landing Page + Conversion',     emoji: '🎯' },
+  { value: 'shop',         label: 'Online-Shop',       desc: 'E-Commerce & Produktseiten',    emoji: '🛒' },
 ];
 
 const GOALS = [
-  { value: 'leads',     label: 'Leads generieren'  },
-  { value: 'bookings',  label: 'Buchungen erhalten' },
-  { value: 'sales',     label: 'Produkte verkaufen' },
-  { value: 'branding',  label: 'Marke aufbauen'    },
-  { value: 'portfolio', label: 'Portfolio zeigen'   },
-];
-
-const PAGES = [
-  { value: 'home',       label: 'Startseite',    icon: '🏠' },
-  { value: 'about',      label: 'Über uns',       icon: '👤' },
-  { value: 'services',   label: 'Leistungen',     icon: '⚡' },
-  { value: 'contact',    label: 'Kontakt',         icon: '✉️' },
-  { value: 'blog',       label: 'Blog',            icon: '📝' },
-  { value: 'faq',        label: 'FAQ',             icon: '❓' },
-  { value: 'references', label: 'Referenzen',      icon: '⭐' },
-  { value: 'shop',       label: 'Shop',            icon: '🛒' },
-];
-
-const FEATURES = [
-  { value: 'contact_form',  label: 'Kontaktformular',  icon: '📩' },
-  { value: 'booking',       label: 'Buchungssystem',   icon: '📅' },
-  { value: 'whatsapp',      label: 'WhatsApp-Button',  icon: '💬' },
-  { value: 'live_chat',     label: 'Live Chat',        icon: '🗨️' },
-  { value: 'newsletter',    label: 'Newsletter',       icon: '📬' },
-  { value: 'login',         label: 'Login-Bereich',    icon: '🔐' },
-  { value: 'multilingual',  label: 'Mehrsprachig',     icon: '🌍' },
-  { value: 'seo',           label: 'SEO',              icon: '🔍' },
-  { value: 'tracking',      label: 'Analytics/Tracking',icon: '📊' },
-  { value: 'dsgvo',         label: 'DSGVO-Paket',      icon: '🛡️' },
+  { value: 'leads',       label: 'Leads generieren',   emoji: '📬' },
+  { value: 'bookings',    label: 'Buchungen erhalten',  emoji: '📅' },
+  { value: 'sales',       label: 'Produkte verkaufen',  emoji: '💰' },
+  { value: 'branding',    label: 'Marke aufbauen',      emoji: '⭐' },
+  { value: 'portfolio',   label: 'Portfolio zeigen',    emoji: '🖼️' },
+  { value: 'information', label: 'Informieren',         emoji: '📖' },
 ];
 
 const BUILD_TYPES = [
-  { value: 'claude_code',  label: 'Claude Code',  desc: 'KI-gestützte Entwicklung' },
-  { value: 'manual_code',  label: 'Manual Code',  desc: 'Klassische Entwicklung' },
-  { value: 'wix',          label: 'Wix',           desc: 'Wix Editor / Studio' },
-  { value: 'webflow',      label: 'Webflow',       desc: 'Webflow Designer' },
+  { value: 'gecodet',  label: 'Gecodet',        desc: 'React / Next.js / HTML',        badge: null },
+  { value: 'wix',      label: 'Wix',            desc: 'Wix Editor / Studio',           badge: null },
+  { value: 'beide',    label: 'Beide',           desc: 'Wix Demo + Coded Version',      badge: null },
 ];
 
 const HOSTING_OPTIONS = [
-  { value: 'vercel',     label: 'Vercel',      desc: 'Optimal für Code-Projekte' },
-  { value: 'hostinger',  label: 'Hostinger',   desc: 'Günstig & zuverlässig' },
-  { value: 'netlify',    label: 'Netlify',     desc: 'JAMstack & Serverless' },
-  { value: 'client',     label: 'Beim Kunden', desc: 'Kundeneigenes Hosting' },
-];
-
-const TIMELINES = [
-  { value: '1_week',   label: '1 Woche'    },
-  { value: '2_weeks',  label: '2 Wochen'   },
-  { value: '1_month',  label: '1 Monat'    },
-  { value: '2_months', label: '2 Monate'   },
-  { value: '3_months', label: '3+ Monate'  },
+  { value: 'vercel',    label: 'Vercel',       desc: 'Empfohlen für Code' },
+  { value: 'netlify',   label: 'Netlify',      desc: 'JAMstack / Static' },
+  { value: 'hostinger', label: 'Hostinger',    desc: 'Günstig & zuverlässig' },
+  { value: 'wix',       label: 'Wix (intern)', desc: 'Wix eigenes Hosting' },
+  { value: 'client',    label: 'Beim Kunden',  desc: 'Kundeneigenes Hosting' },
 ];
 
 const STEPS = [
-  { key: 'client',    label: 'Kunde',     icon: User     },
-  { key: 'project',   label: 'Projekt',   icon: FileText },
-  { key: 'structure', label: 'Seiten',    icon: Layers   },
-  { key: 'features',  label: 'Features',  icon: Zap      },
-  { key: 'tech',      label: 'Technik',   icon: Settings },
-  { key: 'budget',    label: 'Budget',    icon: DollarSign },
+  { key: 'client',  label: 'Kunde',   icon: User },
+  { key: 'project', label: 'Projekt', icon: Sparkles },
+  { key: 'tech',    label: 'Technik', icon: Globe },
 ];
 
-// ── Task generation ────────────────────────────────────────────────────────────
+const INITIAL = {
+  // Step 1 – Client (required: company_name, email)
+  company_name: '', contact_person: '', email: '', phone: '',
+  address: '', industry: '', has_website: null, website_url: '',
+  // Step 2 – Project
+  project_name: '', project_type: '', project_type_custom: '',
+  goal: '', goal_custom: '',
+  // Step 3 – Tech (all optional)
+  build_type: '', hosting: '', domain_new: null,
+  project_value: '', notes: '',
+};
 
-function generateTasks(data) {
-  const tasks = [];
-  const add = (title) => tasks.push(title);
+// ── Sub-components ──────────────────────────────────────────────────────────────
 
-  // Always
-  add('Kickoff-Meeting planen');
-  add('Briefing & Anforderungen dokumentieren');
-
-  // Build type
-  if (data.build_type === 'claude_code' || data.build_type === 'manual_code') {
-    add('GitHub Repository anlegen');
-    add('Entwicklungsumgebung einrichten');
-    add('Basis-Layout & Design entwickeln');
-    add('Responsive Design implementieren');
-    add('Staging-Deployment einrichten');
-  }
-  if (data.build_type === 'wix') {
-    add('Wix-Konto einrichten');
-    add('Template auswählen & anpassen');
-    add('Wix Design konfigurieren');
-  }
-  if (data.build_type === 'webflow') {
-    add('Webflow-Projekt anlegen');
-    add('Webflow Design implementieren');
-  }
-
-  // Pages
-  const pageLabels = {
-    home: 'Startseite gestalten', about: 'Über-uns-Seite gestalten',
-    services: 'Leistungsseite gestalten', contact: 'Kontaktseite gestalten',
-    blog: 'Blog aufsetzen', faq: 'FAQ-Seite erstellen',
-    references: 'Referenzen-Seite erstellen', shop: 'Shop-Seite einrichten',
-  };
-  (data.pages || []).forEach(p => { if (pageLabels[p]) add(pageLabels[p]); });
-
-  // Features
-  if (data.features?.includes('contact_form'))  add('Kontaktformular integrieren');
-  if (data.features?.includes('booking'))        add('Buchungssystem integrieren');
-  if (data.features?.includes('whatsapp'))       add('WhatsApp-Button einbinden');
-  if (data.features?.includes('live_chat'))      add('Live-Chat einbinden');
-  if (data.features?.includes('newsletter'))     add('Newsletter-System einbinden');
-  if (data.features?.includes('login'))          add('Login-Bereich einrichten');
-  if (data.features?.includes('multilingual'))   add('Mehrsprachigkeit konfigurieren');
-  if (data.features?.includes('seo'))            add('On-Page SEO-Optimierung durchführen');
-  if (data.features?.includes('tracking'))       add('Google Analytics / Tracking einrichten');
-  if (data.features?.includes('dsgvo')) {
-    add('Datenschutzerklärung erstellen');
-    add('Impressum einpflegen');
-    add('Cookie-Banner einbinden');
-  }
-
-  // Hosting
-  if (data.hosting === 'vercel' || data.hosting === 'netlify') {
-    add('Live-Deployment & Domain verknüpfen');
-  }
-  if (data.domain_new) add('Domain registrieren & konfigurieren');
-
-  // Always at end
-  add('Browser- & Gerätetest durchführen');
-  add('Kundenabnahme & Feedback einarbeiten');
-  add('Übergabe & Zugänge dokumentieren');
-
-  return tasks;
-}
-
-// ── Onboarding step generation ────────────────────────────────────────────────
-
-function generateOnboardingSteps(data) {
-  const steps = [
-    { type: 'text',  title: 'Über Ihr Unternehmen', description: 'Beschreiben Sie kurz, was Ihr Unternehmen macht und welche Probleme Sie lösen.' },
-    { type: 'text',  title: 'Ihre Zielgruppe',      description: 'Wer sind Ihre idealen Kunden? Alter, Branche, Bedürfnisse.' },
-    { type: 'file_upload',  title: 'Logo & Bilder',         description: 'Laden Sie Ihr Logo und Bilder hoch (PNG, JPG, SVG).' },
-    { type: 'text',  title: 'Markenfarben',          description: 'Welche Farben sollen verwendet werden? (z.B. #FFFFFF, Dunkelblau, Grün)' },
-    { type: 'text',  title: 'Wunsch-Websites',       description: 'Teilen Sie 2-3 Website-Links, die Ihnen gefallen.' },
-  ];
-
-  if (data.pages?.includes('services')) {
-    steps.push({ type: 'text', title: 'Ihre Leistungen', description: 'Nennen Sie alle Leistungen, die auf der Website erscheinen sollen (Titel + kurze Beschreibung).' });
-  }
-  if (data.pages?.includes('about')) {
-    steps.push({ type: 'text', title: 'Über Sie / Das Team', description: 'Wer steht hinter dem Unternehmen? Kurze Bio + ggf. Foto.' });
-  }
-  if (data.pages?.includes('references')) {
-    steps.push({ type: 'text', title: 'Referenzen / Kundenstimmen', description: 'Haben Sie Kundenstimmen oder Projektreferenzen, die wir verwenden dürfen?' });
-  }
-  if (data.features?.includes('contact_form')) {
-    steps.push({ type: 'text', title: 'Kontaktdaten', description: 'Welche E-Mail-Adresse, Telefonnummer und Adresse soll auf der Website erscheinen?' });
-  }
-  steps.push({ type: 'text', title: 'Besondere Wünsche', description: 'Gibt es spezielle Anforderungen oder Hinweise, die wir beachten sollen?' });
-
-  return steps;
-}
-
-// ── Sub-components ─────────────────────────────────────────────────────────────
-
-function ToggleChip({ selected, onClick, children }) {
+function Label({ children, required }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`px-3 py-2 rounded-lg border text-sm font-medium transition-all ${
-        selected
-          ? 'bg-gray-900 border-gray-900 text-white'
-          : 'bg-white border-gray-200 text-gray-700 hover:border-gray-400'
-      }`}
-    >
-      {children}
-    </button>
+    <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, color: '#6E6E73', marginBottom: '5px' }}>
+      {children}{required && <span style={{ color: '#FF3B30', marginLeft: '2px' }}>*</span>}
+    </label>
   );
 }
 
-function CardOption({ selected, onClick, title, desc, badge }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`w-full text-left px-4 py-3 rounded-xl border-2 transition-all ${
-        selected
-          ? 'border-gray-900 bg-gray-50'
-          : 'border-gray-100 bg-white hover:border-gray-300'
-      }`}
-    >
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-semibold text-gray-900">{title}</p>
-          {desc && <p className="text-xs text-gray-400 mt-0.5">{desc}</p>}
-        </div>
-        <div className="flex items-center gap-2">
-          {badge && <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium">{badge}</span>}
-          <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
-            selected ? 'border-gray-900 bg-gray-900' : 'border-gray-300'
-          }`}>
-            {selected && <Check size={10} className="text-white" strokeWidth={3} />}
-          </div>
-        </div>
-      </div>
-    </button>
-  );
-}
-
-function FeatureChip({ value, label, icon, selected, onToggle }) {
-  return (
-    <button
-      type="button"
-      onClick={() => onToggle(value)}
-      className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 text-sm font-medium transition-all ${
-        selected
-          ? 'border-gray-900 bg-gray-900 text-white'
-          : 'border-gray-100 bg-white text-gray-700 hover:border-gray-300'
-      }`}
-    >
-      <span>{icon}</span>
-      {label}
-    </button>
-  );
-}
-
-function Input({ label, value, onChange, type = 'text', placeholder, required }) {
+function Field({ label, required, children }) {
   return (
     <div>
-      <label className="block text-xs font-medium text-gray-600 mb-1">
-        {label}{required && <span className="text-red-400 ml-0.5">*</span>}
-      </label>
-      <input
-        type={type}
-        className="input w-full"
-        placeholder={placeholder}
-        value={value || ''}
-        onChange={e => onChange(e.target.value)}
-      />
+      {label && <Label required={required}>{label}</Label>}
+      {children}
     </div>
   );
 }
 
-// ── Main Wizard ────────────────────────────────────────────────────────────────
+function TextInput({ value, onChange, placeholder, type = 'text', required }) {
+  return (
+    <input
+      type={type}
+      value={value || ''}
+      onChange={e => onChange(e.target.value)}
+      placeholder={placeholder}
+      required={required}
+      style={{
+        width: '100%', boxSizing: 'border-box',
+        padding: '9px 12px',
+        border: '1.5px solid #E5E5EA',
+        borderRadius: '10px',
+        fontSize: '14px',
+        outline: 'none',
+        background: '#fff',
+        color: '#1D1D1F',
+        fontFamily: 'inherit',
+        transition: 'border-color 0.15s',
+      }}
+      onFocus={e => e.target.style.borderColor = '#0071E3'}
+      onBlur={e => e.target.style.borderColor = '#E5E5EA'}
+    />
+  );
+}
 
-const INITIAL = {
-  // Step 1 - Client
-  company_name: '', contact_person: '', email: '', phone: '',
-  address: '', industry: '', company_size: '', has_website: null, website_url: '',
-  // Step 2 - Project
-  project_name: '', project_type: '', goal: '',
-  // Step 3 - Structure
-  pages: ['home', 'contact'],
-  // Step 4 - Features
-  features: ['contact_form', 'dsgvo'],
-  // Step 5 - Tech
-  build_type: '', hosting: '', domain_new: false,
-  // Step 6 - Budget
-  project_value: '', timeline: '',
-};
+function SelectInput({ value, onChange, children }) {
+  return (
+    <select
+      value={value || ''}
+      onChange={e => onChange(e.target.value)}
+      style={{
+        width: '100%', boxSizing: 'border-box',
+        padding: '9px 12px',
+        border: '1.5px solid #E5E5EA',
+        borderRadius: '10px',
+        fontSize: '14px',
+        outline: 'none',
+        background: '#fff',
+        color: value ? '#1D1D1F' : '#8E8E93',
+        fontFamily: 'inherit',
+      }}
+    >
+      {children}
+    </select>
+  );
+}
+
+function CardSelect({ options, value, onChange, showCustom, customValue, onCustomChange }) {
+  const [adding, setAdding] = useState(false);
+  const [custom, setCustom] = useState('');
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      {options.map(opt => {
+        const isSelected = value === opt.value;
+        return (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => onChange(opt.value)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '12px',
+              padding: '12px 14px',
+              borderRadius: '12px',
+              border: `2px solid ${isSelected ? '#0071E3' : '#F2F2F7'}`,
+              background: isSelected ? 'rgba(0,113,227,0.05)' : '#F9F9F9',
+              cursor: 'pointer',
+              textAlign: 'left',
+              transition: 'all 0.15s',
+            }}
+          >
+            {opt.emoji && <span style={{ fontSize: '18px', flexShrink: 0 }}>{opt.emoji}</span>}
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '14px', fontWeight: 600, color: isSelected ? '#0071E3' : '#1D1D1F' }}>
+                {opt.label}
+                {opt.badge && (
+                  <span style={{
+                    marginLeft: '8px', fontSize: '10px', fontWeight: 600,
+                    background: '#0071E3', color: '#fff',
+                    padding: '1px 7px', borderRadius: '20px',
+                  }}>{opt.badge}</span>
+                )}
+              </div>
+              {opt.desc && <div style={{ fontSize: '12px', color: '#8E8E93', marginTop: '1px' }}>{opt.desc}</div>}
+            </div>
+            {isSelected && (
+              <div style={{
+                width: '20px', height: '20px', borderRadius: '50%',
+                background: '#0071E3',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                flexShrink: 0,
+              }}>
+                <Check size={12} color="#fff" strokeWidth={3} />
+              </div>
+            )}
+          </button>
+        );
+      })}
+
+      {/* Custom option */}
+      {showCustom && (
+        <>
+          {!adding ? (
+            <button
+              type="button"
+              onClick={() => setAdding(true)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '8px',
+                padding: '10px 14px',
+                borderRadius: '12px',
+                border: '2px dashed #E5E5EA',
+                background: 'transparent',
+                cursor: 'pointer',
+                color: '#8E8E93',
+                fontSize: '13px',
+                fontWeight: 500,
+                transition: 'all 0.15s',
+              }}
+            >
+              <Plus size={14} /> Eigene Option hinzufügen
+            </button>
+          ) : (
+            <div style={{ display: 'flex', gap: '6px' }}>
+              <input
+                autoFocus
+                value={custom}
+                onChange={e => setCustom(e.target.value)}
+                placeholder="Eigene Option eingeben…"
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && custom.trim()) {
+                    onChange('custom');
+                    onCustomChange(custom.trim());
+                    setAdding(false);
+                  }
+                  if (e.key === 'Escape') setAdding(false);
+                }}
+                style={{
+                  flex: 1, padding: '9px 12px', borderRadius: '10px',
+                  border: '1.5px solid #0071E3', fontSize: '13px',
+                  outline: 'none', fontFamily: 'inherit',
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  if (custom.trim()) {
+                    onChange('custom');
+                    onCustomChange(custom.trim());
+                  }
+                  setAdding(false);
+                }}
+                style={{
+                  padding: '0 14px', borderRadius: '10px',
+                  border: 'none', background: '#0071E3', color: '#fff',
+                  fontSize: '13px', fontWeight: 600, cursor: 'pointer',
+                }}
+              >
+                OK
+              </button>
+            </div>
+          )}
+          {value === 'custom' && customValue && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: '8px',
+              padding: '10px 14px', borderRadius: '12px',
+              border: '2px solid #0071E3', background: 'rgba(0,113,227,0.05)',
+            }}>
+              <span style={{ fontSize: '14px', fontWeight: 600, color: '#0071E3', flex: 1 }}>
+                ✏️ {customValue}
+              </span>
+              <button
+                type="button"
+                onClick={() => { onChange(''); onCustomChange(''); }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8E8E93' }}
+              >
+                <X size={14} />
+              </button>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+function ChipGroup({ options, value, onChange, showCustom, customValue, onCustomChange }) {
+  const [adding, setAdding] = useState(false);
+  const [custom, setCustom] = useState('');
+
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+      {options.map(opt => {
+        const isSelected = value === opt.value;
+        return (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => onChange(opt.value)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '5px',
+              padding: '7px 14px',
+              borderRadius: '99px',
+              border: `2px solid ${isSelected ? '#0071E3' : '#E5E5EA'}`,
+              background: isSelected ? '#0071E3' : '#fff',
+              color: isSelected ? '#fff' : '#3C3C43',
+              fontSize: '13px', fontWeight: 500,
+              cursor: 'pointer',
+              transition: 'all 0.15s',
+            }}
+          >
+            <span>{opt.emoji}</span>
+            {opt.label}
+          </button>
+        );
+      })}
+
+      {/* Custom chip */}
+      {showCustom && (
+        <>
+          {value === 'custom' && customValue ? (
+            <button
+              type="button"
+              onClick={() => { onChange(''); onCustomChange(''); }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '5px',
+                padding: '7px 14px',
+                borderRadius: '99px',
+                border: '2px solid #0071E3',
+                background: '#0071E3', color: '#fff',
+                fontSize: '13px', fontWeight: 500,
+                cursor: 'pointer',
+              }}
+            >
+              ✏️ {customValue} <X size={12} />
+            </button>
+          ) : !adding ? (
+            <button
+              type="button"
+              onClick={() => setAdding(true)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '5px',
+                padding: '7px 12px',
+                borderRadius: '99px',
+                border: '2px dashed #D1D1D6',
+                background: 'transparent',
+                color: '#8E8E93',
+                fontSize: '13px', fontWeight: 500,
+                cursor: 'pointer',
+              }}
+            >
+              <Plus size={12} /> Eigenes
+            </button>
+          ) : (
+            <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+              <input
+                autoFocus
+                value={custom}
+                onChange={e => setCustom(e.target.value)}
+                placeholder="Ziel eingeben…"
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && custom.trim()) {
+                    onChange('custom'); onCustomChange(custom.trim()); setAdding(false);
+                  }
+                  if (e.key === 'Escape') setAdding(false);
+                }}
+                style={{
+                  padding: '5px 10px', borderRadius: '99px',
+                  border: '2px solid #0071E3', fontSize: '13px',
+                  outline: 'none', width: '140px', fontFamily: 'inherit',
+                }}
+              />
+              <button type="button"
+                onClick={() => { if (custom.trim()) { onChange('custom'); onCustomChange(custom.trim()); } setAdding(false); }}
+                style={{ padding: '4px 10px', borderRadius: '99px', border: 'none', background: '#0071E3', color: '#fff', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
+              >OK</button>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+function SectionCard({ title, children }) {
+  return (
+    <div style={{
+      background: '#fff',
+      borderRadius: '16px',
+      border: '1px solid #F2F2F7',
+      padding: '20px',
+      boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+    }}>
+      {title && (
+        <div style={{
+          fontSize: '11px', fontWeight: 600,
+          color: '#8E8E93', textTransform: 'uppercase',
+          letterSpacing: '0.06em',
+          marginBottom: '16px',
+        }}>
+          {title}
+        </div>
+      )}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function TogglePair({ options, value, onChange }) {
+  return (
+    <div style={{ display: 'flex', gap: '8px' }}>
+      {options.map(opt => (
+        <button
+          key={opt.value}
+          type="button"
+          onClick={() => onChange(opt.value)}
+          style={{
+            padding: '7px 16px',
+            borderRadius: '99px',
+            border: `2px solid ${value === opt.value ? '#0071E3' : '#E5E5EA'}`,
+            background: value === opt.value ? '#0071E3' : '#fff',
+            color: value === opt.value ? '#fff' : '#3C3C43',
+            fontSize: '13px', fontWeight: 500,
+            cursor: 'pointer', transition: 'all 0.15s',
+          }}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ── Main Wizard ─────────────────────────────────────────────────────────────────
 
 export default function Wizard() {
   const navigate = useNavigate();
-  const [step, setStep]     = useState(0);
-  const [data, setData]     = useState(INITIAL);
+  const [step,    setStep]    = useState(0);
+  const [data,    setData]    = useState(INITIAL);
   const [loading, setLoading] = useState(false);
 
   const set = (key) => (val) => setData(d => ({ ...d, [key]: val }));
-  const toggleArr = (key, val) => setData(d => {
-    const arr = d[key] || [];
-    return { ...d, [key]: arr.includes(val) ? arr.filter(x => x !== val) : [...arr, val] };
-  });
 
-  // Auto-generate project name when client name or type changes
   const autoProjectName = () => {
     if (!data.company_name) return '';
-    const typeMap = { website_code: 'Website', website_wix: 'Website', webflow: 'Website', funnel: 'Funnel' };
-    const typePart = typeMap[data.project_type] || 'Projekt';
-    const year = new Date().getFullYear();
-    return `${data.company_name} – ${typePart} ${year}`;
+    const typeMap = {
+      website_code: 'Website', website_wix: 'Website', webflow: 'Website',
+      funnel: 'Funnel', shop: 'Shop', custom: data.project_type_custom || 'Projekt',
+    };
+    return `${data.company_name} – ${typeMap[data.project_type] || 'Projekt'} ${new Date().getFullYear()}`;
   };
 
   const canNext = () => {
     if (step === 0) return data.company_name.trim() && data.email.trim();
-    if (step === 1) return data.project_type && data.goal;
-    if (step === 2) return data.pages.length > 0;
-    if (step === 3) return true;
-    if (step === 4) return data.build_type && data.hosting;
-    if (step === 5) return true;
-    return true;
+    return true; // steps 1 and 2 are optional
   };
 
   const next = () => {
@@ -328,51 +451,52 @@ export default function Wizard() {
     setStep(s => Math.min(s + 1, STEPS.length - 1));
   };
 
-  const back = () => setStep(s => Math.max(s - 1, 0));
-
   const handleCreate = async () => {
     if (!data.company_name.trim()) return toast.error('Unternehmensname fehlt');
     setLoading(true);
     try {
       // 1. Create client
-      const clientRes = await clientsApi.create({
+      const client = await clientsApi.create({
         company_name:   data.company_name.trim(),
         contact_person: data.contact_person.trim(),
         email:          data.email.trim(),
         phone:          data.phone.trim(),
         address:        data.address.trim(),
-        industry:       data.industry,
+        industry:       data.industry || '',
         website:        data.website_url.trim() || null,
       });
-      const client = clientRes.data;
 
-      // 2. Create project
+      // 2. Create website project
       const projectName = data.project_name || autoProjectName();
+      const projectType = data.project_type === 'custom'
+        ? data.project_type_custom || 'Sonstiges'
+        : data.project_type || null;
+
       const project = await projectsApi.create({
-        client_id:    client.id,
-        name:         projectName,
-        type:         data.project_type || null,
-        build_type:   data.build_type || null,
-        hosting_provider: data.hosting || null,
-        status:       'planned',
-        budget:       data.project_value ? parseFloat(data.project_value) : null,
+        client_id:        client.id,
+        name:             projectName,
+        type:             projectType,
+        build_type:       data.build_type || null,
+        hosting_provider: data.hosting    || null,
+        status:           'planned',
+        budget:           data.project_value ? parseFloat(data.project_value) : null,
+        description:      data.notes || '',
+        project_type:     'website',
       });
 
-      // 3. Set build_type decision in workflow
-      const buildTypeMap = {
-        website_code: 'gecodet',
-        webflow:      'gecodet',
-        website_wix:  'wix',
-        funnel:       'gecodet',
-      };
-      const workflowBuildType = buildTypeMap[data.project_type] || null;
-      if (workflowBuildType) {
+      // 3. Set workflow decisions (build_type + goal)
+      const wfDecisions = {};
+      if (data.build_type) wfDecisions.build_type = data.build_type;
+      if (data.goal) {
+        wfDecisions.goal = data.goal === 'custom' ? data.goal_custom : data.goal;
+      }
+      if (Object.keys(wfDecisions).length > 0) {
         try {
-          await workflowApi.update(project.id, { decisions: { build_type: workflowBuildType } });
-        } catch (_) { /* workflow auto-creates on first GET, skip error */ }
+          await workflowApi.update(project.id, { decisions: wfDecisions });
+        } catch (_) {}
       }
 
-      toast.success('Projekt erfolgreich erstellt!');
+      toast.success(`🎉 ${projectName} wurde erstellt!`);
       navigate(`/websites/${project.id}`);
     } catch (err) {
       console.error(err);
@@ -382,53 +506,97 @@ export default function Wizard() {
     }
   };
 
-  const progress = ((step) / (STEPS.length - 1)) * 100;
+  const progress = (step / (STEPS.length - 1)) * 100;
+  const isLastStep = step === STEPS.length - 1;
 
   return (
-    <div className="min-h-full bg-gray-50 flex flex-col">
-      {/* Top bar */}
-      <div className="bg-white border-b border-gray-100 px-8 py-4 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-3">
-          <Sparkles size={18} className="text-gray-700" />
-          <span className="text-sm font-semibold text-gray-900">Neues Projekt einrichten</span>
+    <div style={{
+      minHeight: '100%',
+      background: '#F5F5F7',
+      display: 'flex',
+      flexDirection: 'column',
+    }}>
+
+      {/* ── Top bar ── */}
+      <div style={{
+        background: '#fff',
+        borderBottom: '1px solid #F2F2F7',
+        padding: '16px 32px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexShrink: 0,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <Sparkles size={17} color="#0071E3" />
+          <span style={{ fontSize: '15px', fontWeight: 600, color: '#1D1D1F' }}>
+            Neues Projekt einrichten
+          </span>
         </div>
-        <button onClick={() => navigate('/websites')} className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
-          <X size={16} />
+        <button
+          onClick={() => navigate('/websites')}
+          style={{
+            width: '28px', height: '28px', borderRadius: '8px',
+            background: '#F2F2F7', border: 'none',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', color: '#6E6E73',
+          }}
+        >
+          <X size={15} />
         </button>
       </div>
 
-      {/* Progress bar */}
-      <div className="h-0.5 bg-gray-100 shrink-0">
-        <div
-          className="h-full bg-gray-900 transition-all duration-500"
-          style={{ width: `${progress}%` }}
-        />
+      {/* ── Progress bar ── */}
+      <div style={{ height: '2px', background: '#F2F2F7', flexShrink: 0 }}>
+        <div style={{
+          height: '100%',
+          width: `${progress}%`,
+          background: '#0071E3',
+          transition: 'width 0.4s ease',
+        }} />
       </div>
 
-      {/* Step indicators */}
-      <div className="bg-white border-b border-gray-100 px-8 py-3 shrink-0">
-        <div className="flex items-center gap-1 max-w-2xl mx-auto">
+      {/* ── Step indicators ── */}
+      <div style={{
+        background: '#fff',
+        borderBottom: '1px solid #F2F2F7',
+        padding: '12px 32px',
+        flexShrink: 0,
+      }}>
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: '4px',
+          maxWidth: '600px', margin: '0 auto',
+        }}>
           {STEPS.map((s, i) => {
             const Icon = s.icon;
-            const done = i < step;
+            const done   = i < step;
             const active = i === step;
             return (
-              <div key={s.key} className="flex items-center gap-1 flex-1">
-                <div className={`flex items-center gap-1.5 text-xs font-medium transition-colors ${
-                  active ? 'text-gray-900' : done ? 'text-gray-500' : 'text-gray-300'
-                }`}>
-                  <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${
-                    done ? 'bg-gray-900' : active ? 'bg-gray-900' : 'bg-gray-100'
-                  }`}>
+              <div key={s.key} style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: '6px',
+                  fontSize: '12px', fontWeight: active ? 600 : 400,
+                  color: done ? '#34C759' : active ? '#0071E3' : '#C7C7CC',
+                }}>
+                  <div style={{
+                    width: '22px', height: '22px',
+                    borderRadius: '50%',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: done ? '#34C759' : active ? '#0071E3' : '#F2F2F7',
+                    flexShrink: 0,
+                  }}>
                     {done
-                      ? <Check size={10} className="text-white" strokeWidth={3} />
-                      : <Icon size={10} className={active ? 'text-white' : 'text-gray-400'} />
+                      ? <Check size={11} color="#fff" strokeWidth={3} />
+                      : <Icon size={11} color={active ? '#fff' : '#C7C7CC'} />
                     }
                   </div>
-                  <span className="hidden sm:block">{s.label}</span>
+                  <span style={{ whiteSpace: 'nowrap' }}>{s.label}</span>
                 </div>
                 {i < STEPS.length - 1 && (
-                  <div className={`flex-1 h-px mx-1 ${i < step ? 'bg-gray-400' : 'bg-gray-100'}`} />
+                  <div style={{
+                    flex: 1, height: '1px', margin: '0 8px',
+                    background: i < step ? '#34C759' : '#E5E5EA',
+                  }} />
                 )}
               </div>
             );
@@ -436,266 +604,226 @@ export default function Wizard() {
         </div>
       </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-2xl mx-auto px-6 py-8">
+      {/* ── Content ── */}
+      <div style={{ flex: 1, overflowY: 'auto' }}>
+        <div style={{ maxWidth: '600px', margin: '0 auto', padding: '32px 24px 48px' }}>
 
-          {/* ── STEP 0: CLIENT ── */}
+          {/* ── SCHRITT 1: KUNDE ── */}
           {step === 0 && (
-            <div className="space-y-6">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">Kundeninfo</h2>
-                <p className="text-sm text-gray-400 mt-1">Grundlegende Daten zum neuen Kunden</p>
+                <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#1D1D1F', margin: 0 }}>
+                  Kundeninformationen
+                </h2>
+                <p style={{ fontSize: '14px', color: '#8E8E93', marginTop: '4px' }}>
+                  Nur Name und E-Mail sind Pflicht — der Rest kann später ergänzt werden.
+                </p>
               </div>
 
-              <div className="card space-y-4">
-                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide flex items-center gap-2"><Building2 size={12}/> Unternehmen</h3>
-                <Input label="Unternehmensname" value={data.company_name} onChange={set('company_name')} placeholder="Muster GmbH" required />
-                <div className="grid grid-cols-2 gap-3">
-                  <Input label="Ansprechpartner" value={data.contact_person} onChange={set('contact_person')} placeholder="Max Mustermann" />
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Branche</label>
-                    <select className="input w-full" value={data.industry} onChange={e => set('industry')(e.target.value)}>
+              <SectionCard title="🏢 Unternehmen">
+                <Field label="Unternehmensname" required>
+                  <TextInput
+                    value={data.company_name}
+                    onChange={set('company_name')}
+                    placeholder="Muster GmbH"
+                  />
+                </Field>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <Field label="Ansprechpartner">
+                    <TextInput value={data.contact_person} onChange={set('contact_person')} placeholder="Max Mustermann" />
+                  </Field>
+                  <Field label="Branche">
+                    <SelectInput value={data.industry} onChange={set('industry')}>
                       <option value="">Branche wählen</option>
-                      {INDUSTRIES.map(i => <option key={i.value} value={i.value}>{i.label}</option>)}
-                    </select>
-                  </div>
+                      {INDUSTRIES.map(i => <option key={i} value={i}>{i}</option>)}
+                      <option value="Sonstiges">Sonstiges</option>
+                    </SelectInput>
+                  </Field>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Unternehmensgröße</label>
-                    <select className="input w-full" value={data.company_size} onChange={e => set('company_size')(e.target.value)}>
-                      <option value="">Größe wählen</option>
-                      <option value="solo">Solopreneur</option>
-                      <option value="small">1–10 Mitarbeiter</option>
-                      <option value="medium">11–50 Mitarbeiter</option>
-                      <option value="large">50+ Mitarbeiter</option>
-                    </select>
-                  </div>
-                  <Input label="Adresse" value={data.address} onChange={set('address')} placeholder="Musterstraße 1, Berlin" />
-                </div>
-              </div>
+                <Field label="Adresse (optional)">
+                  <TextInput value={data.address} onChange={set('address')} placeholder="Musterstraße 1, 10115 Berlin" />
+                </Field>
+              </SectionCard>
 
-              <div className="card space-y-4">
-                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide flex items-center gap-2"><Mail size={12}/> Kontakt</h3>
-                <div className="grid grid-cols-2 gap-3">
-                  <Input label="E-Mail" value={data.email} onChange={set('email')} type="email" placeholder="kontakt@firma.de" required />
-                  <Input label="Telefon" value={data.phone} onChange={set('phone')} type="tel" placeholder="+49 30 123456" />
+              <SectionCard title="📬 Kontakt">
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <Field label="E-Mail" required>
+                    <TextInput value={data.email} onChange={set('email')} type="email" placeholder="kontakt@firma.de" />
+                  </Field>
+                  <Field label="Telefon">
+                    <TextInput value={data.phone} onChange={set('phone')} type="tel" placeholder="+49 30 123456" />
+                  </Field>
                 </div>
-              </div>
+              </SectionCard>
 
-              <div className="card space-y-4">
-                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide flex items-center gap-2"><Globe size={12}/> Website</h3>
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-2">Hat der Kunde eine bestehende Website?</label>
-                  <div className="flex gap-2">
-                    <ToggleChip selected={data.has_website === true}  onClick={() => set('has_website')(true)}>Ja</ToggleChip>
-                    <ToggleChip selected={data.has_website === false} onClick={() => set('has_website')(false)}>Nein</ToggleChip>
-                  </div>
-                </div>
-                {data.has_website && (
-                  <Input label="Website-URL" value={data.website_url} onChange={set('website_url')} placeholder="https://www.beispiel.de" />
+              <SectionCard title="🌐 Bestehende Website">
+                <Field label="Hat der Kunde eine bestehende Website?">
+                  <TogglePair
+                    options={[{ value: 'ja', label: 'Ja' }, { value: 'nein', label: 'Nein' }]}
+                    value={data.has_website === true ? 'ja' : data.has_website === false ? 'nein' : ''}
+                    onChange={v => set('has_website')(v === 'ja')}
+                  />
+                </Field>
+                {data.has_website === true && (
+                  <Field label="URL der bestehenden Website">
+                    <TextInput value={data.website_url} onChange={set('website_url')} placeholder="https://www.beispiel.de" />
+                  </Field>
                 )}
-              </div>
+              </SectionCard>
             </div>
           )}
 
-          {/* ── STEP 1: PROJECT ── */}
+          {/* ── SCHRITT 2: PROJEKT ── */}
           {step === 1 && (
-            <div className="space-y-6">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">Projektdetails</h2>
-                <p className="text-sm text-gray-400 mt-1">Was soll gebaut werden?</p>
+                <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#1D1D1F', margin: 0 }}>
+                  Projektdetails
+                </h2>
+                <p style={{ fontSize: '14px', color: '#8E8E93', marginTop: '4px' }}>
+                  Alles optional — kann im Workflow-Tab jederzeit ergänzt werden.
+                </p>
               </div>
 
-              <div className="card space-y-4">
-                <Input
-                  label="Projektname"
-                  value={data.project_name || autoProjectName()}
-                  onChange={set('project_name')}
-                  placeholder={autoProjectName() || 'z.B. Website Redesign 2026'}
-                />
-              </div>
-
-              <div className="card space-y-3">
-                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Projekttyp</h3>
-                {PROJECT_TYPES.map(t => (
-                  <CardOption
-                    key={t.value}
-                    selected={data.project_type === t.value}
-                    onClick={() => set('project_type')(t.value)}
-                    title={t.label}
-                    desc={t.desc}
+              <SectionCard title="📋 Projektname">
+                <Field label="Name des Projekts">
+                  <TextInput
+                    value={data.project_name || autoProjectName()}
+                    onChange={set('project_name')}
+                    placeholder={autoProjectName() || 'z.B. Website Redesign 2026'}
                   />
-                ))}
-              </div>
+                </Field>
+              </SectionCard>
 
-              <div className="card space-y-3">
-                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Hauptziel</h3>
-                <div className="flex flex-wrap gap-2">
-                  {GOALS.map(g => (
-                    <ToggleChip key={g.value} selected={data.goal === g.value} onClick={() => set('goal')(g.value)}>
-                      {g.label}
-                    </ToggleChip>
-                  ))}
-                </div>
-              </div>
+              <SectionCard title="🎯 Projekttyp">
+                <CardSelect
+                  options={PROJECT_TYPES}
+                  value={data.project_type}
+                  onChange={set('project_type')}
+                  showCustom
+                  customValue={data.project_type_custom}
+                  onCustomChange={set('project_type_custom')}
+                />
+              </SectionCard>
+
+              <SectionCard title="💡 Hauptziel des Projekts">
+                <ChipGroup
+                  options={GOALS}
+                  value={data.goal}
+                  onChange={set('goal')}
+                  showCustom
+                  customValue={data.goal_custom}
+                  onCustomChange={set('goal_custom')}
+                />
+              </SectionCard>
             </div>
           )}
 
-          {/* ── STEP 2: STRUCTURE ── */}
+          {/* ── SCHRITT 3: TECHNIK (alles optional) ── */}
           {step === 2 && (
-            <div className="space-y-6">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">Website-Struktur</h2>
-                <p className="text-sm text-gray-400 mt-1">Welche Seiten soll die Website haben?</p>
-              </div>
-              <div className="card">
-                <div className="grid grid-cols-2 gap-2">
-                  {PAGES.map(p => {
-                    const sel = data.pages.includes(p.value);
-                    return (
-                      <button
-                        key={p.value}
-                        type="button"
-                        onClick={() => toggleArr('pages', p.value)}
-                        className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 text-sm font-medium transition-all ${
-                          sel
-                            ? 'border-gray-900 bg-gray-900 text-white'
-                            : 'border-gray-100 bg-white text-gray-700 hover:border-gray-300'
-                        }`}
-                      >
-                        <span>{p.icon}</span>
-                        {p.label}
-                        {sel && <Check size={13} className="ml-auto" strokeWidth={3} />}
-                      </button>
-                    );
-                  })}
-                </div>
-                <p className="text-xs text-gray-400 mt-3 text-center">{data.pages.length} Seite{data.pages.length !== 1 ? 'n' : ''} ausgewählt</p>
-              </div>
-            </div>
-          )}
-
-          {/* ── STEP 3: FEATURES ── */}
-          {step === 3 && (
-            <div className="space-y-6">
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900">Features</h2>
-                <p className="text-sm text-gray-400 mt-1">Welche Funktionen soll die Website haben?</p>
-              </div>
-              <div className="card">
-                <div className="grid grid-cols-2 gap-2">
-                  {FEATURES.map(f => (
-                    <FeatureChip
-                      key={f.value}
-                      {...f}
-                      selected={data.features.includes(f.value)}
-                      onToggle={(v) => toggleArr('features', v)}
-                    />
-                  ))}
-                </div>
-                <p className="text-xs text-gray-400 mt-3 text-center">{data.features.length} Feature{data.features.length !== 1 ? 's' : ''} ausgewählt</p>
-              </div>
-            </div>
-          )}
-
-          {/* ── STEP 4: TECH ── */}
-          {step === 4 && (
-            <div className="space-y-6">
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900">Technisches Setup</h2>
-                <p className="text-sm text-gray-400 mt-1">Wie wird die Website gebaut?</p>
+                <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#1D1D1F', margin: 0 }}>
+                  Technisches Setup
+                </h2>
+                <p style={{ fontSize: '14px', color: '#8E8E93', marginTop: '4px' }}>
+                  Alles optional — kann im Workflow jederzeit angepasst werden.
+                </p>
               </div>
 
-              <div className="card space-y-3">
-                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Build-Methode</h3>
-                {BUILD_TYPES.map(b => (
-                  <CardOption
-                    key={b.value}
-                    selected={data.build_type === b.value}
-                    onClick={() => set('build_type')(b.value)}
-                    title={b.label}
-                    desc={b.desc}
-                    badge={b.value === 'claude_code' ? 'KI' : null}
-                  />
-                ))}
-              </div>
-
-              <div className="card space-y-3">
-                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Hosting</h3>
-                {HOSTING_OPTIONS.map(h => (
-                  <CardOption
-                    key={h.value}
-                    selected={data.hosting === h.value}
-                    onClick={() => set('hosting')(h.value)}
-                    title={h.label}
-                    desc={h.desc}
-                  />
-                ))}
-              </div>
-
-              <div className="card space-y-3">
-                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Domain</h3>
-                <div className="flex gap-2">
-                  <ToggleChip selected={data.domain_new === false} onClick={() => set('domain_new')(false)}>Bestehende Domain</ToggleChip>
-                  <ToggleChip selected={data.domain_new === true}  onClick={() => set('domain_new')(true)}>Neue Domain registrieren</ToggleChip>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ── STEP 5: BUDGET ── */}
-          {step === 5 && (
-            <div className="space-y-6">
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900">Budget & Timeline</h2>
-                <p className="text-sm text-gray-400 mt-1">Finanzieller Rahmen des Projekts</p>
-              </div>
-
-              <div className="card space-y-4">
-                <Input
-                  label="Projektwert (€)"
-                  value={data.project_value}
-                  onChange={set('project_value')}
-                  type="number"
-                  placeholder="z.B. 3500"
+              <SectionCard title="⚙️ Build-Methode">
+                <CardSelect
+                  options={BUILD_TYPES}
+                  value={data.build_type}
+                  onChange={set('build_type')}
+                  showCustom
+                  customValue={data.build_type_custom}
+                  onCustomChange={set('build_type_custom')}
                 />
-              </div>
+              </SectionCard>
 
-              <div className="card space-y-3">
-                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Zeitrahmen</h3>
-                <div className="flex flex-wrap gap-2">
-                  {TIMELINES.map(t => (
-                    <ToggleChip key={t.value} selected={data.timeline === t.value} onClick={() => set('timeline')(t.value)}>
-                      {t.label}
-                    </ToggleChip>
-                  ))}
+              <SectionCard title="☁️ Hosting">
+                <CardSelect
+                  options={HOSTING_OPTIONS}
+                  value={data.hosting}
+                  onChange={set('hosting')}
+                  showCustom
+                  customValue={data.hosting_custom}
+                  onCustomChange={set('hosting_custom')}
+                />
+              </SectionCard>
+
+              <SectionCard title="🌍 Domain">
+                <Field label="Domain-Situation">
+                  <TogglePair
+                    options={[
+                      { value: false, label: 'Bestehende Domain' },
+                      { value: true,  label: 'Neue Domain registrieren' },
+                    ]}
+                    value={data.domain_new}
+                    onChange={set('domain_new')}
+                  />
+                </Field>
+              </SectionCard>
+
+              <SectionCard title="💶 Budget & Notizen">
+                <Field label="Projektwert (€) — optional">
+                  <TextInput value={data.project_value} onChange={set('project_value')} type="number" placeholder="z.B. 3500" />
+                </Field>
+                <Field label="Notizen / Besonderes">
+                  <textarea
+                    value={data.notes || ''}
+                    onChange={e => set('notes')(e.target.value)}
+                    placeholder="Besondere Anforderungen, Hinweise…"
+                    rows={3}
+                    style={{
+                      width: '100%', boxSizing: 'border-box',
+                      padding: '9px 12px',
+                      border: '1.5px solid #E5E5EA',
+                      borderRadius: '10px',
+                      fontSize: '14px',
+                      outline: 'none',
+                      resize: 'none',
+                      fontFamily: 'inherit',
+                      color: '#1D1D1F',
+                    }}
+                    onFocus={e => e.target.style.borderColor = '#0071E3'}
+                    onBlur={e => e.target.style.borderColor = '#E5E5EA'}
+                  />
+                </Field>
+              </SectionCard>
+
+              {/* Summary */}
+              <div style={{
+                padding: '16px',
+                borderRadius: '14px',
+                background: 'rgba(0,113,227,0.05)',
+                border: '1px solid rgba(0,113,227,0.15)',
+              }}>
+                <div style={{ fontSize: '12px', fontWeight: 600, color: '#0071E3', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  ✨ Wird erstellt
                 </div>
-              </div>
-
-              {/* Summary preview */}
-              <div className="card bg-gray-50 border border-gray-100 space-y-3">
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-2">
-                  <Sparkles size={12} /> Wird erstellt
-                </h3>
-                <div className="space-y-1.5 text-sm">
-                  <div className="flex items-center gap-2 text-gray-700">
-                    <div className="w-4 h-4 rounded-full bg-emerald-100 flex items-center justify-center"><Check size={9} className="text-emerald-600" strokeWidth={3}/></div>
-                    Kunde: <span className="font-medium">{data.company_name}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-gray-700">
-                    <div className="w-4 h-4 rounded-full bg-emerald-100 flex items-center justify-center"><Check size={9} className="text-emerald-600" strokeWidth={3}/></div>
-                    Projekt: <span className="font-medium">{data.project_name || autoProjectName()}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-gray-700">
-                    <div className="w-4 h-4 rounded-full bg-blue-100 flex items-center justify-center"><Check size={9} className="text-blue-600" strokeWidth={3}/></div>
-                    <span className="font-medium">{generateTasks(data).length} Aufgaben</span> werden automatisch generiert
-                  </div>
-                  <div className="flex items-center gap-2 text-gray-700">
-                    <div className="w-4 h-4 rounded-full bg-violet-100 flex items-center justify-center"><Check size={9} className="text-violet-600" strokeWidth={3}/></div>
-                    <span className="font-medium">Onboarding-Flow</span> mit {generateOnboardingSteps(data).length} Schritten
-                  </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  {[
+                    { label: 'Kunde', value: data.company_name },
+                    { label: 'Projekt', value: data.project_name || autoProjectName() },
+                    data.project_type && { label: 'Typ', value: data.project_type === 'custom' ? data.project_type_custom : PROJECT_TYPES.find(t => t.value === data.project_type)?.label },
+                    data.build_type && { label: 'Build', value: BUILD_TYPES.find(b => b.value === data.build_type)?.label || data.build_type },
+                    data.project_value && { label: 'Budget', value: `${Number(data.project_value).toLocaleString('de-DE')} €` },
+                  ].filter(Boolean).map((item, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
+                      <div style={{
+                        width: '16px', height: '16px', borderRadius: '50%',
+                        background: '#34C759',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        flexShrink: 0,
+                      }}>
+                        <Check size={9} color="#fff" strokeWidth={3} />
+                      </div>
+                      <span style={{ color: '#6E6E73' }}>{item.label}:</span>
+                      <span style={{ fontWeight: 600, color: '#1D1D1F' }}>{item.value}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -704,44 +832,80 @@ export default function Wizard() {
         </div>
       </div>
 
-      {/* Bottom nav */}
-      <div className="bg-white border-t border-gray-100 px-8 py-4 flex items-center justify-between shrink-0">
+      {/* ── Bottom nav ── */}
+      <div style={{
+        background: '#fff',
+        borderTop: '1px solid #F2F2F7',
+        padding: '16px 32px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexShrink: 0,
+      }}>
         <button
           type="button"
-          onClick={back}
+          onClick={() => setStep(s => Math.max(s - 1, 0))}
           disabled={step === 0}
-          className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          style={{
+            display: 'flex', alignItems: 'center', gap: '6px',
+            padding: '9px 16px',
+            borderRadius: '10px',
+            border: '1.5px solid #E5E5EA',
+            background: '#fff',
+            fontSize: '14px', fontWeight: 500,
+            color: step === 0 ? '#C7C7CC' : '#3C3C43',
+            cursor: step === 0 ? 'not-allowed' : 'pointer',
+          }}
         >
           <ChevronLeft size={16} /> Zurück
         </button>
 
-        <span className="text-xs text-gray-400">Schritt {step + 1} von {STEPS.length}</span>
+        <span style={{ fontSize: '12px', color: '#8E8E93' }}>
+          Schritt {step + 1} von {STEPS.length}
+        </span>
 
-        {step < STEPS.length - 1 ? (
+        {!isLastStep ? (
           <button
             type="button"
             onClick={next}
             disabled={!canNext()}
-            className="btn-primary disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{
+              display: 'flex', alignItems: 'center', gap: '6px',
+              padding: '9px 20px',
+              borderRadius: '10px',
+              border: 'none',
+              background: canNext() ? '#0071E3' : '#E5E5EA',
+              color: canNext() ? '#fff' : '#8E8E93',
+              fontSize: '14px', fontWeight: 600,
+              cursor: canNext() ? 'pointer' : 'not-allowed',
+              transition: 'background 0.15s',
+            }}
           >
-            Weiter <ChevronRight size={15} />
+            Weiter <ChevronRight size={16} />
           </button>
         ) : (
           <button
             type="button"
             onClick={handleCreate}
             disabled={loading}
-            className="btn-primary"
+            style={{
+              display: 'flex', alignItems: 'center', gap: '6px',
+              padding: '9px 20px',
+              borderRadius: '10px',
+              border: 'none',
+              background: loading ? '#E5E5EA' : '#0071E3',
+              color: loading ? '#8E8E93' : '#fff',
+              fontSize: '14px', fontWeight: 600,
+              cursor: loading ? 'not-allowed' : 'pointer',
+            }}
           >
             {loading ? (
               <>
-                <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <div style={{ width: '14px', height: '14px', border: '2px solid rgba(255,255,255,0.4)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
                 Erstelle…
               </>
             ) : (
-              <>
-                <Sparkles size={15} /> Projekt erstellen
-              </>
+              <><Sparkles size={15} /> Projekt erstellen</>
             )}
           </button>
         )}
