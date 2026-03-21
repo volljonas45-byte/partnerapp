@@ -22,11 +22,22 @@ export default function DocumentPreview({ type = 'invoice', form = {}, clients =
   const primary = settings.primary_color || '#111827';
 
   const items    = form.items || [];
-  const subtotal = items.reduce((s, i) => s + (Number(i.quantity) || 0) * (Number(i.unit_price) || 0), 0);
+  const pv = v => parseFloat(String(v).replace(',', '.')) || 0;
+  const subtotal = items.reduce((s, i) => s + pv(i.quantity) * pv(i.unit_price), 0);
   const taxTotal = form.reverseCharge
     ? 0
-    : items.reduce((s, i) => s + (Number(i.quantity) || 0) * (Number(i.unit_price) || 0) * ((Number(i.tax_rate) || 0) / 100), 0);
+    : items.reduce((s, i) => s + pv(i.quantity) * pv(i.unit_price) * (pv(i.tax_rate) / 100), 0);
   const total = subtotal + taxTotal;
+
+  const CYCLE_ORDER  = ['once', 'yearly', 'monthly'];
+  const CYCLE_LABELS = { once: 'Einmalige Leistungen', yearly: 'Jährliche Kosten', monthly: 'Monatliche Kosten' };
+  const CYCLE_BADGE  = { once: null, yearly: { bg: '#EBF4FF', color: '#0071E3', text: 'Jährlich' }, monthly: { bg: '#F3EEFF', color: '#7C3AED', text: 'Monatlich' } };
+  const hasMixed = items.some(i => (i.billing_cycle || 'once') !== 'once');
+  const grouped  = hasMixed
+    ? CYCLE_ORDER.map(c => ({ cycle: c, rows: items.filter(i => (i.billing_cycle || 'once') === c) })).filter(g => g.rows.length > 0)
+    : [{ cycle: 'once', rows: items }];
+  const cycleSums = {};
+  items.forEach(i => { const c = i.billing_cycle || 'once'; cycleSums[c] = (cycleSums[c] || 0) + pv(i.quantity) * pv(i.unit_price); });
 
   const docTitle = type === 'quote'
     ? 'ANGEBOT'
@@ -152,32 +163,59 @@ export default function DocumentPreview({ type = 'invoice', form = {}, clients =
                 Noch keine Positionen
               </td>
             </tr>
-          ) : items.map((item, idx) => (
-            <tr key={idx} style={{ borderBottom: '1px solid #f3f4f6' }}>
-              <td style={{ padding: '7px 8px', color: '#1f2937' }}>
-                <div style={{ fontWeight: 500 }}>
-                  {item.title || <span style={{ color: '#d1d5db' }}>—</span>}
-                </div>
-                {item.title && item.description && (
-                  <div style={{ fontSize: 7.5, color: '#9ca3af', marginTop: 2 }}>{item.description}</div>
-                )}
-              </td>
-              <td style={{ padding: '7px 8px', textAlign: 'right', color: '#6b7280' }}>
-                {Number(item.quantity) || 0}
-              </td>
-              <td style={{ padding: '7px 8px', textAlign: 'right', color: '#6b7280' }}>
-                {formatCurrency(item.unit_price)}
-              </td>
-              <td style={{ padding: '7px 8px', textAlign: 'right', color: '#6b7280' }}>
-                {form.reverseCharge ? '—' : `${Number(item.tax_rate) || 0} %`}
-              </td>
-              <td style={{ padding: '7px 8px', textAlign: 'right', fontWeight: 500 }}>
-                {formatCurrency((Number(item.quantity) || 0) * (Number(item.unit_price) || 0))}
-              </td>
-            </tr>
-          ))}
+          ) : grouped.map(({ cycle, rows }) => [
+            // Section header row (only when mixed)
+            hasMixed && (
+              <tr key={`hdr-${cycle}`}>
+                <td colSpan={5} style={{ padding: '5px 8px', background: '#F0F6FF', borderTop: '1px solid #D0E4FF', borderBottom: '1px solid #D0E4FF' }}>
+                  <span style={{ fontSize: 7.5, fontWeight: 700, color: '#0071E3', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    {CYCLE_LABELS[cycle]}
+                  </span>
+                </td>
+              </tr>
+            ),
+            // Item rows
+            ...rows.map((item, idx) => (
+              <tr key={`${cycle}-${idx}`} style={{ borderBottom: '1px solid #f3f4f6', background: idx % 2 === 1 ? '#fafafa' : 'transparent' }}>
+                <td style={{ padding: '7px 8px', color: '#1f2937' }}>
+                  <div style={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: 5 }}>
+                    {item.title || <span style={{ color: '#d1d5db' }}>—</span>}
+                    {!hasMixed && CYCLE_BADGE[item.billing_cycle || 'once'] && (
+                      <span style={{ fontSize: 6.5, fontWeight: 600, padding: '1px 5px', borderRadius: 99, ...CYCLE_BADGE[item.billing_cycle] }}>
+                        {CYCLE_BADGE[item.billing_cycle].text}
+                      </span>
+                    )}
+                  </div>
+                  {item.title && item.description && (
+                    <div style={{ fontSize: 7.5, color: '#9ca3af', marginTop: 2 }}>{item.description}</div>
+                  )}
+                </td>
+                <td style={{ padding: '7px 8px', textAlign: 'right', color: '#6b7280' }}>{pv(item.quantity) || 1}</td>
+                <td style={{ padding: '7px 8px', textAlign: 'right', color: '#6b7280' }}>{formatCurrency(pv(item.unit_price))}</td>
+                <td style={{ padding: '7px 8px', textAlign: 'right', color: '#6b7280' }}>
+                  {form.reverseCharge ? '—' : `${pv(item.tax_rate) || 0} %`}
+                </td>
+                <td style={{ padding: '7px 8px', textAlign: 'right', fontWeight: 500 }}>
+                  {formatCurrency(pv(item.quantity) * pv(item.unit_price))}
+                </td>
+              </tr>
+            )),
+          ])}
         </tbody>
       </table>
+
+      {/* ── KOSTENÜBERBLICK (nur bei gemischten Zyklen) ── */}
+      {hasMixed && (
+        <div style={{ margin: '10px 0', padding: '10px 14px', background: '#F0F6FF', border: '1px solid #C5DCFF', borderRadius: 6 }}>
+          <div style={{ fontSize: 7.5, fontWeight: 700, color: '#0071E3', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>Kostenüberblick</div>
+          {CYCLE_ORDER.filter(c => cycleSums[c]).map(c => (
+            <div key={c} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 8.5, marginBottom: 3 }}>
+              <span style={{ color: '#4b5563' }}>{c === 'once' ? 'Einmalig' : c === 'yearly' ? 'Jährlich' : 'Monatlich'}</span>
+              <span style={{ fontWeight: 600, color: '#111827' }}>{formatCurrency(cycleSums[c])}</span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* ── TOTALS ── */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
