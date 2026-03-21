@@ -227,13 +227,9 @@ export default function EditQuote() {
               </div>
               <div className="col-span-2 flex items-start gap-1 pt-1">
                 <select
+                  className="input"
                   value={item.billing_cycle || 'once'}
                   onChange={e => updateItem(idx, 'billing_cycle', e.target.value)}
-                  style={{
-                    fontSize: '11px', fontWeight: 600, padding: '3px 7px', borderRadius: '7px',
-                    border: '1px solid #E5E5EA', cursor: 'pointer', background: '#F9F9FB',
-                    color: '#1D1D1F', flex: 1, minWidth: 0,
-                  }}
                 >
                   <option value="once">Einmalig</option>
                   <option value="yearly">Jährlich</option>
