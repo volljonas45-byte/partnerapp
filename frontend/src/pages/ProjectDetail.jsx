@@ -103,7 +103,18 @@ function HeaderStatusDropdown({ status, onSelect }) {
 }
 
 // ── Option maps ───────────────────────────────────────────────────────────────
-const TYPE_LABELS          = { website_code:'Website (Code)', website_wix:'Website (Wix)', funnel:'Funnel', video:'Video', content:'Content', seo:'SEO' };
+const TYPE_LABELS = {
+  unternehmenswebsite: 'Unternehmenswebsite',
+  portfolio:           'Portfolio',
+  funnel:              'Sales Funnel',
+  shop:                'Online-Shop',
+  buchung:             'Buchungswebsite',
+  blog:                'Blog / Magazine',
+  community:           'Community / Verein',
+  // legacy
+  website_code: 'Website (Code)', website_wix: 'Website (Wix)',
+  video: 'Video', content: 'Content', seo: 'SEO',
+};
 const BUILD_TYPE_LABELS    = { claude_code:'Claude Code', manual_code:'Manual Code', wix:'Wix', webflow:'Webflow' };
 const FRONTEND_LABELS      = { nextjs:'Next.js', react:'React', html:'HTML' };
 const HOSTING_LABELS       = { vercel:'Vercel', hostinger:'Hostinger', netlify:'Netlify' };
@@ -120,7 +131,7 @@ const CRED_TYPE_STYLES     = {
 };
 
 const STATUS_OPTIONS        = ['planned','active','waiting','completed'];
-const TYPE_OPTIONS          = ['','website_code','website_wix','funnel','video','content','seo'];
+const TYPE_OPTIONS          = ['','unternehmenswebsite','portfolio','funnel','shop','buchung','blog','community'];
 const BUILD_OPTIONS         = ['','claude_code','manual_code','wix','webflow'];
 const FRONTEND_OPTIONS      = ['','nextjs','react','html'];
 const HOSTING_OPTIONS       = ['','vercel','hostinger','netlify'];
@@ -244,7 +255,6 @@ export default function ProjectDetail() {
   const { data: clients = [] } = useQuery({
     queryKey: ['clients'],
     queryFn: () => clientsApi.list().then(r => r.data),
-    enabled: editSection === 'overview',
   });
 
   const clientDbId = project?.client_id;
@@ -389,7 +399,10 @@ export default function ProjectDetail() {
   // ── Handlers ─────────────────────────────────────────────────────────────
   const startEdit = (section) => {
     if (!project) return;
-    setEditForm({ ...project });
+    setEditForm({
+      ...project,
+      client_id: project.client_id ?? '',
+    });
     setEditSection(section);
   };
 
@@ -565,7 +578,19 @@ export default function ProjectDetail() {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <SelectField label="Status" value={editForm.status} options={STATUS_OPTIONS} labelMap={{planned:'Geplant',active:'Aktiv',waiting:'Wartend',completed:'Abgeschlossen'}} onChange={set('status')} />
-                  <SelectField label="Projekttyp" value={editForm.type} options={TYPE_OPTIONS} labelMap={TYPE_LABELS} onChange={set('type')} />
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">Projekttyp</label>
+                    <select className="input w-full text-sm" value={editForm.type || ''} onChange={e => set('type')(e.target.value || null)}>
+                      <option value="">—</option>
+                      {TYPE_OPTIONS.filter(Boolean).map(o => (
+                        <option key={o} value={o}>{TYPE_LABELS[o] || o}</option>
+                      ))}
+                      {/* custom type not in list */}
+                      {editForm.type && !TYPE_OPTIONS.includes(editForm.type) && (
+                        <option value={editForm.type}>{editForm.type}</option>
+                      )}
+                    </select>
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <TextField label="Startdatum" value={editForm.start_date} onChange={set('start_date')} type="date" />
