@@ -89,16 +89,22 @@ export default function NewInvoice() {
     updateItem(idx, 'billing_cycle', next);
   };
   const removeItem = idx  => setItems(i => i.filter((_, j) => j !== idx));
+  // parse a raw string or number value (allows comma as decimal separator)
+  const pv = v => parseFloat(String(v).replace(',', '.')) || 0;
+
   const updateItem = (idx, field, value) =>
     setItems(i => i.map((item, j) =>
       j !== idx ? item : {
         ...item,
-        [field]: (field === 'title' || field === 'description' || field === 'billing_cycle') ? value : parseFloat(value) || 0,
+        // keep unit_price + quantity as raw strings while typing; parse everything else
+        [field]: (field === 'title' || field === 'description' || field === 'billing_cycle' || field === 'unit_price' || field === 'quantity')
+          ? value
+          : parseFloat(value) || 0,
       }
     ));
 
-  const subtotal = items.reduce((s, i) => s + i.quantity * i.unit_price, 0);
-  const taxTotal = reverseCharge ? 0 : items.reduce((s, i) => s + i.quantity * i.unit_price * (i.tax_rate / 100), 0);
+  const subtotal = items.reduce((s, i) => s + pv(i.quantity) * pv(i.unit_price), 0);
+  const taxTotal = reverseCharge ? 0 : items.reduce((s, i) => s + pv(i.quantity) * pv(i.unit_price) * (pv(i.tax_rate) / 100), 0);
   const total    = subtotal + taxTotal;
 
   // Validate and move to preview step
@@ -122,7 +128,7 @@ export default function NewInvoice() {
       leistungszeitraum_von: useZeitraum  ? (leistungszeitraumVon || null) : null,
       leistungszeitraum_bis: useZeitraum  ? (leistungszeitraumBis || null) : null,
       notes,
-      items,
+      items: items.map(i => ({ ...i, quantity: pv(i.quantity), unit_price: pv(i.unit_price) })),
       invoice_type:          invoiceType,
       reverse_charge:        reverseCharge ? 1 : 0,
       project_id:            projectId ? parseInt(projectId) : undefined,
@@ -350,22 +356,14 @@ export default function NewInvoice() {
                 <input
                   type="text" inputMode="numeric" className="input" placeholder="1"
                   value={item.quantity === 0 ? '' : item.quantity}
-                  onChange={e => {
-                    const v = e.target.value.replace(',', '.');
-                    updateItem(idx, 'quantity', v === '' ? 0 : parseFloat(v) || 0);
-                  }}
-                  onBlur={e => { if (e.target.value === '') updateItem(idx, 'quantity', 0); }}
+                  onChange={e => updateItem(idx, 'quantity', e.target.value)}
                 />
               </div>
               <div className="col-span-2 pt-0.5">
                 <input
                   type="text" inputMode="decimal" className="input" placeholder="0,00"
                   value={item.unit_price === 0 ? '' : item.unit_price}
-                  onChange={e => {
-                    const v = e.target.value.replace(',', '.');
-                    updateItem(idx, 'unit_price', v === '' ? 0 : parseFloat(v) || 0);
-                  }}
-                  onBlur={e => { if (e.target.value === '') updateItem(idx, 'unit_price', 0); }}
+                  onChange={e => updateItem(idx, 'unit_price', e.target.value)}
                 />
               </div>
               <div className="col-span-2 pt-0.5">
@@ -407,7 +405,7 @@ export default function NewInvoice() {
             const sums = {};
             items.forEach(i => {
               const c = i.billing_cycle || 'once';
-              sums[c] = (sums[c] || 0) + (Number(i.quantity) * Number(i.unit_price));
+              sums[c] = (sums[c] || 0) + (pv(i.quantity) * pv(i.unit_price));
             });
             return (
               <div style={{ background: '#F0F6FF', border: '1px solid #C5DCFF', borderRadius: '10px', padding: '12px 16px', marginTop: '4px' }}>

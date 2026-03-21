@@ -82,7 +82,9 @@ export default function EditQuote() {
     setItems(i => i.map((item, j) =>
       j !== idx ? item : {
         ...item,
-        [field]: (field === 'title' || field === 'description' || field === 'billing_cycle') ? value : parseFloat(value) || 0,
+        [field]: (field === 'title' || field === 'description' || field === 'billing_cycle' || field === 'unit_price' || field === 'quantity')
+          ? value
+          : parseFloat(value) || 0,
       }
     ));
   const toggleCycle = (idx) => {
@@ -91,8 +93,9 @@ export default function EditQuote() {
     updateItem(idx, 'billing_cycle', next);
   };
 
-  const subtotal = items.reduce((s, i) => s + i.quantity * i.unit_price, 0);
-  const taxTotal = items.reduce((s, i) => s + i.quantity * i.unit_price * (i.tax_rate / 100), 0);
+  const pv = v => parseFloat(String(v).replace(',', '.')) || 0;
+  const subtotal = items.reduce((s, i) => s + pv(i.quantity) * pv(i.unit_price), 0);
+  const taxTotal = items.reduce((s, i) => s + pv(i.quantity) * pv(i.unit_price) * (pv(i.tax_rate) / 100), 0);
   const total    = subtotal + taxTotal;
 
   const handleSubmit = e => {
@@ -106,7 +109,7 @@ export default function EditQuote() {
       issue_date:  issueDate,
       valid_until: validUntil,
       notes,
-      items,
+      items: items.map(i => ({ ...i, quantity: pv(i.quantity), unit_price: pv(i.unit_price) })),
     });
   };
 
@@ -206,22 +209,14 @@ export default function EditQuote() {
                 <input
                   type="text" inputMode="numeric" className="input" placeholder="1"
                   value={item.quantity === 0 ? '' : item.quantity}
-                  onChange={e => {
-                    const v = e.target.value.replace(',', '.');
-                    updateItem(idx, 'quantity', v === '' ? 0 : parseFloat(v) || 0);
-                  }}
-                  onBlur={e => { if (e.target.value === '') updateItem(idx, 'quantity', 0); }}
+                  onChange={e => updateItem(idx, 'quantity', e.target.value)}
                 />
               </div>
               <div className="col-span-2 pt-0.5">
                 <input
                   type="text" inputMode="decimal" className="input" placeholder="0,00"
                   value={item.unit_price === 0 ? '' : item.unit_price}
-                  onChange={e => {
-                    const v = e.target.value.replace(',', '.');
-                    updateItem(idx, 'unit_price', v === '' ? 0 : parseFloat(v) || 0);
-                  }}
-                  onBlur={e => { if (e.target.value === '') updateItem(idx, 'unit_price', 0); }}
+                  onChange={e => updateItem(idx, 'unit_price', e.target.value)}
                 />
               </div>
               <div className="col-span-2 pt-0.5">
