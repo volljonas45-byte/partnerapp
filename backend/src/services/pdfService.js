@@ -244,44 +244,85 @@ async function generateDocumentPDF(doc, settings = {}, type = 'invoice') {
   y -= 17;
   rule(page, ML, MR, y, 0.75);   // header bottom border
 
-  // Rows
+  // Rows — grouped by billing_cycle if mixed cycles present
   const items  = doc.items || [];
 
-  for (let idx = 0; idx < items.length; idx++) {
-    const item    = items[idx];
-    const amt     = Number(item.quantity) * Number(item.unit_price);
-    const taxRate = isKlein ? 0 : (item.tax_rate || 0);
+  const CYCLE_ORDER  = ['once', 'yearly', 'monthly'];
+  const CYCLE_LABELS = { once: 'Einmalige Leistungen', yearly: 'Jährliche Kosten', monthly: 'Monatliche Kosten' };
+  const hasMixed = items.some(i => (i.billing_cycle || 'once') !== 'once');
 
-    // Determine display title and optional description
-    const displayTitle = item.title || item.description || '';
-    const displayDesc  = item.title ? (item.description || '') : '';
-    const hasDesc      = displayDesc.trim().length > 0;
-    const ROW_H        = hasDesc ? 36 : 24;
+  // Group items
+  const grouped = hasMixed
+    ? CYCLE_ORDER.map(cycle => ({ cycle, rows: items.filter(i => (i.billing_cycle || 'once') === cycle) })).filter(g => g.rows.length > 0)
+    : [{ cycle: 'once', rows: items }];
 
-    // Subtle alternate-row tint
-    if (idx % 2 === 1) {
-      page.drawRectangle({ x: ML, y: y - ROW_H + 5, width: CW, height: ROW_H, color: FAINT });
+  let rowIdx = 0; // for alternate tinting across groups
+
+  for (const group of grouped) {
+    // Section header (only when mixed)
+    if (hasMixed) {
+      const headerH = 18;
+      page.drawRectangle({ x: ML, y: y - headerH + 5, width: CW, height: headerH, color: rgb(0.94, 0.96, 1.0) });
+      page.drawText(CYCLE_LABELS[group.cycle] || group.cycle, { x: C_D, y: y - 10, size: 8, font: B, color: rgb(0.0, 0.44, 0.89) });
+      y -= headerH;
     }
 
-    // Vertical center for numeric columns
-    const numY = hasDesc ? y - 15 : y - 11;
+    for (const item of group.rows) {
+      const amt     = Number(item.quantity) * Number(item.unit_price);
+      const taxRate = isKlein ? 0 : (item.tax_rate || 0);
 
-    // Title — bold
-    const titleY = hasDesc ? y - 9 : y - 11;
-    page.drawText(trunc(displayTitle, 42), { x: C_D, y: titleY, size: 9, font: B, color: BODY });
+      const displayTitle = item.title || item.description || '';
+      const displayDesc  = item.title ? (item.description || '') : '';
+      const hasDesc      = displayDesc.trim().length > 0;
+      const ROW_H        = hasDesc ? 36 : 24;
 
-    // Optional description line — smaller, gray
-    if (hasDesc) {
-      page.drawText(trunc(displayDesc, 56), { x: C_D, y: titleY - 11, size: 7.5, font: R, color: MID });
+      if (rowIdx % 2 === 1) {
+        page.drawRectangle({ x: ML, y: y - ROW_H + 5, width: CW, height: ROW_H, color: FAINT });
+      }
+
+      const numY   = hasDesc ? y - 15 : y - 11;
+      const titleY = hasDesc ? y - 9  : y - 11;
+      page.drawText(trunc(displayTitle, 42), { x: C_D, y: titleY, size: 9, font: B, color: BODY });
+      if (hasDesc) {
+        page.drawText(trunc(displayDesc, 56), { x: C_D, y: titleY - 11, size: 7.5, font: R, color: MID });
+      }
+
+      right(page, String(item.quantity),              C_Q, numY, 9, R, MID);
+      right(page, fmtCur(item.unit_price),            C_P, numY, 9, R, BODY);
+      right(page, isKlein ? '0 %' : `${taxRate} %`,  C_T, numY, 9, R, MID);
+      right(page, fmtCur(amt),                        C_A, numY, 9, B, BODY);
+
+      rule(page, ML, MR, y - ROW_H + 5, 0.3);
+      y -= ROW_H;
+      rowIdx++;
     }
+  }
 
-    right(page, String(item.quantity),              C_Q, numY, 9, R, MID);
-    right(page, fmtCur(item.unit_price),            C_P, numY, 9, R, BODY);
-    right(page, isKlein ? '0 %' : `${taxRate} %`,  C_T, numY, 9, R, MID);
-    right(page, fmtCur(amt),                        C_A, numY, 9, B, BODY);
+  // ── KOSTENÜBERBLICK BOX (only when mixed billing cycles) ─────────────────
+  if (hasMixed) {
+    y -= 14;
+    const cycleSums = {};
+    for (const item of items) {
+      const c = item.billing_cycle || 'once';
+      cycleSums[c] = (cycleSums[c] || 0) + (Number(item.quantity) * Number(item.unit_price));
+    }
+    const summaryRows = CYCLE_ORDER.filter(c => cycleSums[c] > 0);
+    const boxH = 16 + summaryRows.length * 15;
+    const BOX_L  = rgb(0.918, 0.953, 1.0);
+    const BOX_BL = rgb(0.816, 0.898, 1.0);
 
-    rule(page, ML, MR, y - ROW_H + 5, 0.3);
-    y -= ROW_H;
+    page.drawRectangle({ x: ML, y: y - boxH + 5, width: CW, height: boxH, color: BOX_L, borderColor: BOX_BL, borderWidth: 0.75 });
+    page.drawText('KOSTENÜBERBLICK', { x: ML + 10, y: y - 9, size: 7.5, font: B, color: rgb(0.0, 0.44, 0.89) });
+    y -= 16;
+
+    const CYCLE_SUFFIX = { once: '', yearly: ' (jährlich)', monthly: ' (monatlich)' };
+    for (const c of summaryRows) {
+      const label = (CYCLE_LABELS[c] || c) + CYCLE_SUFFIX[c];
+      page.drawText(label, { x: ML + 10, y: y - 8, size: 8, font: R, color: BODY });
+      right(page, fmtCur(cycleSums[c]), MR - 10, y - 8, 8, B, BODY);
+      y -= 15;
+    }
+    y -= 8;
   }
 
   // ── SECTION 5 · TOTALS ────────────────────────────────────────────────────

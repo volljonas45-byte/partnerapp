@@ -229,9 +229,9 @@ router.post('/', async (req, res) => {
 
       for (const item of items) {
         await pgClient.query(
-          `INSERT INTO invoice_items (invoice_id, title, description, quantity, unit_price, tax_rate, amount)
-           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-          [invoiceId, item.title || '', item.description || '', item.quantity, item.unit_price, item.tax_rate || 0, item.quantity * item.unit_price]
+          `INSERT INTO invoice_items (invoice_id, title, description, quantity, unit_price, tax_rate, amount, billing_cycle)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+          [invoiceId, item.title || '', item.description || '', item.quantity, item.unit_price, item.tax_rate || 0, item.quantity * item.unit_price, item.billing_cycle || 'once']
         );
       }
 
@@ -277,9 +277,9 @@ router.put('/:id', async (req, res) => {
         await pgClient.query('DELETE FROM invoice_items WHERE invoice_id = $1', [req.params.id]);
         for (const item of items) {
           await pgClient.query(
-            `INSERT INTO invoice_items (invoice_id, title, description, quantity, unit_price, tax_rate, amount)
-             VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-            [req.params.id, item.title || '', item.description || '', item.quantity, item.unit_price, item.tax_rate || 0, item.quantity * item.unit_price]
+            `INSERT INTO invoice_items (invoice_id, title, description, quantity, unit_price, tax_rate, amount, billing_cycle)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+            [req.params.id, item.title || '', item.description || '', item.quantity, item.unit_price, item.tax_rate || 0, item.quantity * item.unit_price, item.billing_cycle || 'once']
           );
         }
         await pgClient.query(`
@@ -391,9 +391,9 @@ router.post('/:id/duplicate', async (req, res) => {
 
       for (const item of original.items) {
         await pgClient.query(
-          `INSERT INTO invoice_items (invoice_id, title, description, quantity, unit_price, tax_rate, amount)
-           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-          [newId, item.title || '', item.description || '', item.quantity, item.unit_price, item.tax_rate || 0, item.amount]
+          `INSERT INTO invoice_items (invoice_id, title, description, quantity, unit_price, tax_rate, amount, billing_cycle)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+          [newId, item.title || '', item.description || '', item.quantity, item.unit_price, item.tax_rate || 0, item.amount, item.billing_cycle || 'once']
         );
       }
 
@@ -456,9 +456,9 @@ router.post('/:id/storno', async (req, res) => {
 
       for (const item of original.items) {
         await pgClient.query(
-          `INSERT INTO invoice_items (invoice_id, title, description, quantity, unit_price, tax_rate, amount)
-           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-          [stornoId, item.title || '', item.description || '', item.quantity, -(item.unit_price), item.tax_rate || 0, -(item.amount)]
+          `INSERT INTO invoice_items (invoice_id, title, description, quantity, unit_price, tax_rate, amount, billing_cycle)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+          [stornoId, item.title || '', item.description || '', item.quantity, -(item.unit_price), item.tax_rate || 0, -(item.amount), item.billing_cycle || 'once']
         );
       }
 

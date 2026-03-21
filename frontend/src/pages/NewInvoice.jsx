@@ -38,7 +38,7 @@ export default function NewInvoice() {
   const [reverseCharge,        setReverseCharge]        = useState(false);
   const [useZeitraum,          setUseZeitraum]          = useState(false);
   const [items,                setItems]                = useState([
-    { title: '', description: '', quantity: 1, unit_price: 0, tax_rate: 19 },
+    { title: '', description: '', quantity: 1, unit_price: 0, tax_rate: 19, billing_cycle: 'once' },
   ]);
 
   const { data: clients = [], isLoading: clientsLoading } = useQuery({
@@ -73,8 +73,21 @@ export default function NewInvoice() {
 
   const addItem    = () => setItems(i => [
     ...i,
-    { title: '', description: '', quantity: 1, unit_price: 0, tax_rate: settings?.kleinunternehmer ? 0 : 19 },
+    { title: '', description: '', quantity: 1, unit_price: 0, tax_rate: settings?.kleinunternehmer ? 0 : 19, billing_cycle: 'once' },
   ]);
+
+  const CYCLES = ['once', 'yearly', 'monthly'];
+  const CYCLE_LABEL = { once: 'Einmalig', yearly: 'Jährlich', monthly: 'Monatlich' };
+  const CYCLE_STYLE = {
+    once:    { background: '#F2F2F7', color: '#636366' },
+    yearly:  { background: '#EBF4FF', color: '#0071E3' },
+    monthly: { background: '#F3EEFF', color: '#7C3AED' },
+  };
+  const toggleCycle = (idx) => {
+    const cur  = items[idx].billing_cycle || 'once';
+    const next = CYCLES[(CYCLES.indexOf(cur) + 1) % CYCLES.length];
+    updateItem(idx, 'billing_cycle', next);
+  };
   const removeItem = idx  => setItems(i => i.filter((_, j) => j !== idx));
   const updateItem = (idx, field, value) =>
     setItems(i => i.map((item, j) =>
@@ -309,16 +322,16 @@ export default function NewInvoice() {
           <h2 className="text-sm font-semibold text-gray-700">Positionen</h2>
 
           <div className="grid grid-cols-12 gap-2 text-xs font-medium text-gray-400 uppercase tracking-wide pb-1 border-b border-gray-100">
-            <div className="col-span-5">Leistung</div>
+            <div className="col-span-4">Leistung</div>
             <div className="col-span-2">Menge</div>
             <div className="col-span-2">Einzelpreis</div>
             <div className="col-span-2">MwSt. %</div>
-            <div className="col-span-1" />
+            <div className="col-span-2" />
           </div>
 
           {items.map((item, idx) => (
             <div key={idx} className="grid grid-cols-12 gap-2 items-start">
-              <div className="col-span-5 space-y-1">
+              <div className="col-span-4 space-y-1">
                 <input
                   className="input"
                   placeholder="Leistungsbezeichnung *"
@@ -359,7 +372,19 @@ export default function NewInvoice() {
                   ))}
                 </select>
               </div>
-              <div className="col-span-1 flex justify-center pt-1.5">
+              <div className="col-span-2 flex items-start gap-1 pt-1">
+                <button
+                  type="button"
+                  onClick={() => toggleCycle(idx)}
+                  style={{
+                    fontSize: '10px', fontWeight: 600, padding: '3px 7px', borderRadius: '99px',
+                    border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
+                    ...CYCLE_STYLE[item.billing_cycle || 'once'],
+                  }}
+                  title="Abrechnungszyklus wechseln"
+                >
+                  {CYCLE_LABEL[item.billing_cycle || 'once']}
+                </button>
                 {items.length > 1 && (
                   <button
                     type="button" onClick={() => removeItem(idx)}
@@ -371,6 +396,28 @@ export default function NewInvoice() {
               </div>
             </div>
           ))}
+
+          {/* Kostenüberblick — nur sichtbar wenn gemischte Zyklen */}
+          {items.some(i => (i.billing_cycle || 'once') !== 'once') && (() => {
+            const sums = {};
+            items.forEach(i => {
+              const c = i.billing_cycle || 'once';
+              sums[c] = (sums[c] || 0) + (Number(i.quantity) * Number(i.unit_price));
+            });
+            return (
+              <div style={{ background: '#F0F6FF', border: '1px solid #C5DCFF', borderRadius: '10px', padding: '12px 16px', marginTop: '4px' }}>
+                <p style={{ fontSize: '11px', fontWeight: 700, color: '#0071E3', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Kostenüberblick</p>
+                {['once','yearly','monthly'].filter(c => sums[c]).map(c => (
+                  <div key={c} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12.5px', marginBottom: '3px' }}>
+                    <span style={{ color: '#636366' }}>{CYCLE_LABEL[c]}</span>
+                    <span style={{ fontWeight: 600, color: '#1D1D1F' }}>
+                      {sums[c].toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
 
           <button
             type="button" onClick={addItem}
