@@ -548,7 +548,8 @@ export default function ProjectDetail() {
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-500 mb-1">Kunde</label>
-                    <select className="input w-full text-sm" value={editForm.client_id || ''} onChange={e => set('client_id')(Number(e.target.value))}>
+                    <select className="input w-full text-sm" value={editForm.client_id || ''} onChange={e => set('client_id')(e.target.value ? Number(e.target.value) : null)}>
+                      <option value="">— Kein Kunde</option>
                       {clients.map(c => <option key={c.id} value={c.id}>{c.company_name}</option>)}
                     </select>
                   </div>

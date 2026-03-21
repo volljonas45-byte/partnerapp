@@ -536,7 +536,23 @@ export default function Websites() {
                   >
                     <td className="px-4 py-2.5 text-center"><HealthDot project={p} /></td>
                     <td className="px-5 py-2.5 font-medium text-gray-900">{p.name}</td>
-                    <td className="px-5 py-2.5 text-gray-500 text-xs">{p.client_name || <span className="text-gray-300">—</span>}</td>
+                    <td className="px-5 py-2.5 text-xs" onClick={e => e.stopPropagation()}>
+                      <select
+                        value={p.client_id || ''}
+                        onChange={e => handleUpdate(p.id, { client_id: e.target.value || null })}
+                        style={{
+                          border: 'none', background: 'transparent', fontSize: '12px',
+                          color: p.client_name ? '#374151' : '#D1D5DB',
+                          cursor: 'pointer', outline: 'none', padding: '0',
+                          maxWidth: '140px',
+                        }}
+                      >
+                        <option value="">— Zuweisen</option>
+                        {clients.map(c => (
+                          <option key={c.id} value={c.id}>{c.company_name}</option>
+                        ))}
+                      </select>
+                    </td>
                     <td className="px-5 py-2.5">
                       {(() => {
                         const phase = p.current_phase;
