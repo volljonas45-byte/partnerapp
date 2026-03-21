@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   User, Globe, Check, Sparkles, X, Plus,
+  ChevronLeft, ChevronRight,
   Building2, Target, ShoppingBag, Calendar,
   Newspaper, Users, Camera, Star, Image, Info,
-  Mail, Settings2, Cloud, Link,
+  Mail, Cloud,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { clientsApi } from '../api/clients';
