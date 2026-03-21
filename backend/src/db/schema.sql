@@ -34,6 +34,8 @@ CREATE TABLE IF NOT EXISTS settings (
   primary_color        TEXT DEFAULT '#111827',
   footer_text          TEXT DEFAULT 'Vielen Dank für Ihr Vertrauen.',
   default_payment_days INTEGER DEFAULT 30,
+  email_alias          TEXT DEFAULT '',
+  email_signature      TEXT DEFAULT '',
   FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
@@ -426,3 +428,12 @@ CREATE TABLE IF NOT EXISTS user_tools (
   created_at TIMESTAMP DEFAULT NOW(),
   FOREIGN KEY (user_id) REFERENCES users(id)
 );
+
+-- ── SAFE COLUMN MIGRATIONS ─────────────────────────────────────────────────────
+-- Adds new columns to existing tables without errors if they already exist
+
+DO $$ BEGIN ALTER TABLE settings          ADD COLUMN email_alias    TEXT DEFAULT ''; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE settings          ADD COLUMN email_signature TEXT DEFAULT ''; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE invoice_items     ADD COLUMN billing_cycle   TEXT DEFAULT 'once'; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE quote_items       ADD COLUMN billing_cycle   TEXT DEFAULT 'once'; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE service_templates ADD COLUMN billing_cycle   TEXT DEFAULT 'once'; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
