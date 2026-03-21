@@ -3,10 +3,11 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowLeft, Mail, Phone, MapPin, Building2, FileText,
-  Plus, ShieldCheck, User, Pencil,
+  Plus, ShieldCheck, User, Pencil, Globe, ChevronRight,
 } from 'lucide-react';
 import { clientsApi } from '../api/clients';
 import { legalApi } from '../api/legal';
+import { PHASE_ORDER, PHASES } from '../components/workflow/workflowConfig';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import StatusBadge from '../components/StatusBadge';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -244,6 +245,11 @@ export default function ClientDetail() {
     queryFn: () => clientsApi.invoices(id).then(r => r.data),
   });
 
+  const { data: clientProjects = [] } = useQuery({
+    queryKey: ['projects', 'by-client', id],
+    queryFn: () => clientsApi.projects(id).then(r => r.data),
+  });
+
   if (clientLoading || invoicesLoading) return <LoadingSpinner className="h-64" />;
   if (!client) return <div style={{ padding: '32px', color: '#86868B' }}>Kunde nicht gefunden.</div>;
 
@@ -254,7 +260,7 @@ export default function ClientDetail() {
   ].filter(Boolean).join(', ');
 
   return (
-    <div style={{ padding: '32px', maxWidth: '900px' }}>
+    <div style={{ padding: '32px', maxWidth: '960px', margin: '0 auto' }}>
 
       {/* ── Header ── */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '28px' }}>
@@ -330,6 +336,87 @@ export default function ClientDetail() {
       {/* ── Legal Setup ── */}
       <div style={{ marginBottom: '12px' }}>
         <LegalSetup clientId={id} />
+      </div>
+
+      {/* ── Websites ── */}
+      <div style={{ ...CARD, padding: 0, overflow: 'hidden', marginBottom: '12px' }}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(0,113,227,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Globe size={14} color="#0071E3" />
+            </div>
+            <span style={{ fontSize: '14px', fontWeight: '600', color: '#1D1D1F', letterSpacing: '-0.01em' }}>
+              Websites
+              <span style={{ marginLeft: '6px', fontSize: '13px', color: '#86868B', fontWeight: '400' }}>{clientProjects.length}</span>
+            </span>
+          </div>
+          <button onClick={() => navigate('/websites/new')} style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', fontWeight: '600', color: '#0071E3', background: 'rgba(0,113,227,0.08)', border: 'none', borderRadius: '8px', cursor: 'pointer', padding: '5px 12px' }}>
+            <Plus size={13} /> Neue Website
+          </button>
+        </div>
+
+        {clientProjects.length === 0 ? (
+          <div style={{ padding: '40px 20px', textAlign: 'center' }}>
+            <Globe size={28} color="#D1D1D6" style={{ margin: '0 auto 10px' }} />
+            <p style={{ fontSize: '14px', color: '#86868B', margin: 0 }}>Noch keine Website für diesen Kunden.</p>
+          </div>
+        ) : (
+          <div>
+            {clientProjects.map((p, i) => {
+              const phase = p.current_phase;
+              const cfg = phase ? PHASES[phase] : null;
+              const phaseIdx = phase ? PHASE_ORDER.indexOf(phase) : 0;
+              const total = PHASE_ORDER.length;
+              const pct = Math.round(((phaseIdx + 1) / total) * 100);
+              const isLast = phase === PHASE_ORDER[PHASE_ORDER.length - 1];
+              return (
+                <div
+                  key={p.id}
+                  onClick={() => navigate(`/websites/${p.id}`)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '16px',
+                    padding: '14px 20px',
+                    borderBottom: i < clientProjects.length - 1 ? '1px solid rgba(0,0,0,0.04)' : 'none',
+                    cursor: 'pointer', transition: 'background 0.1s',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.025)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                >
+                  {/* Icon */}
+                  <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(0,113,227,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Globe size={16} color="#0071E3" />
+                  </div>
+
+                  {/* Name */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: '14px', fontWeight: '600', color: '#1D1D1F', margin: 0, letterSpacing: '-0.01em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</p>
+                    {p.deadline && <p style={{ fontSize: '11px', color: '#86868B', margin: '2px 0 0' }}>Deadline: {formatDate(p.deadline)}</p>}
+                  </div>
+
+                  {/* Phase badge */}
+                  <span style={{
+                    padding: '3px 10px', borderRadius: '99px', fontSize: '11px', fontWeight: 600,
+                    background: isLast ? 'rgba(52,199,89,0.12)' : 'rgba(0,113,227,0.10)',
+                    color: isLast ? '#34C759' : '#0071E3',
+                    whiteSpace: 'nowrap', flexShrink: 0,
+                  }}>
+                    {cfg?.label || 'Start'}
+                  </span>
+
+                  {/* Progress bar */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                    <div style={{ width: '56px', height: '3px', background: '#F2F2F7', borderRadius: '2px' }}>
+                      <div style={{ width: `${pct}%`, height: '100%', background: isLast ? '#34C759' : '#0071E3', borderRadius: '2px' }} />
+                    </div>
+                    <span style={{ fontSize: '11px', color: '#8E8E93' }}>{phaseIdx + 1}/{total}</span>
+                  </div>
+
+                  <ChevronRight size={14} color="#C7C7CC" />
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* ── Rechnungen ── */}

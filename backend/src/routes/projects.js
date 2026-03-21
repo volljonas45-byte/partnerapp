@@ -71,6 +71,8 @@ function projectFields(body) {
 // ── LIST ─────────────────────────────────────────────────────────────────────
 router.get('/', async (req, res) => {
   try {
+    const clientFilter = req.query.client_id ? ' AND p.client_id = ?' : '';
+    const params = req.query.client_id ? [req.userId, req.query.client_id] : [req.userId];
     const rows = await getAll(`
       SELECT p.*, c.company_name as client_name,
              COUNT(t.id) as task_count,
@@ -80,10 +82,10 @@ router.get('/', async (req, res) => {
       LEFT JOIN clients c ON c.id = p.client_id
       LEFT JOIN tasks t ON t.project_id = p.id
       LEFT JOIN project_workflow pw ON pw.project_id = p.id
-      WHERE p.user_id = ?
+      WHERE p.user_id = ?${clientFilter}
       GROUP BY p.id, c.company_name, pw.current_phase
       ORDER BY p.created_at DESC
-    `, [req.userId]);
+    `, params);
     res.json(rows);
   } catch (err) {
     console.error('[projects GET /]', err);
