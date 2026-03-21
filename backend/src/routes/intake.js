@@ -184,9 +184,12 @@ router.delete('/:id', authenticate, async (req, res) => {
 router.get('/public/:token', async (req, res) => {
   try {
     const form = await getOne(`
-      SELECT f.*, t.fields, t.name AS template_name
+      SELECT f.*, t.fields, t.name AS template_name,
+             c.company_name AS client_company_name
       FROM intake_forms f
       LEFT JOIN intake_templates t ON f.template_id = t.id
+      LEFT JOIN projects p ON f.project_id = p.id
+      LEFT JOIN clients c ON p.client_id = c.id
       WHERE f.token = ?
     `, [req.params.token]);
     if (!form) return res.status(404).json({ error: 'Formular nicht gefunden' });

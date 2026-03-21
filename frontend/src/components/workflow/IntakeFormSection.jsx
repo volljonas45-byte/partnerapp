@@ -4,25 +4,59 @@ import { Send, Copy, ExternalLink, Check, Clock, CheckCircle2, Loader, Phone } f
 import toast from 'react-hot-toast';
 import { intakeApi } from '../../api/intake';
 
-// Standard-Template-Felder für Website-Briefing
-// Jedes Feld braucht eine `id` (wird von IntakePublic als Response-Key verwendet)
+// Standard-Template-Felder – nur was der Kunde wirklich ausfüllen muss
+// (Name, E-Mail, Branche, URL kennen wir bereits aus dem Wizard)
 const BRIEFING_FIELDS = [
-  { id: 'company_name', key: 'company_name', label: 'Unternehmensname',             type: 'text',     required: true  },
-  { id: 'contact',      key: 'contact',      label: 'Ansprechpartner',               type: 'text',     required: false },
-  { id: 'industry',     key: 'industry',     label: 'Branche & Zielgruppe',          type: 'textarea', required: false },
-  { id: 'email',        key: 'email',        label: 'E-Mail',                        type: 'text',     required: true  },
-  { id: 'phone',        key: 'phone',        label: 'Telefon',                       type: 'text',     required: false },
-  { id: 'existing_url', key: 'existing_url', label: 'Bestehende Website (URL)',      type: 'url',      required: false },
-  { id: 'goal',         key: 'goal',         label: 'Ziel der neuen Website',        type: 'textarea', required: true  },
-  { id: 'pages',        key: 'pages',        label: 'Gewünschte Seiten',             type: 'textarea', required: false },
-  { id: 'features',     key: 'features',     label: 'Gewünschte Features / Wünsche', type: 'textarea', required: false },
-  { id: 'budget',       key: 'budget',       label: 'Budget-Vorstellung',            type: 'text',     required: false },
-  { id: 'deadline',     key: 'deadline',     label: 'Gewünschte Deadline',           type: 'text',     required: false },
-  { id: 'notes',        key: 'notes',        label: 'Sonstiges / Anmerkungen',       type: 'textarea', required: false },
+  {
+    id: 'goal', key: 'goal',
+    label: 'Was ist das Hauptziel der Website?',
+    type: 'textarea', required: true,
+    placeholder: 'z.B. Neue Kunden gewinnen, Online-Terminbuchung, Portfolio zeigen…',
+  },
+  {
+    id: 'pages', key: 'pages',
+    label: 'Welche Seiten soll die Website haben?',
+    type: 'multiselect', required: false,
+    options: [
+      'Startseite', 'Über uns', 'Team', 'Leistungen', 'Preise',
+      'Portfolio', 'Referenzen / Bewertungen', 'Blog', 'Online-Shop',
+      'Kontakt', 'Buchung / Terminkalender', 'FAQ',
+      'Karriere', 'Galerie', 'Events', 'Partner',
+      'Impressum', 'Datenschutz',
+    ],
+  },
+  {
+    id: 'features', key: 'features',
+    label: 'Welche Funktionen werden benötigt?',
+    type: 'multiselect', required: false,
+    options: [
+      'Kontaktformular', 'WhatsApp-Button', 'Live-Chat',
+      'Online-Buchung / Terminkalender', 'Newsletter-Anmeldung',
+      'Google Maps Einbindung', 'Bildergalerie / Slider',
+      'Video-Hintergrund / -Banner', 'Mehrsprachigkeit',
+      'Online-Shop / Warenkorb', 'Mitgliederbereich / Login',
+      'Blog / News-Bereich', 'Social Media Verlinkung',
+      'Cookie-Banner (DSGVO)', 'Suchfunktion',
+      'Kundenbewertungen / Google Reviews',
+      'Portfolio mit Filter', 'Pop-up / Lead-Magnet',
+      'Downloadbereich', 'Preisrechner',
+    ],
+  },
+  {
+    id: 'deadline', key: 'deadline',
+    label: 'Wann soll die Website fertig sein?',
+    type: 'date', required: false,
+  },
+  {
+    id: 'notes', key: 'notes',
+    label: 'Sonstiges / Anmerkungen',
+    type: 'textarea', required: false,
+    placeholder: 'Besondere Wünsche, Konkurrenz-Websites die gefallen, Farbideen, Besonderheiten…',
+  },
 ];
 
-// v2: neues Marker-Name → zwingt zur Neuanlage (altes Template war doppelt-encoded)
-const TEMPLATE_MARKER = '__website_briefing_v2__';
+// v3: saubere Felder ohne doppelt-encoding, ohne überflüssige Infos
+const TEMPLATE_MARKER = '__website_briefing_v3__';
 
 export default function IntakeFormSection({ projectId, projectName, briefingDone, onSkip }) {
   const qc = useQueryClient();
