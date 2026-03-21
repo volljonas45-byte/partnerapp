@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { CheckCircle2, AlertCircle, Plus, X, Calendar } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Plus, X, Calendar, Zap } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { intakeApi } from '../api/intake';
 
@@ -323,20 +323,22 @@ export default function IntakePublic() {
       <div style={{
         background: '#fff',
         borderBottom: '1px solid #F2F2F7',
-        padding: '20px 24px',
+        padding: '18px 24px',
       }}>
-        <div style={{ maxWidth: '680px', margin: '0 auto', display: 'flex', alignItems: 'center', gap: '14px' }}>
-          <CompanyAvatar name={companyName} size={44} />
-          <div>
-            {companyName && (
-              <div style={{ fontSize: '16px', fontWeight: 700, color: '#1D1D1F', lineHeight: 1.2 }}>
-                {companyName}
-              </div>
-            )}
-            <div style={{ fontSize: '13px', color: '#8E8E93', marginTop: companyName ? '2px' : 0 }}>
-              Website-Briefing
-            </div>
+        <div style={{ maxWidth: '680px', margin: '0 auto', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{
+            width: '30px', height: '30px',
+            background: 'linear-gradient(145deg, #0A84FF, #0071E3)',
+            borderRadius: '8px',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 2px 8px rgba(0,113,227,0.35)',
+            flexShrink: 0,
+          }}>
+            <Zap size={14} color="#fff" strokeWidth={2.5} />
           </div>
+          <span style={{ fontSize: '15px', fontWeight: 700, color: '#1D1D1F', letterSpacing: '-0.02em' }}>
+            Vecturo
+          </span>
         </div>
       </div>
 
