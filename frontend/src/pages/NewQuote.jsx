@@ -274,19 +274,23 @@ export default function NewQuote() {
               </div>
               <div className="col-span-2 pt-0.5">
                 <input
-                  type="number" className="input" placeholder="1"
-                  min="0" step="0.01"
+                  type="text" inputMode="numeric" className="input" placeholder="1"
                   value={item.quantity === 0 ? '' : item.quantity}
-                  onChange={e => updateItem(idx, 'quantity', e.target.value === '' ? 0 : e.target.value)}
+                  onChange={e => {
+                    const v = e.target.value.replace(',', '.');
+                    updateItem(idx, 'quantity', v === '' ? 0 : parseFloat(v) || 0);
+                  }}
                   onBlur={e => { if (e.target.value === '') updateItem(idx, 'quantity', 0); }}
                 />
               </div>
               <div className="col-span-2 pt-0.5">
                 <input
-                  type="number" className="input" placeholder="0,00"
-                  min="0" step="0.01"
+                  type="text" inputMode="decimal" className="input" placeholder="0,00"
                   value={item.unit_price === 0 ? '' : item.unit_price}
-                  onChange={e => updateItem(idx, 'unit_price', e.target.value === '' ? 0 : e.target.value)}
+                  onChange={e => {
+                    const v = e.target.value.replace(',', '.');
+                    updateItem(idx, 'unit_price', v === '' ? 0 : parseFloat(v) || 0);
+                  }}
                   onBlur={e => { if (e.target.value === '') updateItem(idx, 'unit_price', 0); }}
                 />
               </div>
