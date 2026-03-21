@@ -86,7 +86,7 @@ router.post('/', async (req, res) => {
     const {
       company_name, contact_person, address, city,
       postal_code, country, email, phone, vat_id,
-      brand_color, brand_logo,
+      brand_color, brand_logo, industry, website,
     } = req.body;
 
     if (!company_name) {
@@ -95,8 +95,8 @@ router.post('/', async (req, res) => {
 
     const result = await run(`
       INSERT INTO clients
-        (user_id, company_name, contact_person, address, city, postal_code, country, email, phone, vat_id, brand_color, brand_logo)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (user_id, company_name, contact_person, address, city, postal_code, country, email, phone, vat_id, brand_color, brand_logo, industry, website)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       RETURNING id
     `, [
       req.userId,
@@ -111,6 +111,8 @@ router.post('/', async (req, res) => {
       vat_id || '',
       brand_color || '#111827',
       brand_logo || null,
+      industry || '',
+      website || '',
     ]);
 
     const client = await getOne('SELECT * FROM clients WHERE id = ?', [result.lastInsertRowid]);
@@ -137,7 +139,7 @@ router.put('/:id', async (req, res) => {
     const {
       company_name, contact_person, address, city,
       postal_code, country, email, phone, vat_id,
-      brand_color, brand_logo,
+      brand_color, brand_logo, industry, website,
     } = req.body;
 
     if (!company_name) {
@@ -148,7 +150,7 @@ router.put('/:id', async (req, res) => {
       UPDATE clients SET
         company_name = ?, contact_person = ?, address = ?, city = ?,
         postal_code = ?, country = ?, email = ?, phone = ?, vat_id = ?,
-        brand_color = ?, brand_logo = ?
+        brand_color = ?, brand_logo = ?, industry = ?, website = ?
       WHERE id = ? AND user_id = ?
     `, [
       company_name,
@@ -162,6 +164,8 @@ router.put('/:id', async (req, res) => {
       vat_id || '',
       brand_color !== undefined ? brand_color : client.brand_color,
       brand_logo !== undefined ? (brand_logo || null) : client.brand_logo,
+      industry !== undefined ? (industry || '') : (client.industry || ''),
+      website !== undefined ? (website || '') : (client.website || ''),
       req.params.id,
       req.userId,
     ]);

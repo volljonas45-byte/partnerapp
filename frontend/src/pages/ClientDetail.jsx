@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowLeft, Mail, Phone, MapPin, Building2, FileText,
-  Plus, ShieldCheck, User, Pencil, Globe, ChevronRight,
+  Plus, ShieldCheck, User, Pencil, Globe, ChevronRight, Briefcase,
 } from 'lucide-react';
 import { clientsApi } from '../api/clients';
 import { legalApi } from '../api/legal';
@@ -282,6 +282,23 @@ export default function ClientDetail() {
           <Plus size={16} /> Neue Rechnung
         </button>
       </div>
+
+      {/* ── Branche + Website Chips ── */}
+      {(client.industry || client.website) && (
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
+          {client.industry && (
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '4px 12px', borderRadius: '99px', background: 'rgba(0,113,227,0.08)', color: '#0071E3', fontSize: '12px', fontWeight: 600 }}>
+              <Briefcase size={11} /> {client.industry}
+            </span>
+          )}
+          {client.website && (
+            <a href={client.website.startsWith('http') ? client.website : `https://${client.website}`} target="_blank" rel="noopener noreferrer"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '4px 12px', borderRadius: '99px', background: 'rgba(52,199,89,0.08)', color: '#34C759', fontSize: '12px', fontWeight: 600, textDecoration: 'none' }}>
+              <Globe size={11} /> {client.website}
+            </a>
+          )}
+        </div>
+      )}
 
       {/* ── Stats + Adresse grid ── */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: '12px', marginBottom: '12px' }}>

@@ -437,4 +437,7 @@ db.exec(`
 migrate("ALTER TABLE projects ADD COLUMN area_id INTEGER DEFAULT NULL");
 migrate("ALTER TABLE projects ADD COLUMN project_type TEXT DEFAULT 'website'");
 
+migrate("ALTER TABLE clients ADD COLUMN industry TEXT DEFAULT ''");
+migrate("ALTER TABLE clients ADD COLUMN website  TEXT DEFAULT ''");
+
 module.exports = db;
