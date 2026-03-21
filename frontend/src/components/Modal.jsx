@@ -29,9 +29,9 @@ export default function Modal({ open, onClose, title, children, maxWidth = 'max-
 
       {/* Dialog */}
       <div className="relative min-h-full flex items-center justify-center p-4">
-        <div className={`relative w-full ${maxWidth} bg-white rounded-2xl shadow-xl`}>
+        <div className={`relative w-full ${maxWidth} bg-white rounded-2xl shadow-xl flex flex-col max-h-[90vh]`}>
           {/* Header */}
-          <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-gray-100">
+          <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-gray-100 shrink-0">
             <h3 className="text-base font-semibold text-gray-900">{title}</h3>
             <button
               onClick={onClose}
@@ -42,7 +42,7 @@ export default function Modal({ open, onClose, title, children, maxWidth = 'max-
           </div>
 
           {/* Body */}
-          <div className="px-6 py-4">
+          <div className="px-6 py-4 overflow-y-auto">
             {children}
           </div>
         </div>
