@@ -74,12 +74,14 @@ router.get('/', async (req, res) => {
     const rows = await getAll(`
       SELECT p.*, c.company_name as client_name,
              COUNT(t.id) as task_count,
-             COUNT(CASE WHEN t.status = 'done' THEN 1 END) as task_done_count
+             COUNT(CASE WHEN t.status = 'done' THEN 1 END) as task_done_count,
+             pw.current_phase
       FROM projects p
       LEFT JOIN clients c ON c.id = p.client_id
       LEFT JOIN tasks t ON t.project_id = p.id
+      LEFT JOIN project_workflow pw ON pw.project_id = p.id
       WHERE p.user_id = ?
-      GROUP BY p.id, c.company_name
+      GROUP BY p.id, c.company_name, pw.current_phase
       ORDER BY p.created_at DESC
     `, [req.userId]);
     res.json(rows);

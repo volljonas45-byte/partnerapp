@@ -7,6 +7,7 @@ import {
 import toast from 'react-hot-toast';
 import { projectsApi } from '../api/projects';
 import { clientsApi } from '../api/clients';
+import { PHASE_ORDER, PHASES } from '../components/workflow/workflowConfig';
 import { formatDate, isPast } from '../utils/formatters';
 
 function computeHealth(project) {
@@ -536,8 +537,22 @@ export default function Websites() {
                     <td className="px-4 py-2.5 text-center"><HealthDot project={p} /></td>
                     <td className="px-5 py-2.5 font-medium text-gray-900">{p.name}</td>
                     <td className="px-5 py-2.5 text-gray-500 text-xs">{p.client_name || <span className="text-gray-300">—</span>}</td>
-                    <td className="px-5 py-2.5" onClick={e => e.stopPropagation()}>
-                      <StatusCell project={p} onUpdate={handleUpdate} />
+                    <td className="px-5 py-2.5">
+                      {(() => {
+                        const phase = p.current_phase;
+                        const cfg = phase ? PHASES[phase] : null;
+                        const isLast = phase === 'abgeschlossen';
+                        return (
+                          <span style={{
+                            display: 'inline-flex', alignItems: 'center', gap: '5px',
+                            padding: '2px 9px', borderRadius: '99px', fontSize: '11px', fontWeight: 600,
+                            background: isLast ? 'rgba(52,199,89,0.12)' : 'rgba(0,113,227,0.10)',
+                            color: isLast ? '#34C759' : '#0071E3',
+                          }}>
+                            {cfg?.label || 'Demo'}
+                          </span>
+                        );
+                      })()}
                     </td>
                     <td className="px-5 py-2.5">
                       <TypeBadge type={p.type} />
@@ -550,10 +565,21 @@ export default function Websites() {
                       {p.hosting_provider ? (HOSTING_LABELS[p.hosting_provider] || p.hosting_provider) : <span className="text-gray-300">—</span>}
                     </td>
                     <td className="px-5 py-2.5 text-xs text-gray-500">
-                      {p.task_count > 0
-                        ? <span>{p.task_done_count}/{p.task_count}</span>
-                        : <span className="text-gray-300">—</span>
-                      }
+                      {(() => {
+                        const phase = p.current_phase;
+                        if (!phase) return <span className="text-gray-300">—</span>;
+                        const idx = PHASE_ORDER.indexOf(phase);
+                        const total = PHASE_ORDER.length;
+                        const pct = Math.round(((idx + 1) / total) * 100);
+                        return (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <div style={{ width: '48px', height: '3px', background: '#F2F2F7', borderRadius: '2px' }}>
+                              <div style={{ width: `${pct}%`, height: '100%', background: phase === 'abgeschlossen' ? '#34C759' : '#0071E3', borderRadius: '2px' }} />
+                            </div>
+                            <span style={{ color: '#8E8E93', fontSize: '11px' }}>{idx + 1}/{total}</span>
+                          </div>
+                        );
+                      })()}
                     </td>
                     <td className="px-5 py-2.5" onClick={e => e.stopPropagation()}>
                       <button
