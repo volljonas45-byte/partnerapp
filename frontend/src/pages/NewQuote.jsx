@@ -9,6 +9,7 @@ import { settingsApi } from '../api/settings';
 import { formatCurrency, today, addDays } from '../utils/formatters';
 import LoadingSpinner from '../components/LoadingSpinner';
 import DocumentPreview from '../components/DocumentPreview';
+import ClientLegalWidget from '../components/ClientLegalWidget';
 
 const VAT_RATES = [0, 7, 19];
 
@@ -200,6 +201,7 @@ export default function NewQuote() {
                 </button>
               </p>
             )}
+            <ClientLegalWidget clientId={clientId} />
           </div>
 
           <div className="grid grid-cols-2 gap-4">

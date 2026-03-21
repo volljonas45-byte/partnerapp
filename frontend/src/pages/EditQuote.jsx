@@ -7,6 +7,7 @@ import { quotesApi } from '../api/quotes';
 import { clientsApi } from '../api/clients';
 import { formatCurrency } from '../utils/formatters';
 import LoadingSpinner from '../components/LoadingSpinner';
+import ClientLegalWidget from '../components/ClientLegalWidget';
 
 const EMPTY_ITEM = { title: '', description: '', quantity: 1, unit_price: 0, tax_rate: 19 };
 const VAT_RATES  = [0, 7, 19];
@@ -139,6 +140,7 @@ export default function EditQuote() {
                 <option key={c.id} value={c.id}>{c.company_name}</option>
               ))}
             </select>
+            <ClientLegalWidget clientId={clientId} />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
