@@ -492,7 +492,7 @@ export default function ProjectDetail() {
 
       {/* ── WORKFLOW ──────────────────────────────────────────────────────── */}
       {activeTab === 'workflow' && (
-        <WorkflowPanel projectId={id} />
+        <WorkflowPanel projectId={id} projectName={project?.name} />
       )}
 
       {/* ── OVERVIEW ──────────────────────────────────────────────────────── */}

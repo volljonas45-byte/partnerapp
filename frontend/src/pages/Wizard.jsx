@@ -7,7 +7,7 @@ import {
 import toast from 'react-hot-toast';
 import { clientsApi } from '../api/clients';
 import { projectsApi } from '../api/projects';
-import { onboardingApi } from '../api/onboarding';
+import { workflowApi } from '../api/workflow';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -358,33 +358,22 @@ export default function Wizard() {
         budget:       data.project_value ? parseFloat(data.project_value) : null,
       });
 
-      // 3. Generate & create tasks
-      const taskTitles = generateTasks(data);
-      for (const title of taskTitles) {
-        await projectsApi.createTask(project.id, { title });
+      // 3. Set build_type decision in workflow
+      const buildTypeMap = {
+        website_code: 'gecodet',
+        webflow:      'gecodet',
+        website_wix:  'wix',
+        funnel:       'gecodet',
+      };
+      const workflowBuildType = buildTypeMap[data.project_type] || null;
+      if (workflowBuildType) {
+        try {
+          await workflowApi.update(project.id, { decisions: { build_type: workflowBuildType } });
+        } catch (_) { /* workflow auto-creates on first GET, skip error */ }
       }
-
-      // 4. Create onboarding flow
-      const obSteps = generateOnboardingSteps(data);
-      const template = await onboardingApi.createTemplate({
-        name:       `${data.company_name} – Onboarding`,
-        brand_name: data.company_name,
-      });
-      for (let i = 0; i < obSteps.length; i++) {
-        await onboardingApi.addStep(template.id, {
-          ...obSteps[i],
-          position: i,
-          config: '{}',
-        });
-      }
-      await onboardingApi.createFlow({
-        template_id: template.id,
-        client_id:   client.id,
-        project_id:  project.id,
-      });
 
       toast.success('Projekt erfolgreich erstellt!');
-      navigate(`/projects/${project.id}`);
+      navigate(`/websites/${project.id}`);
     } catch (err) {
       console.error(err);
       toast.error(err.response?.data?.error || 'Fehler beim Erstellen');
@@ -403,7 +392,7 @@ export default function Wizard() {
           <Sparkles size={18} className="text-gray-700" />
           <span className="text-sm font-semibold text-gray-900">Neues Projekt einrichten</span>
         </div>
-        <button onClick={() => navigate('/projects')} className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+        <button onClick={() => navigate('/websites')} className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
           <X size={16} />
         </button>
       </div>

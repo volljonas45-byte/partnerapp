@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Check, ChevronDown, ChevronRight, Zap } from 'lucide-react';
 import { PHASE_ORDER, PHASES, DECISIONS } from './workflowConfig';
 import DecisionModal from './DecisionModal';
+import IntakeFormSection from './IntakeFormSection';
 
 function TaskRow({ task, checked, onToggle, decisions, onDecision }) {
   const isVisible = !task.condition || task.condition(decisions);
@@ -93,6 +94,8 @@ export default function PhaseCard({
   onDecisionSave,
   onAdvance,
   isAdvancing,
+  projectId,
+  projectName,
 }) {
   const phase      = PHASES[phaseKey];
   const phaseIdx   = PHASE_ORDER.indexOf(phaseKey);
@@ -247,6 +250,11 @@ export default function PhaseCard({
                   />
                 ))}
               </div>
+            )}
+
+            {/* Intake-Briefing (nur Demo-Phase) */}
+            {phaseKey === 'demo' && projectId && (
+              <IntakeFormSection projectId={projectId} projectName={projectName} />
             )}
 
             {/* "Abgeschlossen" celebration */}

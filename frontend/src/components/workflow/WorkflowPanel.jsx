@@ -9,7 +9,7 @@ import PhaseCard from './PhaseCard';
 import QuickToolMenu from './QuickToolMenu';
 import ReminderCard from './ReminderCard';
 
-export default function WorkflowPanel({ projectId }) {
+export default function WorkflowPanel({ projectId, projectName }) {
   const qc = useQueryClient();
   const [showReminderForm, setShowReminderForm] = useState(false);
   const [reminderForm,     setReminderForm]     = useState({ title: '', due_date: '', note: '' });
@@ -187,6 +187,8 @@ export default function WorkflowPanel({ projectId }) {
             onDecisionSave={handleDecisionSave}
             onAdvance={() => advanceMutation.mutate()}
             isAdvancing={advanceMutation.isPending}
+            projectId={projectId}
+            projectName={projectName}
           />
         ))}
       </div>
