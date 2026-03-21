@@ -284,11 +284,15 @@ export default function NewQuote() {
                 />
               </div>
               <div className="col-span-2 pt-0.5">
-                <input
-                  type="text" inputMode="decimal" className="input" placeholder="0,00"
-                  value={item.unit_price === 0 ? '' : item.unit_price}
-                  onChange={e => updateItem(idx, 'unit_price', e.target.value)}
-                />
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type="text" inputMode="decimal" className="input" placeholder="0,00"
+                    style={{ paddingRight: '24px' }}
+                    value={item.unit_price === 0 ? '' : item.unit_price}
+                    onChange={e => updateItem(idx, 'unit_price', e.target.value)}
+                  />
+                  <span style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', fontSize: '12px', color: '#8E8E93', pointerEvents: 'none' }}>€</span>
+                </div>
               </div>
               <div className="col-span-2 pt-0.5">
                 <select
