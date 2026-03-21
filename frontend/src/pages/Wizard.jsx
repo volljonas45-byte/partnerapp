@@ -15,9 +15,31 @@ import { workflowApi } from '../api/workflow';
 // ── Constants ──────────────────────────────────────────────────────────────────
 
 const INDUSTRIES = [
-  'Handwerk', 'Coaching', 'E-Commerce', 'Gastronomie', 'Immobilien',
-  'Medizin / Gesundheit', 'Recht / Kanzlei', 'IT / Software',
-  'Marketing / Agentur', 'Bildung / Training', 'Beauty / Wellness',
+  'App-Entwicklung', 'Apotheke', 'Architekt', 'Arztpraxis / Medizin', 'Autohandel', 'Automobilindustrie',
+  'Bank / Finanzdienstleistung', 'Bar / Cocktailbar', 'Barber / Herrenfriseur', 'Baugewerbe', 'Beauty / Kosmetik', 'Beratung / Consulting', 'Buchhaltung / Steuerberatung',
+  'Café', 'Catering', 'Chemieindustrie', 'Cloud-Services', 'Coaching / Mentoring', 'Cybersecurity',
+  'Dachdecker', 'Data Science / KI', 'Dentist / Zahnarzt', 'Druck / Print',
+  'E-Commerce / Online-Shop', 'E-Learning / Online-Kurse', 'Einzelhandel', 'Elektriker', 'Energieversorgung', 'Ernährungsberatung', 'Event-Management',
+  'Facility Management', 'Fahrschule', 'Film & Video', 'Fintech', 'Fitnessstudio / Personal Training', 'Fliesenleger', 'Fotografie', 'Friseur / Salon',
+  'Gärtner / Gartenbau', 'Gastronomie', 'Gemeinnützige Organisation / NGO', 'Grafik-Design', 'Großhandel',
+  'Handwerk', 'Hebamme', 'Heizung & Sanitär', 'Hotel / Unterkunft', 'HR / Personalwesen',
+  'Illustration', 'Imbiss / Schnellrestaurant', 'Immobilien', 'Innenarchitektur', 'IT / Software', 'IT-Support / Managed Services',
+  'Journalismus / Redaktion',
+  'Kindergarten / Kita', 'Kirche / Religionsgemeinschaft', 'Krankenhaus / Klinik', 'Kreditvermittlung',
+  'Landwirtschaft', 'Lebensmittelhandel', 'Logistik / Transport', 'Luxusgüter',
+  'Maler & Lackierer', 'Marketing / Agentur', 'Maschinenbau', 'Massage / Körpertherapie', 'Medienproduktion', 'Metallverarbeitung', 'Mode & Bekleidung', 'Musik / Band', 'Musikschule',
+  'Nachhilfe / Tutoring', 'Nagel-Studio',
+  'Online-Shop', 'Optiker',
+  'Pharmaindustrie', 'Physiotherapie', 'Podcast', 'Psychologie / Therapie',
+  'Recht / Kanzlei', 'Reinigungsservice', 'Reisebüro / Tourismus', 'Restaurant',
+  'SaaS / Software', 'Schreiner / Tischler', 'Schule / Akademie', 'Sicherheitsdienst', 'Social Media Management', 'Soziale Einrichtung', 'Spa & Wellness', 'Sportartikel', 'Sprachschule', 'Steuerberatung / Wirtschaftsprüfung', 'Stiftung',
+  'Tattoo & Piercing', 'Technik & Elektronik', 'Textilproduktion', 'Tiermedizin / Tierarzt', 'Tierschutz', 'Trainer / Dozent',
+  'Umzugsunternehmen', 'Unternehmensberatung', 'Übersetzung / Dolmetscher',
+  'Verein / Club', 'Versicherungsagentur', 'Vermögensverwaltung',
+  'Webdesign / Webentwicklung', 'Weinhandel / Winzer', 'Wohlfahrtsverband',
+  'Yoga / Meditation',
+  'Zimmerer',
+  'Sonstiges',
 ];
 
 const PROJECT_TYPES = [
@@ -153,6 +175,126 @@ function SelectInput({ value, onChange, children }) {
     >
       {children}
     </select>
+  );
+}
+
+function BrancheSelect({ value, onChange }) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const searchRef = useState(null);
+  const inputRef = { current: null };
+
+  const filtered = search.length === 0
+    ? INDUSTRIES
+    : INDUSTRIES.filter(i => i.toLowerCase().includes(search.toLowerCase()));
+
+  function select(val) {
+    onChange(val);
+    setOpen(false);
+    setSearch('');
+  }
+
+  function handleKeyDown(e) {
+    if (!open) {
+      // Single letter press opens and filters
+      if (e.key.length === 1 && /[a-zA-ZäöüÄÖÜß]/.test(e.key)) {
+        setSearch(e.key);
+        setOpen(true);
+      }
+    }
+  }
+
+  return (
+    <div style={{ position: 'relative' }} onKeyDown={handleKeyDown}>
+      {/* Trigger */}
+      <button
+        type="button"
+        onClick={() => { setOpen(o => !o); setSearch(''); }}
+        style={{
+          width: '100%', boxSizing: 'border-box',
+          padding: '9px 12px',
+          border: `1.5px solid ${open ? '#0071E3' : '#E5E5EA'}`,
+          borderRadius: '10px', fontSize: '14px',
+          background: '#fff', cursor: 'pointer', textAlign: 'left',
+          color: value ? '#1D1D1F' : '#8E8E93',
+          fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          transition: 'border-color 0.15s',
+        }}
+      >
+        <span>{value || 'Branche wählen'}</span>
+        <span style={{ fontSize: '10px', color: '#8E8E93', marginLeft: '6px' }}>{open ? '▲' : '▼'}</span>
+      </button>
+
+      {/* Dropdown */}
+      {open && (
+        <>
+          <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => { setOpen(false); setSearch(''); }} />
+          <div style={{
+            position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0,
+            background: '#fff', borderRadius: '12px', zIndex: 50,
+            border: '1.5px solid #E5E5EA',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+            overflow: 'hidden',
+          }}>
+            {/* Search box */}
+            <div style={{ padding: '8px 8px 4px' }}>
+              <input
+                autoFocus
+                type="text"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Suchen oder Buchstabe tippen…"
+                style={{
+                  width: '100%', boxSizing: 'border-box',
+                  padding: '7px 10px', border: '1.5px solid #E5E5EA',
+                  borderRadius: '8px', fontSize: '13px', outline: 'none',
+                  background: '#F5F5F7', fontFamily: 'inherit', color: '#1D1D1F',
+                }}
+                onFocus={e => e.target.style.borderColor = '#0071E3'}
+                onBlur={e => e.target.style.borderColor = '#E5E5EA'}
+              />
+            </div>
+
+            {/* Letter hint */}
+            {search.length === 0 && (
+              <div style={{ padding: '2px 12px 6px', fontSize: '11px', color: '#8E8E93' }}>
+                Buchstabe tippen zum Filtern
+              </div>
+            )}
+
+            {/* List */}
+            <div style={{ maxHeight: '240px', overflowY: 'auto' }}>
+              {filtered.length === 0 ? (
+                <div style={{ padding: '16px 12px', fontSize: '13px', color: '#8E8E93', textAlign: 'center' }}>
+                  Keine Branche gefunden
+                </div>
+              ) : (
+                filtered.map(industry => (
+                  <button
+                    key={industry}
+                    type="button"
+                    onClick={() => select(industry)}
+                    style={{
+                      display: 'block', width: '100%', textAlign: 'left',
+                      padding: '8px 12px', fontSize: '13px', border: 'none',
+                      background: industry === value ? 'rgba(0,113,227,0.07)' : 'transparent',
+                      color: industry === value ? '#0071E3' : '#1D1D1F',
+                      fontWeight: industry === value ? 600 : 400,
+                      cursor: 'pointer', fontFamily: 'inherit',
+                      transition: 'background 0.1s',
+                    }}
+                    onMouseEnter={e => { if (industry !== value) e.currentTarget.style.background = '#F5F5F7'; }}
+                    onMouseLeave={e => { if (industry !== value) e.currentTarget.style.background = 'transparent'; }}
+                  >
+                    {industry}
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
   );
 }
 
@@ -766,11 +908,7 @@ export default function Wizard() {
                     <TextInput value={data.contact_person} onChange={set('contact_person')} placeholder="Max Mustermann" />
                   </Field>
                   <Field label="Branche">
-                    <SelectInput value={data.industry} onChange={set('industry')}>
-                      <option value="">Branche wählen</option>
-                      {INDUSTRIES.map(i => <option key={i} value={i}>{i}</option>)}
-                      <option value="Sonstiges">Sonstiges</option>
-                    </SelectInput>
+                    <BrancheSelect value={data.industry} onChange={set('industry')} />
                   </Field>
                 </div>
                 <Field label="Adresse (optional)">
