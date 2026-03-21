@@ -7,6 +7,7 @@ import LoadingSpinner from './components/LoadingSpinner';
 import Login         from './pages/Login';
 import Dashboard     from './pages/Dashboard';
 import Clients       from './pages/Clients';
+import NewClient     from './pages/NewClient';
 import ClientDetail  from './pages/ClientDetail';
 import Invoices      from './pages/Invoices';
 import NewInvoice    from './pages/NewInvoice';
@@ -56,8 +57,9 @@ function AppRoutes() {
       {/* Geschützt */}
       <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
 
-      <Route path="/clients"     element={<ProtectedRoute><Clients /></ProtectedRoute>} />
-      <Route path="/clients/:id" element={<ProtectedRoute><ClientDetail /></ProtectedRoute>} />
+      <Route path="/clients"         element={<ProtectedRoute><Clients /></ProtectedRoute>} />
+      <Route path="/clients/new"     element={<ProtectedRoute><NewClient /></ProtectedRoute>} />
+      <Route path="/clients/:id"     element={<ProtectedRoute><ClientDetail /></ProtectedRoute>} />
 
       <Route path="/invoices"     element={<ProtectedRoute><Invoices /></ProtectedRoute>} />
       <Route path="/invoices/new" element={<ProtectedRoute><NewInvoice /></ProtectedRoute>} />

@@ -158,7 +158,7 @@ export default function Clients() {
           <h1 className="page-title">Kunden</h1>
           <p className="page-subtitle">{clients.length} {clients.length === 1 ? 'Kunde' : 'Kunden'}</p>
         </div>
-        <button onClick={openAdd} className="btn-primary">
+        <button onClick={() => navigate('/clients/new')} className="btn-primary">
           <Plus size={15} /> Kunden anlegen
         </button>
       </div>
@@ -187,7 +187,7 @@ export default function Clients() {
             {search ? `Keine Treffer für „${search}"` : 'Legen Sie jetzt Ihren ersten Kunden an.'}
           </p>
           {!search && (
-            <button onClick={openAdd} className="btn-primary mx-auto">
+            <button onClick={() => navigate('/clients/new')} className="btn-primary mx-auto">
               <Plus size={15} /> Kunden anlegen
             </button>
           )}
