@@ -446,7 +446,7 @@ export default function ProjectDetail() {
   );
 
   return (
-    <div className="p-8 max-w-4xl">
+    <div className="p-8 max-w-5xl mx-auto">
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div className="flex items-center gap-3">
@@ -466,10 +466,23 @@ export default function ProjectDetail() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <HeaderStatusDropdown
-            status={project.status}
-            onSelect={val => updateMutation.mutate({ status: val })}
-          />
+          {(() => {
+            const phase = workflow?.current_phase;
+            const cfg = phase ? PHASES[phase] : null;
+            const isLast = phase === PHASE_ORDER[PHASE_ORDER.length - 1];
+            return (
+              <span style={{
+                padding: '3px 10px',
+                borderRadius: '99px',
+                fontSize: '12px',
+                fontWeight: 600,
+                background: isLast ? 'rgba(52,199,89,0.12)' : 'rgba(0,113,227,0.10)',
+                color: isLast ? '#34C759' : '#0071E3',
+              }}>
+                {cfg?.label || 'Start'}
+              </span>
+            );
+          })()}
           <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ring-1 ${healthCfg.cls}`}>
             <span className={`w-1.5 h-1.5 rounded-full ${healthCfg.dot}`} />
             {healthCfg.label}
