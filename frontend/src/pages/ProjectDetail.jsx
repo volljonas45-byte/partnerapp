@@ -8,10 +8,12 @@ import {
   CreditCard, Lock, Link as LinkIcon, MessageSquare,
   Activity, User, AlertTriangle, CheckCircle2, Clock,
   ChevronRight, Send, ChevronDown, GitBranch,
+  Mail, Phone, MapPin,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { projectsApi } from '../api/projects';
 import { clientsApi } from '../api/clients';
+import { legalApi } from '../api/legal';
 import { workflowApi } from '../api/workflow';
 import { PHASE_ORDER, PHASES } from '../components/workflow/workflowConfig';
 import { formatCurrency, formatDate, isPast } from '../utils/formatters';
@@ -243,6 +245,13 @@ export default function ProjectDetail() {
     queryKey: ['clients'],
     queryFn: () => clientsApi.list().then(r => r.data),
     enabled: editSection === 'overview',
+  });
+
+  const clientDbId = project?.client_id;
+  const { data: clientLegal } = useQuery({
+    queryKey: ['legal', clientDbId],
+    queryFn: () => legalApi.get(clientDbId),
+    enabled: !!clientDbId,
   });
 
   const { data: invoices = [] } = useQuery({
@@ -640,6 +649,93 @@ export default function ProjectDetail() {
               </dl>
             )}
           </div>
+
+          {/* Client info card */}
+          {project.client_id && (
+            <div className="card" style={{ background: '#F9FAFB' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '26px', height: '26px', borderRadius: '8px', background: 'rgba(0,113,227,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Building2 size={13} color="#0071E3" />
+                  </div>
+                  <span style={{ fontSize: '13px', fontWeight: '600', color: '#1D1D1F', letterSpacing: '-0.01em' }}>
+                    {project.client_name}
+                  </span>
+                </div>
+                <button
+                  onClick={() => navigate(`/clients/${project.client_id}`)}
+                  style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#0071E3', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 8px', borderRadius: '6px' }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,113,227,0.07)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                >
+                  Kundenprofil <ChevronRight size={11} />
+                </button>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+                {/* Kontakt */}
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                  <User size={13} color="#86868B" style={{ marginTop: '1px', flexShrink: 0 }} />
+                  <div>
+                    <span style={{ fontSize: '10px', color: '#86868B', display: 'block', marginBottom: '2px' }}>ANSPRECHPARTNER</span>
+                    <span style={{ fontSize: '13px', color: '#1D1D1F', fontWeight: '500' }}>{project.contact_person || '–'}</span>
+                  </div>
+                </div>
+                {/* E-Mail */}
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                  <Mail size={13} color="#86868B" style={{ marginTop: '1px', flexShrink: 0 }} />
+                  <div style={{ minWidth: 0 }}>
+                    <span style={{ fontSize: '10px', color: '#86868B', display: 'block', marginBottom: '2px' }}>E-MAIL</span>
+                    {project.client_email
+                      ? <a href={`mailto:${project.client_email}`} style={{ fontSize: '13px', color: '#0071E3', fontWeight: '500', textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>{project.client_email}</a>
+                      : <span style={{ fontSize: '13px', color: '#C7C7CC' }}>–</span>}
+                  </div>
+                </div>
+                {/* Telefon */}
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                  <Phone size={13} color="#86868B" style={{ marginTop: '1px', flexShrink: 0 }} />
+                  <div>
+                    <span style={{ fontSize: '10px', color: '#86868B', display: 'block', marginBottom: '2px' }}>TELEFON</span>
+                    {project.client_phone
+                      ? <a href={`tel:${project.client_phone}`} style={{ fontSize: '13px', color: '#1D1D1F', fontWeight: '500', textDecoration: 'none' }}>{project.client_phone}</a>
+                      : <span style={{ fontSize: '13px', color: '#C7C7CC' }}>–</span>}
+                  </div>
+                </div>
+                {/* Adresse */}
+                {(project.client_city || project.client_address) && (
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                    <MapPin size={13} color="#86868B" style={{ marginTop: '1px', flexShrink: 0 }} />
+                    <div>
+                      <span style={{ fontSize: '10px', color: '#86868B', display: 'block', marginBottom: '2px' }}>ADRESSE</span>
+                      <span style={{ fontSize: '13px', color: '#1D1D1F', fontWeight: '500', lineHeight: 1.4 }}>
+                        {[project.client_address, [project.client_postal_code, project.client_city].filter(Boolean).join(' ')].filter(Boolean).join(', ')}
+                      </span>
+                    </div>
+                  </div>
+                )}
+                {/* USt-IdNr */}
+                {clientLegal?.vat_id && (
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                    <Shield size={13} color="#86868B" style={{ marginTop: '1px', flexShrink: 0 }} />
+                    <div>
+                      <span style={{ fontSize: '10px', color: '#86868B', display: 'block', marginBottom: '2px' }}>UST-IDNR</span>
+                      <span style={{ fontSize: '13px', color: '#1D1D1F', fontWeight: '500' }}>{clientLegal.vat_id}</span>
+                    </div>
+                  </div>
+                )}
+                {/* DSGVO */}
+                {clientLegal?.dsgvo_provider && (
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                    <Shield size={13} color="#86868B" style={{ marginTop: '1px', flexShrink: 0 }} />
+                    <div>
+                      <span style={{ fontSize: '10px', color: '#86868B', display: 'block', marginBottom: '2px' }}>DSGVO</span>
+                      <span style={{ fontSize: '13px', color: '#1D1D1F', fontWeight: '500' }}>{clientLegal.dsgvo_provider}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Quick stats */}
           <div className="grid grid-cols-4 gap-3">

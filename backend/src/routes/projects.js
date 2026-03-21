@@ -98,7 +98,10 @@ router.get('/:id', async (req, res) => {
   try {
     const project = await getOne(`
       SELECT p.*, c.company_name as client_name, c.contact_person,
-             c.email as client_email, c.phone as client_phone
+             c.email as client_email, c.phone as client_phone,
+             c.address as client_address, c.postal_code as client_postal_code,
+             c.city as client_city, c.country as client_country,
+             c.id as client_db_id
       FROM projects p
       LEFT JOIN clients c ON c.id = p.client_id
       WHERE p.id = ? AND p.user_id = ?
