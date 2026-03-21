@@ -116,6 +116,14 @@ router.post('/', async (req, res) => {
     ]);
 
     const client = await getOne('SELECT * FROM clients WHERE id = ?', [result.lastInsertRowid]);
+
+    // Auto-seed legal setup with company name + address
+    await run(`
+      INSERT INTO client_legal (client_id, company_name, address, vat_id, dsgvo_provider, updated_at)
+      VALUES (?, ?, ?, '', '', NOW())
+      ON CONFLICT (client_id) DO NOTHING
+    `, [client.id, company_name, address || '']);
+
     res.status(201).json(client);
   } catch (err) {
     console.error('[clients POST /]', err);
@@ -169,6 +177,16 @@ router.put('/:id', async (req, res) => {
       req.params.id,
       req.userId,
     ]);
+
+    // Sync legal setup: pre-fill company_name/address if legal record is still empty
+    await run(`
+      INSERT INTO client_legal (client_id, company_name, address, vat_id, dsgvo_provider, updated_at)
+      VALUES (?, ?, ?, '', '', NOW())
+      ON CONFLICT (client_id) DO UPDATE SET
+        company_name = CASE WHEN client_legal.company_name = '' THEN EXCLUDED.company_name ELSE client_legal.company_name END,
+        address      = CASE WHEN client_legal.address = ''      THEN EXCLUDED.address      ELSE client_legal.address      END,
+        updated_at   = NOW()
+    `, [req.params.id, company_name, address || '']);
 
     const updated = await getOne('SELECT * FROM clients WHERE id = ?', [req.params.id]);
     res.json(updated);
