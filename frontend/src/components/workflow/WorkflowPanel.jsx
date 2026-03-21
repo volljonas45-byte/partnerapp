@@ -96,8 +96,10 @@ export default function WorkflowPanel({ projectId, projectName }) {
   }
 
   function handleDecisionSave(decisionKey, value, dueDate) {
-    // Save decision
-    updateMutation.mutate({ decisions: { [decisionKey]: value } });
+    // Save decision (+ optional date for "postponed")
+    const decisionsToSave = { [decisionKey]: value };
+    if (dueDate) decisionsToSave[`${decisionKey}_date`] = dueDate;
+    updateMutation.mutate({ decisions: decisionsToSave });
 
     // Mark the task as done too
     const phaseMap = {

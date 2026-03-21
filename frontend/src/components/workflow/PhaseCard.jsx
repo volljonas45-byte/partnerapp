@@ -252,6 +252,60 @@ export default function PhaseCard({
               </div>
             )}
 
+            {/* Inline Outcome-Auswahl für Entscheidungs-Phase */}
+            {phaseKey === 'entscheidung' && (
+              <div style={{
+                marginTop: '14px',
+                padding: '16px',
+                borderRadius: '14px',
+                background: '#F9F9FB',
+                border: '1.5px solid #E5E5EA',
+              }}>
+                <p style={{ fontSize: '12px', fontWeight: 600, color: '#6E6E73', margin: '0 0 12px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Ergebnis
+                </p>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  {[
+                    { value: 'won',       label: 'Gewonnen',   color: '#34C759', bg: 'rgba(52,199,89,0.10)'  },
+                    { value: 'lost',      label: 'Verloren',   color: '#FF3B30', bg: 'rgba(255,59,48,0.10)'  },
+                    { value: 'postponed', label: 'Verschoben', color: '#FF9500', bg: 'rgba(255,149,0,0.10)'  },
+                  ].map(opt => {
+                    const isSelected = decisions.outcome === opt.value;
+                    return (
+                      <button
+                        key={opt.value}
+                        onClick={() => setDecisionModal('outcome')}
+                        style={{
+                          flex: 1, minWidth: '100px',
+                          padding: '12px 10px',
+                          borderRadius: '12px',
+                          border: `2px solid ${isSelected ? opt.color : '#E5E5EA'}`,
+                          background: isSelected ? opt.bg : '#fff',
+                          color: isSelected ? opt.color : '#3C3C43',
+                          fontSize: '13px', fontWeight: isSelected ? 700 : 500,
+                          cursor: 'pointer', textAlign: 'center',
+                          transition: 'all 0.15s',
+                          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
+                        }}
+                        onMouseEnter={e => { if (!isSelected) e.currentTarget.style.borderColor = opt.color; }}
+                        onMouseLeave={e => { if (!isSelected) e.currentTarget.style.borderColor = '#E5E5EA'; }}
+                      >
+                        <span style={{ fontSize: '18px' }}>
+                          {opt.value === 'won' ? '✓' : opt.value === 'lost' ? '✗' : '↷'}
+                        </span>
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                {decisions.outcome === 'postponed' && decisions.outcome_date && (
+                  <p style={{ fontSize: '12px', color: '#FF9500', marginTop: '10px', marginBottom: 0 }}>
+                    Follow-up: {new Date(decisions.outcome_date).toLocaleDateString('de-DE')}
+                  </p>
+                )}
+              </div>
+            )}
+
             {/* Demo-Link (nur Demo-Phase, wenn Demo gebaut) */}
             {phaseKey === 'demo' && phaseTasks['demo_built'] && (
               <div style={{
