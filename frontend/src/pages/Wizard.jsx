@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  User, Mail, Phone, Globe, Check, Sparkles, X,
-  ChevronRight, ChevronLeft, Plus, Building2,
+  User, Globe, Check, Sparkles, X, Plus,
+  Building2, Target, ShoppingBag, Calendar,
+  Newspaper, Users, Camera, Star, Image, Info,
+  Mail, Settings2, Cloud, Link,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { clientsApi } from '../api/clients';
@@ -18,20 +20,22 @@ const INDUSTRIES = [
 ];
 
 const PROJECT_TYPES = [
-  { value: 'website_code', label: 'Website (Code)',    desc: 'React, Next.js, HTML/CSS',      emoji: '💻' },
-  { value: 'website_wix',  label: 'Website (Wix)',     desc: 'Wix Editor / Wix Studio',       emoji: '🌐' },
-  { value: 'webflow',      label: 'Website (Webflow)', desc: 'Webflow Designer',               emoji: '🎨' },
-  { value: 'funnel',       label: 'Sales Funnel',      desc: 'Landing Page + Conversion',     emoji: '🎯' },
-  { value: 'shop',         label: 'Online-Shop',       desc: 'E-Commerce & Produktseiten',    emoji: '🛒' },
+  { value: 'unternehmenswebsite', label: 'Unternehmenswebsite', desc: 'Professionelle Online-Präsenz',  icon: Building2 },
+  { value: 'portfolio',           label: 'Portfolio',           desc: 'Arbeiten & Projekte präsentieren', icon: Camera },
+  { value: 'funnel',              label: 'Sales Funnel',        desc: 'Landing Page & Conversion',       icon: Target },
+  { value: 'shop',                label: 'Online-Shop',         desc: 'E-Commerce & Produktseiten',      icon: ShoppingBag },
+  { value: 'buchung',             label: 'Buchungswebsite',     desc: 'Termine & Reservierungen',        icon: Calendar },
+  { value: 'blog',                label: 'Blog / Magazine',     desc: 'Content, Artikel & News',         icon: Newspaper },
+  { value: 'community',           label: 'Community / Verein',  desc: 'Mitglieder & Gruppen',            icon: Users },
 ];
 
 const GOALS = [
-  { value: 'leads',       label: 'Leads generieren',   emoji: '📬' },
-  { value: 'bookings',    label: 'Buchungen erhalten',  emoji: '📅' },
-  { value: 'sales',       label: 'Produkte verkaufen',  emoji: '💰' },
-  { value: 'branding',    label: 'Marke aufbauen',      emoji: '⭐' },
-  { value: 'portfolio',   label: 'Portfolio zeigen',    emoji: '🖼️' },
-  { value: 'information', label: 'Informieren',         emoji: '📖' },
+  { value: 'leads',       label: 'Leads generieren',  icon: Mail },
+  { value: 'bookings',    label: 'Buchungen erhalten', icon: Calendar },
+  { value: 'sales',       label: 'Produkte verkaufen', icon: ShoppingBag },
+  { value: 'branding',    label: 'Marke aufbauen',     icon: Star },
+  { value: 'portfolio',   label: 'Portfolio zeigen',   icon: Image },
+  { value: 'information', label: 'Informieren',        icon: Info },
 ];
 
 const BUILD_TYPES = [
@@ -41,11 +45,10 @@ const BUILD_TYPES = [
 ];
 
 const HOSTING_OPTIONS = [
-  { value: 'vercel',    label: 'Vercel',       desc: 'Empfohlen für Code' },
-  { value: 'netlify',   label: 'Netlify',      desc: 'JAMstack / Static' },
-  { value: 'hostinger', label: 'Hostinger',    desc: 'Günstig & zuverlässig' },
-  { value: 'wix',       label: 'Wix (intern)', desc: 'Wix eigenes Hosting' },
-  { value: 'client',    label: 'Beim Kunden',  desc: 'Kundeneigenes Hosting' },
+  { value: 'vercel',    label: 'Vercel',    desc: 'Empfohlen für Code',   icon: Cloud },
+  { value: 'netlify',   label: 'Netlify',   desc: 'JAMstack / Static',    icon: Cloud },
+  { value: 'hostinger', label: 'Hostinger', desc: 'Günstig & zuverlässig', icon: Cloud },
+  { value: 'wix',       label: 'Wix',       desc: 'Wix eigenes Hosting',  icon: Globe },
 ];
 
 const STEPS = [
@@ -55,18 +58,18 @@ const STEPS = [
 ];
 
 const COMMON_PAGES = [
-  { value: 'startseite',  label: 'Startseite',     emoji: '🏠' },
-  { value: 'ueber_uns',   label: 'Über uns',        emoji: '👥' },
-  { value: 'leistungen',  label: 'Leistungen',      emoji: '⚙️' },
-  { value: 'portfolio',   label: 'Portfolio',        emoji: '🖼️' },
-  { value: 'referenzen',  label: 'Referenzen',       emoji: '⭐' },
-  { value: 'blog',        label: 'Blog',             emoji: '📝' },
-  { value: 'shop',        label: 'Shop',             emoji: '🛒' },
-  { value: 'kontakt',     label: 'Kontakt',          emoji: '📬' },
-  { value: 'impressum',   label: 'Impressum',        emoji: '⚖️' },
-  { value: 'datenschutz', label: 'Datenschutz',      emoji: '🔒' },
-  { value: 'faq',         label: 'FAQ',              emoji: '❓' },
-  { value: 'karriere',    label: 'Karriere',         emoji: '💼' },
+  { value: 'startseite',  label: 'Startseite'  },
+  { value: 'ueber_uns',   label: 'Über uns'    },
+  { value: 'leistungen',  label: 'Leistungen'  },
+  { value: 'portfolio',   label: 'Portfolio'   },
+  { value: 'referenzen',  label: 'Referenzen'  },
+  { value: 'blog',        label: 'Blog'        },
+  { value: 'shop',        label: 'Shop'        },
+  { value: 'kontakt',     label: 'Kontakt'     },
+  { value: 'impressum',   label: 'Impressum'   },
+  { value: 'datenschutz', label: 'Datenschutz' },
+  { value: 'faq',         label: 'FAQ'         },
+  { value: 'karriere',    label: 'Karriere'    },
 ];
 
 const INITIAL = {
@@ -81,7 +84,7 @@ const INITIAL = {
   project_name: '', project_type: '', project_type_custom: '',
   goal: '', goal_custom: '',
   // Step 3 – Tech (all optional)
-  build_type: '', hosting: '', domain_new: null,
+  build_type: '', hosting: '', domain_new: null, domain_url: '',
   project_value: '', notes: '',
 };
 
@@ -176,7 +179,7 @@ function CardSelect({ options, value, onChange, showCustom, customValue, onCusto
               transition: 'all 0.15s',
             }}
           >
-            {opt.emoji && <span style={{ fontSize: '18px', flexShrink: 0 }}>{opt.emoji}</span>}
+            {opt.icon && (() => { const Icon = opt.icon; return <Icon size={16} color={isSelected ? '#0071E3' : '#8E8E93'} strokeWidth={1.8} style={{ flexShrink: 0 }} />; })()}
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: '14px', fontWeight: 600, color: isSelected ? '#0071E3' : '#1D1D1F' }}>
                 {opt.label}
@@ -273,7 +276,7 @@ function CardSelect({ options, value, onChange, showCustom, customValue, onCusto
               border: '2px solid #0071E3', background: 'rgba(0,113,227,0.05)',
             }}>
               <span style={{ fontSize: '14px', fontWeight: 600, color: '#0071E3', flex: 1 }}>
-                ✏️ {customValue}
+                {customValue}
               </span>
               <button
                 type="button"
@@ -315,7 +318,7 @@ function ChipGroup({ options, value, onChange, showCustom, customValue, onCustom
               transition: 'all 0.15s',
             }}
           >
-            <span>{opt.emoji}</span>
+            {opt.icon && (() => { const Icon = opt.icon; return <Icon size={13} strokeWidth={1.8} />; })()}
             {opt.label}
           </button>
         );
@@ -338,7 +341,7 @@ function ChipGroup({ options, value, onChange, showCustom, customValue, onCustom
                 cursor: 'pointer',
               }}
             >
-              ✏️ {customValue} <X size={12} />
+              {customValue} <X size={12} />
             </button>
           ) : !adding ? (
             <button
@@ -428,7 +431,7 @@ function MultiChipGroup({ options, value = [], onChange }) {
               cursor: 'pointer', transition: 'all 0.15s',
             }}
           >
-            <span>{opt.emoji}</span> {opt.label}
+            {opt.label}
           </button>
         );
       })}
@@ -445,7 +448,7 @@ function MultiChipGroup({ options, value = [], onChange }) {
               color: '#fff', fontSize: '13px', fontWeight: 500, cursor: 'pointer',
             }}
           >
-            ✏️ {label} <X size={12} />
+            {label} <X size={12} />
           </button>
         );
       })}
@@ -547,8 +550,9 @@ export default function Wizard() {
   const autoProjectName = () => {
     if (!data.company_name) return '';
     const typeMap = {
-      website_code: 'Website', website_wix: 'Website', webflow: 'Website',
-      funnel: 'Funnel', shop: 'Shop', custom: data.project_type_custom || 'Projekt',
+      unternehmenswebsite: 'Website', portfolio: 'Portfolio',
+      funnel: 'Funnel', shop: 'Shop', buchung: 'Buchungsseite',
+      blog: 'Blog', community: 'Website', custom: data.project_type_custom || 'Projekt',
     };
     return `${data.company_name} – ${typeMap[data.project_type] || 'Projekt'} ${new Date().getFullYear()}`;
   };
@@ -622,7 +626,7 @@ export default function Wizard() {
         } catch (_) {}
       }
 
-      toast.success(`🎉 ${projectName} wurde erstellt!`);
+      toast.success(`${projectName} wurde erstellt!`);
       navigate(`/websites/${project.id}`);
     } catch (err) {
       console.error(err);
@@ -746,7 +750,7 @@ export default function Wizard() {
                 </p>
               </div>
 
-              <SectionCard title="🏢 Unternehmen">
+              <SectionCard title="UNTERNEHMEN">
                 <Field label="Unternehmensname" required>
                   <TextInput
                     value={data.company_name}
@@ -771,7 +775,7 @@ export default function Wizard() {
                 </Field>
               </SectionCard>
 
-              <SectionCard title="📬 Kontakt">
+              <SectionCard title="KONTAKT">
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <Field label="E-Mail" required>
                     <TextInput value={data.email} onChange={set('email')} type="email" placeholder="kontakt@firma.de" />
@@ -782,7 +786,7 @@ export default function Wizard() {
                 </div>
               </SectionCard>
 
-              <SectionCard title="🌐 Bestehende Website">
+              <SectionCard title="BESTEHENDE WEBSITE">
                 <Field label="Hat der Kunde eine bestehende Website?">
                   <TogglePair
                     options={[{ value: 'ja', label: 'Ja' }, { value: 'nein', label: 'Nein' }]}
@@ -797,7 +801,7 @@ export default function Wizard() {
                 )}
               </SectionCard>
 
-              <SectionCard title="📄 Gewünschte Seiten">
+              <SectionCard title="GEWÜNSCHTE SEITEN">
                 <p style={{ fontSize: '12px', color: '#8E8E93', margin: '-4px 0 4px', lineHeight: 1.5 }}>
                   Welche Seiten soll die Website haben? (Mehrfachauswahl)
                 </p>
@@ -808,7 +812,7 @@ export default function Wizard() {
                 />
               </SectionCard>
 
-              <SectionCard title="💬 Erste Hinweise & Wünsche">
+              <SectionCard title="ERSTE HINWEISE & WÜNSCHE">
                 <Field label="Was hat der Kunde sonst noch erwähnt?">
                   <textarea
                     value={data.first_notes || ''}
@@ -844,7 +848,7 @@ export default function Wizard() {
                 </p>
               </div>
 
-              <SectionCard title="📋 Projektname">
+              <SectionCard title="PROJEKTNAME">
                 <Field label="Name des Projekts">
                   <TextInput
                     value={data.project_name || autoProjectName()}
@@ -854,7 +858,7 @@ export default function Wizard() {
                 </Field>
               </SectionCard>
 
-              <SectionCard title="🎯 Projekttyp">
+              <SectionCard title="PROJEKTTYP">
                 <CardSelect
                   options={PROJECT_TYPES}
                   value={data.project_type}
@@ -865,7 +869,7 @@ export default function Wizard() {
                 />
               </SectionCard>
 
-              <SectionCard title="💡 Hauptziel des Projekts">
+              <SectionCard title="HAUPTZIEL DES PROJEKTS">
                 <ChipGroup
                   options={GOALS}
                   value={data.goal}
@@ -890,7 +894,7 @@ export default function Wizard() {
                 </p>
               </div>
 
-              <SectionCard title="⚙️ Build-Methode">
+              <SectionCard title="BUILD-METHODE">
                 <CardSelect
                   options={BUILD_TYPES}
                   value={data.build_type}
@@ -901,7 +905,7 @@ export default function Wizard() {
                 />
               </SectionCard>
 
-              <SectionCard title="☁️ Hosting">
+              <SectionCard title="HOSTING">
                 <CardSelect
                   options={HOSTING_OPTIONS}
                   value={data.hosting}
@@ -912,7 +916,7 @@ export default function Wizard() {
                 />
               </SectionCard>
 
-              <SectionCard title="🌍 Domain">
+              <SectionCard title="DOMAIN">
                 <Field label="Domain-Situation">
                   <TogglePair
                     options={[
@@ -923,9 +927,18 @@ export default function Wizard() {
                     onChange={set('domain_new')}
                   />
                 </Field>
+                {data.domain_new === false && (
+                  <Field label="Domain-URL">
+                    <TextInput
+                      value={data.domain_url}
+                      onChange={set('domain_url')}
+                      placeholder="www.beispiel.de"
+                    />
+                  </Field>
+                )}
               </SectionCard>
 
-              <SectionCard title="💶 Budget & Notizen">
+              <SectionCard title="BUDGET & NOTIZEN">
                 <Field label="Projektwert (€) — optional">
                   <TextInput value={data.project_value} onChange={set('project_value')} type="number" placeholder="z.B. 3500" />
                 </Field>
@@ -960,7 +973,7 @@ export default function Wizard() {
                 border: '1px solid rgba(0,113,227,0.15)',
               }}>
                 <div style={{ fontSize: '12px', fontWeight: 600, color: '#0071E3', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  ✨ Wird erstellt
+                  Wird erstellt
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   {[
