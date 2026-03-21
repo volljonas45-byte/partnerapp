@@ -373,18 +373,19 @@ export default function NewInvoice() {
                 </select>
               </div>
               <div className="col-span-2 flex items-start gap-1 pt-1">
-                <button
-                  type="button"
-                  onClick={() => toggleCycle(idx)}
+                <select
+                  value={item.billing_cycle || 'once'}
+                  onChange={e => updateItem(idx, 'billing_cycle', e.target.value)}
                   style={{
-                    fontSize: '10px', fontWeight: 600, padding: '3px 7px', borderRadius: '99px',
-                    border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
-                    ...CYCLE_STYLE[item.billing_cycle || 'once'],
+                    fontSize: '11px', fontWeight: 600, padding: '3px 7px', borderRadius: '7px',
+                    border: '1px solid #E5E5EA', cursor: 'pointer', background: '#F9F9FB',
+                    color: '#1D1D1F', flex: 1, minWidth: 0,
                   }}
-                  title="Abrechnungszyklus wechseln"
                 >
-                  {CYCLE_LABEL[item.billing_cycle || 'once']}
-                </button>
+                  <option value="once">Einmalig</option>
+                  <option value="yearly">Jährlich</option>
+                  <option value="monthly">Monatlich</option>
+                </select>
                 {items.length > 1 && (
                   <button
                     type="button" onClick={() => removeItem(idx)}
