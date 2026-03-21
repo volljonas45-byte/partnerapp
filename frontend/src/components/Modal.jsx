@@ -20,7 +20,7 @@ export default function Modal({ open, onClose, title, children, maxWidth = 'max-
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/30 backdrop-blur-sm"
@@ -28,23 +28,24 @@ export default function Modal({ open, onClose, title, children, maxWidth = 'max-
       />
 
       {/* Dialog */}
-      <div className="relative min-h-full flex items-center justify-center p-4">
-        <div className={`relative w-full ${maxWidth} bg-white rounded-2xl shadow-xl flex flex-col max-h-[90vh]`}>
-          {/* Header */}
-          <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-gray-100 shrink-0">
-            <h3 className="text-base font-semibold text-gray-900">{title}</h3>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              <X size={18} />
-            </button>
-          </div>
+      <div
+        className={`relative w-full ${maxWidth} bg-white rounded-2xl shadow-xl flex flex-col overflow-hidden`}
+        style={{ maxHeight: 'calc(100vh - 2rem)' }}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-gray-100 shrink-0">
+          <h3 className="text-base font-semibold text-gray-900">{title}</h3>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <X size={18} />
+          </button>
+        </div>
 
-          {/* Body */}
-          <div className="px-6 py-4 overflow-y-auto">
-            {children}
-          </div>
+        {/* Body — scrollable */}
+        <div className="px-6 py-4 overflow-y-auto flex-1">
+          {children}
         </div>
       </div>
     </div>
