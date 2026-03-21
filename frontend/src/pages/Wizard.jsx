@@ -181,8 +181,6 @@ function SelectInput({ value, onChange, children }) {
 function BrancheSelect({ value, onChange }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
-  const searchRef = useState(null);
-  const inputRef = { current: null };
 
   const filtered = search.length === 0
     ? INDUSTRIES
