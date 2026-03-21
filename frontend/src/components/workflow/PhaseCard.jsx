@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Check, ChevronDown, ChevronRight, Zap } from 'lucide-react';
+import { Check, ChevronDown, ChevronRight, Zap, Link } from 'lucide-react';
 import { PHASE_ORDER, PHASES, DECISIONS } from './workflowConfig';
 import DecisionModal from './DecisionModal';
 import IntakeFormSection from './IntakeFormSection';
@@ -249,6 +249,71 @@ export default function PhaseCard({
                     onDecision={(dk) => setDecisionModal(dk)}
                   />
                 ))}
+              </div>
+            )}
+
+            {/* Demo-Link (nur Demo-Phase, wenn Demo gebaut) */}
+            {phaseKey === 'demo' && phaseTasks['demo_built'] && (
+              <div style={{
+                marginTop: '12px',
+                padding: '14px 16px',
+                borderRadius: '12px',
+                background: '#F5F9FF',
+                border: '1.5px solid #D0E4FF',
+              }}>
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: '7px',
+                  marginBottom: '8px',
+                }}>
+                  <Link size={14} color="#0071E3" />
+                  <span style={{ fontSize: '13px', fontWeight: 600, color: '#0071E3' }}>
+                    Demo-Link
+                  </span>
+                </div>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <input
+                    type="url"
+                    placeholder="https://demo.wixsite.com/…"
+                    defaultValue={decisions.demo_url || ''}
+                    onBlur={e => {
+                      const val = e.target.value.trim();
+                      if (val !== (decisions.demo_url || '')) {
+                        onDecisionSave('demo_url', val);
+                      }
+                    }}
+                    style={{
+                      flex: 1,
+                      padding: '8px 12px',
+                      borderRadius: '9px',
+                      border: '1.5px solid #C8DEFF',
+                      fontSize: '13px',
+                      fontFamily: 'inherit',
+                      outline: 'none',
+                      background: '#fff',
+                      color: '#1D1D1F',
+                    }}
+                  />
+                  {decisions.demo_url && (
+                    <a
+                      href={decisions.demo_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        padding: '8px 13px',
+                        borderRadius: '9px',
+                        background: '#0071E3',
+                        color: '#fff',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        textDecoration: 'none',
+                        flexShrink: 0,
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      Öffnen ↗
+                    </a>
+                  )}
+                </div>
               </div>
             )}
 

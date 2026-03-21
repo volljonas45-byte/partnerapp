@@ -278,7 +278,8 @@ export default function IntakePublic() {
 
   // ── Success ──────────────────────────────────────────────────────────────────
 
-  const companyName = form.client_company_name || '';
+  const agencyName = form.agency_name || 'Vecturo';
+  const agencyLogo = form.agency_logo || null;
 
   if (submitted) {
     return (
@@ -326,18 +327,26 @@ export default function IntakePublic() {
         padding: '18px 24px',
       }}>
         <div style={{ maxWidth: '680px', margin: '0 auto', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{
-            width: '30px', height: '30px',
-            background: 'linear-gradient(145deg, #0A84FF, #0071E3)',
-            borderRadius: '8px',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 2px 8px rgba(0,113,227,0.35)',
-            flexShrink: 0,
-          }}>
-            <Zap size={14} color="#fff" strokeWidth={2.5} />
-          </div>
+          {agencyLogo ? (
+            <img
+              src={agencyLogo}
+              alt={agencyName}
+              style={{ height: '32px', maxWidth: '120px', objectFit: 'contain', flexShrink: 0 }}
+            />
+          ) : (
+            <div style={{
+              width: '30px', height: '30px',
+              background: 'linear-gradient(145deg, #0A84FF, #0071E3)',
+              borderRadius: '8px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 2px 8px rgba(0,113,227,0.35)',
+              flexShrink: 0,
+            }}>
+              <Zap size={14} color="#fff" strokeWidth={2.5} />
+            </div>
+          )}
           <span style={{ fontSize: '15px', fontWeight: 700, color: '#1D1D1F', letterSpacing: '-0.02em' }}>
-            Vecturo
+            {agencyName}
           </span>
         </div>
       </div>
