@@ -1,15 +1,7 @@
 import { X } from 'lucide-react';
 import { useEffect } from 'react';
 
-/**
- * Generic modal dialog with overlay.
- * @param {boolean} open - Whether the modal is visible
- * @param {() => void} onClose - Close handler
- * @param {string} title - Modal title
- * @param {ReactNode} children
- */
 export default function Modal({ open, onClose, title, children, maxWidth = 'max-w-lg' }) {
-  // Close on Escape key
   useEffect(() => {
     if (!open) return;
     const handler = e => { if (e.key === 'Escape') onClose(); };
@@ -20,32 +12,25 @@ export default function Modal({ open, onClose, title, children, maxWidth = 'max-
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/30 backdrop-blur-sm"
-        onClick={onClose}
-      />
+      <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} />
 
-      {/* Dialog */}
-      <div
-        className={`relative w-full ${maxWidth} bg-white rounded-2xl shadow-xl flex flex-col overflow-hidden`}
-        style={{ maxHeight: 'calc(100vh - 2rem)' }}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-gray-100 shrink-0">
-          <h3 className="text-base font-semibold text-gray-900">{title}</h3>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            <X size={18} />
-          </button>
-        </div>
+      {/* Centering wrapper — scrolls when content is taller than viewport */}
+      <div className="relative flex min-h-full items-center justify-center p-6">
+        <div className={`relative w-full ${maxWidth} bg-white rounded-2xl shadow-xl my-4`}>
+          {/* Header */}
+          <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-gray-100">
+            <h3 className="text-base font-semibold text-gray-900">{title}</h3>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+              <X size={18} />
+            </button>
+          </div>
 
-        {/* Body — scrollable */}
-        <div className="px-6 py-4 overflow-y-auto flex-1">
-          {children}
+          {/* Body */}
+          <div className="px-6 py-4">
+            {children}
+          </div>
         </div>
       </div>
     </div>
