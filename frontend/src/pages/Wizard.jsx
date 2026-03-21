@@ -54,10 +54,29 @@ const STEPS = [
   { key: 'tech',    label: 'Technik', icon: Globe },
 ];
 
+const COMMON_PAGES = [
+  { value: 'startseite',  label: 'Startseite',     emoji: '🏠' },
+  { value: 'ueber_uns',   label: 'Über uns',        emoji: '👥' },
+  { value: 'leistungen',  label: 'Leistungen',      emoji: '⚙️' },
+  { value: 'portfolio',   label: 'Portfolio',        emoji: '🖼️' },
+  { value: 'referenzen',  label: 'Referenzen',       emoji: '⭐' },
+  { value: 'blog',        label: 'Blog',             emoji: '📝' },
+  { value: 'shop',        label: 'Shop',             emoji: '🛒' },
+  { value: 'kontakt',     label: 'Kontakt',          emoji: '📬' },
+  { value: 'impressum',   label: 'Impressum',        emoji: '⚖️' },
+  { value: 'datenschutz', label: 'Datenschutz',      emoji: '🔒' },
+  { value: 'faq',         label: 'FAQ',              emoji: '❓' },
+  { value: 'karriere',    label: 'Karriere',         emoji: '💼' },
+];
+
 const INITIAL = {
   // Step 1 – Client (required: company_name, email)
   company_name: '', contact_person: '', email: '', phone: '',
   address: '', industry: '', has_website: null, website_url: '',
+  // Step 1 – erste Projektinfos
+  pages: [],           // Array der gewählten Seiten-Keys (MultiChip)
+  pages_custom: '',    // freie Seiten-Eingabe
+  first_notes: '',     // erste Hinweise / Wünsche
   // Step 2 – Project
   project_name: '', project_type: '', project_type_custom: '',
   goal: '', goal_custom: '',
@@ -369,6 +388,101 @@ function ChipGroup({ options, value, onChange, showCustom, customValue, onCustom
   );
 }
 
+// Multi-Auswahl Chips (mehrere gleichzeitig wählbar)
+function MultiChipGroup({ options, value = [], onChange }) {
+  const [adding, setAdding] = useState(false);
+  const [custom, setCustom] = useState('');
+
+  function toggle(v) {
+    onChange(value.includes(v) ? value.filter(x => x !== v) : [...value, v]);
+  }
+
+  function addCustom() {
+    const trimmed = custom.trim();
+    if (!trimmed) return;
+    const key = `custom_${trimmed}`;
+    if (!value.includes(key)) onChange([...value, key]);
+    setCustom('');
+    setAdding(false);
+  }
+
+  // Zeige Standard-Chips + evtl. vorhandene Custom-Einträge
+  const customEntries = value.filter(v => v.startsWith('custom_'));
+
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+      {options.map(opt => {
+        const sel = value.includes(opt.value);
+        return (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => toggle(opt.value)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '5px',
+              padding: '7px 13px', borderRadius: '99px',
+              border: `2px solid ${sel ? '#0071E3' : '#E5E5EA'}`,
+              background: sel ? '#0071E3' : '#fff',
+              color: sel ? '#fff' : '#3C3C43',
+              fontSize: '13px', fontWeight: 500,
+              cursor: 'pointer', transition: 'all 0.15s',
+            }}
+          >
+            <span>{opt.emoji}</span> {opt.label}
+          </button>
+        );
+      })}
+
+      {/* Custom Einträge */}
+      {customEntries.map(v => {
+        const label = v.replace('custom_', '');
+        return (
+          <button key={v} type="button" onClick={() => toggle(v)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '5px',
+              padding: '7px 13px', borderRadius: '99px',
+              border: '2px solid #0071E3', background: '#0071E3',
+              color: '#fff', fontSize: '13px', fontWeight: 500, cursor: 'pointer',
+            }}
+          >
+            ✏️ {label} <X size={12} />
+          </button>
+        );
+      })}
+
+      {/* Eigene Seite hinzufügen */}
+      {!adding ? (
+        <button type="button" onClick={() => setAdding(true)}
+          style={{
+            display: 'flex', alignItems: 'center', gap: '5px',
+            padding: '7px 12px', borderRadius: '99px',
+            border: '2px dashed #D1D1D6', background: 'transparent',
+            color: '#8E8E93', fontSize: '13px', fontWeight: 500, cursor: 'pointer',
+          }}
+        >
+          <Plus size={12} /> Eigene
+        </button>
+      ) : (
+        <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+          <input
+            autoFocus value={custom} onChange={e => setCustom(e.target.value)}
+            placeholder="Seitenname…"
+            onKeyDown={e => { if (e.key === 'Enter') addCustom(); if (e.key === 'Escape') { setAdding(false); setCustom(''); } }}
+            style={{
+              padding: '5px 10px', borderRadius: '99px',
+              border: '2px solid #0071E3', fontSize: '13px',
+              outline: 'none', width: '130px', fontFamily: 'inherit',
+            }}
+          />
+          <button type="button" onClick={addCustom}
+            style={{ padding: '4px 10px', borderRadius: '99px', border: 'none', background: '#0071E3', color: '#fff', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
+          >OK</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SectionCard({ title, children }) {
   return (
     <div style={{
@@ -472,6 +586,18 @@ export default function Wizard() {
         ? data.project_type_custom || 'Sonstiges'
         : data.project_type || null;
 
+      // Beschreibung aus allen relevanten Infos zusammenbauen
+      const descParts = [];
+      if (data.pages?.length) {
+        const pageLabels = data.pages.map(v => {
+          if (v.startsWith('custom_')) return v.replace('custom_', '');
+          return COMMON_PAGES.find(p => p.value === v)?.label || v;
+        });
+        descParts.push(`Gewünschte Seiten: ${pageLabels.join(', ')}`);
+      }
+      if (data.first_notes?.trim()) descParts.push(data.first_notes.trim());
+      if (data.notes?.trim())       descParts.push(data.notes.trim());
+
       const project = await projectsApi.create({
         client_id:        client.id,
         name:             projectName,
@@ -480,7 +606,7 @@ export default function Wizard() {
         hosting_provider: data.hosting    || null,
         status:           'planned',
         budget:           data.project_value ? parseFloat(data.project_value) : null,
-        description:      data.notes || '',
+        description:      descParts.join('\n\n'),
         project_type:     'website',
       });
 
@@ -670,6 +796,39 @@ export default function Wizard() {
                   </Field>
                 )}
               </SectionCard>
+
+              <SectionCard title="📄 Gewünschte Seiten">
+                <p style={{ fontSize: '12px', color: '#8E8E93', margin: '-4px 0 4px', lineHeight: 1.5 }}>
+                  Welche Seiten soll die Website haben? (Mehrfachauswahl)
+                </p>
+                <MultiChipGroup
+                  options={COMMON_PAGES}
+                  value={data.pages}
+                  onChange={set('pages')}
+                />
+              </SectionCard>
+
+              <SectionCard title="💬 Erste Hinweise & Wünsche">
+                <Field label="Was hat der Kunde sonst noch erwähnt?">
+                  <textarea
+                    value={data.first_notes || ''}
+                    onChange={e => set('first_notes')(e.target.value)}
+                    placeholder="z.B. Farben, Stil, Konkurrenz, besondere Wünsche, Deadlines…"
+                    rows={4}
+                    style={{
+                      width: '100%', boxSizing: 'border-box',
+                      padding: '9px 12px',
+                      border: '1.5px solid #E5E5EA',
+                      borderRadius: '10px',
+                      fontSize: '14px', outline: 'none',
+                      resize: 'vertical', fontFamily: 'inherit',
+                      color: '#1D1D1F', lineHeight: 1.5,
+                    }}
+                    onFocus={e => e.target.style.borderColor = '#0071E3'}
+                    onBlur={e => e.target.style.borderColor = '#E5E5EA'}
+                  />
+                </Field>
+              </SectionCard>
             </div>
           )}
 
@@ -808,6 +967,7 @@ export default function Wizard() {
                     { label: 'Kunde', value: data.company_name },
                     { label: 'Projekt', value: data.project_name || autoProjectName() },
                     data.project_type && { label: 'Typ', value: data.project_type === 'custom' ? data.project_type_custom : PROJECT_TYPES.find(t => t.value === data.project_type)?.label },
+                    data.pages?.length > 0 && { label: 'Seiten', value: `${data.pages.length} ausgewählt` },
                     data.build_type && { label: 'Build', value: BUILD_TYPES.find(b => b.value === data.build_type)?.label || data.build_type },
                     data.project_value && { label: 'Budget', value: `${Number(data.project_value).toLocaleString('de-DE')} €` },
                   ].filter(Boolean).map((item, i) => (
