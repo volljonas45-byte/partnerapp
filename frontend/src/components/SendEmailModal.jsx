@@ -14,8 +14,9 @@ import Modal from './Modal';
  *   doc             invoice or quote object (needs client_email, contact_person, client_name,
  *                   invoice_number|quote_number, total, due_date|valid_until)
  *   agencyName      string  (from settings, optional)
+ *   fromAlias       string  (from settings.email_alias, optional)
  */
-export default function SendEmailModal({ open, onClose, onSend, sending, type, doc, agencyName }) {
+export default function SendEmailModal({ open, onClose, onSend, sending, type, doc, agencyName, fromAlias }) {
   const isInvoice = type === 'invoice';
   const docNumber = isInvoice ? doc?.invoice_number : doc?.quote_number;
   const greeting  = doc?.contact_person || doc?.client_name || '';
@@ -91,6 +92,14 @@ export default function SendEmailModal({ open, onClose, onSend, sending, type, d
             className="input w-full resize-none font-mono text-sm leading-relaxed"
           />
         </div>
+
+        {/* Von-Adresse */}
+        {fromAlias && (
+          <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-100 rounded-xl text-sm text-gray-500">
+            <span className="font-medium text-gray-400 shrink-0">Von:</span>
+            <span>{fromAlias}</span>
+          </div>
+        )}
 
         {/* PDF attachment note */}
         <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-100 rounded-xl text-sm text-blue-700">

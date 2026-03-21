@@ -816,6 +816,7 @@ export default function InvoiceDetail() {
         type="invoice"
         doc={invoice}
         agencyName={settings?.company_name}
+        fromAlias={settings?.email_alias}
       />
     </div>
   );

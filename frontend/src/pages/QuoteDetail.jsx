@@ -312,6 +312,7 @@ export default function QuoteDetail() {
         type="quote"
         doc={quote}
         agencyName={settings?.company_name}
+        fromAlias={settings?.email_alias}
       />
     </div>
   );

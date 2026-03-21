@@ -151,6 +151,8 @@ migrate("ALTER TABLE invoices  ADD COLUMN leistungszeitraum_bis  TEXT DEFAULT NU
 migrate("ALTER TABLE invoice_items ADD COLUMN title          TEXT DEFAULT ''");
 migrate("ALTER TABLE quote_items   ADD COLUMN title          TEXT DEFAULT ''");
 migrate("ALTER TABLE settings      ADD COLUMN default_payment_days INTEGER DEFAULT 30");
+migrate("ALTER TABLE settings      ADD COLUMN email_alias         TEXT DEFAULT ''");
+migrate("ALTER TABLE settings      ADD COLUMN email_signature      TEXT DEFAULT ''");
 
 // ── PROJECT SCHEMA ────────────────────────────────────────────────────────────
 db.exec(`

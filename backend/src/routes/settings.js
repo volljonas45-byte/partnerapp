@@ -44,6 +44,7 @@ router.put('/', async (req, res) => {
       kleinunternehmer,
       primary_color, footer_text,
       default_payment_days,
+      email_alias, email_signature,
     } = req.body;
 
     await ensureSettings(req.userId);
@@ -71,7 +72,9 @@ router.put('/', async (req, res) => {
         kleinunternehmer  = ?,
         primary_color     = ?,
         footer_text       = ?,
-        default_payment_days = ?
+        default_payment_days = ?,
+        email_alias       = ?,
+        email_signature   = ?
       WHERE user_id = ?
     `, [
       company_name      || '',
@@ -96,6 +99,8 @@ router.put('/', async (req, res) => {
       primary_color     || '#111827',
       footer_text       || 'Vielen Dank für Ihr Vertrauen.',
       default_payment_days != null ? parseInt(default_payment_days) || 30 : 30,
+      email_alias     || '',
+      email_signature || '',
       req.userId,
     ]);
 

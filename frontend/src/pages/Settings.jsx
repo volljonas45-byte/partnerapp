@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Upload, X, Save, Plus, Trash2, Pencil, Check, Building2, FileText, Layers } from 'lucide-react';
+import { Upload, X, Save, Plus, Trash2, Pencil, Check, Building2, FileText, Layers, Mail } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { settingsApi } from '../api/settings';
 import { serviceTemplatesApi } from '../api/serviceTemplates';
@@ -23,14 +23,17 @@ const EMPTY_FORM = {
   primary_color: '#111827',
   footer_text: 'Vielen Dank für Ihr Vertrauen.',
   default_payment_days: 30,
+  email_alias: '',
+  email_signature: '',
 };
 
 const EMPTY_TMPL = { name: '', description: '', unit: 'Stunde', unit_price: '', tax_rate: '19' };
 
 const TABS = [
-  { id: 'company',   label: 'Unternehmen',        icon: Building2 },
+  { id: 'company',   label: 'Unternehmen',          icon: Building2 },
   { id: 'documents', label: 'Rechnungen & Angebote', icon: FileText  },
-  { id: 'templates', label: 'Leistungsvorlagen',   icon: Layers     },
+  { id: 'email',     label: 'E-Mail',                icon: Mail      },
+  { id: 'templates', label: 'Leistungsvorlagen',     icon: Layers    },
 ];
 
 // ── ServiceTemplates ───────────────────────────────────────────────────────────
@@ -209,6 +212,8 @@ export default function Settings() {
         primary_color:        settings.primary_color        || '#111827',
         footer_text:          settings.footer_text          || 'Vielen Dank für Ihr Vertrauen.',
         default_payment_days: settings.default_payment_days ?? 30,
+        email_alias:          settings.email_alias          || '',
+        email_signature:      settings.email_signature      || '',
       });
       setLogoPreview(settings.logo_base64 || null);
     }
@@ -427,6 +432,80 @@ export default function Settings() {
                 <p className="text-xs text-gray-400 mt-1">Erscheint am unteren Rand jeder Rechnung und jedes Angebots</p>
               </div>
             </div>
+
+            <div className="flex justify-end">
+              <button type="submit" disabled={updateMutation.isPending} className="btn-primary">
+                <Save size={15} /> {updateMutation.isPending ? 'Wird gespeichert…' : 'Einstellungen speichern'}
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* ── Tab: E-Mail ── */}
+        {activeTab === 'email' && (
+          <form onSubmit={handleSave} className="space-y-5">
+
+            {/* Absender-Alias */}
+            <div className="card space-y-4">
+              <div>
+                <h2 className="text-sm font-semibold text-gray-700">Absender-Alias</h2>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  Deine persönliche Absender-E-Mail-Adresse. E-Mails gehen von dieser Adresse aus —
+                  jeder Nutzer kann hier seinen eigenen Alias eintragen (z. B. <em>jonas@jragencyservices.com</em>).
+                  Der globale SMTP-Account in der .env wird zum Versenden verwendet.
+                </p>
+              </div>
+              <div>
+                <label className="label">E-Mail-Alias</label>
+                <input
+                  type="email"
+                  className="input"
+                  placeholder="jonas@jragencyservices.com"
+                  value={form.email_alias}
+                  onChange={e => setField('email_alias', e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Signatur */}
+            <div className="card space-y-4">
+              <div>
+                <h2 className="text-sm font-semibold text-gray-700">E-Mail-Signatur</h2>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  Wird automatisch unter jede gesendete E-Mail angehängt (nach einem "-- " Trennstrich).
+                </p>
+              </div>
+              <div>
+                <label className="label">Signatur (Freitext)</label>
+                <textarea
+                  rows={6}
+                  className="input resize-none font-mono text-sm leading-relaxed"
+                  placeholder={`Jonas Richter\nJR Agency Services\njragencyservices.com\n+49 123 456789`}
+                  value={form.email_signature}
+                  onChange={e => setField('email_signature', e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Vorschau */}
+            {(form.email_alias || form.email_signature) && (
+              <div className="card space-y-2">
+                <h2 className="text-sm font-semibold text-gray-700">Vorschau</h2>
+                <div className="rounded-xl bg-gray-50 border border-gray-100 px-4 py-3 text-sm text-gray-600 space-y-1">
+                  {form.email_alias && (
+                    <p><span className="text-gray-400 text-xs font-medium uppercase tracking-wide">Von:</span>{' '}
+                      {form.email_alias}
+                    </p>
+                  )}
+                  {form.email_signature && (
+                    <div className="pt-2 mt-2 border-t border-gray-200">
+                      <p className="text-gray-400 text-xs font-medium uppercase tracking-wide mb-1">Signatur:</p>
+                      <pre className="font-sans text-sm text-gray-600 whitespace-pre-wrap">{form.email_signature}</pre>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             <div className="flex justify-end">
               <button type="submit" disabled={updateMutation.isPending} className="btn-primary">

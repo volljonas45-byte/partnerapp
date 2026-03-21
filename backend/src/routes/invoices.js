@@ -659,6 +659,8 @@ router.post('/:id/send', async (req, res) => {
       to:         recipient,
       subject,
       message,
+      fromAlias:  settings?.email_alias     || '',
+      signature:  settings?.email_signature || '',
       pdfBytes,
     });
 

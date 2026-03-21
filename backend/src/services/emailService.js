@@ -113,12 +113,14 @@ function buildHtml(type, doc, agencyName, customMessage) {
  * @param {'invoice'|'quote'} opts.type
  * @param {object}  opts.doc        - full invoice/quote with client fields
  * @param {string}  opts.agencyName - settings.company_name
- * @param {string}  [opts.to]       - override recipient (default: doc.client_email)
- * @param {string}  [opts.subject]  - override subject
- * @param {string}  [opts.message]  - custom message body (plain text)
- * @param {Uint8Array} opts.pdfBytes - PDF buffer from pdfService
+ * @param {string}  [opts.to]          - override recipient (default: doc.client_email)
+ * @param {string}  [opts.subject]     - override subject
+ * @param {string}  [opts.message]     - custom message body (plain text)
+ * @param {string}  [opts.fromAlias]   - per-user alias, e.g. "jonas@jragencyservices.com"
+ * @param {string}  [opts.signature]   - per-user signature text (plain text)
+ * @param {Uint8Array} opts.pdfBytes   - PDF buffer from pdfService
  */
-async function sendDocument({ type, doc, agencyName, to, subject, message, pdfBytes }) {
+async function sendDocument({ type, doc, agencyName, to, subject, message, fromAlias, signature, pdfBytes }) {
   const transporter = createTransporter();
   if (!transporter) {
     throw new Error(
@@ -137,11 +139,19 @@ async function sendDocument({ type, doc, agencyName, to, subject, message, pdfBy
     ? `${doc.invoice_number}.pdf`
     : `${doc.quote_number}.pdf`;
 
+  // Use per-user alias if set, otherwise fall back to global EMAIL_FROM
+  const fromAddress = fromAlias
+    ? (agencyName ? `"${agencyName}" <${fromAlias}>` : fromAlias)
+    : (process.env.EMAIL_FROM || process.env.EMAIL_USER);
+
+  // Merge user's signature into message
+  const fullMessage = [message, signature].filter(Boolean).join('\n\n-- \n');
+
   await transporter.sendMail({
-    from:        process.env.EMAIL_FROM || process.env.EMAIL_USER,
+    from:        fromAddress,
     to:          recipient,
     subject:     subject || defaultSubject,
-    html:        buildHtml(type, doc, agencyName, message || ''),
+    html:        buildHtml(type, doc, agencyName, fullMessage),
     attachments: [{
       filename,
       content:     Buffer.from(pdfBytes),
