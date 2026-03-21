@@ -12,6 +12,8 @@ import {
 import toast from 'react-hot-toast';
 import { projectsApi } from '../api/projects';
 import { clientsApi } from '../api/clients';
+import { workflowApi } from '../api/workflow';
+import { PHASE_ORDER, PHASES } from '../components/workflow/workflowConfig';
 import { formatCurrency, formatDate, isPast } from '../utils/formatters';
 import StatusBadge from '../components/StatusBadge';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -232,6 +234,11 @@ export default function ProjectDetail() {
     queryFn: () => projectsApi.get(id).then(r => r.data),
   });
 
+  const { data: workflow } = useQuery({
+    queryKey: ['workflow', id],
+    queryFn: () => workflowApi.get(id).then(r => r.data),
+  });
+
   const { data: clients = [] } = useQuery({
     queryKey: ['clients'],
     queryFn: () => clientsApi.list().then(r => r.data),
@@ -295,6 +302,21 @@ export default function ProjectDetail() {
     mutationFn: (key) => projectsApi.deleteChecklist(id, key),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['projects', id] }),
   });
+
+  const workflowUpdateMutation = useMutation({
+    mutationFn: (data) => workflowApi.update(id, data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['workflow', id] }),
+  });
+
+  function toggleWorkflowTask(phaseKey, taskKey, currentVal) {
+    const pd = workflow?.phase_data || {};
+    workflowUpdateMutation.mutate({
+      phase_data: {
+        ...pd,
+        [phaseKey]: { ...pd[phaseKey], tasks: { ...(pd[phaseKey]?.tasks || {}), [taskKey]: !currentVal } },
+      },
+    });
+  }
 
   const createTaskMutation = useMutation({
     mutationFn: (title) => projectsApi.createTask(id, { title }),
@@ -537,12 +559,38 @@ export default function ProjectDetail() {
                   <dd className="text-gray-900 font-medium">{project.client_name}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-gray-400 mb-0.5">Status</dt>
+                  <dt className="text-xs text-gray-400 mb-0.5">Workflow-Phase</dt>
                   <dd>
-                    <HeaderStatusDropdown
-                      status={project.status}
-                      onSelect={val => updateMutation.mutate({ status: val })}
-                    />
+                    {(() => {
+                      const phase = workflow?.current_phase;
+                      const phaseIdx = phase ? PHASE_ORDER.indexOf(phase) : 0;
+                      const total = PHASE_ORDER.length;
+                      const cfg = phase ? PHASES[phase] : null;
+                      return (
+                        <div>
+                          <span style={{
+                            display: 'inline-flex', alignItems: 'center', gap: '5px',
+                            padding: '2px 10px', borderRadius: '99px',
+                            background: phase === 'abgeschlossen' ? 'rgba(52,199,89,0.12)' : 'rgba(0,113,227,0.10)',
+                            color: phase === 'abgeschlossen' ? '#34C759' : '#0071E3',
+                            fontSize: '12px', fontWeight: 600,
+                          }}>
+                            {cfg?.label || 'Demo'}
+                          </span>
+                          <div style={{ marginTop: '5px', height: '3px', background: '#F2F2F7', borderRadius: '2px', width: '100px' }}>
+                            <div style={{
+                              height: '100%', borderRadius: '2px',
+                              background: phase === 'abgeschlossen' ? '#34C759' : '#0071E3',
+                              width: `${Math.round(((phaseIdx + 1) / total) * 100)}%`,
+                              transition: 'width 0.3s',
+                            }} />
+                          </div>
+                          <span style={{ fontSize: '10px', color: '#8E8E93', marginTop: '2px', display: 'block' }}>
+                            Schritt {phaseIdx + 1} von {total}
+                          </span>
+                        </div>
+                      );
+                    })()}
                   </dd>
                 </div>
                 {project.start_date && (
@@ -687,102 +735,103 @@ export default function ProjectDetail() {
           </div>
 
           {/* Checklist */}
-          <div className="card">
-            <h2 className="flex items-center gap-2 text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">
-              <CheckSquare size={13}/> Checkliste
-            </h2>
-            <div className="space-y-1 mb-3">
-              {/* Predefined items */}
-              {Object.entries(CHECKLIST_LABELS).map(([key, label]) => {
-                const checked = Boolean(checkMap[key]);
-                return (
-                  <label key={key} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
-                    <button
-                      type="button"
-                      onClick={() => checklistMutation.mutate({ key, checked: !checked })}
-                      className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-colors ${
-                        checked ? 'bg-gray-900 border-gray-900' : 'border-gray-300 hover:border-gray-500'
-                      }`}
-                    >
-                      {checked && <Check size={10} className="text-white" strokeWidth={3} />}
-                    </button>
-                    <span className={`text-sm flex-1 ${checked ? 'line-through text-gray-400' : 'text-gray-700'}`}>
-                      {label}
-                    </span>
-                  </label>
-                );
-              })}
-              {/* Custom items */}
-              {checklist.filter(c => c.custom).map(item => {
-                const checked = Boolean(item.checked);
-                return (
-                  <div key={item.key} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 group transition-colors">
-                    <button
-                      type="button"
-                      onClick={() => checklistMutation.mutate({ key: item.key, checked: !checked })}
-                      className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-colors ${
-                        checked ? 'bg-gray-900 border-gray-900' : 'border-gray-300 hover:border-gray-500'
-                      }`}
-                    >
-                      {checked && <Check size={10} className="text-white" strokeWidth={3} />}
-                    </button>
-                    <span className={`text-sm flex-1 ${checked ? 'line-through text-gray-400' : 'text-gray-700'}`}>
-                      {item.label || item.key}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => deleteChecklistMutation.mutate(item.key)}
-                      className="opacity-0 group-hover:opacity-100 p-0.5 text-gray-300 hover:text-red-400 transition-all"
-                    >
-                      <X size={13} />
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-            {/* Add custom item */}
-            <form
-              onSubmit={e => { e.preventDefault(); if (newChecklistItem.trim()) addChecklistMutation.mutate(newChecklistItem.trim()); }}
-              className="flex gap-2"
-            >
-              <input
-                className="input flex-1 text-sm"
-                placeholder="Eigenen Schritt hinzufügen…"
-                value={newChecklistItem}
-                onChange={e => setNewChecklistItem(e.target.value)}
-              />
-              <button type="submit" disabled={!newChecklistItem.trim() || addChecklistMutation.isPending} className="btn-secondary text-xs py-1 px-3">
-                <Plus size={13} />
-              </button>
-            </form>
-          </div>
         </div>
       )}
 
       {/* ── TASKS ─────────────────────────────────────────────────────────── */}
       {activeTab === 'tasks' && (
-        <div className="space-y-3">
-          <form onSubmit={handleAddTask} className="flex gap-2">
-            <input
-              className="input flex-1"
-              placeholder="Neue Aufgabe hinzufügen…"
-              value={newTask}
-              onChange={e => setNewTask(e.target.value)}
-            />
-            <button type="submit" disabled={!newTask.trim()} className="btn-primary">
-              <Plus size={15}/> Hinzufügen
-            </button>
-          </form>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
-          {tasks.length === 0 ? (
-            <div className="card text-center py-10">
-              <CheckSquare size={28} className="mx-auto text-gray-200 mb-2" />
-              <p className="text-sm text-gray-400">Noch keine Aufgaben.</p>
+          {/* Workflow-Aufgaben je Phase */}
+          {PHASE_ORDER.map(phaseKey => {
+            const phase = PHASES[phaseKey];
+            if (!phase?.tasks?.length) return null;
+            const phaseTasks = workflow?.phase_data?.[phaseKey]?.tasks || {};
+            const decisions  = workflow?.decisions || {};
+            const visibleTasks = phase.tasks.filter(t => !t.condition || t.condition(decisions));
+            if (!visibleTasks.length) return null;
+            const doneCount = visibleTasks.filter(t => phaseTasks[t.key]).length;
+            const isCurrent = workflow?.current_phase === phaseKey;
+            const phaseIdx  = PHASE_ORDER.indexOf(phaseKey);
+            const currentIdx = PHASE_ORDER.indexOf(workflow?.current_phase);
+            const isDone    = phaseIdx < currentIdx;
+
+            return (
+              <div key={phaseKey} style={{
+                background: '#fff', borderRadius: '14px',
+                border: `1px solid ${isCurrent ? '#C8DEFF' : '#F2F2F7'}`,
+                borderLeft: `3px solid ${isDone ? '#34C759' : isCurrent ? '#0071E3' : '#E5E5EA'}`,
+                overflow: 'hidden',
+                opacity: phaseIdx > currentIdx ? 0.55 : 1,
+              }}>
+                <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span style={{ fontSize: '13px', fontWeight: 600, color: isDone ? '#34C759' : isCurrent ? '#0071E3' : '#8E8E93', flex: 1 }}>
+                    {phase.label}
+                  </span>
+                  <span style={{ fontSize: '11px', color: '#8E8E93' }}>{doneCount}/{visibleTasks.length}</span>
+                  {isDone && <Check size={13} color="#34C759" strokeWidth={2.5} />}
+                </div>
+                <div style={{ borderTop: '1px solid #F2F2F7' }}>
+                  {visibleTasks.map(task => {
+                    const checked = !!phaseTasks[task.key];
+                    return (
+                      <div key={task.key} style={{
+                        display: 'flex', alignItems: 'center', gap: '10px',
+                        padding: '10px 16px',
+                        borderBottom: '1px solid #F9F9F9',
+                      }}>
+                        <button
+                          onClick={() => toggleWorkflowTask(phaseKey, task.key, checked)}
+                          style={{
+                            width: '18px', height: '18px', borderRadius: '5px', flexShrink: 0,
+                            border: `2px solid ${checked ? '#34C759' : '#D1D1D6'}`,
+                            background: checked ? '#34C759' : '#fff',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            cursor: 'pointer', transition: 'all 0.15s',
+                          }}
+                        >
+                          {checked && <Check size={11} color="#fff" strokeWidth={3} />}
+                        </button>
+                        <span style={{ flex: 1, fontSize: '13px', color: checked ? '#8E8E93' : '#1D1D1F', textDecoration: checked ? 'line-through' : 'none' }}>
+                          {task.label}
+                        </span>
+                        {task.decision && (
+                          <span style={{
+                            fontSize: '11px', padding: '2px 8px', borderRadius: '99px',
+                            background: decisions[task.decision] ? 'rgba(0,113,227,0.08)' : '#F2F2F7',
+                            color: decisions[task.decision] ? '#0071E3' : '#8E8E93', fontWeight: 500,
+                          }}>
+                            {decisions[task.decision] || 'Offen'}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Eigene Aufgaben */}
+          <div style={{ background: '#fff', borderRadius: '14px', border: '1px solid #F2F2F7', overflow: 'hidden' }}>
+            <div style={{ padding: '12px 16px', borderBottom: '1px solid #F2F2F7', fontSize: '13px', fontWeight: 600, color: '#1D1D1F' }}>
+              Eigene Aufgaben
             </div>
-          ) : (
-            <div className="card p-0 divide-y divide-gray-50">
+            <div style={{ padding: '12px 16px' }}>
+              <form onSubmit={handleAddTask} style={{ display: 'flex', gap: '8px', marginBottom: tasks.length ? '12px' : 0 }}>
+                <input
+                  className="input flex-1"
+                  placeholder="Eigene Aufgabe hinzufügen…"
+                  value={newTask}
+                  onChange={e => setNewTask(e.target.value)}
+                  style={{ fontSize: '13px' }}
+                />
+                <button type="submit" disabled={!newTask.trim()} className="btn-primary" style={{ fontSize: '13px' }}>
+                  <Plus size={13}/> Hinzufügen
+                </button>
+              </form>
               {tasks.map(task => (
-                <div key={task.id} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors group">
+                <div key={task.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 0', borderBottom: '1px solid #F9F9F9' }} className="group">
                   <button
                     onClick={() => cycleTask(task)}
                     className={`w-5 h-5 rounded flex items-center justify-center shrink-0 border transition-colors ${
@@ -790,7 +839,6 @@ export default function ProjectDetail() {
                       task.status === 'doing' ? 'bg-blue-500 border-blue-500' :
                       'border-gray-300 hover:border-gray-400'
                     }`}
-                    title="Status weiter"
                   >
                     {task.status === 'done'  && <Check size={11} className="text-white" strokeWidth={3}/>}
                     {task.status === 'doing' && <div className="w-2 h-2 rounded-full bg-white"/>}
@@ -798,23 +846,17 @@ export default function ProjectDetail() {
                   <span className={`flex-1 text-sm ${task.status === 'done' ? 'line-through text-gray-400' : 'text-gray-700'}`}>
                     {task.title}
                   </span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${
-                    task.status === 'done'  ? 'bg-emerald-50 text-emerald-600' :
-                    task.status === 'doing' ? 'bg-blue-50 text-blue-600' :
-                    'bg-gray-100 text-gray-500'
-                  }`}>
-                    {TASK_LABELS[task.status]}
-                  </span>
-                  <button
-                    onClick={() => deleteTaskMutation.mutate(task.id)}
-                    className="opacity-0 group-hover:opacity-100 p-1 text-gray-300 hover:text-red-500 transition-all rounded"
-                  >
+                  <button onClick={() => deleteTaskMutation.mutate(task.id)}
+                    className="opacity-0 group-hover:opacity-100 p-1 text-gray-300 hover:text-red-500 transition-all rounded">
                     <Trash2 size={13}/>
                   </button>
                 </div>
               ))}
+              {tasks.length === 0 && (
+                <p style={{ fontSize: '13px', color: '#8E8E93', marginTop: '8px' }}>Noch keine eigenen Aufgaben.</p>
+              )}
             </div>
-          )}
+          </div>
         </div>
       )}
 
