@@ -349,17 +349,19 @@ export default function NewInvoice() {
               <div className="col-span-2 pt-0.5">
                 <input
                   type="number" className="input" placeholder="1"
-                  min="0" step="0.01" value={item.quantity}
-                  onChange={e => updateItem(idx, 'quantity', e.target.value)}
-                  onFocus={e => e.target.select()}
+                  min="0" step="0.01"
+                  value={item.quantity === 0 ? '' : item.quantity}
+                  onChange={e => updateItem(idx, 'quantity', e.target.value === '' ? 0 : e.target.value)}
+                  onBlur={e => { if (e.target.value === '') updateItem(idx, 'quantity', 0); }}
                 />
               </div>
               <div className="col-span-2 pt-0.5">
                 <input
                   type="number" className="input" placeholder="0,00"
-                  min="0" step="0.01" value={item.unit_price}
-                  onChange={e => updateItem(idx, 'unit_price', e.target.value)}
-                  onFocus={e => e.target.select()}
+                  min="0" step="0.01"
+                  value={item.unit_price === 0 ? '' : item.unit_price}
+                  onChange={e => updateItem(idx, 'unit_price', e.target.value === '' ? 0 : e.target.value)}
+                  onBlur={e => { if (e.target.value === '') updateItem(idx, 'unit_price', 0); }}
                 />
               </div>
               <div className="col-span-2 pt-0.5">
