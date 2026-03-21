@@ -190,7 +190,22 @@ router.get('/public/:token', async (req, res) => {
       WHERE f.token = ?
     `, [req.params.token]);
     if (!form) return res.status(404).json({ error: 'Formular nicht gefunden' });
-    res.json({ ...form, fields: JSON.parse(form.fields || '[]'), responses: JSON.parse(form.responses || '{}') });
+
+    // Sicher parsen – unterstützt auch doppelt-encoded JSON (Legacy-Daten)
+    function safeParse(str, fallback) {
+      try {
+        let v = JSON.parse(str || JSON.stringify(fallback));
+        // Wenn Ergebnis noch ein String ist → nochmal parsen (doppelt-encoded)
+        if (typeof v === 'string') v = JSON.parse(v);
+        return v;
+      } catch { return fallback; }
+    }
+
+    res.json({
+      ...form,
+      fields:    safeParse(form.fields, []),
+      responses: safeParse(form.responses, {}),
+    });
   } catch (err) {
     console.error('[intake GET /public/:token]', err);
     res.status(500).json({ error: 'Internal server error' });

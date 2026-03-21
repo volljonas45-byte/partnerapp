@@ -254,7 +254,12 @@ export default function PhaseCard({
 
             {/* Intake-Briefing (nur Demo-Phase) */}
             {phaseKey === 'demo' && projectId && (
-              <IntakeFormSection projectId={projectId} projectName={projectName} />
+              <IntakeFormSection
+                projectId={projectId}
+                projectName={projectName}
+                briefingDone={!!phaseTasks['briefing_done']}
+                onSkip={() => onTaskToggle('demo', 'briefing_done', true)}
+              />
             )}
 
             {/* "Abgeschlossen" celebration */}
