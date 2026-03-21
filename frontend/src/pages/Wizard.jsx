@@ -163,6 +163,7 @@ function CardSelect({ options, value, onChange, showCustom, customValue, onCusto
     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
       {options.map(opt => {
         const isSelected = value === opt.value;
+        const OptIcon = opt.icon || null;
         return (
           <button
             key={opt.value}
@@ -179,7 +180,7 @@ function CardSelect({ options, value, onChange, showCustom, customValue, onCusto
               transition: 'all 0.15s',
             }}
           >
-            {opt.icon && (() => { const Icon = opt.icon; return <Icon size={16} color={isSelected ? '#0071E3' : '#8E8E93'} strokeWidth={1.8} style={{ flexShrink: 0 }} />; })()}
+            {OptIcon && <OptIcon size={16} color={isSelected ? '#0071E3' : '#8E8E93'} strokeWidth={1.8} style={{ flexShrink: 0 }} />}
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: '14px', fontWeight: 600, color: isSelected ? '#0071E3' : '#1D1D1F' }}>
                 {opt.label}
@@ -301,6 +302,7 @@ function ChipGroup({ options, value, onChange, showCustom, customValue, onCustom
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
       {options.map(opt => {
         const isSelected = value === opt.value;
+        const OptIcon = opt.icon || null;
         return (
           <button
             key={opt.value}
@@ -318,7 +320,7 @@ function ChipGroup({ options, value, onChange, showCustom, customValue, onCustom
               transition: 'all 0.15s',
             }}
           >
-            {opt.icon && (() => { const Icon = opt.icon; return <Icon size={13} strokeWidth={1.8} />; })()}
+            {OptIcon && <OptIcon size={13} strokeWidth={1.8} />}
             {opt.label}
           </button>
         );
