@@ -207,6 +207,7 @@ export default function EditQuote() {
                   type="number" className="input" placeholder="1"
                   min="0" step="0.01" value={item.quantity}
                   onChange={e => updateItem(idx, 'quantity', e.target.value)}
+                  onFocus={e => e.target.select()}
                 />
               </div>
               <div className="col-span-2 pt-0.5">
@@ -214,6 +215,7 @@ export default function EditQuote() {
                   type="number" className="input" placeholder="0,00"
                   min="0" step="0.01" value={item.unit_price}
                   onChange={e => updateItem(idx, 'unit_price', e.target.value)}
+                  onFocus={e => e.target.select()}
                 />
               </div>
               <div className="col-span-2 pt-0.5">
