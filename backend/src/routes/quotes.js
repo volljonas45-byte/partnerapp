@@ -2,6 +2,7 @@ const express = require('express');
 const { getOne, getAll, run, pool } = require('../db/pg');
 const authenticate = require('../middleware/auth');
 const { generateDocumentPDF } = require('../services/pdfService');
+const { sendDocument }        = require('../services/emailService');
 
 const router = express.Router();
 router.use(authenticate);
@@ -318,6 +319,50 @@ router.post('/:id/convert', async (req, res) => {
   } catch (err) {
     console.error('[quotes POST /:id/convert]', err);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ── SEND (E-Mail mit PDF-Anhang) ──────────────────────────────────────────────
+router.post('/:id/send', async (req, res) => {
+  try {
+    const quote = await getOne(`
+      SELECT q.*, c.company_name as client_name, c.contact_person,
+             c.address as client_address, c.city as client_city,
+             c.postal_code as client_postal_code, c.country as client_country,
+             c.email as client_email, c.phone as client_phone, c.vat_id as client_vat_id
+      FROM quotes q LEFT JOIN clients c ON c.id = q.client_id
+      WHERE q.id = ? AND q.user_id = ?
+    `, [req.params.id, req.userId]);
+
+    if (!quote) return res.status(404).json({ error: 'Angebot nicht gefunden' });
+
+    const { to, subject, message } = req.body || {};
+    const recipient = to || quote.client_email;
+    if (!recipient) return res.status(422).json({ error: 'Kunde hat keine E-Mail-Adresse' });
+
+    const items    = await getAll('SELECT * FROM quote_items WHERE quote_id = ? ORDER BY id ASC', [req.params.id]);
+    const settings = await getOne('SELECT * FROM settings WHERE user_id = ?', [req.userId]);
+
+    const pdfBytes = await generateDocumentPDF({ ...quote, items }, settings, 'quote');
+
+    await sendDocument({
+      type:       'quote',
+      doc:        quote,
+      agencyName: settings?.company_name || '',
+      to:         recipient,
+      subject,
+      message,
+      pdfBytes,
+    });
+
+    await run("UPDATE quotes SET status='sent' WHERE id=? AND user_id=?", [req.params.id, req.userId]);
+    res.json({ success: true, sentTo: recipient });
+  } catch (err) {
+    console.error('Fehler beim Senden:', err);
+    const msg = err.message?.includes('konfiguriert') || err.message?.includes('Empfänger')
+      ? err.message
+      : 'Angebot konnte nicht gesendet werden';
+    res.status(500).json({ error: msg });
   }
 });
 

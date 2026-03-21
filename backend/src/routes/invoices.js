@@ -2,6 +2,7 @@ const express = require('express');
 const { getOne, getAll, run, pool } = require('../db/pg');
 const authenticate = require('../middleware/auth');
 const { generateInvoicePDF } = require('../services/pdfService');
+const { sendDocument }       = require('../services/emailService');
 
 const router = express.Router();
 router.use(authenticate);
@@ -628,7 +629,7 @@ router.get('/:id/history', async (req, res) => {
   }
 });
 
-// ── SEND (email placeholder) ──────────────────────────────────────────────────
+// ── SEND (E-Mail mit PDF-Anhang) ──────────────────────────────────────────────
 router.post('/:id/send', async (req, res) => {
   try {
     const invoice = await getOne(`
@@ -641,21 +642,34 @@ router.post('/:id/send', async (req, res) => {
     `, [req.params.id, req.userId]);
 
     if (!invoice) return res.status(404).json({ error: 'Rechnung nicht gefunden' });
-    if (!invoice.client_email) return res.status(422).json({ error: 'Kunde hat keine E-Mail-Adresse' });
+
+    const { to, subject, message } = req.body || {};
+    const recipient = to || invoice.client_email;
+    if (!recipient) return res.status(422).json({ error: 'Kunde hat keine E-Mail-Adresse' });
 
     const items    = await getAll('SELECT * FROM invoice_items WHERE invoice_id = ? ORDER BY id ASC', [req.params.id]);
     const settings = await getOne('SELECT * FROM settings WHERE user_id = ?', [req.userId]);
 
     const pdfBytes = await generateInvoicePDF({ ...invoice, items }, settings);
-    console.log(`[EMAIL] An:      ${invoice.client_email}`);
-    console.log(`[EMAIL] Rechnung: ${invoice.invoice_number}`);
-    console.log(`[EMAIL] PDF:     ${pdfBytes.length} Bytes`);
+
+    await sendDocument({
+      type:       'invoice',
+      doc:        invoice,
+      agencyName: settings?.company_name || '',
+      to:         recipient,
+      subject,
+      message,
+      pdfBytes,
+    });
 
     await run("UPDATE invoices SET status='sent' WHERE id=? AND user_id=?", [req.params.id, req.userId]);
-    res.json({ success: true, sentTo: invoice.client_email });
+    res.json({ success: true, sentTo: recipient });
   } catch (err) {
     console.error('Fehler beim Senden:', err);
-    res.status(500).json({ error: 'Rechnung konnte nicht gesendet werden' });
+    const msg = err.message?.includes('konfiguriert') || err.message?.includes('Empfänger')
+      ? err.message
+      : 'Rechnung konnte nicht gesendet werden';
+    res.status(500).json({ error: msg });
   }
 });
 

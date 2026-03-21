@@ -7,6 +7,7 @@ export const quotesApi = {
   create:       (data)       => api.post('/api/quotes', data).then(r => r.data),
   update:       (id, data)   => api.put(`/api/quotes/${id}`, data),
   updateStatus: (id, data)   => api.patch(`/api/quotes/${id}/status`, data),
+  send:         (id, data)   => api.post(`/api/quotes/${id}/send`, data),
   convert:      (id)         => api.post(`/api/quotes/${id}/convert`),
   delete:       (id)         => api.delete(`/api/quotes/${id}`),
 

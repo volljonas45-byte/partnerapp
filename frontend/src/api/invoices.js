@@ -8,7 +8,7 @@ export const invoicesApi = {
   create:       (data)       => api.post('/api/invoices', data).then(r => r.data),
   update:       (id, data)   => api.put(`/api/invoices/${id}`, data),
   updateStatus: (id, data)   => api.patch(`/api/invoices/${id}/status`, data),
-  send:         (id)         => api.post(`/api/invoices/${id}/send`),
+  send:         (id, data)   => api.post(`/api/invoices/${id}/send`, data),
   delete:       (id)         => api.delete(`/api/invoices/${id}`),
 
   // New actions

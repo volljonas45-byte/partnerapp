@@ -7,10 +7,12 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { quotesApi } from '../api/quotes';
+import { settingsApi } from '../api/settings';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import StatusBadge from '../components/StatusBadge';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useConfirm } from '../hooks/useConfirm';
+import SendEmailModal from '../components/SendEmailModal';
 
 export default function QuoteDetail() {
   const { id } = useParams();
@@ -21,10 +23,17 @@ export default function QuoteDetail() {
 
   const [downloading, setDownloading] = useState(false);
   const [converting,  setConverting]  = useState(false);
+  const [sending,     setSending]     = useState(false);
+  const [emailModal,  setEmailModal]  = useState(false);
 
   const { data: quote, isLoading } = useQuery({
     queryKey: ['quotes', id],
     queryFn: () => quotesApi.get(id).then(r => r.data),
+  });
+
+  const { data: settings } = useQuery({
+    queryKey: ['settings'],
+    queryFn: () => settingsApi.get().then(r => r.data),
   });
 
   const invalidate = () => {
@@ -83,6 +92,20 @@ export default function QuoteDetail() {
     deleteMutation.mutate();
   };
 
+  const handleEmailSend = async ({ to, subject, message }) => {
+    setSending(true);
+    try {
+      await quotesApi.send(id, { to, subject, message });
+      invalidate();
+      setEmailModal(false);
+      toast.success(`Angebot gesendet an ${to}`);
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Senden fehlgeschlagen');
+    } finally {
+      setSending(false);
+    }
+  };
+
   if (isLoading) return <LoadingSpinner className="h-64" />;
   if (!quote)    return <div className="p-8 text-gray-400">Angebot nicht gefunden.</div>;
 
@@ -118,6 +141,12 @@ export default function QuoteDetail() {
               className="btn-secondary"
             >
               <FileText size={15} /> Als gesendet markieren
+            </button>
+          )}
+
+          {(isDraft || isSent) && quote.client_email && (
+            <button onClick={() => setEmailModal(true)} disabled={sending} className="btn-secondary">
+              <Send size={15} /> {sending ? 'Wird gesendet…' : 'E-Mail senden'}
             </button>
           )}
 
@@ -274,6 +303,16 @@ export default function QuoteDetail() {
         </div>
       )}
       {ConfirmDialogNode}
+
+      <SendEmailModal
+        open={emailModal}
+        onClose={() => setEmailModal(false)}
+        onSend={handleEmailSend}
+        sending={sending}
+        type="quote"
+        doc={quote}
+        agencyName={settings?.company_name}
+      />
     </div>
   );
 }

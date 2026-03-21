@@ -9,10 +9,12 @@ import {
 import toast from 'react-hot-toast';
 import { useConfirm } from '../hooks/useConfirm';
 import { invoicesApi } from '../api/invoices';
+import { settingsApi } from '../api/settings';
 import { formatCurrency, formatDate, today } from '../utils/formatters';
 import StatusBadge from '../components/StatusBadge';
 import LoadingSpinner from '../components/LoadingSpinner';
 import Modal from '../components/Modal';
+import SendEmailModal from '../components/SendEmailModal';
 
 const REMINDER_LEVELS = [
   { value: 1, label: '1. Mahnung (7 Tage)' },
@@ -38,6 +40,7 @@ export default function InvoiceDetail() {
   const [stornoModal,     setStornoModal]      = useState(false);
   const [paymentModal,    setPaymentModal]     = useState(false);
   const [reminderModal,   setReminderModal]    = useState(false);
+  const [emailModal,      setEmailModal]       = useState(false);
 
   // Form state
   const [paymentDate,     setPaymentDate]      = useState(today());
@@ -64,6 +67,11 @@ export default function InvoiceDetail() {
   const { data: invoice, isLoading } = useQuery({
     queryKey: ['invoices', id],
     queryFn: () => invoicesApi.get(id).then(r => r.data),
+  });
+
+  const { data: settings } = useQuery({
+    queryKey: ['settings'],
+    queryFn: () => settingsApi.get().then(r => r.data),
   });
 
   const { data: payments = [] } = useQuery({
@@ -166,14 +174,15 @@ export default function InvoiceDetail() {
     }
   };
 
-  const handleSendEmail = async () => {
-    const ok = await confirm(`Rechnung ${invoice.invoice_number} an ${invoice.client_email || 'den Kunden'} senden?`, { title: 'Rechnung senden', danger: false, confirmLabel: 'Senden' });
-    if (!ok) return;
+  const handleSendEmail = () => setEmailModal(true);
+
+  const handleEmailSend = async ({ to, subject, message }) => {
     setSending(true);
     try {
-      await invoicesApi.send(id);
+      await invoicesApi.send(id, { to, subject, message });
       invalidate();
-      toast.success(`Rechnung gesendet an ${invoice.client_email}`);
+      setEmailModal(false);
+      toast.success(`Rechnung gesendet an ${to}`);
     } catch (err) {
       toast.error(err.response?.data?.error || 'Senden fehlgeschlagen');
     } finally {
@@ -798,6 +807,16 @@ export default function InvoiceDetail() {
         </div>
       </Modal>
       {ConfirmDialogNode}
+
+      <SendEmailModal
+        open={emailModal}
+        onClose={() => setEmailModal(false)}
+        onSend={handleEmailSend}
+        sending={sending}
+        type="invoice"
+        doc={invoice}
+        agencyName={settings?.company_name}
+      />
     </div>
   );
 }
