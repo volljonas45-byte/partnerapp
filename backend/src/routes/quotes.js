@@ -116,7 +116,7 @@ router.post('/', async (req, res) => {
     const client = await getOne('SELECT id FROM clients WHERE id = ? AND user_id = ?', [client_id, req.workspaceUserId]);
     if (!client) return res.status(404).json({ error: 'Kunde nicht gefunden' });
 
-    const settings = await getOne('SELECT quote_prefix FROM settings WHERE user_id = ?', [req.workspaceUserId]);
+    const settings = await getOne('SELECT quote_prefix FROM settings WHERE user_id = ?', [req.userId]);
     const prefix   = settings?.quote_prefix || 'AN';
     const number   = await generateQuoteNumber(req.workspaceUserId, prefix);
     const { subtotal, tax_total, total } = calcTotals(items);
@@ -259,7 +259,7 @@ router.post('/:id/convert', async (req, res) => {
       return res.status(409).json({ error: 'Angebot wurde bereits umgewandelt' });
 
     const items = await getAll('SELECT * FROM quote_items WHERE quote_id = ? ORDER BY id ASC', [req.params.id]);
-    const settings = await getOne('SELECT invoice_prefix FROM settings WHERE user_id = ?', [req.workspaceUserId]);
+    const settings = await getOne('SELECT invoice_prefix FROM settings WHERE user_id = ?', [req.userId]);
     const prefix   = settings?.invoice_prefix || 'RE';
 
     // Generate invoice number
@@ -341,7 +341,7 @@ router.post('/:id/send', async (req, res) => {
     if (!recipient) return res.status(422).json({ error: 'Kunde hat keine E-Mail-Adresse' });
 
     const items    = await getAll('SELECT * FROM quote_items WHERE quote_id = ? ORDER BY id ASC', [req.params.id]);
-    const settings = await getOne('SELECT * FROM settings WHERE user_id = ?', [req.workspaceUserId]);
+    const settings = await getOne('SELECT * FROM settings WHERE user_id = ?', [req.userId]);
 
     const pdfBytes = await generateDocumentPDF({ ...quote, items }, settings, 'quote');
 
@@ -396,7 +396,7 @@ router.get('/:id/pdf', async (req, res) => {
     if (!quote) return res.status(404).json({ error: 'Angebot nicht gefunden' });
 
     const items    = await getAll('SELECT * FROM quote_items WHERE quote_id = ? ORDER BY id ASC', [req.params.id]);
-    const settings = await getOne('SELECT * FROM settings WHERE user_id = ?', [req.workspaceUserId]);
+    const settings = await getOne('SELECT * FROM settings WHERE user_id = ?', [req.userId]);
 
     const pdfBytes = await generateDocumentPDF({ ...quote, items }, settings, 'quote');
     res.set({

@@ -50,8 +50,7 @@ export default function Sidebar() {
       items: [
         { to: '/clients', icon: Users,    label: 'Kunden' },
         { to: '/team',    icon: UserCog,  label: 'Team'   },
-        // Einstellungen nur für Admin
-        ...(isAdmin ? [{ to: '/settings', icon: Settings, label: 'Einstellungen' }] : []),
+        { to: '/settings', icon: Settings, label: 'Einstellungen' },
       ],
     },
   ];

@@ -22,7 +22,7 @@ async function ensureSettings(userId) {
  */
 router.get('/', async (req, res) => {
   try {
-    res.json(await ensureSettings(req.workspaceUserId));
+    res.json(await ensureSettings(req.userId));
   } catch (err) {
     console.error('[settings GET /]', err);
     res.status(500).json({ error: 'Internal server error' });
@@ -47,7 +47,7 @@ router.put('/', async (req, res) => {
       email_alias, email_signature,
     } = req.body;
 
-    await ensureSettings(req.workspaceUserId);
+    await ensureSettings(req.userId);
 
     await run(`
       UPDATE settings SET
@@ -101,10 +101,10 @@ router.put('/', async (req, res) => {
       default_payment_days != null ? parseInt(default_payment_days) || 30 : 30,
       email_alias     || '',
       email_signature || '',
-      req.workspaceUserId,
+      req.userId,
     ]);
 
-    res.json(await getOne('SELECT * FROM settings WHERE user_id = ?', [req.workspaceUserId]));
+    res.json(await getOne('SELECT * FROM settings WHERE user_id = ?', [req.userId]));
   } catch (err) {
     console.error('[settings PUT /]', err);
     res.status(500).json({ error: 'Internal server error' });
@@ -122,8 +122,8 @@ router.post('/logo', async (req, res) => {
     if (!logo_base64.startsWith('data:image/')) return res.status(400).json({ error: 'Ungültiges Bildformat' });
     if (logo_base64.length > 2_800_000) return res.status(413).json({ error: 'Logo muss kleiner als 2 MB sein' });
 
-    await ensureSettings(req.workspaceUserId);
-    await run('UPDATE settings SET logo_base64 = ? WHERE user_id = ?', [logo_base64, req.workspaceUserId]);
+    await ensureSettings(req.userId);
+    await run('UPDATE settings SET logo_base64 = ? WHERE user_id = ?', [logo_base64, req.userId]);
     res.json({ success: true });
   } catch (err) {
     console.error('[settings POST /logo]', err);
@@ -136,7 +136,7 @@ router.post('/logo', async (req, res) => {
  */
 router.delete('/logo', async (req, res) => {
   try {
-    await run('UPDATE settings SET logo_base64 = NULL WHERE user_id = ?', [req.workspaceUserId]);
+    await run('UPDATE settings SET logo_base64 = NULL WHERE user_id = ?', [req.userId]);
     res.json({ success: true });
   } catch (err) {
     console.error('[settings DELETE /logo]', err);
