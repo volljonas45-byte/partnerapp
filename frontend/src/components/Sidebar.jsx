@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Users, FileText, ClipboardList, Settings, LogOut,
   Zap, Briefcase, Layers, Sparkles, ClipboardCheck, PackageCheck, Globe,
-  UserCog,
+  UserCog, Clock,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
@@ -25,8 +25,9 @@ export default function Sidebar() {
       label: null,
       items: [
         { to: '/',         icon: LayoutDashboard, label: 'Dashboard' },
-        { to: '/websites', icon: Globe,            label: 'Websites'  },
-        { to: '/projects', icon: Briefcase,        label: 'Projekte'  },
+        { to: '/websites',       icon: Globe,     label: 'Websites'      },
+        { to: '/projects',       icon: Briefcase, label: 'Projekte'      },
+        { to: '/time-tracking',  icon: Clock,     label: 'Zeiterfassung' },
       ],
     },
     {

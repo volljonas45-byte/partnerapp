@@ -447,3 +447,33 @@ DO $$ BEGIN ALTER TABLE users ADD COLUMN color              TEXT    DEFAULT '#63
 DO $$ BEGIN ALTER TABLE tasks ADD COLUMN assignee_id        INTEGER DEFAULT NULL;    EXCEPTION WHEN duplicate_column THEN NULL; END $$;
 DO $$ BEGIN ALTER TABLE clients ADD COLUMN industry TEXT DEFAULT ''; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
 DO $$ BEGIN ALTER TABLE clients ADD COLUMN website  TEXT DEFAULT ''; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+
+-- ── TIME TRACKING SCHEMA ───────────────────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS time_entries (
+  id          SERIAL PRIMARY KEY,
+  user_id     INTEGER NOT NULL,
+  project_id  INTEGER DEFAULT NULL,
+  description TEXT DEFAULT '',
+  start_time  TIMESTAMP NOT NULL,
+  end_time    TIMESTAMP DEFAULT NULL,
+  duration    INTEGER DEFAULT NULL,
+  created_at  TIMESTAMP DEFAULT NOW(),
+  FOREIGN KEY (user_id)    REFERENCES users(id),
+  FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS fahrtenbuch_entries (
+  id          SERIAL PRIMARY KEY,
+  user_id     INTEGER NOT NULL,
+  project_id  INTEGER DEFAULT NULL,
+  date        TEXT NOT NULL,
+  from_loc    TEXT DEFAULT '',
+  to_loc      TEXT DEFAULT '',
+  distance_km REAL DEFAULT 0,
+  purpose     TEXT DEFAULT '',
+  notes       TEXT DEFAULT '',
+  created_at  TIMESTAMP DEFAULT NOW(),
+  FOREIGN KEY (user_id)    REFERENCES users(id),
+  FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL
+);

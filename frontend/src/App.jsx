@@ -33,6 +33,7 @@ import Delivery                 from './pages/Delivery';
 import Team                    from './pages/Team';
 import NewTeamMember           from './pages/NewTeamMember';
 import DeliveryPublic           from './pages/DeliveryPublic';
+import TimeTracking             from './pages/TimeTracking';
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated, loading } = useAuth();
@@ -79,6 +80,7 @@ function AppRoutes() {
       <Route path="/websites"     element={<ProtectedRoute><Websites /></ProtectedRoute>} />
       <Route path="/websites/:id" element={<ProtectedRoute><ProjectDetail /></ProtectedRoute>} />
 
+      <Route path="/time-tracking" element={<ProtectedRoute><TimeTracking /></ProtectedRoute>} />
       <Route path="/wizard"   element={<ProtectedRoute><Wizard /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
       <Route path="/team"        element={<ProtectedRoute><Team /></ProtectedRoute>} />

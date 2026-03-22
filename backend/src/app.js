@@ -18,6 +18,7 @@ const legalRoutes    = require('./routes/legal');
 const areasRoutes    = require('./routes/areas');
 const workflowRoutes = require('./routes/workflow');
 const teamRoutes     = require('./routes/team');
+const timeRoutes     = require('./routes/time');
 
 const app = express();
 
@@ -81,6 +82,7 @@ app.use('/api/legal',    legalRoutes);
 app.use('/api/areas',    areasRoutes);
 app.use('/api/workflow', workflowRoutes);
 app.use('/api/team',     teamRoutes);
+app.use('/api/time',     timeRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
