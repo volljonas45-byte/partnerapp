@@ -175,15 +175,16 @@ const CHECKLIST_LABELS = {
 };
 
 const TABS = [
-  { key: 'workflow',  label: 'Workflow',   icon: GitBranch },
-  { key: 'overview',  label: 'Übersicht' },
-  { key: 'setup',     label: 'Setup'     },
-  { key: 'tasks',     label: 'Aufgaben'  },
-  { key: 'changes',   label: 'Änderungen'},
-  { key: 'notes',     label: 'Notizen'   },
-  { key: 'finance',   label: 'Finanzen'  },
-  { key: 'access',    label: 'Zugang'    },
-  { key: 'activity',  label: 'Aktivität' },
+  { key: 'dashboard', label: 'Dashboard'      },
+  { key: 'workflow',  label: 'Workflow'       },
+  { key: 'tasks',     label: 'Aufgaben'      },
+  { key: 'changes',   label: 'Änderungen'    },
+  { key: 'notes',     label: 'Notizen'       },
+  { key: 'finance',   label: 'Finanzen'      },
+  { key: 'access',    label: 'Zugang'        },
+  { key: 'overview',  label: 'Einstellungen' },
+  { key: 'setup',     label: 'Setup'         },
+  { key: 'activity',  label: 'Aktivität'     },
 ];
 
 // ── Field components ──────────────────────────────────────────────────────────
@@ -248,7 +249,7 @@ export default function ProjectDetail() {
   const qc       = useQueryClient();
   const { confirm, ConfirmDialogNode } = useConfirm();
 
-  const [activeTab,         setActiveTab]         = useState('workflow');
+  const [activeTab,         setActiveTab]         = useState('dashboard');
   const [newTask,           setNewTask]           = useState('');
   const [newNote,           setNewNote]           = useState('');
   const [newChecklistItem,  setNewChecklistItem]  = useState('');
@@ -325,7 +326,7 @@ export default function ProjectDetail() {
   const { data: activity = [] } = useQuery({
     queryKey: ['projects', id, 'activity'],
     queryFn: () => projectsApi.getActivity(id).then(r => r.data),
-    enabled: activeTab === 'activity',
+    enabled: activeTab === 'activity' || activeTab === 'dashboard',
   });
 
   const { data: changes = [] } = useQuery({
@@ -542,12 +543,11 @@ export default function ProjectDetail() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#F5F5F7', overflow: 'hidden' }}>
 
-      {/* ── TOP BAR ─────────────────────────────────────────────────────────── */}
+      {/* ── HEADER ───────────────────────────────────────────────────────────── */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: '12px',
-        padding: '0 20px', height: '52px', flexShrink: 0,
-        background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(20px)',
-        borderBottom: '1px solid rgba(0,0,0,0.07)',
+        padding: '0 28px', height: '60px', flexShrink: 0,
+        background: '#fff', borderBottom: '1px solid rgba(0,0,0,0.08)',
       }}>
         <button
           onClick={() => navigate('/websites')}
@@ -562,216 +562,280 @@ export default function ProjectDetail() {
         >
           <ArrowLeft size={14} /> Websites
         </button>
-        <span style={{ color: '#C7C7CC', fontSize: '14px' }}>/</span>
-        <span style={{ fontSize: '14px', fontWeight: '600', color: '#1D1D1F', letterSpacing: '-0.01em' }}>{project.name}</span>
+        <span style={{ color: '#D1D1D6', fontSize: '14px' }}>/</span>
+        <h1 style={{ fontSize: '16px', fontWeight: '700', color: '#1D1D1F', letterSpacing: '-0.02em', margin: 0 }}>
+          {project.name}
+        </h1>
         {project.type && (
           <span style={{ fontSize: '11px', fontWeight: '500', color: '#6E6E73', background: '#F2F2F7', padding: '2px 8px', borderRadius: '6px' }}>
             {TYPE_LABELS[project.type] || project.type}
           </span>
         )}
+        <div style={{ flex: 1 }} />
+        <HeaderStatusDropdown status={project.status} onSelect={(s) => updateMutation.mutate({ status: s })} />
+        <button
+          onClick={() => setActiveTab('overview')}
+          style={{
+            display: 'flex', alignItems: 'center', gap: '6px', padding: '7px 14px',
+            borderRadius: '8px', border: '1px solid rgba(0,0,0,0.1)',
+            background: 'transparent', color: '#424245', fontSize: '13px', fontWeight: '500',
+            cursor: 'pointer', transition: 'background 0.12s',
+          }}
+          onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.04)'}
+          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+        >
+          <Pencil size={13} /> Bearbeiten
+        </button>
       </div>
 
-      {/* ── TWO-COLUMN BODY ─────────────────────────────────────────────────── */}
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-
-        {/* ── LEFT SIDEBAR ──────────────────────────────────────────────────── */}
-        <aside style={{
-          width: '256px', flexShrink: 0,
-          background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(20px)',
-          borderRight: '1px solid rgba(0,0,0,0.07)',
-          overflowY: 'auto', padding: '20px 16px',
-          display: 'flex', flexDirection: 'column', gap: '20px',
-        }}>
-
-          {/* Health + Phase */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{
-                display: 'inline-flex', alignItems: 'center', gap: '5px',
-                padding: '4px 10px', borderRadius: '99px', fontSize: '12px', fontWeight: '600',
-                background: health === 'critical' ? 'rgba(239,68,68,0.10)' : health === 'warning' ? 'rgba(245,158,11,0.10)' : 'rgba(52,199,89,0.10)',
-                color:      health === 'critical' ? '#EF4444'               : health === 'warning' ? '#F59E0B'               : '#34C759',
-              }}>
-                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'currentColor' }} />
-                {healthCfg.label}
+      {/* ── TAB BAR ──────────────────────────────────────────────────────────── */}
+      <div style={{
+        display: 'flex', gap: 0, background: '#fff',
+        borderBottom: '1px solid rgba(0,0,0,0.08)',
+        padding: '0 28px', flexShrink: 0, overflowX: 'auto',
+      }}>
+        {TABS.map(tab => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            style={{
+              padding: '14px 16px', fontSize: '13px',
+              fontWeight: activeTab === tab.key ? '600' : '400',
+              color: activeTab === tab.key ? '#1D1D1F' : '#86868B',
+              background: 'transparent', border: 'none',
+              borderBottom: `2px solid ${activeTab === tab.key ? '#1D1D1F' : 'transparent'}`,
+              cursor: 'pointer', transition: 'color 0.12s',
+              display: 'flex', alignItems: 'center', gap: '6px',
+              whiteSpace: 'nowrap', marginBottom: '-1px', letterSpacing: '-0.01em',
+            }}
+            onMouseEnter={e => { if (activeTab !== tab.key) e.currentTarget.style.color = '#3C3C43'; }}
+            onMouseLeave={e => { if (activeTab !== tab.key) e.currentTarget.style.color = '#86868B'; }}
+          >
+            {tab.label}
+            {tab.key === 'tasks' && tasks.length > 0 && (
+              <span style={{ fontSize: '10px', fontWeight: '600', background: '#F2F2F7', color: '#6E6E73', padding: '1px 6px', borderRadius: '99px' }}>
+                {doneTasks}/{tasks.length}
               </span>
-            </div>
-            <div>
-              <span style={{
-                display: 'inline-flex', alignItems: 'center', gap: '5px',
-                padding: '3px 10px', borderRadius: '99px', fontSize: '12px', fontWeight: '600',
-                background: isLastPhase ? 'rgba(52,199,89,0.10)' : 'rgba(0,113,227,0.10)',
-                color: isLastPhase ? '#34C759' : '#0071E3',
-              }}>
-                {phaseCfg?.label || 'Startphase'}
+            )}
+            {tab.key === 'changes' && openChanges > 0 && (
+              <span style={{ fontSize: '10px', fontWeight: '700', background: 'rgba(245,158,11,0.15)', color: '#F59E0B', padding: '1px 6px', borderRadius: '99px' }}>
+                {openChanges}
               </span>
-              <div style={{ marginTop: '8px', height: '3px', background: '#F2F2F7', borderRadius: '2px' }}>
-                <div style={{
-                  height: '100%', borderRadius: '2px', transition: 'width 0.4s',
-                  background: isLastPhase ? '#34C759' : '#0071E3',
-                  width: `${Math.round(((phaseIdx + 1) / PHASE_ORDER.length) * 100)}%`,
-                }} />
-              </div>
-              <p style={{ fontSize: '10px', color: '#8E8E93', marginTop: '4px' }}>
-                Schritt {phaseIdx + 1} von {PHASE_ORDER.length}
-              </p>
-            </div>
-          </div>
-
-          {/* Divider */}
-          <div style={{ height: '1px', background: '#F2F2F7', margin: '0 -4px' }} />
-
-          {/* Project info */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {project.client_name && (
-              <div>
-                <p style={{ fontSize: '10px', fontWeight: '600', color: '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '3px' }}>Kunde</p>
-                <button
-                  onClick={() => project.client_id && navigate(`/clients/${project.client_id}`)}
-                  style={{ fontSize: '13px', fontWeight: '500', color: project.client_id ? '#0071E3' : '#1D1D1F', background: 'none', border: 'none', padding: 0, cursor: project.client_id ? 'pointer' : 'default', textAlign: 'left' }}
-                >
-                  {project.client_name}
-                </button>
-              </div>
             )}
-            {(project.assignee_name || project.assignee) && (
-              <div>
-                <p style={{ fontSize: '10px', fontWeight: '600', color: '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>Zuständig</p>
-                {project.assignee_name ? (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
-                    <div style={{
-                      width: '22px', height: '22px', borderRadius: '50%', flexShrink: 0,
-                      background: project.assignee_color || '#6366f1',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: '9px', fontWeight: '700', color: '#fff',
-                    }}>
-                      {project.assignee_name.trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase()}
-                    </div>
-                    <span style={{ fontSize: '13px', fontWeight: '500', color: '#1D1D1F' }}>{project.assignee_name}</span>
-                  </div>
-                ) : (
-                  <span style={{ fontSize: '13px', color: '#1D1D1F' }}>{project.assignee}</span>
-                )}
+          </button>
+        ))}
+      </div>
+
+      {/* ── CONTENT ──────────────────────────────────────────────────────────── */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '28px 32px' }}>
+
+      {/* ── DASHBOARD ────────────────────────────────────────────────────────── */}
+      {activeTab === 'dashboard' && (() => {
+        const daysLeft = project.deadline
+          ? Math.floor((new Date(project.deadline) - new Date()) / 86400000)
+          : null;
+        const openCh = changes.filter(c => c.status !== 'erledigt');
+        const urgentCh = openCh.filter(c => c.priority === 'kritisch' || c.priority === 'hoch');
+        const taskPct = tasks.length > 0 ? Math.round((doneTasks / tasks.length) * 100) : 0;
+        const phaseProgress = PHASE_ORDER.length > 0 ? Math.round(((phaseIdx + 1) / PHASE_ORDER.length) * 100) : 0;
+        const card = { background: '#fff', borderRadius: '16px', padding: '22px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' };
+        return (
+          <div>
+            {/* KPI row */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '20px' }}>
+
+              {/* Aufgaben */}
+              <div style={card}>
+                <p style={{ fontSize: '11px', fontWeight: '600', color: '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px' }}>Aufgaben</p>
+                <p style={{ fontSize: '32px', fontWeight: '700', letterSpacing: '-0.04em', lineHeight: 1, marginBottom: '12px', color: doneTasks === tasks.length && tasks.length > 0 ? '#34C759' : '#1D1D1F' }}>
+                  {doneTasks}<span style={{ fontSize: '18px', color: '#C7C7CC', fontWeight: '400' }}>/{tasks.length || 0}</span>
+                </p>
+                <div style={{ height: '4px', background: '#F2F2F7', borderRadius: '2px' }}>
+                  <div style={{ height: '100%', borderRadius: '2px', transition: 'width 0.5s', background: doneTasks === tasks.length && tasks.length > 0 ? '#34C759' : '#0071E3', width: `${taskPct}%` }} />
+                </div>
               </div>
-            )}
-            {project.deadline && (
-              <div>
-                <p style={{ fontSize: '10px', fontWeight: '600', color: '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '3px' }}>Deadline</p>
-                <p style={{ fontSize: '13px', fontWeight: '500', color: isPast(project.deadline) ? '#EF4444' : '#1D1D1F' }}>
-                  {formatDate(project.deadline)}
-                  {isPast(project.deadline) && <span style={{ fontSize: '11px', marginLeft: '4px', color: '#EF4444' }}>überschritten</span>}
+
+              {/* Änderungen */}
+              <div style={{ ...card, background: urgentCh.length > 0 ? 'rgba(239,68,68,0.03)' : openCh.length > 0 ? 'rgba(245,158,11,0.03)' : '#fff', border: `1px solid ${urgentCh.length > 0 ? 'rgba(239,68,68,0.2)' : openCh.length > 0 ? 'rgba(245,158,11,0.2)' : 'rgba(0,0,0,0.06)'}` }}>
+                <p style={{ fontSize: '11px', fontWeight: '600', color: '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px' }}>Offene Änderungen</p>
+                <p style={{ fontSize: '32px', fontWeight: '700', letterSpacing: '-0.04em', lineHeight: 1, marginBottom: '6px', color: urgentCh.length > 0 ? '#EF4444' : openCh.length > 0 ? '#F59E0B' : '#34C759' }}>
+                  {openCh.length}
+                </p>
+                <p style={{ fontSize: '12px', color: '#8E8E93' }}>
+                  {openCh.length === 0 ? 'Alle erledigt ✓' : urgentCh.length > 0 ? `${urgentCh.length} dringend` : 'offen'}
                 </p>
               </div>
-            )}
-            {project.budget != null && (
-              <div>
-                <p style={{ fontSize: '10px', fontWeight: '600', color: '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '3px' }}>Budget</p>
-                <p style={{ fontSize: '13px', fontWeight: '500', color: '#1D1D1F' }}>{formatCurrency(project.budget)}</p>
+
+              {/* Budget */}
+              <div style={card}>
+                <p style={{ fontSize: '11px', fontWeight: '600', color: '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px' }}>Budget</p>
+                <p style={{ fontSize: '32px', fontWeight: '700', letterSpacing: '-0.04em', lineHeight: 1, marginBottom: '6px', color: '#1D1D1F' }}>
+                  {project.budget ? `${Number(project.budget).toLocaleString('de-DE')} €` : '—'}
+                </p>
+                <p style={{ fontSize: '12px', color: '#8E8E93' }}>{BILLING_LABELS[project.billing_type] || 'Einmalig'}</p>
               </div>
-            )}
-          </div>
 
-          {/* Divider */}
-          <div style={{ height: '1px', background: '#F2F2F7', margin: '0 -4px' }} />
-
-          {/* Quick Stats */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <p style={{ fontSize: '10px', fontWeight: '600', color: '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Übersicht</p>
-            {tasks.length > 0 && (
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
-                  <span style={{ fontSize: '12px', color: '#3C3C43' }}>Aufgaben</span>
-                  <span style={{ fontSize: '12px', fontWeight: '600', color: '#1D1D1F' }}>{doneTasks}/{tasks.length}</span>
-                </div>
-                <div style={{ height: '3px', background: '#F2F2F7', borderRadius: '2px' }}>
-                  <div style={{ height: '100%', borderRadius: '2px', background: '#34C759', width: `${tasks.length ? Math.round((doneTasks / tasks.length) * 100) : 0}%`, transition: 'width 0.3s' }} />
-                </div>
-              </div>
-            )}
-            {openChanges > 0 && (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: '12px', color: '#3C3C43' }}>Offene Änderungen</span>
-                <span style={{ fontSize: '11px', fontWeight: '700', color: '#F59E0B', background: 'rgba(245,158,11,0.12)', padding: '2px 7px', borderRadius: '99px' }}>{openChanges}</span>
-              </div>
-            )}
-          </div>
-
-          {/* Divider */}
-          <div style={{ height: '1px', background: '#F2F2F7', margin: '0 -4px' }} />
-
-          {/* Next Step */}
-          <div style={{
-            padding: '10px 12px', borderRadius: '10px',
-            background: nextStep.urgent ? 'rgba(239,68,68,0.06)' : '#F9F9FB',
-            border: `1px solid ${nextStep.urgent ? 'rgba(239,68,68,0.15)' : '#F2F2F7'}`,
-          }}>
-            <p style={{ fontSize: '10px', fontWeight: '600', color: nextStep.urgent ? '#EF4444' : '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
-              Nächster Schritt
-            </p>
-            <p style={{ fontSize: '12px', color: nextStep.urgent ? '#EF4444' : '#3C3C43', lineHeight: 1.4 }}>
-              {nextStep.text}
-            </p>
-          </div>
-
-          {/* Edit button */}
-          <button
-            onClick={() => setActiveTab('overview')}
-            style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-              padding: '8px', borderRadius: '10px', fontSize: '12px', fontWeight: '500',
-              color: '#86868B', background: '#F2F2F7', border: 'none', cursor: 'pointer',
-              transition: 'background 0.12s, color 0.12s',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.background = '#E5E5EA'; e.currentTarget.style.color = '#1D1D1F'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = '#F2F2F7'; e.currentTarget.style.color = '#86868B'; }}
-          >
-            <Pencil size={12} /> Projekt bearbeiten
-          </button>
-        </aside>
-
-        {/* ── RIGHT MAIN ────────────────────────────────────────────────────── */}
-        <main style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
-
-          {/* Tab bar */}
-          <div style={{
-            display: 'flex', gap: 0,
-            borderBottom: '1px solid rgba(0,0,0,0.07)',
-            background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(10px)',
-            paddingLeft: '24px', flexShrink: 0, position: 'sticky', top: 0, zIndex: 10,
-          }}>
-            {TABS.map(tab => (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                style={{
-                  padding: '12px 16px', fontSize: '13px', fontWeight: activeTab === tab.key ? '600' : '400',
-                  color: activeTab === tab.key ? '#1D1D1F' : '#86868B',
-                  background: 'transparent', border: 'none', borderBottom: `2px solid ${activeTab === tab.key ? '#1D1D1F' : 'transparent'}`,
-                  cursor: 'pointer', transition: 'color 0.12s, border-color 0.12s',
-                  display: 'flex', alignItems: 'center', gap: '6px',
-                  marginBottom: '-1px', letterSpacing: '-0.01em',
-                }}
-                onMouseEnter={e => { if (activeTab !== tab.key) e.currentTarget.style.color = '#3C3C43'; }}
-                onMouseLeave={e => { if (activeTab !== tab.key) e.currentTarget.style.color = '#86868B'; }}
-              >
-                {tab.icon && <tab.icon size={12} />}
-                {tab.label}
-                {tab.key === 'tasks' && tasks.length > 0 && (
-                  <span style={{ fontSize: '10px', fontWeight: '600', background: '#F2F2F7', color: '#6E6E73', padding: '1px 6px', borderRadius: '99px' }}>
-                    {doneTasks}/{tasks.length}
-                  </span>
+              {/* Deadline */}
+              <div style={{ ...card, background: daysLeft !== null && daysLeft < 0 ? 'rgba(239,68,68,0.03)' : daysLeft !== null && daysLeft <= 7 ? 'rgba(245,158,11,0.03)' : '#fff', border: `1px solid ${daysLeft !== null && daysLeft < 0 ? 'rgba(239,68,68,0.2)' : daysLeft !== null && daysLeft <= 7 ? 'rgba(245,158,11,0.2)' : 'rgba(0,0,0,0.06)'}` }}>
+                <p style={{ fontSize: '11px', fontWeight: '600', color: '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px' }}>Deadline</p>
+                {daysLeft !== null ? (
+                  <>
+                    <p style={{ fontSize: '32px', fontWeight: '700', letterSpacing: '-0.04em', lineHeight: 1, marginBottom: '6px', color: daysLeft < 0 ? '#EF4444' : daysLeft <= 7 ? '#F59E0B' : '#1D1D1F' }}>
+                      {daysLeft < 0 ? `+${Math.abs(daysLeft)}` : daysLeft}
+                      <span style={{ fontSize: '14px', fontWeight: '400', color: '#8E8E93', marginLeft: '4px' }}>Tage</span>
+                    </p>
+                    <p style={{ fontSize: '12px', color: '#8E8E93' }}>
+                      {daysLeft < 0 ? 'überschritten' : daysLeft === 0 ? 'heute fällig' : 'verbleibend'}
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p style={{ fontSize: '32px', fontWeight: '700', letterSpacing: '-0.04em', lineHeight: 1, marginBottom: '6px', color: '#C7C7CC' }}>—</p>
+                    <p style={{ fontSize: '12px', color: '#8E8E93' }}>kein Datum</p>
+                  </>
                 )}
-                {tab.key === 'changes' && openChanges > 0 && (
-                  <span style={{ fontSize: '10px', fontWeight: '700', background: 'rgba(245,158,11,0.15)', color: '#F59E0B', padding: '1px 6px', borderRadius: '99px' }}>
-                    {openChanges}
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
+              </div>
+            </div>
 
-          {/* Tab content */}
-          <div style={{ padding: '28px 32px', flex: 1 }}>
+            {/* Grid 2×2 */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+
+              {/* Workflow card */}
+              <div style={card}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                  <p style={{ fontSize: '12px', fontWeight: '600', color: '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Workflow</p>
+                  <button onClick={() => setActiveTab('workflow')} style={{ fontSize: '12px', color: '#0071E3', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '500' }}>Details →</button>
+                </div>
+                {phaseCfg ? (
+                  <>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', padding: '4px 10px', borderRadius: '99px', fontSize: '12px', fontWeight: '600', background: isLastPhase ? 'rgba(52,199,89,0.10)' : 'rgba(0,113,227,0.10)', color: isLastPhase ? '#34C759' : '#0071E3' }}>
+                        {phaseCfg.label}
+                      </span>
+                      <span style={{ fontSize: '12px', color: '#8E8E93' }}>Schritt {phaseIdx + 1} / {PHASE_ORDER.length}</span>
+                    </div>
+                    <div style={{ height: '6px', background: '#F2F2F7', borderRadius: '3px', marginBottom: '16px' }}>
+                      <div style={{ height: '100%', borderRadius: '3px', background: isLastPhase ? '#34C759' : '#0071E3', width: `${phaseProgress}%`, transition: 'width 0.5s' }} />
+                    </div>
+                    <div style={{ padding: '12px', borderRadius: '10px', background: nextStep.urgent ? 'rgba(239,68,68,0.06)' : '#F9F9FB', border: `1px solid ${nextStep.urgent ? 'rgba(239,68,68,0.15)' : '#F2F2F7'}` }}>
+                      <p style={{ fontSize: '10px', fontWeight: '600', color: nextStep.urgent ? '#EF4444' : '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>Nächster Schritt</p>
+                      <p style={{ fontSize: '13px', color: nextStep.urgent ? '#EF4444' : '#3C3C43', lineHeight: 1.4 }}>{nextStep.text}</p>
+                    </div>
+                  </>
+                ) : (
+                  <div style={{ padding: '20px', textAlign: 'center' }}>
+                    <p style={{ fontSize: '13px', color: '#8E8E93' }}>Kein Workflow gestartet.</p>
+                    <button onClick={() => setActiveTab('workflow')} style={{ marginTop: '10px', fontSize: '13px', color: '#0071E3', background: 'none', border: 'none', cursor: 'pointer' }}>Workflow starten →</button>
+                  </div>
+                )}
+              </div>
+
+              {/* Aufgaben card */}
+              <div style={card}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                  <p style={{ fontSize: '12px', fontWeight: '600', color: '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Aufgaben</p>
+                  <button onClick={() => setActiveTab('tasks')} style={{ fontSize: '12px', color: '#0071E3', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '500' }}>Alle →</button>
+                </div>
+                {tasks.length === 0 ? (
+                  <div style={{ padding: '20px', textAlign: 'center' }}>
+                    <p style={{ fontSize: '13px', color: '#8E8E93' }}>Noch keine Aufgaben.</p>
+                    <button onClick={() => setActiveTab('tasks')} style={{ marginTop: '10px', fontSize: '13px', color: '#0071E3', background: 'none', border: 'none', cursor: 'pointer' }}>Aufgabe anlegen →</button>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    {tasks.slice(0, 6).map(task => {
+                      const isDone = task.status === 'done';
+                      const isIn = task.status === 'doing';
+                      return (
+                        <div
+                          key={task.id}
+                          onClick={() => cycleTask(task)}
+                          style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 10px', borderRadius: '8px', background: isDone ? '#FAFAFA' : '#fff', border: '1px solid #F2F2F7', cursor: 'pointer' }}
+                          onMouseEnter={e => e.currentTarget.style.background = '#F5F5F7'}
+                          onMouseLeave={e => e.currentTarget.style.background = isDone ? '#FAFAFA' : '#fff'}
+                        >
+                          <div style={{ width: '18px', height: '18px', borderRadius: '50%', flexShrink: 0, border: `2px solid ${isDone ? '#34C759' : isIn ? '#0071E3' : '#D1D1D6'}`, background: isDone ? '#34C759' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            {isDone && <Check size={10} color="#fff" strokeWidth={3} />}
+                            {isIn && <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#0071E3' }} />}
+                          </div>
+                          <span style={{ flex: 1, fontSize: '13px', color: isDone ? '#8E8E93' : '#1D1D1F', textDecoration: isDone ? 'line-through' : 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {task.title}
+                          </span>
+                          {isIn && <span style={{ fontSize: '10px', fontWeight: '600', background: 'rgba(0,113,227,0.1)', color: '#0071E3', padding: '2px 6px', borderRadius: '4px', flexShrink: 0 }}>Aktiv</span>}
+                        </div>
+                      );
+                    })}
+                    {tasks.length > 6 && (
+                      <button onClick={() => setActiveTab('tasks')} style={{ fontSize: '12px', color: '#8E8E93', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 10px', textAlign: 'left' }}>
+                        +{tasks.length - 6} weitere...
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Änderungen card */}
+              <div style={card}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                  <p style={{ fontSize: '12px', fontWeight: '600', color: '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Offene Änderungen</p>
+                  <button onClick={() => setActiveTab('changes')} style={{ fontSize: '12px', color: '#0071E3', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '500' }}>Alle →</button>
+                </div>
+                {openCh.length === 0 ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '14px', background: 'rgba(52,199,89,0.06)', borderRadius: '10px', border: '1px solid rgba(52,199,89,0.15)' }}>
+                    <CheckCircle2 size={15} color="#34C759" />
+                    <p style={{ fontSize: '13px', color: '#34C759', fontWeight: '500' }}>Alle Änderungen erledigt</p>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    {openCh.slice(0, 5).map(ch => {
+                      const tc = CHANGE_TYPE_CONFIG[ch.type] || CHANGE_TYPE_CONFIG.intern;
+                      const pc = PRIORITY_CONFIG[ch.priority] || PRIORITY_CONFIG.mittel;
+                      return (
+                        <div key={ch.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', borderRadius: '8px', border: '1px solid #F2F2F7' }}>
+                          <div style={{ width: '3px', alignSelf: 'stretch', borderRadius: '2px', background: pc.color, flexShrink: 0 }} />
+                          <span style={{ fontSize: '11px', fontWeight: '600', padding: '2px 7px', borderRadius: '5px', background: tc.bg, color: tc.color, flexShrink: 0 }}>{tc.label}</span>
+                          <span style={{ flex: 1, fontSize: '13px', color: '#1D1D1F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ch.title}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Aktivität card */}
+              <div style={card}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                  <p style={{ fontSize: '12px', fontWeight: '600', color: '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Aktivität</p>
+                  <button onClick={() => setActiveTab('activity')} style={{ fontSize: '12px', color: '#0071E3', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '500' }}>Alle →</button>
+                </div>
+                {activity.length === 0 ? (
+                  <p style={{ fontSize: '13px', color: '#8E8E93' }}>Noch keine Aktivitäten.</p>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    {activity.slice(0, 6).map(entry => (
+                      <div key={entry.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '9px 0', borderBottom: '1px solid #F9F9FB' }}>
+                        <div style={{ width: '26px', height: '26px', borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: entry.type === 'status_change' ? 'rgba(0,113,227,0.08)' : entry.type === 'note_added' ? 'rgba(139,92,246,0.08)' : 'rgba(52,199,89,0.08)' }}>
+                          {entry.type === 'status_change' && <Activity size={12} color="#0071E3" />}
+                          {entry.type === 'note_added' && <MessageSquare size={12} color="#8B5CF6" />}
+                          {entry.type === 'created' && <CheckCircle2 size={12} color="#34C759" />}
+                          {!['status_change','note_added','created'].includes(entry.type) && <Clock size={12} color="#8E8E93" />}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p style={{ fontSize: '13px', color: '#3C3C43', lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{entry.message}</p>
+                          <p style={{ fontSize: '11px', color: '#8E8E93', marginTop: '2px' }}>
+                            {new Date(entry.created_at).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ── WORKFLOW ──────────────────────────────────────────────────────── */}
       {activeTab === 'workflow' && (
@@ -2020,8 +2084,6 @@ export default function ProjectDetail() {
       )}
 
       {ConfirmDialogNode}
-          </div>
-        </main>
       </div>
     </div>
   );
