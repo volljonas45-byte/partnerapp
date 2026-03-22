@@ -146,6 +146,25 @@ const CRED_TYPE_OPTIONS     = ['password','guide','other'];
 const TASK_STATUSES = ['todo','doing','done'];
 const TASK_LABELS   = { todo:'Offen', doing:'In Arbeit', done:'Fertig' };
 
+const PRIORITY_ORDER  = ['kritisch', 'hoch', 'mittel', 'niedrig'];
+const PRIORITY_CONFIG = {
+  kritisch: { label: 'Kritisch', color: '#EF4444' },
+  hoch:     { label: 'Hoch',     color: '#F59E0B' },
+  mittel:   { label: 'Mittel',   color: '#EAB308' },
+  niedrig:  { label: 'Niedrig',  color: '#6B7280' },
+};
+const CHANGE_TYPE_CONFIG = {
+  bug:    { label: 'Bug',    bg: '#FEE2E2', color: '#DC2626' },
+  kunde:  { label: 'Kunde',  bg: '#DBEAFE', color: '#2563EB' },
+  intern: { label: 'Intern', bg: '#EDE9FE', color: '#7C3AED' },
+};
+const CHANGE_STATUS_CYCLE = ['offen', 'in_bearbeitung', 'erledigt'];
+const CHANGE_STATUS_CONFIG = {
+  offen:          { label: 'Offen',          bg: '#F2F2F7', color: '#6E6E73' },
+  in_bearbeitung: { label: 'In Bearbeitung', bg: '#E8F1FF', color: '#0071E3' },
+  erledigt:       { label: 'Erledigt',       bg: '#D1FAE5', color: '#059669' },
+};
+
 const CHECKLIST_LABELS = {
   domain_connected:    'Domain verbunden',
   imprint_added:       'Impressum eingetragen',
@@ -156,10 +175,11 @@ const CHECKLIST_LABELS = {
 };
 
 const TABS = [
-  { key: 'workflow',  label: 'Workflow',  icon: GitBranch },
+  { key: 'workflow',  label: 'Workflow',   icon: GitBranch },
   { key: 'overview',  label: 'Übersicht' },
   { key: 'setup',     label: 'Setup'     },
   { key: 'tasks',     label: 'Aufgaben'  },
+  { key: 'changes',   label: 'Änderungen'},
   { key: 'notes',     label: 'Notizen'   },
   { key: 'finance',   label: 'Finanzen'  },
   { key: 'access',    label: 'Zugang'    },
@@ -242,6 +262,14 @@ export default function ProjectDetail() {
   const [credForm,      setCredForm]      = useState({ label: '', type: 'password', link: '', note: '' });
   const [editingCredId, setEditingCredId] = useState(null);
 
+  // Changes state
+  const [changeTypeFilter,   setChangeTypeFilter]   = useState('all');
+  const [changeStatusFilter, setChangeStatusFilter] = useState('all');
+  const [changeForm,         setChangeForm]         = useState({ title: '', type: 'intern', priority: 'mittel', description: '' });
+  const [expandedChangeId,   setExpandedChangeId]   = useState(null);
+  const [editingChangeId,    setEditingChangeId]    = useState(null);
+  const [editChangeForm,     setEditChangeForm]     = useState({});
+
   // ── Data ──────────────────────────────────────────────────────────────────
   const { data: project, isLoading } = useQuery({
     queryKey: ['projects', id],
@@ -298,6 +326,11 @@ export default function ProjectDetail() {
     queryKey: ['projects', id, 'activity'],
     queryFn: () => projectsApi.getActivity(id).then(r => r.data),
     enabled: activeTab === 'activity',
+  });
+
+  const { data: changes = [] } = useQuery({
+    queryKey: ['projects', id, 'changes'],
+    queryFn: () => projectsApi.getChanges(id),
   });
 
   // ── Mutations ─────────────────────────────────────────────────────────────
@@ -400,6 +433,33 @@ export default function ProjectDetail() {
   const deleteNoteMutation = useMutation({
     mutationFn: (nId) => projectsApi.deleteNote(id, nId),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['projects', id, 'notes'] }),
+  });
+
+  const createChangeMutation = useMutation({
+    mutationFn: (data) => projectsApi.createChange(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['projects', id, 'changes'] });
+      setChangeForm({ title: '', type: 'intern', priority: 'mittel', description: '' });
+      toast.success('Änderung angelegt');
+    },
+    onError: err => toast.error(err.response?.data?.error || 'Fehler'),
+  });
+
+  const updateChangeMutation = useMutation({
+    mutationFn: ({ cid, data }) => projectsApi.updateChange(id, cid, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['projects', id, 'changes'] });
+      setEditingChangeId(null);
+    },
+    onError: err => toast.error(err.response?.data?.error || 'Fehler'),
+  });
+
+  const deleteChangeMutation = useMutation({
+    mutationFn: (cid) => projectsApi.deleteChange(id, cid),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['projects', id, 'changes'] });
+      toast.success('Gelöscht');
+    },
   });
 
   // ── Handlers ─────────────────────────────────────────────────────────────
@@ -547,6 +607,11 @@ export default function ProjectDetail() {
             {tab.key === 'tasks' && tasks.length > 0 && (
               <span className="ml-1.5 text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full">
                 {doneTasks}/{tasks.length}
+              </span>
+            )}
+            {tab.key === 'changes' && changes.filter(c => c.status !== 'erledigt').length > 0 && (
+              <span className="ml-1.5 text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-medium">
+                {changes.filter(c => c.status !== 'erledigt').length}
               </span>
             )}
           </button>
@@ -1376,6 +1441,363 @@ export default function ProjectDetail() {
           </div>
         </div>
       )}
+      {/* ── CHANGES ───────────────────────────────────────────────────────── */}
+      {activeTab === 'changes' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+
+          {/* Quick-add form */}
+          <div style={{ background: '#fff', borderRadius: '14px', border: '1px solid #F2F2F7', padding: '16px' }}>
+            <p style={{ fontSize: '12px', fontWeight: '600', color: '#86868B', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '12px' }}>
+              Neue Änderung
+            </p>
+            <form
+              onSubmit={e => {
+                e.preventDefault();
+                if (!changeForm.title.trim()) return toast.error('Titel ist erforderlich');
+                createChangeMutation.mutate(changeForm);
+              }}
+              style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}
+            >
+              <input
+                className="input w-full"
+                placeholder="Was soll geändert werden?"
+                value={changeForm.title}
+                onChange={e => setChangeForm(f => ({ ...f, title: e.target.value }))}
+                style={{ fontSize: '14px' }}
+              />
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                {/* Type */}
+                <div style={{ display: 'flex', gap: '4px' }}>
+                  {Object.entries(CHANGE_TYPE_CONFIG).map(([k, v]) => (
+                    <button
+                      key={k} type="button"
+                      onClick={() => setChangeForm(f => ({ ...f, type: k }))}
+                      style={{
+                        padding: '5px 12px', borderRadius: '99px', fontSize: '12px', fontWeight: '500',
+                        border: 'none', cursor: 'pointer', transition: 'all 0.12s',
+                        background: changeForm.type === k ? v.bg : '#F2F2F7',
+                        color: changeForm.type === k ? v.color : '#6E6E73',
+                      }}
+                    >{v.label}</button>
+                  ))}
+                </div>
+                {/* Priority */}
+                <div style={{ display: 'flex', gap: '4px' }}>
+                  {PRIORITY_ORDER.map(k => {
+                    const v = PRIORITY_CONFIG[k];
+                    return (
+                      <button
+                        key={k} type="button"
+                        onClick={() => setChangeForm(f => ({ ...f, priority: k }))}
+                        style={{
+                          padding: '5px 12px', borderRadius: '99px', fontSize: '12px', fontWeight: '500',
+                          border: `1.5px solid ${changeForm.priority === k ? v.color : 'transparent'}`,
+                          background: changeForm.priority === k ? v.color + '18' : '#F2F2F7',
+                          color: changeForm.priority === k ? v.color : '#6E6E73',
+                          cursor: 'pointer', transition: 'all 0.12s',
+                        }}
+                      >{v.label}</button>
+                    );
+                  })}
+                </div>
+                <button
+                  type="submit"
+                  disabled={!changeForm.title.trim() || createChangeMutation.isPending}
+                  className="btn-primary"
+                  style={{ fontSize: '13px', marginLeft: 'auto' }}
+                >
+                  <Plus size={13}/> Hinzufügen
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {/* Filter bar */}
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <select
+              className="input"
+              value={changeTypeFilter}
+              onChange={e => setChangeTypeFilter(e.target.value)}
+              style={{ fontSize: '13px', width: 'auto' }}
+            >
+              <option value="all">Alle Typen</option>
+              <option value="bug">Bug</option>
+              <option value="kunde">Kunde</option>
+              <option value="intern">Intern</option>
+            </select>
+            <select
+              className="input"
+              value={changeStatusFilter}
+              onChange={e => setChangeStatusFilter(e.target.value)}
+              style={{ fontSize: '13px', width: 'auto' }}
+            >
+              <option value="all">Alle Status</option>
+              <option value="offen">Offen</option>
+              <option value="in_bearbeitung">In Bearbeitung</option>
+              <option value="erledigt">Erledigt</option>
+            </select>
+            <span style={{ fontSize: '12px', color: '#86868B', marginLeft: 'auto' }}>
+              {changes.filter(c =>
+                (changeTypeFilter === 'all' || c.type === changeTypeFilter) &&
+                (changeStatusFilter === 'all' || c.status === changeStatusFilter)
+              ).length} Einträge
+            </span>
+          </div>
+
+          {/* List */}
+          {(() => {
+            const filtered = changes
+              .filter(c =>
+                (changeTypeFilter === 'all' || c.type === changeTypeFilter) &&
+                (changeStatusFilter === 'all' || c.status === changeStatusFilter)
+              )
+              .sort((a, b) => {
+                // Erledigte ans Ende
+                if (a.status === 'erledigt' && b.status !== 'erledigt') return 1;
+                if (b.status === 'erledigt' && a.status !== 'erledigt') return -1;
+                // Nach Priorität
+                return PRIORITY_ORDER.indexOf(a.priority) - PRIORITY_ORDER.indexOf(b.priority);
+              });
+
+            if (filtered.length === 0) {
+              return (
+                <div style={{ background: '#fff', borderRadius: '14px', border: '1px solid #F2F2F7', padding: '40px', textAlign: 'center' }}>
+                  <p style={{ fontSize: '14px', color: '#86868B' }}>
+                    {changes.length === 0 ? 'Noch keine Änderungen — leg die erste an.' : 'Keine Einträge für diesen Filter.'}
+                  </p>
+                </div>
+              );
+            }
+
+            return (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {filtered.map(ch => {
+                  const priCfg = PRIORITY_CONFIG[ch.priority] || PRIORITY_CONFIG.mittel;
+                  const typCfg = CHANGE_TYPE_CONFIG[ch.type]  || CHANGE_TYPE_CONFIG.intern;
+                  const staCfg = CHANGE_STATUS_CONFIG[ch.status] || CHANGE_STATUS_CONFIG.offen;
+                  const isExpanded = expandedChangeId === ch.id;
+                  const isEditing  = editingChangeId  === ch.id;
+                  const isDone     = ch.status === 'erledigt';
+
+                  return (
+                    <div
+                      key={ch.id}
+                      style={{
+                        background: '#fff',
+                        borderRadius: '14px',
+                        border: '1px solid #F2F2F7',
+                        borderLeft: `3px solid ${isDone ? '#D1FAE5' : priCfg.color}`,
+                        overflow: 'hidden',
+                        opacity: isDone ? 0.7 : 1,
+                        transition: 'opacity 0.15s',
+                      }}
+                    >
+                      {/* Card header */}
+                      <div
+                        style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}
+                        onClick={() => setExpandedChangeId(isExpanded ? null : ch.id)}
+                      >
+                        {/* Priority dot */}
+                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: priCfg.color, flexShrink: 0 }} />
+
+                        {/* Title */}
+                        <span style={{
+                          flex: 1, fontSize: '14px', fontWeight: '500',
+                          color: isDone ? '#8E8E93' : '#1D1D1F',
+                          textDecoration: isDone ? 'line-through' : 'none',
+                        }}>
+                          {ch.title}
+                        </span>
+
+                        {/* Type badge */}
+                        <span style={{
+                          fontSize: '11px', fontWeight: '600', padding: '2px 8px', borderRadius: '99px',
+                          background: typCfg.bg, color: typCfg.color, flexShrink: 0,
+                        }}>
+                          {typCfg.label}
+                        </span>
+
+                        {/* Status chip (clickable to cycle) */}
+                        <button
+                          onClick={e => {
+                            e.stopPropagation();
+                            const next = CHANGE_STATUS_CYCLE[(CHANGE_STATUS_CYCLE.indexOf(ch.status) + 1) % CHANGE_STATUS_CYCLE.length];
+                            updateChangeMutation.mutate({ cid: ch.id, data: { status: next } });
+                          }}
+                          style={{
+                            fontSize: '11px', fontWeight: '600', padding: '3px 10px', borderRadius: '99px',
+                            background: staCfg.bg, color: staCfg.color,
+                            border: 'none', cursor: 'pointer', flexShrink: 0,
+                            transition: 'opacity 0.12s',
+                          }}
+                          onMouseEnter={e => e.currentTarget.style.opacity = '0.75'}
+                          onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+                          title="Klicken zum Wechseln"
+                        >
+                          {staCfg.label}
+                        </button>
+
+                        {/* Assignee avatar */}
+                        {ch.assignee_name && (
+                          <div style={{
+                            width: '22px', height: '22px', borderRadius: '50%', flexShrink: 0,
+                            background: ch.assignee_color || '#6366f1',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: '9px', fontWeight: '700', color: '#fff',
+                          }} title={ch.assignee_name}>
+                            {ch.assignee_name.trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase()}
+                          </div>
+                        )}
+
+                        <ChevronDown
+                          size={14}
+                          color="#8E8E93"
+                          style={{ flexShrink: 0, transform: isExpanded ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s' }}
+                        />
+                      </div>
+
+                      {/* Expanded section */}
+                      {isExpanded && (
+                        <div style={{ borderTop: '1px solid #F2F2F7', padding: '14px 16px', background: '#FAFAFA' }}>
+                          {isEditing ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                              <input
+                                className="input w-full"
+                                value={editChangeForm.title || ''}
+                                onChange={e => setEditChangeForm(f => ({ ...f, title: e.target.value }))}
+                                placeholder="Titel"
+                                style={{ fontSize: '14px' }}
+                              />
+                              <textarea
+                                className="input w-full resize-none"
+                                rows={3}
+                                value={editChangeForm.description || ''}
+                                onChange={e => setEditChangeForm(f => ({ ...f, description: e.target.value }))}
+                                placeholder="Beschreibung (optional)"
+                                style={{ fontSize: '13px' }}
+                              />
+                              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                {/* Type */}
+                                <div style={{ display: 'flex', gap: '4px' }}>
+                                  {Object.entries(CHANGE_TYPE_CONFIG).map(([k, v]) => (
+                                    <button key={k} type="button"
+                                      onClick={() => setEditChangeForm(f => ({ ...f, type: k }))}
+                                      style={{
+                                        padding: '4px 10px', borderRadius: '99px', fontSize: '12px', fontWeight: '500', border: 'none', cursor: 'pointer',
+                                        background: editChangeForm.type === k ? v.bg : '#F2F2F7',
+                                        color: editChangeForm.type === k ? v.color : '#6E6E73',
+                                      }}
+                                    >{v.label}</button>
+                                  ))}
+                                </div>
+                                {/* Priority */}
+                                <div style={{ display: 'flex', gap: '4px' }}>
+                                  {PRIORITY_ORDER.map(k => {
+                                    const v = PRIORITY_CONFIG[k];
+                                    return (
+                                      <button key={k} type="button"
+                                        onClick={() => setEditChangeForm(f => ({ ...f, priority: k }))}
+                                        style={{
+                                          padding: '4px 10px', borderRadius: '99px', fontSize: '12px', fontWeight: '500', cursor: 'pointer',
+                                          border: `1.5px solid ${editChangeForm.priority === k ? v.color : 'transparent'}`,
+                                          background: editChangeForm.priority === k ? v.color + '18' : '#F2F2F7',
+                                          color: editChangeForm.priority === k ? v.color : '#6E6E73',
+                                        }}
+                                      >{v.label}</button>
+                                    );
+                                  })}
+                                </div>
+                                {/* Assignee */}
+                                <select
+                                  className="input"
+                                  value={editChangeForm.assignee_id || ''}
+                                  onChange={e => setEditChangeForm(f => ({ ...f, assignee_id: e.target.value ? Number(e.target.value) : null }))}
+                                  style={{ fontSize: '13px', width: 'auto' }}
+                                >
+                                  <option value="">— Zuständig —</option>
+                                  {teamMembers.map(m => <option key={m.id} value={m.id}>{m.name || m.email}</option>)}
+                                </select>
+                              </div>
+                              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                                <button
+                                  className="btn-secondary"
+                                  style={{ fontSize: '13px', padding: '6px 14px' }}
+                                  onClick={() => setEditingChangeId(null)}
+                                >
+                                  <X size={13}/> Abbrechen
+                                </button>
+                                <button
+                                  className="btn-primary"
+                                  style={{ fontSize: '13px', padding: '6px 14px' }}
+                                  disabled={updateChangeMutation.isPending}
+                                  onClick={() => {
+                                    if (!editChangeForm.title?.trim()) return toast.error('Titel erforderlich');
+                                    updateChangeMutation.mutate({ cid: ch.id, data: editChangeForm });
+                                  }}
+                                >
+                                  <Save size={13}/> Speichern
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div>
+                              {ch.description && (
+                                <p style={{ fontSize: '13px', color: '#3C3C43', marginBottom: '12px', lineHeight: 1.5 }}>
+                                  {ch.description}
+                                </p>
+                              )}
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#86868B', marginBottom: '12px' }}>
+                                <span style={{
+                                  padding: '2px 8px', borderRadius: '99px',
+                                  background: PRIORITY_CONFIG[ch.priority]?.color + '18',
+                                  color: PRIORITY_CONFIG[ch.priority]?.color,
+                                  fontWeight: '600',
+                                }}>
+                                  {PRIORITY_CONFIG[ch.priority]?.label}
+                                </span>
+                                {ch.assignee_name ? (
+                                  <span>Zuständig: <strong style={{ color: '#3C3C43' }}>{ch.assignee_name}</strong></span>
+                                ) : (
+                                  <span>Niemand zugewiesen</span>
+                                )}
+                                <span style={{ marginLeft: 'auto' }}>
+                                  {new Date(ch.created_at).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                                </span>
+                              </div>
+                              <div style={{ display: 'flex', gap: '8px' }}>
+                                <button
+                                  className="btn-secondary"
+                                  style={{ fontSize: '12px', padding: '5px 12px' }}
+                                  onClick={() => {
+                                    setEditChangeForm({ title: ch.title, description: ch.description || '', type: ch.type, priority: ch.priority, assignee_id: ch.assignee_id });
+                                    setEditingChangeId(ch.id);
+                                  }}
+                                >
+                                  <Pencil size={12}/> Bearbeiten
+                                </button>
+                                <button
+                                  style={{ fontSize: '12px', padding: '5px 12px', background: 'none', border: '1px solid #FFE5E5', borderRadius: '8px', color: '#EF4444', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}
+                                  onClick={async () => {
+                                    const ok = await confirm(`„${ch.title}" wird gelöscht.`, { title: 'Änderung löschen' });
+                                    if (ok) deleteChangeMutation.mutate(ch.id);
+                                  }}
+                                >
+                                  <Trash2 size={12}/> Löschen
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
+        </div>
+      )}
+
       {ConfirmDialogNode}
     </div>
   );
