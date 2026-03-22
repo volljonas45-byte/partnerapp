@@ -23,14 +23,10 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: 'Password must be at least 6 characters' });
     }
 
-    // Whitelist check — only allowed emails can register
-    const allowedEmails = (process.env.ALLOWED_EMAILS || '')
-      .split(',')
-      .map(e => e.trim().toLowerCase())
-      .filter(Boolean);
-
-    if (allowedEmails.length > 0 && !allowedEmails.includes(email.toLowerCase())) {
-      return res.status(403).json({ error: 'Registrierung nicht erlaubt.' });
+    // Block public registration after first account exists — all further users are invited via /team/invite
+    const anyUser = await getOne('SELECT id FROM users LIMIT 1', []);
+    if (anyUser) {
+      return res.status(403).json({ error: 'Registrierung ist deaktiviert. Bitte wende dich an deinen Admin.' });
     }
 
     // Check if already registered
