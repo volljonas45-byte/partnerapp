@@ -153,7 +153,8 @@ router.post('/', async (req, res) => {
       if (!client) return res.status(404).json({ error: 'Kunde nicht gefunden' });
     }
 
-    const assigneeId = req.body.assignee_id ? parseInt(req.body.assignee_id) : null;
+    // Default assignee is the creator; can be overridden by passing assignee_id
+    const assigneeId = req.body.assignee_id ? parseInt(req.body.assignee_id) : req.userId;
 
     const r = await run(`
       INSERT INTO projects

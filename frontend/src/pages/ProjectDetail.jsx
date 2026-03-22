@@ -13,6 +13,7 @@ import {
 import toast from 'react-hot-toast';
 import { projectsApi } from '../api/projects';
 import { clientsApi } from '../api/clients';
+import { teamApi } from '../api/team';
 import { legalApi } from '../api/legal';
 import { workflowApi } from '../api/workflow';
 import { PHASE_ORDER, PHASES } from '../components/workflow/workflowConfig';
@@ -255,6 +256,11 @@ export default function ProjectDetail() {
   const { data: clients = [] } = useQuery({
     queryKey: ['clients'],
     queryFn: () => clientsApi.list().then(r => r.data),
+  });
+
+  const { data: teamMembers = [] } = useQuery({
+    queryKey: ['team'],
+    queryFn: () => teamApi.list().then(r => r.data),
   });
 
   const clientDbId = project?.client_id;
@@ -597,7 +603,15 @@ export default function ProjectDetail() {
                   <TextField label="Deadline"   value={editForm.deadline}   onChange={set('deadline')}   type="date" />
                 </div>
                 <TextField label="Budget (€)" value={editForm.budget} onChange={set('budget')} type="number" placeholder="0.00" />
-                <TextField label="Zuständig" value={editForm.assignee} onChange={set('assignee')} placeholder="Name der zuständigen Person" />
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Zuständig</label>
+                  <select className="input w-full text-sm" value={editForm.assignee_id || ''} onChange={e => set('assignee_id')(e.target.value ? Number(e.target.value) : null)}>
+                    <option value="">— Niemand —</option>
+                    {teamMembers.map(m => (
+                      <option key={m.id} value={m.id}>{m.name || m.email}</option>
+                    ))}
+                  </select>
+                </div>
                 <TextAreaField label="Beschreibung" value={editForm.description} onChange={set('description')} />
               </div>
             ) : (
@@ -659,10 +673,26 @@ export default function ProjectDetail() {
                     <dd className="text-gray-700">{formatCurrency(project.budget)}</dd>
                   </div>
                 )}
-                {project.assignee && (
+                {(project.assignee_name || project.assignee) && (
                   <div>
                     <dt className="flex items-center gap-1 text-xs text-gray-400 mb-0.5"><User size={11}/>Zuständig</dt>
-                    <dd className="text-gray-700">{project.assignee}</dd>
+                    <dd>
+                      {project.assignee_name ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <div style={{
+                            width: 20, height: 20, borderRadius: '50%',
+                            background: project.assignee_color || '#6366f1',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: '9px', fontWeight: '700', color: '#fff', flexShrink: 0,
+                          }}>
+                            {(project.assignee_name).trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase()}
+                          </div>
+                          <span className="text-gray-700 text-sm">{project.assignee_name}</span>
+                        </div>
+                      ) : (
+                        <span className="text-gray-700">{project.assignee}</span>
+                      )}
+                    </dd>
                   </div>
                 )}
                 {project.description && (
