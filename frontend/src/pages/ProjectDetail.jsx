@@ -302,13 +302,13 @@ export default function ProjectDetail() {
   const { data: invoices = [] } = useQuery({
     queryKey: ['projects', id, 'invoices'],
     queryFn: () => projectsApi.getInvoices(id).then(r => r.data),
-    enabled: activeTab === 'finance',
+    enabled: activeTab === 'finance' || activeTab === 'dashboard',
   });
 
   const { data: quotes = [] } = useQuery({
     queryKey: ['projects', id, 'quotes'],
     queryFn: () => projectsApi.getQuotes(id).then(r => r.data),
-    enabled: activeTab === 'finance',
+    enabled: activeTab === 'finance' || activeTab === 'dashboard',
   });
 
   const { data: credentials = [] } = useQuery({
@@ -637,16 +637,34 @@ export default function ProjectDetail() {
         const openCh = changes.filter(c => c.status !== 'erledigt');
         const urgentCh = openCh.filter(c => c.priority === 'kritisch' || c.priority === 'hoch');
         const taskPct = tasks.length > 0 ? Math.round((doneTasks / tasks.length) * 100) : 0;
-        const phaseProgress = PHASE_ORDER.length > 0 ? Math.round(((phaseIdx + 1) / PHASE_ORDER.length) * 100) : 0;
+
+        // Top 4 open tasks: doing first, then todo
+        const topTasks = [...tasks]
+          .filter(t => t.status !== 'done')
+          .sort((a, b) => (a.status === 'doing' ? -1 : b.status === 'doing' ? 1 : 0))
+          .slice(0, 4);
+
+        // Top 4 changes by priority
+        const topChanges = [...openCh]
+          .sort((a, b) => PRIORITY_ORDER.indexOf(a.priority) - PRIORITY_ORDER.indexOf(b.priority))
+          .slice(0, 4);
+
+        // Finanzen inbox
+        const pendingInvoices = invoices.filter(i => i.status !== 'paid');
+        const pendingQuotes   = quotes.filter(q => q.status !== 'accepted' && q.status !== 'rejected');
+
         const card = { background: '#fff', borderRadius: '16px', padding: '22px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' };
+        const sectionTitle = { fontSize: '11px', fontWeight: '600', color: '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.05em' };
+        const linkBtn = { fontSize: '12px', color: '#0071E3', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '500' };
+
         return (
           <div>
-            {/* KPI row */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '20px' }}>
+            {/* ── KPI Row ── */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '14px', marginBottom: '18px' }}>
 
               {/* Aufgaben */}
               <div style={card}>
-                <p style={{ fontSize: '11px', fontWeight: '600', color: '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px' }}>Aufgaben</p>
+                <p style={{ ...sectionTitle, marginBottom: '12px' }}>Aufgaben</p>
                 <p style={{ fontSize: '32px', fontWeight: '700', letterSpacing: '-0.04em', lineHeight: 1, marginBottom: '12px', color: doneTasks === tasks.length && tasks.length > 0 ? '#34C759' : '#1D1D1F' }}>
                   {doneTasks}<span style={{ fontSize: '18px', color: '#C7C7CC', fontWeight: '400' }}>/{tasks.length || 0}</span>
                 </p>
@@ -657,7 +675,7 @@ export default function ProjectDetail() {
 
               {/* Änderungen */}
               <div style={{ ...card, background: urgentCh.length > 0 ? 'rgba(239,68,68,0.03)' : openCh.length > 0 ? 'rgba(245,158,11,0.03)' : '#fff', border: `1px solid ${urgentCh.length > 0 ? 'rgba(239,68,68,0.2)' : openCh.length > 0 ? 'rgba(245,158,11,0.2)' : 'rgba(0,0,0,0.06)'}` }}>
-                <p style={{ fontSize: '11px', fontWeight: '600', color: '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px' }}>Offene Änderungen</p>
+                <p style={{ ...sectionTitle, marginBottom: '12px' }}>Offene Änderungen</p>
                 <p style={{ fontSize: '32px', fontWeight: '700', letterSpacing: '-0.04em', lineHeight: 1, marginBottom: '6px', color: urgentCh.length > 0 ? '#EF4444' : openCh.length > 0 ? '#F59E0B' : '#34C759' }}>
                   {openCh.length}
                 </p>
@@ -668,7 +686,7 @@ export default function ProjectDetail() {
 
               {/* Budget */}
               <div style={card}>
-                <p style={{ fontSize: '11px', fontWeight: '600', color: '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px' }}>Budget</p>
+                <p style={{ ...sectionTitle, marginBottom: '12px' }}>Budget</p>
                 <p style={{ fontSize: '32px', fontWeight: '700', letterSpacing: '-0.04em', lineHeight: 1, marginBottom: '6px', color: '#1D1D1F' }}>
                   {project.budget ? `${Number(project.budget).toLocaleString('de-DE')} €` : '—'}
                 </p>
@@ -677,16 +695,14 @@ export default function ProjectDetail() {
 
               {/* Deadline */}
               <div style={{ ...card, background: daysLeft !== null && daysLeft < 0 ? 'rgba(239,68,68,0.03)' : daysLeft !== null && daysLeft <= 7 ? 'rgba(245,158,11,0.03)' : '#fff', border: `1px solid ${daysLeft !== null && daysLeft < 0 ? 'rgba(239,68,68,0.2)' : daysLeft !== null && daysLeft <= 7 ? 'rgba(245,158,11,0.2)' : 'rgba(0,0,0,0.06)'}` }}>
-                <p style={{ fontSize: '11px', fontWeight: '600', color: '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px' }}>Deadline</p>
+                <p style={{ ...sectionTitle, marginBottom: '12px' }}>Deadline</p>
                 {daysLeft !== null ? (
                   <>
                     <p style={{ fontSize: '32px', fontWeight: '700', letterSpacing: '-0.04em', lineHeight: 1, marginBottom: '6px', color: daysLeft < 0 ? '#EF4444' : daysLeft <= 7 ? '#F59E0B' : '#1D1D1F' }}>
                       {daysLeft < 0 ? `+${Math.abs(daysLeft)}` : daysLeft}
                       <span style={{ fontSize: '14px', fontWeight: '400', color: '#8E8E93', marginLeft: '4px' }}>Tage</span>
                     </p>
-                    <p style={{ fontSize: '12px', color: '#8E8E93' }}>
-                      {daysLeft < 0 ? 'überschritten' : daysLeft === 0 ? 'heute fällig' : 'verbleibend'}
-                    </p>
+                    <p style={{ fontSize: '12px', color: '#8E8E93' }}>{daysLeft < 0 ? 'überschritten' : daysLeft === 0 ? 'heute fällig' : 'verbleibend'}</p>
                   </>
                 ) : (
                   <>
@@ -697,137 +713,308 @@ export default function ProjectDetail() {
               </div>
             </div>
 
-            {/* Grid 2×2 */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            {/* ── Row 2: Workflow Stepper + Aufgaben ── */}
+            <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: '14px', marginBottom: '14px' }}>
 
-              {/* Workflow card */}
+              {/* Workflow Stepper */}
               <div style={card}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-                  <p style={{ fontSize: '12px', fontWeight: '600', color: '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Workflow</p>
-                  <button onClick={() => setActiveTab('workflow')} style={{ fontSize: '12px', color: '#0071E3', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '500' }}>Details →</button>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px' }}>
+                  <p style={sectionTitle}>Workflow-Phasen</p>
+                  <button onClick={() => setActiveTab('workflow')} style={linkBtn}>Details →</button>
                 </div>
-                {phaseCfg ? (
-                  <>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                      <span style={{ display: 'inline-flex', alignItems: 'center', padding: '4px 10px', borderRadius: '99px', fontSize: '12px', fontWeight: '600', background: isLastPhase ? 'rgba(52,199,89,0.10)' : 'rgba(0,113,227,0.10)', color: isLastPhase ? '#34C759' : '#0071E3' }}>
-                        {phaseCfg.label}
-                      </span>
-                      <span style={{ fontSize: '12px', color: '#8E8E93' }}>Schritt {phaseIdx + 1} / {PHASE_ORDER.length}</span>
-                    </div>
-                    <div style={{ height: '6px', background: '#F2F2F7', borderRadius: '3px', marginBottom: '16px' }}>
-                      <div style={{ height: '100%', borderRadius: '3px', background: isLastPhase ? '#34C759' : '#0071E3', width: `${phaseProgress}%`, transition: 'width 0.5s' }} />
-                    </div>
-                    <div style={{ padding: '12px', borderRadius: '10px', background: nextStep.urgent ? 'rgba(239,68,68,0.06)' : '#F9F9FB', border: `1px solid ${nextStep.urgent ? 'rgba(239,68,68,0.15)' : '#F2F2F7'}` }}>
-                      <p style={{ fontSize: '10px', fontWeight: '600', color: nextStep.urgent ? '#EF4444' : '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>Nächster Schritt</p>
-                      <p style={{ fontSize: '13px', color: nextStep.urgent ? '#EF4444' : '#3C3C43', lineHeight: 1.4 }}>{nextStep.text}</p>
-                    </div>
-                  </>
-                ) : (
-                  <div style={{ padding: '20px', textAlign: 'center' }}>
-                    <p style={{ fontSize: '13px', color: '#8E8E93' }}>Kein Workflow gestartet.</p>
-                    <button onClick={() => setActiveTab('workflow')} style={{ marginTop: '10px', fontSize: '13px', color: '#0071E3', background: 'none', border: 'none', cursor: 'pointer' }}>Workflow starten →</button>
-                  </div>
-                )}
+                <div style={{ position: 'relative' }}>
+                  {PHASE_ORDER.map((phaseKey, i) => {
+                    const phase = PHASES[phaseKey];
+                    const isDone    = i < phaseIdx;
+                    const isCurrent = i === phaseIdx;
+                    const phaseTaskDefs = phase?.tasks || [];
+                    const phaseTaskData = workflow?.phase_data?.[phaseKey]?.tasks || {};
+                    const completedCount = phaseTaskDefs.filter(t => phaseTaskData[t.key]).length;
+                    const isLast = i === PHASE_ORDER.length - 1;
+                    return (
+                      <div key={phaseKey} style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', paddingBottom: isLast ? 0 : '4px' }}>
+                        {/* Timeline column */}
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, width: '20px' }}>
+                          <div style={{
+                            width: '20px', height: '20px', borderRadius: '50%', flexShrink: 0,
+                            background: isDone ? '#34C759' : isCurrent ? '#0071E3' : '#F2F2F7',
+                            border: isCurrent ? '2px solid #0071E3' : 'none',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            transition: 'background 0.2s',
+                          }}>
+                            {isDone    && <Check size={10} color="#fff" strokeWidth={3} />}
+                            {isCurrent && <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#fff' }} />}
+                          </div>
+                          {!isLast && (
+                            <div style={{ width: '2px', flex: 1, minHeight: '24px', background: isDone ? '#34C759' : '#F0F0F5', margin: '3px 0' }} />
+                          )}
+                        </div>
+                        {/* Content */}
+                        <div style={{ flex: 1, paddingBottom: isLast ? 0 : '8px', opacity: i > phaseIdx ? 0.45 : 1 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: isCurrent && phaseTaskDefs.length > 0 ? '6px' : 0 }}>
+                            <span style={{ fontSize: '12px', marginTop: '2px' }}>{phase?.emoji}</span>
+                            <p style={{ fontSize: '13px', fontWeight: isCurrent ? '700' : isDone ? '500' : '400', color: isDone ? '#8E8E93' : isCurrent ? '#1D1D1F' : '#6E6E73', lineHeight: 1.2 }}>
+                              {phase?.label}
+                            </p>
+                            {isCurrent && (
+                              <span style={{ fontSize: '10px', fontWeight: '700', background: 'rgba(0,113,227,0.12)', color: '#0071E3', padding: '2px 7px', borderRadius: '99px', flexShrink: 0 }}>
+                                Aktuell
+                              </span>
+                            )}
+                            {isDone && (
+                              <span style={{ fontSize: '10px', fontWeight: '600', color: '#34C759', flexShrink: 0 }}>✓</span>
+                            )}
+                          </div>
+                          {isCurrent && phaseTaskDefs.length > 0 && (
+                            <div style={{ marginLeft: '0px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                                <div style={{ flex: 1, height: '3px', background: '#F2F2F7', borderRadius: '2px' }}>
+                                  <div style={{ height: '100%', borderRadius: '2px', background: '#0071E3', width: `${phaseTaskDefs.length > 0 ? Math.round((completedCount / phaseTaskDefs.length) * 100) : 0}%`, transition: 'width 0.4s' }} />
+                                </div>
+                                <span style={{ fontSize: '11px', color: '#8E8E93', flexShrink: 0 }}>{completedCount}/{phaseTaskDefs.length}</span>
+                              </div>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                                {phaseTaskDefs.slice(0, 3).map(t => {
+                                  const done = phaseTaskData[t.key];
+                                  return (
+                                    <div key={t.key} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                      <div style={{ width: '12px', height: '12px', borderRadius: '50%', border: `1.5px solid ${done ? '#34C759' : '#D1D1D6'}`, background: done ? '#34C759' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                        {done && <Check size={7} color="#fff" strokeWidth={3} />}
+                                      </div>
+                                      <span style={{ fontSize: '11px', color: done ? '#8E8E93' : '#6E6E73', textDecoration: done ? 'line-through' : 'none' }}>{t.label}</span>
+                                    </div>
+                                  );
+                                })}
+                                {phaseTaskDefs.length > 3 && (
+                                  <span style={{ fontSize: '11px', color: '#8E8E93', marginLeft: '18px' }}>+{phaseTaskDefs.length - 3} weitere...</span>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
-              {/* Aufgaben card */}
+              {/* Top 4 Aufgaben */}
               <div style={card}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-                  <p style={{ fontSize: '12px', fontWeight: '600', color: '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Aufgaben</p>
-                  <button onClick={() => setActiveTab('tasks')} style={{ fontSize: '12px', color: '#0071E3', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '500' }}>Alle →</button>
+                  <p style={sectionTitle}>Aufgaben</p>
+                  <button onClick={() => setActiveTab('tasks')} style={linkBtn}>Alle →</button>
                 </div>
-                {tasks.length === 0 ? (
-                  <div style={{ padding: '20px', textAlign: 'center' }}>
-                    <p style={{ fontSize: '13px', color: '#8E8E93' }}>Noch keine Aufgaben.</p>
-                    <button onClick={() => setActiveTab('tasks')} style={{ marginTop: '10px', fontSize: '13px', color: '#0071E3', background: 'none', border: 'none', cursor: 'pointer' }}>Aufgabe anlegen →</button>
+                {topTasks.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '24px 0' }}>
+                    <CheckCircle2 size={28} color="#D1D1D6" style={{ margin: '0 auto 8px' }} />
+                    <p style={{ fontSize: '13px', color: '#8E8E93' }}>Alle Aufgaben erledigt</p>
+                    <button onClick={() => setActiveTab('tasks')} style={{ ...linkBtn, marginTop: '8px', display: 'block', margin: '8px auto 0' }}>+ Neue Aufgabe</button>
                   </div>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    {tasks.slice(0, 6).map(task => {
-                      const isDone = task.status === 'done';
+                    {topTasks.map(task => {
                       const isIn = task.status === 'doing';
                       return (
                         <div
                           key={task.id}
                           onClick={() => cycleTask(task)}
-                          style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 10px', borderRadius: '8px', background: isDone ? '#FAFAFA' : '#fff', border: '1px solid #F2F2F7', cursor: 'pointer' }}
+                          style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 11px', borderRadius: '10px', border: `1px solid ${isIn ? 'rgba(0,113,227,0.2)' : '#F2F2F7'}`, background: isIn ? 'rgba(0,113,227,0.03)' : '#FAFAFA', cursor: 'pointer', transition: 'all 0.12s' }}
                           onMouseEnter={e => e.currentTarget.style.background = '#F5F5F7'}
-                          onMouseLeave={e => e.currentTarget.style.background = isDone ? '#FAFAFA' : '#fff'}
+                          onMouseLeave={e => e.currentTarget.style.background = isIn ? 'rgba(0,113,227,0.03)' : '#FAFAFA'}
                         >
-                          <div style={{ width: '18px', height: '18px', borderRadius: '50%', flexShrink: 0, border: `2px solid ${isDone ? '#34C759' : isIn ? '#0071E3' : '#D1D1D6'}`, background: isDone ? '#34C759' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            {isDone && <Check size={10} color="#fff" strokeWidth={3} />}
+                          <div style={{ width: '18px', height: '18px', borderRadius: '50%', flexShrink: 0, border: `2px solid ${isIn ? '#0071E3' : '#D1D1D6'}`, background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             {isIn && <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#0071E3' }} />}
                           </div>
-                          <span style={{ flex: 1, fontSize: '13px', color: isDone ? '#8E8E93' : '#1D1D1F', textDecoration: isDone ? 'line-through' : 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {task.title}
-                          </span>
-                          {isIn && <span style={{ fontSize: '10px', fontWeight: '600', background: 'rgba(0,113,227,0.1)', color: '#0071E3', padding: '2px 6px', borderRadius: '4px', flexShrink: 0 }}>Aktiv</span>}
+                          <span style={{ flex: 1, fontSize: '13px', color: '#1D1D1F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{task.title}</span>
+                          {isIn && <span style={{ fontSize: '10px', fontWeight: '700', background: '#0071E3', color: '#fff', padding: '2px 6px', borderRadius: '4px', flexShrink: 0 }}>Aktiv</span>}
                         </div>
                       );
                     })}
-                    {tasks.length > 6 && (
-                      <button onClick={() => setActiveTab('tasks')} style={{ fontSize: '12px', color: '#8E8E93', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 10px', textAlign: 'left' }}>
-                        +{tasks.length - 6} weitere...
+                    {tasks.filter(t => t.status !== 'done').length > 4 && (
+                      <button onClick={() => setActiveTab('tasks')} style={{ ...linkBtn, fontSize: '12px', color: '#8E8E93', padding: '4px 0', textAlign: 'left' }}>
+                        +{tasks.filter(t => t.status !== 'done').length - 4} weitere offen
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* ── Row 3: Änderungen + Quick Links + Finanzen ── */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px' }}>
+
+              {/* Top 4 Änderungen */}
+              <div style={card}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                  <p style={sectionTitle}>Änderungen</p>
+                  <button onClick={() => setActiveTab('changes')} style={linkBtn}>Alle →</button>
+                </div>
+                {topChanges.length === 0 ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '13px', background: 'rgba(52,199,89,0.06)', borderRadius: '10px', border: '1px solid rgba(52,199,89,0.15)' }}>
+                    <CheckCircle2 size={14} color="#34C759" />
+                    <p style={{ fontSize: '13px', color: '#34C759', fontWeight: '500' }}>Alle erledigt</p>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    {topChanges.map(ch => {
+                      const tc = CHANGE_TYPE_CONFIG[ch.type] || CHANGE_TYPE_CONFIG.intern;
+                      const pc = PRIORITY_CONFIG[ch.priority] || PRIORITY_CONFIG.mittel;
+                      return (
+                        <div key={ch.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '9px 11px', borderRadius: '10px', border: '1px solid #F2F2F7', background: '#FAFAFA' }}>
+                          <div style={{ width: '3px', alignSelf: 'stretch', borderRadius: '2px', background: pc.color, flexShrink: 0 }} />
+                          <span style={{ fontSize: '10px', fontWeight: '700', padding: '2px 6px', borderRadius: '5px', background: tc.bg, color: tc.color, flexShrink: 0 }}>{tc.label}</span>
+                          <span style={{ flex: 1, fontSize: '12px', color: '#1D1D1F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ch.title}</span>
+                        </div>
+                      );
+                    })}
+                    {openCh.length > 4 && (
+                      <button onClick={() => setActiveTab('changes')} style={{ ...linkBtn, fontSize: '12px', color: '#8E8E93', padding: '4px 0', textAlign: 'left' }}>
+                        +{openCh.length - 4} weitere
                       </button>
                     )}
                   </div>
                 )}
               </div>
 
-              {/* Änderungen card */}
+              {/* Quick Links */}
               <div style={card}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-                  <p style={{ fontSize: '12px', fontWeight: '600', color: '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Offene Änderungen</p>
-                  <button onClick={() => setActiveTab('changes')} style={{ fontSize: '12px', color: '#0071E3', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '500' }}>Alle →</button>
+                  <p style={sectionTitle}>Quick Links</p>
+                  <button onClick={() => setActiveTab('setup')} style={linkBtn}>Setup →</button>
                 </div>
-                {openCh.length === 0 ? (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '14px', background: 'rgba(52,199,89,0.06)', borderRadius: '10px', border: '1px solid rgba(52,199,89,0.15)' }}>
-                    <CheckCircle2 size={15} color="#34C759" />
-                    <p style={{ fontSize: '13px', color: '#34C759', fontWeight: '500' }}>Alle Änderungen erledigt</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {/* Live URL */}
+                  {project.live_url ? (
+                    <a href={project.live_url} target="_blank" rel="noreferrer"
+                      style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', borderRadius: '10px', background: 'rgba(0,113,227,0.04)', border: '1px solid rgba(0,113,227,0.12)', textDecoration: 'none', transition: 'background 0.12s' }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,113,227,0.08)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,113,227,0.04)'}
+                    >
+                      <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(0,113,227,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Globe size={13} color="#0071E3" />
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontSize: '12px', fontWeight: '600', color: '#0071E3' }}>Live-Website</p>
+                        <p style={{ fontSize: '11px', color: '#86868B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{project.live_url.replace(/^https?:\/\//, '')}</p>
+                      </div>
+                      <ExternalLink size={12} color="#0071E3" style={{ flexShrink: 0 }} />
+                    </a>
+                  ) : (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', borderRadius: '10px', background: '#FAFAFA', border: '1px dashed #E5E5EA' }}>
+                      <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: '#F2F2F7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Globe size={13} color="#C7C7CC" />
+                      </div>
+                      <p style={{ fontSize: '12px', color: '#C7C7CC' }}>Live-URL noch nicht eingetragen</p>
+                    </div>
+                  )}
+
+                  {/* Domain */}
+                  {project.domain_name && (
+                    <a href={`https://${project.domain_name}`} target="_blank" rel="noreferrer"
+                      style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', borderRadius: '10px', background: 'rgba(52,199,89,0.04)', border: '1px solid rgba(52,199,89,0.12)', textDecoration: 'none', transition: 'background 0.12s' }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(52,199,89,0.08)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'rgba(52,199,89,0.04)'}
+                    >
+                      <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(52,199,89,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <LinkIcon size={13} color="#34C759" />
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontSize: '12px', fontWeight: '600', color: '#059669' }}>Domain</p>
+                        <p style={{ fontSize: '11px', color: '#86868B' }}>{project.domain_name}</p>
+                      </div>
+                      <ExternalLink size={12} color="#34C759" style={{ flexShrink: 0 }} />
+                    </a>
+                  )}
+
+                  {/* Repository */}
+                  {project.repository_url && (
+                    <a href={project.repository_url} target="_blank" rel="noreferrer"
+                      style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', borderRadius: '10px', background: 'rgba(88,86,214,0.04)', border: '1px solid rgba(88,86,214,0.12)', textDecoration: 'none', transition: 'background 0.12s' }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(88,86,214,0.08)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'rgba(88,86,214,0.04)'}
+                    >
+                      <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(88,86,214,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <GitBranch size={13} color="#5856D6" />
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontSize: '12px', fontWeight: '600', color: '#5856D6' }}>Repository</p>
+                        <p style={{ fontSize: '11px', color: '#86868B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{project.repository_url.replace(/^https?:\/\//, '')}</p>
+                      </div>
+                      <ExternalLink size={12} color="#5856D6" style={{ flexShrink: 0 }} />
+                    </a>
+                  )}
+
+                  {/* Tech summary */}
+                  {(project.build_type || project.hosting_provider || project.frontend) && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', paddingTop: '4px' }}>
+                      {project.build_type && <span style={{ fontSize: '11px', fontWeight: '500', padding: '3px 8px', borderRadius: '6px', background: '#F2F2F7', color: '#6E6E73' }}>{BUILD_TYPE_LABELS[project.build_type] || project.build_type}</span>}
+                      {project.frontend && <span style={{ fontSize: '11px', fontWeight: '500', padding: '3px 8px', borderRadius: '6px', background: '#F2F2F7', color: '#6E6E73' }}>{FRONTEND_LABELS[project.frontend] || project.frontend}</span>}
+                      {project.hosting_provider && <span style={{ fontSize: '11px', fontWeight: '500', padding: '3px 8px', borderRadius: '6px', background: '#F2F2F7', color: '#6E6E73' }}>{HOSTING_LABELS[project.hosting_provider] || project.hosting_provider}</span>}
+                    </div>
+                  )}
+
+                  {!project.live_url && !project.domain_name && !project.repository_url && !project.build_type && (
+                    <button onClick={() => setActiveTab('setup')} style={{ ...linkBtn, color: '#8E8E93', fontSize: '13px', padding: '6px 0', textAlign: 'left', display: 'block' }}>
+                      Setup einrichten →
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Finanzen Inbox */}
+              <div style={card}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                  <p style={sectionTitle}>Finanzen</p>
+                  <button onClick={() => setActiveTab('finance')} style={linkBtn}>Alle →</button>
+                </div>
+                {pendingInvoices.length === 0 && pendingQuotes.length === 0 ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '13px', background: 'rgba(52,199,89,0.06)', borderRadius: '10px', border: '1px solid rgba(52,199,89,0.15)' }}>
+                    <CheckCircle2 size={14} color="#34C759" />
+                    <p style={{ fontSize: '13px', color: '#34C759', fontWeight: '500' }}>Alles beglichen</p>
                   </div>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    {openCh.slice(0, 5).map(ch => {
-                      const tc = CHANGE_TYPE_CONFIG[ch.type] || CHANGE_TYPE_CONFIG.intern;
-                      const pc = PRIORITY_CONFIG[ch.priority] || PRIORITY_CONFIG.mittel;
-                      return (
-                        <div key={ch.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', borderRadius: '8px', border: '1px solid #F2F2F7' }}>
-                          <div style={{ width: '3px', alignSelf: 'stretch', borderRadius: '2px', background: pc.color, flexShrink: 0 }} />
-                          <span style={{ fontSize: '11px', fontWeight: '600', padding: '2px 7px', borderRadius: '5px', background: tc.bg, color: tc.color, flexShrink: 0 }}>{tc.label}</span>
-                          <span style={{ flex: 1, fontSize: '13px', color: '#1D1D1F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ch.title}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              {/* Aktivität card */}
-              <div style={card}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-                  <p style={{ fontSize: '12px', fontWeight: '600', color: '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Aktivität</p>
-                  <button onClick={() => setActiveTab('activity')} style={{ fontSize: '12px', color: '#0071E3', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '500' }}>Alle →</button>
-                </div>
-                {activity.length === 0 ? (
-                  <p style={{ fontSize: '13px', color: '#8E8E93' }}>Noch keine Aktivitäten.</p>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    {activity.slice(0, 6).map(entry => (
-                      <div key={entry.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '9px 0', borderBottom: '1px solid #F9F9FB' }}>
-                        <div style={{ width: '26px', height: '26px', borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: entry.type === 'status_change' ? 'rgba(0,113,227,0.08)' : entry.type === 'note_added' ? 'rgba(139,92,246,0.08)' : 'rgba(52,199,89,0.08)' }}>
-                          {entry.type === 'status_change' && <Activity size={12} color="#0071E3" />}
-                          {entry.type === 'note_added' && <MessageSquare size={12} color="#8B5CF6" />}
-                          {entry.type === 'created' && <CheckCircle2 size={12} color="#34C759" />}
-                          {!['status_change','note_added','created'].includes(entry.type) && <Clock size={12} color="#8E8E93" />}
+                    {pendingQuotes.slice(0, 2).map(q => (
+                      <div
+                        key={q.id}
+                        onClick={() => navigate(`/quotes/${q.id}`)}
+                        style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 11px', borderRadius: '10px', background: 'rgba(0,113,227,0.03)', border: '1px solid rgba(0,113,227,0.12)', cursor: 'pointer', transition: 'background 0.12s' }}
+                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,113,227,0.07)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,113,227,0.03)'}
+                      >
+                        <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(0,113,227,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <ClipboardList size={13} color="#0071E3" />
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <p style={{ fontSize: '13px', color: '#3C3C43', lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{entry.message}</p>
-                          <p style={{ fontSize: '11px', color: '#8E8E93', marginTop: '2px' }}>
-                            {new Date(entry.created_at).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                          </p>
+                          <p style={{ fontSize: '12px', fontWeight: '600', color: '#1D1D1F' }}>{q.quote_number}</p>
+                          <p style={{ fontSize: '11px', color: '#8E8E93' }}>Angebot · {formatCurrency(q.total)}</p>
                         </div>
+                        <StatusBadge status={q.status} />
                       </div>
                     ))}
+                    {pendingInvoices.slice(0, 2).map(inv => (
+                      <div
+                        key={inv.id}
+                        onClick={() => navigate(`/invoices/${inv.id}`)}
+                        style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 11px', borderRadius: '10px', background: 'rgba(245,158,11,0.03)', border: '1px solid rgba(245,158,11,0.15)', cursor: 'pointer', transition: 'background 0.12s' }}
+                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(245,158,11,0.07)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'rgba(245,158,11,0.03)'}
+                      >
+                        <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(245,158,11,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <Euro size={13} color="#F59E0B" />
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p style={{ fontSize: '12px', fontWeight: '600', color: '#1D1D1F' }}>{inv.invoice_number}</p>
+                          <p style={{ fontSize: '11px', color: '#8E8E93' }}>Rechnung · {formatCurrency(inv.total)}</p>
+                        </div>
+                        <StatusBadge status={inv.status} />
+                      </div>
+                    ))}
+                    {(pendingInvoices.length + pendingQuotes.length) > 4 && (
+                      <button onClick={() => setActiveTab('finance')} style={{ ...linkBtn, fontSize: '12px', color: '#8E8E93', padding: '4px 0', textAlign: 'left' }}>
+                        +{pendingInvoices.length + pendingQuotes.length - 4} weitere
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
