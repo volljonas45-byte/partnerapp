@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Upload, X, Save, Plus, Trash2, Pencil, Check, Building2, FileText, Layers, Mail, Users } from 'lucide-react';
+import { Upload, X, Save, Plus, Trash2, Pencil, Check, Building2, FileText, Layers, Mail, Users, UserCircle, KeyRound } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { settingsApi } from '../api/settings';
 import { serviceTemplatesApi } from '../api/serviceTemplates';
 import { teamApi } from '../api/team';
+import { authApi } from '../api/auth';
+import { useAuth } from '../context/AuthContext';
 import { formatCurrency } from '../utils/formatters';
 import LoadingSpinner from '../components/LoadingSpinner';
 
@@ -30,12 +32,18 @@ const EMPTY_FORM = {
 
 const EMPTY_TMPL = { name: '', description: '', unit: 'Stunde', unit_price: '', tax_rate: '19' };
 
+const AVATAR_COLORS = [
+  '#6366f1', '#0071E3', '#10B981', '#F59E0B',
+  '#EF4444', '#EC4899', '#8B5CF6', '#06B6D4',
+];
+
 const TABS = [
-  { id: 'company',   label: 'Unternehmen',          icon: Building2 },
-  { id: 'documents', label: 'Rechnungen & Angebote', icon: FileText  },
-  { id: 'email',     label: 'E-Mail',                icon: Mail      },
-  { id: 'templates', label: 'Leistungsvorlagen',     icon: Layers    },
-  { id: 'team',      label: 'Team',                  icon: Users     },
+  { id: 'personal',  label: 'Persönlich',            icon: UserCircle },
+  { id: 'company',   label: 'Unternehmen',            icon: Building2  },
+  { id: 'documents', label: 'Rechnungen & Angebote',  icon: FileText   },
+  { id: 'email',     label: 'E-Mail',                 icon: Mail       },
+  { id: 'templates', label: 'Leistungsvorlagen',      icon: Layers     },
+  { id: 'team',      label: 'Team',                   icon: Users      },
 ];
 
 // ── ServiceTemplates ───────────────────────────────────────────────────────────
@@ -175,6 +183,176 @@ function ServiceTemplates() {
   );
 }
 
+// ── PersonalSettings ──────────────────────────────────────────────────────────
+function PersonalSettings() {
+  const { user, refreshUser } = useAuth();
+  const avatarRef = useRef();
+
+  const [name, setName]           = useState('');
+  const [color, setColor]         = useState('#6366f1');
+  const [avatarPreview, setAvatarPreview] = useState(null);
+  const [removeAvatar, setRemoveAvatar]   = useState(false);
+
+  const [pwForm, setPwForm] = useState({ current: '', next: '', confirm: '' });
+
+  useEffect(() => {
+    if (user) {
+      setName(user.name || '');
+      setColor(user.color || '#6366f1');
+      setAvatarPreview(user.avatar_base64 || null);
+    }
+  }, [user]);
+
+  const profileMutation = useMutation({
+    mutationFn: (data) => authApi.updateProfile(data),
+    onSuccess: () => { refreshUser(); toast.success('Profil gespeichert'); setRemoveAvatar(false); },
+    onError: err => toast.error(err.response?.data?.error || 'Fehler beim Speichern'),
+  });
+
+  const passwordMutation = useMutation({
+    mutationFn: (data) => authApi.changePassword(data),
+    onSuccess: () => { toast.success('Passwort geändert'); setPwForm({ current: '', next: '', confirm: '' }); },
+    onError: err => toast.error(err.response?.data?.error || 'Falsches Passwort'),
+  });
+
+  const handleAvatarChange = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { toast.error('Bitte eine Bilddatei wählen'); return; }
+    if (file.size > 2_000_000) { toast.error('Bild muss kleiner als 2 MB sein'); return; }
+    const reader = new FileReader();
+    reader.onload = ev => { setAvatarPreview(ev.target.result); setRemoveAvatar(false); };
+    reader.readAsDataURL(file);
+  };
+
+  const handleProfileSave = e => {
+    e.preventDefault();
+    const data = { name, color };
+    if (removeAvatar) data.avatar_base64 = null;
+    else if (avatarPreview && avatarPreview !== user?.avatar_base64) data.avatar_base64 = avatarPreview;
+    profileMutation.mutate(data);
+  };
+
+  const handlePasswordSave = e => {
+    e.preventDefault();
+    if (pwForm.next !== pwForm.confirm) { toast.error('Neue Passwörter stimmen nicht überein'); return; }
+    if (pwForm.next.length < 6) { toast.error('Neues Passwort muss mindestens 6 Zeichen haben'); return; }
+    passwordMutation.mutate({ current_password: pwForm.current, new_password: pwForm.next });
+  };
+
+  const initials = (name || user?.email || '?').trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+
+  return (
+    <div className="space-y-5">
+
+      {/* Profil */}
+      <form onSubmit={handleProfileSave} className="space-y-5">
+        <div className="card space-y-4">
+          <h2 className="text-sm font-semibold text-gray-700">Profilbild</h2>
+          <div className="flex items-center gap-5">
+            {/* Preview */}
+            <div style={{
+              width: 72, height: 72, borderRadius: '50%',
+              background: avatarPreview && !removeAvatar ? 'transparent' : color,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '22px', fontWeight: '700', color: '#fff',
+              overflow: 'hidden', flexShrink: 0,
+              boxShadow: '0 2px 12px rgba(0,0,0,0.12)',
+            }}>
+              {avatarPreview && !removeAvatar
+                ? <img src={avatarPreview} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                : initials}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <input ref={avatarRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
+              <button type="button" onClick={() => avatarRef.current?.click()} className="btn-secondary text-xs">
+                <Upload size={13} /> Bild hochladen
+              </button>
+              {(avatarPreview && !removeAvatar) && (
+                <button type="button" onClick={() => { setAvatarPreview(null); setRemoveAvatar(true); }}
+                  className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1">
+                  <X size={12} /> Bild entfernen
+                </button>
+              )}
+              <p className="text-xs text-gray-400">PNG, JPG · max. 2 MB</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="card space-y-4">
+          <h2 className="text-sm font-semibold text-gray-700">Angaben</h2>
+          <div>
+            <label className="label">Anzeigename</label>
+            <input className="input" placeholder="Max Mustermann" value={name} onChange={e => setName(e.target.value)} />
+          </div>
+          <div>
+            <label className="label">E-Mail</label>
+            <input className="input" value={user?.email || ''} disabled style={{ opacity: 0.5, cursor: 'not-allowed' }} />
+            <p className="text-xs text-gray-400 mt-1">E-Mail kann nicht geändert werden</p>
+          </div>
+          <div>
+            <label className="label">Avatar-Farbe (Initialen-Fallback)</label>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '4px' }}>
+              {AVATAR_COLORS.map(c => (
+                <button key={c} type="button" onClick={() => setColor(c)}
+                  style={{
+                    width: 28, height: 28, borderRadius: '50%', background: c,
+                    border: 'none', cursor: 'pointer',
+                    outline: color === c ? `3px solid ${c}` : '2px solid transparent',
+                    outlineOffset: '2px', transition: 'outline 0.15s',
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex justify-end">
+          <button type="submit" disabled={profileMutation.isPending} className="btn-primary">
+            <Save size={15} /> {profileMutation.isPending ? 'Wird gespeichert…' : 'Profil speichern'}
+          </button>
+        </div>
+      </form>
+
+      {/* Passwort */}
+      <form onSubmit={handlePasswordSave} className="space-y-5">
+        <div className="card space-y-4">
+          <div>
+            <h2 className="text-sm font-semibold text-gray-700">Passwort ändern</h2>
+            <p className="text-xs text-gray-400 mt-0.5">Gib dein aktuelles Passwort ein, dann zweimal das neue.</p>
+          </div>
+          <div>
+            <label className="label">Aktuelles Passwort</label>
+            <input type="password" className="input" placeholder="••••••••"
+              value={pwForm.current} onChange={e => setPwForm(f => ({ ...f, current: e.target.value }))} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="label">Neues Passwort</label>
+              <input type="password" className="input" placeholder="Min. 6 Zeichen"
+                value={pwForm.next} onChange={e => setPwForm(f => ({ ...f, next: e.target.value }))} />
+            </div>
+            <div>
+              <label className="label">Neues Passwort bestätigen</label>
+              <input type="password" className="input" placeholder="••••••••"
+                value={pwForm.confirm} onChange={e => setPwForm(f => ({ ...f, confirm: e.target.value }))}
+                style={{ borderColor: pwForm.confirm && pwForm.next !== pwForm.confirm ? '#EF4444' : undefined }} />
+            </div>
+          </div>
+          {pwForm.confirm && pwForm.next !== pwForm.confirm && (
+            <p className="text-xs text-red-500">Passwörter stimmen nicht überein</p>
+          )}
+        </div>
+        <div className="flex justify-end">
+          <button type="submit" disabled={passwordMutation.isPending || !pwForm.current || !pwForm.next} className="btn-primary">
+            <KeyRound size={15} /> {passwordMutation.isPending ? 'Wird gespeichert…' : 'Passwort ändern'}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
 // ── TeamSettings ──────────────────────────────────────────────────────────────
 function TeamSettings() {
   const qc = useQueryClient();
@@ -273,7 +451,7 @@ function TeamSettings() {
 export default function Settings() {
   const qc      = useQueryClient();
   const fileRef = useRef();
-  const [activeTab, setActiveTab] = useState('company');
+  const [activeTab, setActiveTab] = useState('personal');
 
   const { data: settings, isLoading } = useQuery({
     queryKey: ['settings'],
@@ -383,6 +561,9 @@ export default function Settings() {
             );
           })}
         </div>
+
+        {/* ── Tab: Persönlich ── */}
+        {activeTab === 'personal' && <PersonalSettings />}
 
         {/* ── Tab: Unternehmen ── */}
         {activeTab === 'company' && (

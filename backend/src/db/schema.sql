@@ -448,6 +448,7 @@ DO $$ BEGIN ALTER TABLE tasks ADD COLUMN assignee_id        INTEGER DEFAULT NULL
 DO $$ BEGIN ALTER TABLE clients ADD COLUMN industry TEXT DEFAULT ''; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
 DO $$ BEGIN ALTER TABLE clients ADD COLUMN website  TEXT DEFAULT ''; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
 DO $$ BEGIN ALTER TABLE users ADD COLUMN show_in_dashboard BOOLEAN DEFAULT TRUE; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE users ADD COLUMN avatar_base64 TEXT DEFAULT NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
 
 -- ── TIME TRACKING SCHEMA ───────────────────────────────────────────────────────
 

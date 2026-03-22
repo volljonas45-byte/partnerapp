@@ -227,8 +227,11 @@ export default function Sidebar() {
             fontSize: '11px', fontWeight: '700',
             color: '#fff',
             flexShrink: 0,
+            overflow: 'hidden',
           }}>
-            {initials}
+            {user?.avatar_base64
+              ? <img src={user.avatar_base64} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              : initials}
           </div>
           <div style={{ flex: 1, overflow: 'hidden' }}>
             {user?.name && (

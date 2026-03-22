@@ -41,6 +41,9 @@ export function AuthProvider({ children }) {
     setUser(userData);
   };
 
+  const refreshUser = () =>
+    api.get('/api/auth/me').then(res => setUser(res.data)).catch(() => {});
+
   /** Convenience getter: role of the current user */
   const isCEO       = user?.role === 'ceo';
   const isAdmin     = isCEO || user?.role === 'admin';
@@ -53,7 +56,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ token, user, loading, login, logout, isAuthenticated: !!token, isCEO, isAdmin, isPM, isDeveloper }}>
+    <AuthContext.Provider value={{ token, user, loading, login, logout, refreshUser, isAuthenticated: !!token, isCEO, isAdmin, isPM, isDeveloper }}>
       {children}
     </AuthContext.Provider>
   );

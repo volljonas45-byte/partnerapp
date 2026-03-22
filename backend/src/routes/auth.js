@@ -100,13 +100,68 @@ router.post('/login', async (req, res) => {
 router.get('/me', require('../middleware/auth'), async (req, res) => {
   try {
     const user = await getOne(
-      'SELECT id, email, name, color, role, workspace_owner_id, created_at FROM users WHERE id = ?',
+      'SELECT id, email, name, color, role, workspace_owner_id, avatar_base64, created_at FROM users WHERE id = ?',
       [req.userId]
     );
     if (!user) return res.status(404).json({ error: 'User not found' });
     res.json(user);
   } catch (err) {
     console.error('[auth/me]', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * PUT /api/auth/profile
+ * Update own name, color, avatar_base64.
+ */
+router.put('/profile', require('../middleware/auth'), async (req, res) => {
+  try {
+    const { name, color, avatar_base64 } = req.body;
+    await run(
+      `UPDATE users SET
+        name          = COALESCE(?, name),
+        color         = COALESCE(?, color),
+        avatar_base64 = CASE WHEN ? THEN ? ELSE avatar_base64 END
+       WHERE id = ?`,
+      [name ?? null, color ?? null,
+       avatar_base64 !== undefined, avatar_base64 ?? null,
+       req.userId]
+    );
+    const user = await getOne(
+      'SELECT id, email, name, color, role, workspace_owner_id, avatar_base64, created_at FROM users WHERE id = ?',
+      [req.userId]
+    );
+    res.json(user);
+  } catch (err) {
+    console.error('[auth/profile]', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * PUT /api/auth/password
+ * Change own password. Requires current password verification.
+ */
+router.put('/password', require('../middleware/auth'), async (req, res) => {
+  try {
+    const { current_password, new_password } = req.body;
+    if (!current_password || !new_password) {
+      return res.status(400).json({ error: 'Aktuelles und neues Passwort sind erforderlich' });
+    }
+    if (new_password.length < 6) {
+      return res.status(400).json({ error: 'Neues Passwort muss mindestens 6 Zeichen haben' });
+    }
+    const user = await getOne('SELECT password_hash FROM users WHERE id = ?', [req.userId]);
+    const valid = await bcrypt.compare(current_password, user.password_hash);
+    if (!valid) {
+      return res.status(401).json({ error: 'Aktuelles Passwort ist falsch' });
+    }
+    const hash = await bcrypt.hash(new_password, 12);
+    await run('UPDATE users SET password_hash = ? WHERE id = ?', [hash, req.userId]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('[auth/password]', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
