@@ -9,31 +9,78 @@ export default function Modal({ open, onClose, title, children, maxWidth = 'max-
     return () => document.removeEventListener('keydown', handler);
   }, [open, onClose]);
 
+  // Lock body scroll when open
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [open]);
+
   if (!open) return null;
 
+  // Max-width mapping
+  const widthMap = {
+    'max-w-sm':  '384px',
+    'max-w-md':  '448px',
+    'max-w-lg':  '512px',
+    'max-w-xl':  '576px',
+    'max-w-2xl': '672px',
+  };
+  const maxWidthPx = widthMap[maxWidth] || '512px';
+
   return (
-    // Backdrop + Scroll-Container in einem Element — kein weißer Block möglich
     <div
-      className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm overflow-y-auto"
       onClick={onClose}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 9999,
+        background: 'rgba(0,0,0,0.35)',
+        backdropFilter: 'blur(4px)',
+        WebkitBackdropFilter: 'blur(4px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '24px',
+        overflowY: 'auto',
+      }}
     >
       <div
-        className="flex min-h-full items-center justify-center p-6"
         onClick={e => e.stopPropagation()}
+        style={{
+          position: 'relative',
+          width: '100%',
+          maxWidth: maxWidthPx,
+          background: '#fff',
+          borderRadius: '16px',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+          flexShrink: 0,
+          margin: 'auto',
+        }}
       >
-        <div className={`relative w-full ${maxWidth} bg-white rounded-2xl shadow-xl my-4`}>
-          {/* Header */}
-          <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-gray-100">
-            <h3 className="text-base font-semibold text-gray-900">{title}</h3>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
-              <X size={18} />
-            </button>
-          </div>
+        {/* Header */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '20px 24px 16px',
+          borderBottom: '1px solid rgba(0,0,0,0.06)',
+        }}>
+          <h3 style={{ fontSize: '15px', fontWeight: '600', color: '#1D1D1F', margin: 0 }}>{title}</h3>
+          <button
+            onClick={onClose}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6E6E73', padding: '2px', display: 'flex' }}
+            onMouseEnter={e => e.currentTarget.style.color = '#1D1D1F'}
+            onMouseLeave={e => e.currentTarget.style.color = '#6E6E73'}
+          >
+            <X size={18} />
+          </button>
+        </div>
 
-          {/* Body */}
-          <div className="px-6 py-4">
-            {children}
-          </div>
+        {/* Body */}
+        <div style={{ padding: '16px 24px 24px' }}>
+          {children}
         </div>
       </div>
     </div>
