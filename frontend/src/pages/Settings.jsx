@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Upload, X, Save, Plus, Trash2, Pencil, Check, Building2, FileText, Layers, Mail } from 'lucide-react';
+import { Upload, X, Save, Plus, Trash2, Pencil, Check, Building2, FileText, Layers, Mail, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { settingsApi } from '../api/settings';
 import { serviceTemplatesApi } from '../api/serviceTemplates';
+import { teamApi } from '../api/team';
 import { formatCurrency } from '../utils/formatters';
 import LoadingSpinner from '../components/LoadingSpinner';
 
@@ -34,6 +35,7 @@ const TABS = [
   { id: 'documents', label: 'Rechnungen & Angebote', icon: FileText  },
   { id: 'email',     label: 'E-Mail',                icon: Mail      },
   { id: 'templates', label: 'Leistungsvorlagen',     icon: Layers    },
+  { id: 'team',      label: 'Team',                  icon: Users     },
 ];
 
 // ── ServiceTemplates ───────────────────────────────────────────────────────────
@@ -168,6 +170,100 @@ function ServiceTemplates() {
             </div>
           ))
         )}
+      </div>
+    </div>
+  );
+}
+
+// ── TeamSettings ──────────────────────────────────────────────────────────────
+function TeamSettings() {
+  const qc = useQueryClient();
+
+  const { data: members = [], isLoading } = useQuery({
+    queryKey: ['team'],
+    queryFn: () => teamApi.list().then(r => r.data),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }) => teamApi.update(id, data),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['team'] }); qc.invalidateQueries({ queryKey: ['team-stats'] }); },
+    onError: () => toast.error('Fehler beim Speichern'),
+  });
+
+  if (isLoading) return <LoadingSpinner className="h-32" />;
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <div>
+        <h2 style={{ fontSize: '13px', fontWeight: '600', color: '#1D1D1F', margin: 0 }}>Team Dashboard Sichtbarkeit</h2>
+        <p style={{ fontSize: '12px', color: '#86868B', margin: '4px 0 0', lineHeight: 1.5 }}>
+          Lege fest, welche Mitglieder in Aufgaben-Auswertungen und Zeiterfassungs-Statistiken erscheinen.
+        </p>
+      </div>
+
+      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+        {members.map((m, i) => {
+          const isVisible = m.show_in_dashboard !== false;
+          const initials = (m.name || m.email || '?').trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+          return (
+            <div key={m.id} style={{
+              display: 'flex', alignItems: 'center', gap: '12px',
+              padding: '14px 18px',
+              borderBottom: i < members.length - 1 ? '1px solid rgba(0,0,0,0.05)' : 'none',
+            }}>
+              {/* Avatar */}
+              <div style={{
+                width: '34px', height: '34px', borderRadius: '50%',
+                background: m.color || '#6366f1',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '12px', fontWeight: '700', color: '#fff', flexShrink: 0,
+              }}>
+                {initials}
+              </div>
+
+              {/* Info */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontSize: '13px', fontWeight: '500', color: '#1D1D1F', margin: 0, lineHeight: 1.3 }}>
+                  {m.name || m.email}
+                </p>
+                <p style={{ fontSize: '11px', color: '#86868B', margin: '1px 0 0' }}>
+                  {m.email} · {m.role}
+                  {!m.workspace_owner_id && <span style={{ marginLeft: '6px', fontSize: '10px', background: 'rgba(0,113,227,0.1)', color: '#0071E3', borderRadius: '4px', padding: '1px 5px', fontWeight: '500' }}>Haupt-Account</span>}
+                </p>
+              </div>
+
+              {/* Toggle */}
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', flexShrink: 0 }}>
+                <span style={{ fontSize: '12px', color: isVisible ? '#34C759' : '#86868B', fontWeight: '500' }}>
+                  {isVisible ? 'Sichtbar' : 'Ausgeblendet'}
+                </span>
+                <div
+                  onClick={() => updateMutation.mutate({ id: m.id, data: { show_in_dashboard: !isVisible } })}
+                  style={{
+                    width: '40px', height: '24px',
+                    borderRadius: '12px',
+                    background: isVisible ? '#34C759' : '#D1D1D6',
+                    position: 'relative',
+                    cursor: 'pointer',
+                    transition: 'background 0.2s ease',
+                    flexShrink: 0,
+                  }}
+                >
+                  <div style={{
+                    position: 'absolute',
+                    top: '3px',
+                    left: isVisible ? '19px' : '3px',
+                    width: '18px', height: '18px',
+                    borderRadius: '50%',
+                    background: '#fff',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                    transition: 'left 0.2s ease',
+                  }} />
+                </div>
+              </label>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -517,6 +613,9 @@ export default function Settings() {
 
         {/* ── Tab: Leistungsvorlagen ── */}
         {activeTab === 'templates' && <ServiceTemplates />}
+
+        {/* ── Tab: Team ── */}
+        {activeTab === 'team' && <TeamSettings />}
       </div>
     </div>
   );

@@ -17,7 +17,7 @@ router.get('/', async (req, res) => {
   try {
     const wsId = req.workspaceUserId;
     const members = await getAll(`
-      SELECT id, email, name, color, role, workspace_owner_id, created_at
+      SELECT id, email, name, color, role, workspace_owner_id, show_in_dashboard, created_at
       FROM users
       WHERE id = ? OR workspace_owner_id = ?
       ORDER BY id ASC
@@ -37,10 +37,10 @@ router.get('/stats', async (req, res) => {
   try {
     const wsId = req.workspaceUserId;
 
-    // All workspace member IDs
+    // All workspace member IDs (only those enabled for dashboard)
     const members = await getAll(`
       SELECT id, email, name, color, role
-      FROM users WHERE id = ? OR workspace_owner_id = ?
+      FROM users WHERE (id = ? OR workspace_owner_id = ?) AND show_in_dashboard = TRUE
       ORDER BY id ASC
     `, [wsId, wsId]);
 
@@ -200,7 +200,7 @@ router.put('/:id', async (req, res) => {
 
     if (!member) return res.status(404).json({ error: 'Mitglied nicht gefunden' });
 
-    const { name, role, color } = req.body;
+    const { name, role, color, show_in_dashboard } = req.body;
 
     if (role && !VALID_ROLES.includes(role)) {
       return res.status(400).json({ error: 'Ungültige Rolle' });
@@ -219,14 +219,17 @@ router.put('/:id', async (req, res) => {
 
     await run(`
       UPDATE users SET
-        name  = COALESCE(?, name),
-        role  = COALESCE(?, role),
-        color = COALESCE(?, color)
+        name               = COALESCE(?, name),
+        role               = COALESCE(?, role),
+        color              = COALESCE(?, color),
+        show_in_dashboard  = CASE WHEN ? THEN ? ELSE show_in_dashboard END
       WHERE id = ?
-    `, [name ?? null, role ?? null, color ?? null, req.params.id]);
+    `, [name ?? null, role ?? null, color ?? null,
+        show_in_dashboard !== undefined, show_in_dashboard ?? true,
+        req.params.id]);
 
     const updated = await getOne(
-      'SELECT id, email, name, color, role, workspace_owner_id, created_at FROM users WHERE id = ?',
+      'SELECT id, email, name, color, role, workspace_owner_id, show_in_dashboard, created_at FROM users WHERE id = ?',
       [req.params.id]
     );
     res.json(updated);
