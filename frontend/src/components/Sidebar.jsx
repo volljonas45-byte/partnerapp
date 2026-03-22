@@ -2,43 +2,11 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Users, FileText, ClipboardList, Settings, LogOut,
   Zap, Briefcase, Layers, Sparkles, ClipboardCheck, PackageCheck, Globe,
+  UserCog,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { intakeApi } from '../api/intake';
-
-const NAV_GROUPS = [
-  {
-    label: null,
-    items: [
-      { to: '/',         icon: LayoutDashboard, label: 'Dashboard' },
-      { to: '/websites', icon: Globe,            label: 'Websites'  },
-      { to: '/projects', icon: Briefcase,        label: 'Projekte'  },
-    ],
-  },
-  {
-    label: 'Workflow',
-    items: [
-      { to: '/intake',    icon: ClipboardCheck, label: 'Intake'    },
-      { to: '/delivery',  icon: PackageCheck,   label: 'Übergabe'  },
-      { to: '/onboarding',icon: Layers,         label: 'Onboarding'},
-    ],
-  },
-  {
-    label: 'Finanzen',
-    items: [
-      { to: '/invoices', icon: FileText,      label: 'Rechnungen' },
-      { to: '/quotes',   icon: ClipboardList, label: 'Angebote'   },
-    ],
-  },
-  {
-    label: 'Verwaltung',
-    items: [
-      { to: '/clients',  icon: Users,    label: 'Kunden'        },
-      { to: '/settings', icon: Settings, label: 'Einstellungen' },
-    ],
-  },
-];
 
 function avatarColor(str = '') {
   const colors = ['#BF5AF2','#0071E3','#34C759','#FF9500','#FF3B30','#5AC8FA','#FF6961'];
@@ -48,8 +16,45 @@ function avatarColor(str = '') {
 }
 
 export default function Sidebar() {
-  const { logout, user } = useAuth();
+  const { logout, user, isAdmin, isPM } = useAuth();
   const navigate = useNavigate();
+
+  // Build nav groups based on role
+  const NAV_GROUPS = [
+    {
+      label: null,
+      items: [
+        { to: '/',         icon: LayoutDashboard, label: 'Dashboard' },
+        { to: '/websites', icon: Globe,            label: 'Websites'  },
+        { to: '/projects', icon: Briefcase,        label: 'Projekte'  },
+      ],
+    },
+    {
+      label: 'Workflow',
+      items: [
+        { to: '/intake',    icon: ClipboardCheck, label: 'Intake'    },
+        { to: '/delivery',  icon: PackageCheck,   label: 'Übergabe'  },
+        { to: '/onboarding',icon: Layers,         label: 'Onboarding'},
+      ],
+    },
+    // Finanzen: nur für Admin und PM sichtbar
+    ...(isAdmin || isPM ? [{
+      label: 'Finanzen',
+      items: [
+        { to: '/invoices', icon: FileText,      label: 'Rechnungen' },
+        { to: '/quotes',   icon: ClipboardList, label: 'Angebote'   },
+      ],
+    }] : []),
+    {
+      label: 'Verwaltung',
+      items: [
+        { to: '/clients', icon: Users,    label: 'Kunden' },
+        { to: '/team',    icon: UserCog,  label: 'Team'   },
+        // Einstellungen nur für Admin
+        ...(isAdmin ? [{ to: '/settings', icon: Settings, label: 'Einstellungen' }] : []),
+      ],
+    },
+  ];
 
   const { data: unread } = useQuery({
     queryKey: ['intake-unread-count'],
@@ -57,8 +62,9 @@ export default function Sidebar() {
     refetchInterval: 30000,
   });
 
-  const initials = (user?.email || '?').slice(0, 2).toUpperCase();
-  const bgColor  = avatarColor(user?.email || '');
+  const displayName = user?.name || user?.email || '?';
+  const initials = displayName.trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  const bgColor  = user?.color || avatarColor(user?.email || '');
 
   return (
     <aside style={{
@@ -223,13 +229,16 @@ export default function Sidebar() {
           }}>
             {initials}
           </div>
-          <p style={{
-            fontSize: '12px', color: '#6E6E73',
-            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-            flex: 1,
-          }}>
-            {user?.email}
-          </p>
+          <div style={{ flex: 1, overflow: 'hidden' }}>
+            {user?.name && (
+              <p style={{ fontSize: '12px', fontWeight: '500', color: '#1D1D1F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.2 }}>
+                {user.name}
+              </p>
+            )}
+            <p style={{ fontSize: '11px', color: '#6E6E73', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.3 }}>
+              {user?.email}
+            </p>
+          </div>
         </div>
 
         {/* Logout */}

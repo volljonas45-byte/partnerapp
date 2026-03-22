@@ -15,7 +15,7 @@ router.get('/', async (req, res) => {
   try {
     const clients = await getAll(
       'SELECT * FROM clients WHERE user_id = ? ORDER BY company_name ASC',
-      [req.userId]
+      [req.workspaceUserId]
     );
     res.json(clients);
   } catch (err) {
@@ -32,7 +32,7 @@ router.get('/:id', async (req, res) => {
   try {
     const client = await getOne(
       'SELECT * FROM clients WHERE id = ? AND user_id = ?',
-      [req.params.id, req.userId]
+      [req.params.id, req.workspaceUserId]
     );
 
     if (!client) return res.status(404).json({ error: 'Client not found' });
@@ -46,7 +46,7 @@ router.get('/:id', async (req, res) => {
         MAX(issue_date) as last_invoice_date
       FROM invoices
       WHERE client_id = ? AND user_id = ?
-    `, [req.params.id, req.userId]);
+    `, [req.params.id, req.workspaceUserId]);
 
     res.json({ ...client, ...stats });
   } catch (err) {
@@ -61,14 +61,14 @@ router.get('/:id', async (req, res) => {
  */
 router.get('/:id/invoices', async (req, res) => {
   try {
-    const client = await getOne('SELECT id FROM clients WHERE id = ? AND user_id = ?', [req.params.id, req.userId]);
+    const client = await getOne('SELECT id FROM clients WHERE id = ? AND user_id = ?', [req.params.id, req.workspaceUserId]);
     if (!client) return res.status(404).json({ error: 'Client not found' });
 
     const invoices = await getAll(`
       SELECT * FROM invoices
       WHERE client_id = ? AND user_id = ?
       ORDER BY created_at DESC
-    `, [req.params.id, req.userId]);
+    `, [req.params.id, req.workspaceUserId]);
 
     res.json(invoices);
   } catch (err) {
@@ -99,7 +99,7 @@ router.post('/', async (req, res) => {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       RETURNING id
     `, [
-      req.userId,
+      req.workspaceUserId,
       company_name,
       contact_person || '',
       address || '',
@@ -139,7 +139,7 @@ router.put('/:id', async (req, res) => {
   try {
     const client = await getOne(
       'SELECT * FROM clients WHERE id = ? AND user_id = ?',
-      [req.params.id, req.userId]
+      [req.params.id, req.workspaceUserId]
     );
 
     if (!client) return res.status(404).json({ error: 'Client not found' });
@@ -175,7 +175,7 @@ router.put('/:id', async (req, res) => {
       industry !== undefined ? (industry || '') : (client.industry || ''),
       website !== undefined ? (website || '') : (client.website || ''),
       req.params.id,
-      req.userId,
+      req.workspaceUserId,
     ]);
 
     // Sync legal setup: pre-fill company_name/address if legal record is still empty
@@ -204,14 +204,14 @@ router.delete('/:id', async (req, res) => {
   try {
     const client = await getOne(
       'SELECT * FROM clients WHERE id = ? AND user_id = ?',
-      [req.params.id, req.userId]
+      [req.params.id, req.workspaceUserId]
     );
 
     if (!client) return res.status(404).json({ error: 'Client not found' });
 
     const invoiceCount = await getOne(
       'SELECT COUNT(*) as count FROM invoices WHERE client_id = ? AND user_id = ?',
-      [req.params.id, req.userId]
+      [req.params.id, req.workspaceUserId]
     );
 
     if (parseInt(invoiceCount.count) > 0) {
@@ -220,7 +220,7 @@ router.delete('/:id', async (req, res) => {
       });
     }
 
-    await run('DELETE FROM clients WHERE id = ? AND user_id = ?', [req.params.id, req.userId]);
+    await run('DELETE FROM clients WHERE id = ? AND user_id = ?', [req.params.id, req.workspaceUserId]);
     res.json({ success: true });
   } catch (err) {
     console.error('[clients DELETE /:id]', err);

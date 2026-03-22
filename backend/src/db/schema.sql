@@ -437,3 +437,12 @@ DO $$ BEGIN ALTER TABLE settings          ADD COLUMN email_signature TEXT DEFAUL
 DO $$ BEGIN ALTER TABLE invoice_items     ADD COLUMN billing_cycle   TEXT DEFAULT 'once'; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
 DO $$ BEGIN ALTER TABLE quote_items       ADD COLUMN billing_cycle   TEXT DEFAULT 'once'; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
 DO $$ BEGIN ALTER TABLE service_templates ADD COLUMN billing_cycle   TEXT DEFAULT 'once'; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+
+-- ── TEAM MANAGEMENT MIGRATIONS ─────────────────────────────────────────────────
+DO $$ BEGIN ALTER TABLE users ADD COLUMN role               TEXT    DEFAULT 'admin'; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE users ADD COLUMN workspace_owner_id INTEGER DEFAULT NULL;    EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE users ADD COLUMN name               TEXT    DEFAULT '';      EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE users ADD COLUMN color              TEXT    DEFAULT '#6366f1'; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE tasks ADD COLUMN assignee_id        INTEGER DEFAULT NULL;    EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE clients ADD COLUMN industry TEXT DEFAULT ''; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE clients ADD COLUMN website  TEXT DEFAULT ''; EXCEPTION WHEN duplicate_column THEN NULL; END $$;

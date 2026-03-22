@@ -8,7 +8,7 @@ router.use(authenticate);
 // List all areas with their projects
 router.get('/', async (req, res) => {
   try {
-    const uid = req.userId;
+    const uid = req.workspaceUserId;
 
     const areas = await getAll(`
       SELECT * FROM project_areas WHERE user_id = ? ORDER BY position, id
@@ -39,7 +39,7 @@ router.get('/', async (req, res) => {
 // Create area
 router.post('/', async (req, res) => {
   try {
-    const uid = req.userId;
+    const uid = req.workspaceUserId;
     const { name, color = '#0071E3', icon = 'briefcase' } = req.body;
     if (!name?.trim()) return res.status(400).json({ error: 'Name erforderlich' });
 
@@ -62,7 +62,7 @@ router.post('/', async (req, res) => {
 // Update area
 router.put('/:id', async (req, res) => {
   try {
-    const uid = req.userId;
+    const uid = req.workspaceUserId;
     const area = await getOne(`SELECT * FROM project_areas WHERE id = ? AND user_id = ?`, [req.params.id, uid]);
     if (!area) return res.status(404).json({ error: 'Nicht gefunden' });
 
@@ -80,7 +80,7 @@ router.put('/:id', async (req, res) => {
 // Delete area
 router.delete('/:id', async (req, res) => {
   try {
-    const uid = req.userId;
+    const uid = req.workspaceUserId;
     const area = await getOne(`SELECT * FROM project_areas WHERE id = ? AND user_id = ?`, [req.params.id, uid]);
     if (!area) return res.status(404).json({ error: 'Nicht gefunden' });
 
@@ -96,7 +96,7 @@ router.delete('/:id', async (req, res) => {
 // Create a general project inside an area
 router.post('/:id/projects', async (req, res) => {
   try {
-    const uid = req.userId;
+    const uid = req.workspaceUserId;
     const area = await getOne(`SELECT * FROM project_areas WHERE id = ? AND user_id = ?`, [req.params.id, uid]);
     if (!area) return res.status(404).json({ error: 'Nicht gefunden' });
 

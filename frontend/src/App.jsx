@@ -30,6 +30,7 @@ import Wizard                   from './pages/Wizard';
 import Intake                   from './pages/Intake';
 import IntakePublic             from './pages/IntakePublic';
 import Delivery                 from './pages/Delivery';
+import Team                    from './pages/Team';
 import DeliveryPublic           from './pages/DeliveryPublic';
 
 function ProtectedRoute({ children }) {
@@ -79,6 +80,7 @@ function AppRoutes() {
 
       <Route path="/wizard"   element={<ProtectedRoute><Wizard /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+      <Route path="/team"     element={<ProtectedRoute><Team /></ProtectedRoute>} />
 
       <Route path="/onboarding"                    element={<ProtectedRoute><OnboardingTemplates /></ProtectedRoute>} />
       <Route path="/onboarding/templates/:id"       element={<ProtectedRoute><OnboardingTemplateBuilder /></ProtectedRoute>} />

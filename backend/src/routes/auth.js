@@ -100,7 +100,10 @@ router.post('/login', async (req, res) => {
  */
 router.get('/me', require('../middleware/auth'), async (req, res) => {
   try {
-    const user = await getOne('SELECT id, email, created_at FROM users WHERE id = ?', [req.userId]);
+    const user = await getOne(
+      'SELECT id, email, name, color, role, workspace_owner_id, created_at FROM users WHERE id = ?',
+      [req.userId]
+    );
     if (!user) return res.status(404).json({ error: 'User not found' });
     res.json(user);
   } catch (err) {

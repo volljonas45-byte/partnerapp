@@ -15,7 +15,7 @@ router.get('/', authenticate, async (req, res) => {
       LEFT JOIN projects p ON d.project_id = p.id
       LEFT JOIN clients c ON p.client_id = c.id
       WHERE d.user_id = ? ORDER BY d.created_at DESC
-    `, [req.userId]);
+    `, [req.workspaceUserId]);
     res.json(rows.map(parseDoc));
   } catch (err) {
     console.error('[delivery GET /]', err);
@@ -32,7 +32,7 @@ router.post('/', authenticate, async (req, res) => {
       INSERT INTO delivery_documents (user_id, project_id, type, title, summary, links, credentials, instructions, token)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       RETURNING id
-    `, [req.userId, project_id, type || 'one_time', title, summary || '',
+    `, [req.workspaceUserId, project_id, type || 'one_time', title, summary || '',
        JSON.stringify(links || []), JSON.stringify(credentials || []), instructions || '', token]);
     res.json(parseDoc(await getOne('SELECT * FROM delivery_documents WHERE id = ?', [r.lastInsertRowid])));
   } catch (err) {
@@ -49,7 +49,7 @@ router.get('/:id', authenticate, async (req, res) => {
       LEFT JOIN projects p ON d.project_id = p.id
       LEFT JOIN clients c ON p.client_id = c.id
       WHERE d.id = ? AND d.user_id = ?
-    `, [req.params.id, req.userId]);
+    `, [req.params.id, req.workspaceUserId]);
     if (!doc) return res.status(404).json({ error: 'Not found' });
     res.json(parseDoc(doc));
   } catch (err) {
@@ -60,7 +60,7 @@ router.get('/:id', authenticate, async (req, res) => {
 
 router.patch('/:id', authenticate, async (req, res) => {
   try {
-    const existing = await getOne('SELECT * FROM delivery_documents WHERE id = ? AND user_id = ?', [req.params.id, req.userId]);
+    const existing = await getOne('SELECT * FROM delivery_documents WHERE id = ? AND user_id = ?', [req.params.id, req.workspaceUserId]);
     if (!existing) return res.status(404).json({ error: 'Not found' });
     const { type, status, title, summary, links, credentials, instructions } = req.body;
     await run(`
@@ -74,7 +74,7 @@ router.patch('/:id', authenticate, async (req, res) => {
       links        != null ? JSON.stringify(links)       : existing.links,
       credentials  != null ? JSON.stringify(credentials) : existing.credentials,
       instructions ?? existing.instructions,
-      req.params.id, req.userId,
+      req.params.id, req.workspaceUserId,
     ]);
     res.json(parseDoc(await getOne('SELECT * FROM delivery_documents WHERE id = ?', [req.params.id])));
   } catch (err) {
@@ -85,7 +85,7 @@ router.patch('/:id', authenticate, async (req, res) => {
 
 router.delete('/:id', authenticate, async (req, res) => {
   try {
-    await run('DELETE FROM delivery_documents WHERE id = ? AND user_id = ?', [req.params.id, req.userId]);
+    await run('DELETE FROM delivery_documents WHERE id = ? AND user_id = ?', [req.params.id, req.workspaceUserId]);
     res.json({ ok: true });
   } catch (err) {
     console.error('[delivery DELETE /:id]', err);

@@ -80,7 +80,7 @@ router.get('/', async (req, res) => {
       LEFT JOIN clients c ON c.id = i.client_id
       WHERE i.user_id = ?
       ORDER BY i.created_at DESC
-    `, [req.userId]);
+    `, [req.workspaceUserId]);
     res.json(rows);
   } catch (err) {
     console.error('[invoices GET /]', err);
@@ -112,7 +112,7 @@ router.get('/stats', async (req, res) => {
         COUNT(CASE WHEN status='cancelled' THEN 1 END) as cancelled_count,
         COUNT(CASE WHEN status IN('sent','unpaid') THEN 1 END) as unpaid_count
       FROM invoices WHERE user_id = ?
-    `, [`${year}-${month}%`, `${year}%`, req.userId]);
+    `, [`${year}-${month}%`, `${year}%`, req.workspaceUserId]);
 
     res.json(stats);
   } catch (err) {
@@ -132,7 +132,7 @@ router.get('/revenue-chart', async (req, res) => {
       FROM invoices
       WHERE user_id = ? AND issue_date >= TO_CHAR(NOW() - INTERVAL '11 months', 'YYYY-MM') || '-01'
       GROUP BY month ORDER BY month ASC
-    `, [req.userId]);
+    `, [req.workspaceUserId]);
 
     const result = [];
     for (let i = 11; i >= 0; i--) {
@@ -167,7 +167,7 @@ router.get('/:id', async (req, res) => {
       FROM invoices i
       LEFT JOIN clients c ON c.id = i.client_id
       WHERE i.id = ? AND i.user_id = ?
-    `, [req.params.id, req.userId]);
+    `, [req.params.id, req.workspaceUserId]);
 
     if (!invoice) return res.status(404).json({ error: 'Rechnung nicht gefunden' });
 
@@ -197,12 +197,12 @@ router.post('/', async (req, res) => {
     if (!items || items.length === 0)
       return res.status(400).json({ error: 'Mindestens eine Position ist erforderlich' });
 
-    const client = await getOne('SELECT id FROM clients WHERE id = ? AND user_id = ?', [client_id, req.userId]);
+    const client = await getOne('SELECT id FROM clients WHERE id = ? AND user_id = ?', [client_id, req.workspaceUserId]);
     if (!client) return res.status(404).json({ error: 'Kunde nicht gefunden' });
 
-    const settings = await getOne('SELECT invoice_prefix FROM settings WHERE user_id = ?', [req.userId]);
+    const settings = await getOne('SELECT invoice_prefix FROM settings WHERE user_id = ?', [req.workspaceUserId]);
     const prefix   = settings?.invoice_prefix || 'RE';
-    const number   = await generateInvoiceNumber(req.userId, prefix);
+    const number   = await generateInvoiceNumber(req.workspaceUserId, prefix);
     const { subtotal, tax_total, total } = calcTotals(items);
 
     const pgClient = await pool.connect();
@@ -219,7 +219,7 @@ router.post('/', async (req, res) => {
          VALUES ($1, $2, $3, 'draft', $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
          RETURNING id`,
         [
-          req.userId, client_id, number, issue_date, due_date,
+          req.workspaceUserId, client_id, number, issue_date, due_date,
           leistungsdatum || null, leistungszeitraum_von || null, leistungszeitraum_bis || null,
           notes || '', invoice_type, reverse_charge ? 1 : 0,
           subtotal, tax_total, total, project_id || null,
@@ -260,7 +260,7 @@ router.post('/', async (req, res) => {
 // ── UPDATE ───────────────────────────────────────────────────────────────────
 router.put('/:id', async (req, res) => {
   try {
-    const existing = await getOne('SELECT * FROM invoices WHERE id = ? AND user_id = ?', [req.params.id, req.userId]);
+    const existing = await getOne('SELECT * FROM invoices WHERE id = ? AND user_id = ?', [req.params.id, req.workspaceUserId]);
     if (!existing) return res.status(404).json({ error: 'Rechnung nicht gefunden' });
 
     const {
@@ -300,12 +300,12 @@ router.put('/:id', async (req, res) => {
           invoice_type             || existing.invoice_type || 'standard',
           reverse_charge           !== undefined ? (reverse_charge ? 1 : 0) : existing.reverse_charge,
           subtotal, tax_total, total,
-          req.params.id, req.userId,
+          req.params.id, req.workspaceUserId,
         ]);
       }
       if (status && VALID_STATUSES.includes(status)) {
         await pgClient.query('UPDATE invoices SET status=$1, payment_date=$2 WHERE id=$3 AND user_id=$4',
-          [status, payment_date || null, req.params.id, req.userId]);
+          [status, payment_date || null, req.params.id, req.workspaceUserId]);
       }
 
       await pgClient.query('COMMIT');
@@ -322,7 +322,7 @@ router.put('/:id', async (req, res) => {
       FROM invoices i LEFT JOIN clients c ON c.id = i.client_id WHERE i.id = ?
     `, [req.params.id]);
     const updatedItems = await getAll('SELECT * FROM invoice_items WHERE invoice_id = ?', [req.params.id]);
-    await recordHistory(req.userId, req.params.id, { ...updated, items: updatedItems });
+    await recordHistory(req.workspaceUserId, req.params.id, { ...updated, items: updatedItems });
 
     res.json(updated);
   } catch (err) {
@@ -338,12 +338,12 @@ router.patch('/:id/status', async (req, res) => {
     if (!VALID_STATUSES.includes(status))
       return res.status(400).json({ error: `Status muss einer von: ${VALID_STATUSES.join(', ')} sein` });
 
-    const invoice = await getOne('SELECT id FROM invoices WHERE id = ? AND user_id = ?', [req.params.id, req.userId]);
+    const invoice = await getOne('SELECT id FROM invoices WHERE id = ? AND user_id = ?', [req.params.id, req.workspaceUserId]);
     if (!invoice) return res.status(404).json({ error: 'Rechnung nicht gefunden' });
 
     const pd = status === 'paid' ? (payment_date || new Date().toISOString().split('T')[0]) : null;
     await run('UPDATE invoices SET status=?, payment_date=? WHERE id=? AND user_id=?',
-      [status, pd, req.params.id, req.userId]);
+      [status, pd, req.params.id, req.workspaceUserId]);
 
     res.json(await getOne('SELECT * FROM invoices WHERE id = ?', [req.params.id]));
   } catch (err) {
@@ -356,12 +356,12 @@ router.patch('/:id/status', async (req, res) => {
 router.post('/:id/duplicate', async (req, res) => {
   try {
     const original = await getFullInvoice(req.params.id);
-    if (!original || original.user_id !== req.userId)
+    if (!original || original.user_id !== req.workspaceUserId)
       return res.status(404).json({ error: 'Rechnung nicht gefunden' });
 
-    const settings = await getOne('SELECT invoice_prefix FROM settings WHERE user_id = ?', [req.userId]);
+    const settings = await getOne('SELECT invoice_prefix FROM settings WHERE user_id = ?', [req.workspaceUserId]);
     const prefix   = settings?.invoice_prefix || 'RE';
-    const number   = await generateInvoiceNumber(req.userId, prefix);
+    const number   = await generateInvoiceNumber(req.workspaceUserId, prefix);
     const today    = new Date().toISOString().split('T')[0];
     const dueDate  = new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0];
 
@@ -378,7 +378,7 @@ router.post('/:id/duplicate', async (req, res) => {
         VALUES ($1, $2, $3, 'draft', $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
         RETURNING id
       `, [
-        req.userId, original.client_id, number, today, dueDate,
+        req.workspaceUserId, original.client_id, number, today, dueDate,
         original.leistungsdatum || null,
         original.leistungszeitraum_von || null,
         original.leistungszeitraum_bis || null,
@@ -422,14 +422,14 @@ router.post('/:id/duplicate', async (req, res) => {
 router.post('/:id/storno', async (req, res) => {
   try {
     const original = await getFullInvoice(req.params.id);
-    if (!original || original.user_id !== req.userId)
+    if (!original || original.user_id !== req.workspaceUserId)
       return res.status(404).json({ error: 'Rechnung nicht gefunden' });
     if (original.storno_of_id)
       return res.status(409).json({ error: 'Stornorechnung kann nicht erneut storniert werden' });
 
-    const settings  = await getOne('SELECT storno_prefix, invoice_prefix FROM settings WHERE user_id = ?', [req.userId]);
+    const settings  = await getOne('SELECT storno_prefix, invoice_prefix FROM settings WHERE user_id = ?', [req.workspaceUserId]);
     const prefix    = settings?.storno_prefix || 'ST';
-    const number    = await generateInvoiceNumber(req.userId, prefix);
+    const number    = await generateInvoiceNumber(req.workspaceUserId, prefix);
     const today     = new Date().toISOString().split('T')[0];
 
     const pgClient = await pool.connect();
@@ -445,7 +445,7 @@ router.post('/:id/storno', async (req, res) => {
         VALUES ($1, $2, $3, 'cancelled', $4, $5, $6, $7, $8, $9, $10, $11, $12)
         RETURNING id
       `, [
-        req.userId, original.client_id, number, today, today,
+        req.workspaceUserId, original.client_id, number, today, today,
         `Stornorechnung zu ${original.invoice_number}`,
         original.invoice_type || 'standard',
         original.reverse_charge || 0,
@@ -464,7 +464,7 @@ router.post('/:id/storno', async (req, res) => {
       }
 
       // Mark original as cancelled
-      await pgClient.query("UPDATE invoices SET status='cancelled' WHERE id=$1 AND user_id=$2", [original.id, req.userId]);
+      await pgClient.query("UPDATE invoices SET status='cancelled' WHERE id=$1 AND user_id=$2", [original.id, req.workspaceUserId]);
 
       await pgClient.query('COMMIT');
     } catch (txErr) {
@@ -489,7 +489,7 @@ router.post('/:id/storno', async (req, res) => {
 // ── PAYMENTS ─────────────────────────────────────────────────────────────────
 router.get('/:id/payments', async (req, res) => {
   try {
-    const invoice = await getOne('SELECT id, user_id, total FROM invoices WHERE id = ? AND user_id = ?', [req.params.id, req.userId]);
+    const invoice = await getOne('SELECT id, user_id, total FROM invoices WHERE id = ? AND user_id = ?', [req.params.id, req.workspaceUserId]);
     if (!invoice) return res.status(404).json({ error: 'Rechnung nicht gefunden' });
 
     const payments = await getAll('SELECT * FROM invoice_payments WHERE invoice_id = ? ORDER BY payment_date ASC', [req.params.id]);
@@ -503,7 +503,7 @@ router.get('/:id/payments', async (req, res) => {
 
 router.post('/:id/payments', async (req, res) => {
   try {
-    const invoice = await getOne('SELECT id, user_id, total FROM invoices WHERE id = ? AND user_id = ?', [req.params.id, req.userId]);
+    const invoice = await getOne('SELECT id, user_id, total FROM invoices WHERE id = ? AND user_id = ?', [req.params.id, req.workspaceUserId]);
     if (!invoice) return res.status(404).json({ error: 'Rechnung nicht gefunden' });
 
     const { amount, payment_date, notes } = req.body;
@@ -540,7 +540,7 @@ router.post('/:id/payments', async (req, res) => {
 
 router.delete('/:id/payments/:paymentId', async (req, res) => {
   try {
-    const invoice = await getOne('SELECT id FROM invoices WHERE id = ? AND user_id = ?', [req.params.id, req.userId]);
+    const invoice = await getOne('SELECT id FROM invoices WHERE id = ? AND user_id = ?', [req.params.id, req.workspaceUserId]);
     if (!invoice) return res.status(404).json({ error: 'Rechnung nicht gefunden' });
 
     const payment = await getOne('SELECT id FROM invoice_payments WHERE id = ? AND invoice_id = ?', [req.params.paymentId, req.params.id]);
@@ -565,7 +565,7 @@ router.delete('/:id/payments/:paymentId', async (req, res) => {
 // ── REMINDERS ────────────────────────────────────────────────────────────────
 router.get('/:id/reminders', async (req, res) => {
   try {
-    const invoice = await getOne('SELECT id FROM invoices WHERE id = ? AND user_id = ?', [req.params.id, req.userId]);
+    const invoice = await getOne('SELECT id FROM invoices WHERE id = ? AND user_id = ?', [req.params.id, req.workspaceUserId]);
     if (!invoice) return res.status(404).json({ error: 'Rechnung nicht gefunden' });
 
     const reminders = await getAll('SELECT * FROM invoice_reminders WHERE invoice_id = ? ORDER BY sent_at ASC', [req.params.id]);
@@ -578,7 +578,7 @@ router.get('/:id/reminders', async (req, res) => {
 
 router.post('/:id/reminders', async (req, res) => {
   try {
-    const invoice = await getOne('SELECT id FROM invoices WHERE id = ? AND user_id = ?', [req.params.id, req.userId]);
+    const invoice = await getOne('SELECT id FROM invoices WHERE id = ? AND user_id = ?', [req.params.id, req.workspaceUserId]);
     if (!invoice) return res.status(404).json({ error: 'Rechnung nicht gefunden' });
 
     const { reminder_level, sent_at, notes } = req.body;
@@ -600,7 +600,7 @@ router.post('/:id/reminders', async (req, res) => {
 
 router.delete('/:id/reminders/:reminderId', async (req, res) => {
   try {
-    const invoice = await getOne('SELECT id FROM invoices WHERE id = ? AND user_id = ?', [req.params.id, req.userId]);
+    const invoice = await getOne('SELECT id FROM invoices WHERE id = ? AND user_id = ?', [req.params.id, req.workspaceUserId]);
     if (!invoice) return res.status(404).json({ error: 'Rechnung nicht gefunden' });
 
     await run('DELETE FROM invoice_reminders WHERE id = ? AND invoice_id = ?', [req.params.reminderId, req.params.id]);
@@ -614,14 +614,14 @@ router.delete('/:id/reminders/:reminderId', async (req, res) => {
 // ── HISTORY ──────────────────────────────────────────────────────────────────
 router.get('/:id/history', async (req, res) => {
   try {
-    const invoice = await getOne('SELECT id FROM invoices WHERE id = ? AND user_id = ?', [req.params.id, req.userId]);
+    const invoice = await getOne('SELECT id FROM invoices WHERE id = ? AND user_id = ?', [req.params.id, req.workspaceUserId]);
     if (!invoice) return res.status(404).json({ error: 'Rechnung nicht gefunden' });
 
     const history = await getAll(`
       SELECT id, version, changed_at FROM document_history
       WHERE document_id = ? AND document_type = 'invoice' AND user_id = ?
       ORDER BY version DESC
-    `, [req.params.id, req.userId]);
+    `, [req.params.id, req.workspaceUserId]);
     res.json(history);
   } catch (err) {
     console.error('[invoices GET /:id/history]', err);
@@ -639,7 +639,7 @@ router.post('/:id/send', async (req, res) => {
              c.email as client_email, c.phone as client_phone, c.vat_id as client_vat_id
       FROM invoices i LEFT JOIN clients c ON c.id = i.client_id
       WHERE i.id = ? AND i.user_id = ?
-    `, [req.params.id, req.userId]);
+    `, [req.params.id, req.workspaceUserId]);
 
     if (!invoice) return res.status(404).json({ error: 'Rechnung nicht gefunden' });
 
@@ -648,7 +648,7 @@ router.post('/:id/send', async (req, res) => {
     if (!recipient) return res.status(422).json({ error: 'Kunde hat keine E-Mail-Adresse' });
 
     const items    = await getAll('SELECT * FROM invoice_items WHERE invoice_id = ? ORDER BY id ASC', [req.params.id]);
-    const settings = await getOne('SELECT * FROM settings WHERE user_id = ?', [req.userId]);
+    const settings = await getOne('SELECT * FROM settings WHERE user_id = ?', [req.workspaceUserId]);
 
     const pdfBytes = await generateInvoicePDF({ ...invoice, items }, settings);
 
@@ -664,7 +664,7 @@ router.post('/:id/send', async (req, res) => {
       pdfBytes,
     });
 
-    await run("UPDATE invoices SET status='sent' WHERE id=? AND user_id=?", [req.params.id, req.userId]);
+    await run("UPDATE invoices SET status='sent' WHERE id=? AND user_id=?", [req.params.id, req.workspaceUserId]);
     res.json({ success: true, sentTo: recipient });
   } catch (err) {
     console.error('Fehler beim Senden:', err);
@@ -678,11 +678,11 @@ router.post('/:id/send', async (req, res) => {
 // ── DELETE (only drafts) ──────────────────────────────────────────────────────
 router.delete('/:id', async (req, res) => {
   try {
-    const invoice = await getOne('SELECT id, status FROM invoices WHERE id = ? AND user_id = ?', [req.params.id, req.userId]);
+    const invoice = await getOne('SELECT id, status FROM invoices WHERE id = ? AND user_id = ?', [req.params.id, req.workspaceUserId]);
     if (!invoice) return res.status(404).json({ error: 'Rechnung nicht gefunden' });
     if (invoice.status !== 'draft')
       return res.status(409).json({ error: 'Nur Entwürfe können gelöscht werden. Verwende Stornierung für versendete Rechnungen.' });
-    await run('DELETE FROM invoices WHERE id = ? AND user_id = ?', [req.params.id, req.userId]);
+    await run('DELETE FROM invoices WHERE id = ? AND user_id = ?', [req.params.id, req.workspaceUserId]);
     res.json({ success: true });
   } catch (err) {
     console.error('[invoices DELETE /:id]', err);
@@ -700,12 +700,12 @@ router.get('/:id/pdf', async (req, res) => {
              c.email as client_email, c.phone as client_phone, c.vat_id as client_vat_id
       FROM invoices i LEFT JOIN clients c ON c.id = i.client_id
       WHERE i.id = ? AND i.user_id = ?
-    `, [req.params.id, req.userId]);
+    `, [req.params.id, req.workspaceUserId]);
 
     if (!invoice) return res.status(404).json({ error: 'Rechnung nicht gefunden' });
 
     const items    = await getAll('SELECT * FROM invoice_items WHERE invoice_id = ? ORDER BY id ASC', [req.params.id]);
-    const settings = await getOne('SELECT * FROM settings WHERE user_id = ?', [req.userId]);
+    const settings = await getOne('SELECT * FROM settings WHERE user_id = ?', [req.workspaceUserId]);
 
     const pdfBytes = await generateInvoicePDF({ ...invoice, items }, settings);
 
@@ -714,7 +714,7 @@ router.get('/:id/pdf', async (req, res) => {
       await run(`
         INSERT INTO pdf_archive (user_id, document_type, document_id, document_number, pdf_data, file_size)
         VALUES (?, 'invoice', ?, ?, ?, ?)
-      `, [req.userId, invoice.id, invoice.invoice_number, Buffer.from(pdfBytes), pdfBytes.length]);
+      `, [req.workspaceUserId, invoice.id, invoice.invoice_number, Buffer.from(pdfBytes), pdfBytes.length]);
     } catch (archiveErr) {
       console.warn('[PDF Archive] Fehler beim Archivieren:', archiveErr.message);
     }
@@ -734,14 +734,14 @@ router.get('/:id/pdf', async (req, res) => {
 // ── PDF ARCHIVE LIST ──────────────────────────────────────────────────────────
 router.get('/:id/archive', async (req, res) => {
   try {
-    const invoice = await getOne('SELECT id FROM invoices WHERE id = ? AND user_id = ?', [req.params.id, req.userId]);
+    const invoice = await getOne('SELECT id FROM invoices WHERE id = ? AND user_id = ?', [req.params.id, req.workspaceUserId]);
     if (!invoice) return res.status(404).json({ error: 'Rechnung nicht gefunden' });
 
     const archives = await getAll(`
       SELECT id, document_number, file_size, generated_at FROM pdf_archive
       WHERE document_id = ? AND document_type = 'invoice' AND user_id = ?
       ORDER BY generated_at DESC
-    `, [req.params.id, req.userId]);
+    `, [req.params.id, req.workspaceUserId]);
     res.json(archives);
   } catch (err) {
     console.error('[invoices GET /:id/archive]', err);
@@ -754,7 +754,7 @@ router.get('/:id/archive/:archiveId', async (req, res) => {
   try {
     const archive = await getOne(`
       SELECT * FROM pdf_archive WHERE id = ? AND document_id = ? AND user_id = ?
-    `, [req.params.archiveId, req.params.id, req.userId]);
+    `, [req.params.archiveId, req.params.id, req.workspaceUserId]);
 
     if (!archive) return res.status(404).json({ error: 'Archiv nicht gefunden' });
 

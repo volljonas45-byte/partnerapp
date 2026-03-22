@@ -4,11 +4,26 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowLeft, Plus, Trash2, Circle, CheckCircle2,
   Calendar, StickyNote, ChevronDown, Pencil, Check, X,
-  Flag, Link as LinkIcon, ExternalLink, CheckSquare,
+  Flag, Link as LinkIcon, ExternalLink, CheckSquare, UserCircle,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { projectsApi } from '../api/projects';
+import { teamApi } from '../api/team';
 import { useConfirm } from '../hooks/useConfirm';
+
+function MemberAvatar({ member, size = 20 }) {
+  if (!member) return null;
+  const name = member.name || member.email || '?';
+  const letters = name.trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  return (
+    <div title={member.name || member.email} style={{
+      width: size, height: size, borderRadius: '50%',
+      background: member.color || '#6366f1',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontSize: size * 0.38, fontWeight: '700', color: '#fff', flexShrink: 0,
+    }}>{letters}</div>
+  );
+}
 
 const STATUS_OPTIONS = [
   { value: 'planned',   label: 'Geplant',       color: '#6E6E73', bg: 'rgba(118,118,128,0.12)' },
@@ -21,19 +36,60 @@ function getStatus(val) { return STATUS_OPTIONS.find(s => s.value === val) || ST
 
 // ── InlineTaskInput ────────────────────────────────────────────────────────────
 
-function InlineTaskInput({ onAdd, onCancel }) {
-  const [title, setTitle] = useState('');
+function InlineTaskInput({ onAdd, onCancel, members = [] }) {
+  const [title, setTitle]         = useState('');
+  const [assigneeId, setAssigneeId] = useState(null);
+  const [showPicker, setShowPicker] = useState(false);
   const submitted = useRef(false);
-  function submit() { if (!title.trim()) return; submitted.current = true; onAdd(title.trim()); }
+
+  function submit() {
+    if (!title.trim()) return;
+    submitted.current = true;
+    onAdd(title.trim(), assigneeId);
+  }
+
+  const assignee = members.find(m => m.id === assigneeId);
+
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 14px', background: 'rgba(0,113,227,0.05)', borderRadius: '10px', margin: '6px 0' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', background: 'rgba(0,113,227,0.05)', borderRadius: '10px', margin: '6px 0', position: 'relative' }}>
       <Circle size={16} color="#C7C7CC" style={{ flexShrink: 0 }} />
       <input autoFocus
         style={{ flex: 1, fontSize: '14px', color: '#1D1D1F', background: 'none', border: 'none', outline: 'none', letterSpacing: '-0.01em' }}
         placeholder="Aufgabe eingeben…" value={title} onChange={e => setTitle(e.target.value)}
         onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); submit(); } if (e.key === 'Escape') onCancel(); }}
-        onBlur={() => { if (!submitted.current) onCancel(); }}
+        onBlur={() => { if (!submitted.current && !showPicker) onCancel(); }}
       />
+      {/* Assignee picker */}
+      {members.length > 0 && (
+        <div style={{ position: 'relative' }}>
+          <button onMouseDown={e => e.preventDefault()} onClick={() => setShowPicker(p => !p)}
+            title="Zuweisen"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px', display: 'flex', alignItems: 'center' }}>
+            {assignee ? <MemberAvatar member={assignee} size={20} /> : <UserCircle size={18} color="#C7C7CC" />}
+          </button>
+          {showPicker && (
+            <div onMouseDown={e => e.preventDefault()} style={{
+              position: 'absolute', right: 0, bottom: '110%',
+              background: '#fff', borderRadius: '10px',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+              border: '1px solid rgba(0,0,0,0.08)',
+              padding: '4px', zIndex: 100, minWidth: '160px',
+            }}>
+              <button onClick={() => { setAssigneeId(null); setShowPicker(false); }}
+                style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 10px', background: 'none', border: 'none', cursor: 'pointer', borderRadius: '7px', fontSize: '13px', color: '#6E6E73' }}>
+                <UserCircle size={16} /> Niemand
+              </button>
+              {members.map(m => (
+                <button key={m.id} onClick={() => { setAssigneeId(m.id); setShowPicker(false); }}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 10px', background: assigneeId === m.id ? '#F0F0F5' : 'none', border: 'none', cursor: 'pointer', borderRadius: '7px', fontSize: '13px', color: '#1D1D1F' }}>
+                  <MemberAvatar member={m} size={18} />
+                  {m.name || m.email}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
       <button onMouseDown={e => e.preventDefault()} onClick={submit}
         style={{ fontSize: '12px', fontWeight: '600', color: title.trim() ? '#0071E3' : '#C7C7CC', background: 'none', border: 'none', cursor: 'pointer' }}>
         Speichern
@@ -49,6 +105,9 @@ function InlineTaskInput({ onAdd, onCancel }) {
 function TaskRow({ task, onToggle, onDelete }) {
   const [hov, setHov] = useState(false);
   const done = task.status === 'done';
+  const assignee = task.assignee_name
+    ? { name: task.assignee_name, color: task.assignee_color, email: task.assignee_email }
+    : null;
   return (
     <div onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
       style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 0', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
@@ -56,6 +115,7 @@ function TaskRow({ task, onToggle, onDelete }) {
         {done ? <CheckCircle2 size={18} /> : <Circle size={18} />}
       </button>
       <span style={{ flex: 1, fontSize: '14px', color: done ? '#C7C7CC' : '#1D1D1F', textDecoration: done ? 'line-through' : 'none', letterSpacing: '-0.01em' }}>{task.title}</span>
+      {assignee && <MemberAvatar member={assignee} size={20} />}
       {hov && (
         <button onClick={onDelete} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#C7C7CC', padding: '2px', flexShrink: 0 }}
           onMouseEnter={e => e.currentTarget.style.color = '#FF3B30'}
@@ -134,8 +194,13 @@ export default function ProjectDetailGeneral() {
     queryFn: () => projectsApi.getCredentials(id).then(r => r.data),
   });
 
+  const { data: teamMembers = [] } = useQuery({
+    queryKey: ['team'],
+    queryFn: () => teamApi.list().then(r => r.data),
+  });
+
   const update   = useMutation({ mutationFn: d => projectsApi.update(id, d), onSuccess: () => qc.invalidateQueries({ queryKey: ['project', id] }), onError: err => toast.error(err.response?.data?.error || 'Fehler') });
-  const addTask  = useMutation({ mutationFn: t => projectsApi.createTask(id, { title: t }), onSuccess: () => qc.invalidateQueries({ queryKey: ['project-tasks', id] }), onError: err => toast.error(err.response?.data?.error || 'Fehler') });
+  const addTask  = useMutation({ mutationFn: ({ title, assignee_id }) => projectsApi.createTask(id, { title, assignee_id }), onSuccess: () => qc.invalidateQueries({ queryKey: ['project-tasks', id] }), onError: err => toast.error(err.response?.data?.error || 'Fehler') });
   const togTask  = useMutation({ mutationFn: ({ taskId, status }) => projectsApi.updateTask(id, taskId, { status }), onSuccess: () => qc.invalidateQueries({ queryKey: ['project-tasks', id] }) });
   const delTask  = useMutation({ mutationFn: tid => projectsApi.deleteTask(id, tid), onSuccess: () => qc.invalidateQueries({ queryKey: ['project-tasks', id] }), onError: err => toast.error(err.response?.data?.error || 'Fehler') });
   const addNote  = useMutation({ mutationFn: c => projectsApi.addNote(id, { content: c }), onSuccess: () => { qc.invalidateQueries({ queryKey: ['project-notes', id] }); setNewNote(''); }, onError: err => toast.error(err.response?.data?.error || 'Fehler') });
@@ -288,7 +353,7 @@ export default function ProjectDetailGeneral() {
               onToggle={() => togTask.mutate({ taskId: t.id, status: t.status === 'done' ? 'todo' : 'done' })}
               onDelete={() => handleDeleteTask(t.id)} />
           ))}
-          {addingTask && <InlineTaskInput onAdd={t => { addTask.mutate(t); setAddingTask(false); }} onCancel={() => setAddingTask(false)} />}
+          {addingTask && <InlineTaskInput members={teamMembers} onAdd={(t, assignee_id) => { addTask.mutate({ title: t, assignee_id }); setAddingTask(false); }} onCancel={() => setAddingTask(false)} />}
         </Section>
 
         {/* ── Links ── */}

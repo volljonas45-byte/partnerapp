@@ -22,7 +22,7 @@ const DEFAULT_TOOLS = [
 
 router.get('/tools', async (req, res) => {
   try {
-    const uid = req.userId;
+    const uid = req.workspaceUserId;
     let tools = await getAll('SELECT * FROM user_tools WHERE user_id = $1 ORDER BY position ASC', [uid]);
     if (tools.length === 0) {
       for (const t of DEFAULT_TOOLS) {
@@ -36,7 +36,7 @@ router.get('/tools', async (req, res) => {
 
 router.post('/tools', async (req, res) => {
   try {
-    const uid = req.userId;
+    const uid = req.workspaceUserId;
     const { name, url = '', category = 'other' } = req.body;
     if (!name) return res.status(400).json({ error: 'name erforderlich' });
     const maxPos = await getOne('SELECT COALESCE(MAX(position),0) as m FROM user_tools WHERE user_id = $1', [uid]);
@@ -47,7 +47,7 @@ router.post('/tools', async (req, res) => {
 
 router.patch('/tools/:id', async (req, res) => {
   try {
-    const uid = req.userId;
+    const uid = req.workspaceUserId;
     const tool = await getOne('SELECT id FROM user_tools WHERE id = $1 AND user_id = $2', [req.params.id, uid]);
     if (!tool) return res.status(404).json({ error: 'Tool nicht gefunden' });
     const { name, url, category } = req.body;
@@ -62,7 +62,7 @@ router.patch('/tools/:id', async (req, res) => {
 
 router.delete('/tools/:id', async (req, res) => {
   try {
-    const uid = req.userId;
+    const uid = req.workspaceUserId;
     await run('DELETE FROM user_tools WHERE id = $1 AND user_id = $2', [req.params.id, uid]);
     res.json({ success: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -72,7 +72,7 @@ router.delete('/tools/:id', async (req, res) => {
 
 router.get('/reminders', async (req, res) => {
   try {
-    const uid = req.userId;
+    const uid = req.workspaceUserId;
     const reminders = await getAll(`
       SELECT wr.*, p.name as project_name
       FROM workflow_reminders wr
@@ -88,7 +88,7 @@ router.get('/reminders', async (req, res) => {
 
 router.get('/:projectId', async (req, res) => {
   try {
-    const uid = req.userId;
+    const uid = req.workspaceUserId;
     const pid = req.params.projectId;
     const project = await getOne('SELECT id FROM projects WHERE id = $1 AND user_id = $2', [pid, uid]);
     if (!project) return res.status(404).json({ error: 'Projekt nicht gefunden' });
@@ -108,7 +108,7 @@ router.get('/:projectId', async (req, res) => {
 
 router.put('/:projectId', async (req, res) => {
   try {
-    const uid = req.userId;
+    const uid = req.workspaceUserId;
     const pid = req.params.projectId;
     const project = await getOne('SELECT id FROM projects WHERE id = $1 AND user_id = $2', [pid, uid]);
     if (!project) return res.status(404).json({ error: 'Projekt nicht gefunden' });
@@ -147,7 +147,7 @@ router.put('/:projectId', async (req, res) => {
 
 router.post('/:projectId/advance', async (req, res) => {
   try {
-    const uid = req.userId;
+    const uid = req.workspaceUserId;
     const pid = req.params.projectId;
     const project = await getOne('SELECT id, name FROM projects WHERE id = $1 AND user_id = $2', [pid, uid]);
     if (!project) return res.status(404).json({ error: 'Projekt nicht gefunden' });
@@ -190,7 +190,7 @@ router.post('/:projectId/advance', async (req, res) => {
 
 router.get('/:projectId/reminders', async (req, res) => {
   try {
-    const uid = req.userId;
+    const uid = req.workspaceUserId;
     const pid = req.params.projectId;
     const reminders = await getAll('SELECT * FROM workflow_reminders WHERE project_id=$1 AND user_id=$2 ORDER BY due_date ASC', [pid, uid]);
     res.json(reminders);
@@ -199,7 +199,7 @@ router.get('/:projectId/reminders', async (req, res) => {
 
 router.post('/:projectId/reminders', async (req, res) => {
   try {
-    const uid = req.userId;
+    const uid = req.workspaceUserId;
     const pid = req.params.projectId;
     const { title, due_date, note = '', type = 'followup' } = req.body;
     if (!title || !due_date) return res.status(400).json({ error: 'title und due_date erforderlich' });
@@ -213,7 +213,7 @@ router.post('/:projectId/reminders', async (req, res) => {
 
 router.patch('/:projectId/reminders/:id', async (req, res) => {
   try {
-    const uid = req.userId;
+    const uid = req.workspaceUserId;
     const { done, note, due_date } = req.body;
     const reminder = await getOne('SELECT id FROM workflow_reminders WHERE id=$1 AND user_id=$2', [req.params.id, uid]);
     if (!reminder) return res.status(404).json({ error: 'Erinnerung nicht gefunden' });
@@ -231,7 +231,7 @@ router.patch('/:projectId/reminders/:id', async (req, res) => {
 
 router.delete('/:projectId/reminders/:id', async (req, res) => {
   try {
-    const uid = req.userId;
+    const uid = req.workspaceUserId;
     await run('DELETE FROM workflow_reminders WHERE id=$1 AND user_id=$2', [req.params.id, uid]);
     res.json({ success: true });
   } catch (e) { res.status(500).json({ error: e.message }); }

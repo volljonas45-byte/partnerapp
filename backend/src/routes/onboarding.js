@@ -114,7 +114,7 @@ router.get('/templates', async (req, res) => {
       WHERE t.user_id = ?
       GROUP BY t.id
       ORDER BY t.created_at DESC
-    `, [req.userId]);
+    `, [req.workspaceUserId]);
     res.json(templates);
   } catch (err) {
     console.error('[onboarding GET /templates]', err);
@@ -125,7 +125,7 @@ router.get('/templates', async (req, res) => {
 router.get('/templates/:id', async (req, res) => {
   try {
     const template = await getOne('SELECT * FROM onboarding_templates WHERE id = ? AND user_id = ?',
-      [req.params.id, req.userId]);
+      [req.params.id, req.workspaceUserId]);
     if (!template) return res.status(404).json({ error: 'Vorlage nicht gefunden' });
 
     const steps = await getAll(
@@ -150,7 +150,7 @@ router.post('/templates', async (req, res) => {
 
     const r = await run(
       'INSERT INTO onboarding_templates (user_id, name, brand_name, brand_color, brand_logo) VALUES (?, ?, ?, ?, ?) RETURNING id',
-      [req.userId, name, brand_name, brand_color, brand_logo]
+      [req.workspaceUserId, name, brand_name, brand_color, brand_logo]
     );
 
     res.status(201).json(await getOne('SELECT * FROM onboarding_templates WHERE id = ?', [r.lastInsertRowid]));
@@ -163,7 +163,7 @@ router.post('/templates', async (req, res) => {
 router.put('/templates/:id', async (req, res) => {
   try {
     const template = await getOne('SELECT id FROM onboarding_templates WHERE id = ? AND user_id = ?',
-      [req.params.id, req.userId]);
+      [req.params.id, req.workspaceUserId]);
     if (!template) return res.status(404).json({ error: 'Vorlage nicht gefunden' });
 
     const allowed = ['name', 'brand_name', 'brand_color', 'brand_logo'];
@@ -176,7 +176,7 @@ router.put('/templates/:id', async (req, res) => {
       }
     }
     if (sets.length > 0) {
-      values.push(req.params.id, req.userId);
+      values.push(req.params.id, req.workspaceUserId);
       const pgClient = await pool.connect();
       try {
         await pgClient.query(
@@ -198,10 +198,10 @@ router.put('/templates/:id', async (req, res) => {
 router.delete('/templates/:id', async (req, res) => {
   try {
     const template = await getOne('SELECT id FROM onboarding_templates WHERE id = ? AND user_id = ?',
-      [req.params.id, req.userId]);
+      [req.params.id, req.workspaceUserId]);
     if (!template) return res.status(404).json({ error: 'Vorlage nicht gefunden' });
 
-    await run('DELETE FROM onboarding_templates WHERE id = ? AND user_id = ?', [req.params.id, req.userId]);
+    await run('DELETE FROM onboarding_templates WHERE id = ? AND user_id = ?', [req.params.id, req.workspaceUserId]);
     res.json({ success: true });
   } catch (err) {
     console.error('[onboarding DELETE /templates/:id]', err);
@@ -214,7 +214,7 @@ router.delete('/templates/:id', async (req, res) => {
 router.post('/templates/:id/steps', async (req, res) => {
   try {
     const template = await getOne('SELECT id FROM onboarding_templates WHERE id = ? AND user_id = ?',
-      [req.params.id, req.userId]);
+      [req.params.id, req.workspaceUserId]);
     if (!template) return res.status(404).json({ error: 'Vorlage nicht gefunden' });
 
     const { type, title, description = '', config = {} } = req.body;
@@ -245,7 +245,7 @@ router.put('/templates/:id/steps/:stepId', async (req, res) => {
       SELECT s.id FROM onboarding_template_steps s
       JOIN onboarding_templates t ON t.id = s.template_id
       WHERE s.id = ? AND t.user_id = ?
-    `, [req.params.stepId, req.userId]);
+    `, [req.params.stepId, req.workspaceUserId]);
     if (!step) return res.status(404).json({ error: 'Schritt nicht gefunden' });
 
     const { title, description, config } = req.body;
@@ -267,7 +267,7 @@ router.delete('/templates/:id/steps/:stepId', async (req, res) => {
       SELECT s.id FROM onboarding_template_steps s
       JOIN onboarding_templates t ON t.id = s.template_id
       WHERE s.id = ? AND t.user_id = ?
-    `, [req.params.stepId, req.userId]);
+    `, [req.params.stepId, req.workspaceUserId]);
     if (!step) return res.status(404).json({ error: 'Schritt nicht gefunden' });
 
     await run('DELETE FROM onboarding_template_steps WHERE id = ?', [req.params.stepId]);
@@ -281,7 +281,7 @@ router.delete('/templates/:id/steps/:stepId', async (req, res) => {
 router.patch('/templates/:id/steps/reorder', async (req, res) => {
   try {
     const template = await getOne('SELECT id FROM onboarding_templates WHERE id = ? AND user_id = ?',
-      [req.params.id, req.userId]);
+      [req.params.id, req.workspaceUserId]);
     if (!template) return res.status(404).json({ error: 'Vorlage nicht gefunden' });
 
     const { stepIds } = req.body;
@@ -323,7 +323,7 @@ router.get('/flows', async (req, res) => {
       LEFT JOIN clients c ON c.id = f.client_id
       WHERE f.user_id = ?
       ORDER BY f.created_at DESC
-    `, [req.userId]);
+    `, [req.workspaceUserId]);
     res.json(flows);
   } catch (err) {
     console.error('[onboarding GET /flows]', err);
@@ -338,7 +338,7 @@ router.get('/flows/:id', async (req, res) => {
       FROM onboarding_flows f
       JOIN onboarding_templates t ON t.id = f.template_id
       WHERE f.id = ? AND f.user_id = ?
-    `, [req.params.id, req.userId]);
+    `, [req.params.id, req.workspaceUserId]);
     if (!flow) return res.status(404).json({ error: 'Flow nicht gefunden' });
 
     const steps = await getAll(
@@ -363,7 +363,7 @@ router.post('/flows', async (req, res) => {
     if (!template_id) return res.status(400).json({ error: 'template_id ist erforderlich' });
 
     const template = await getOne('SELECT id FROM onboarding_templates WHERE id = ? AND user_id = ?',
-      [template_id, req.userId]);
+      [template_id, req.workspaceUserId]);
     if (!template) return res.status(404).json({ error: 'Vorlage nicht gefunden' });
 
     const link_token    = crypto.randomBytes(24).toString('hex');
@@ -373,7 +373,7 @@ router.post('/flows', async (req, res) => {
       INSERT INTO onboarding_flows (user_id, template_id, client_id, client_name, link_token, password_hash)
       VALUES (?, ?, ?, ?, ?, ?)
       RETURNING id
-    `, [req.userId, template_id, client_id || null, client_name, link_token, password_hash]);
+    `, [req.workspaceUserId, template_id, client_id || null, client_name, link_token, password_hash]);
 
     const flow = await getOne(`
       SELECT f.*, t.name as template_name
@@ -391,10 +391,10 @@ router.post('/flows', async (req, res) => {
 router.delete('/flows/:id', async (req, res) => {
   try {
     const flow = await getOne('SELECT id FROM onboarding_flows WHERE id = ? AND user_id = ?',
-      [req.params.id, req.userId]);
+      [req.params.id, req.workspaceUserId]);
     if (!flow) return res.status(404).json({ error: 'Flow nicht gefunden' });
 
-    await run('DELETE FROM onboarding_flows WHERE id = ? AND user_id = ?', [req.params.id, req.userId]);
+    await run('DELETE FROM onboarding_flows WHERE id = ? AND user_id = ?', [req.params.id, req.workspaceUserId]);
     res.json({ success: true });
   } catch (err) {
     console.error('[onboarding DELETE /flows/:id]', err);

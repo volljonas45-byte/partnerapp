@@ -43,7 +43,7 @@ router.get('/', async (req, res) => {
       LEFT JOIN clients c ON c.id = q.client_id
       WHERE q.user_id = ?
       ORDER BY q.created_at DESC
-    `, [req.userId]);
+    `, [req.workspaceUserId]);
     res.json(rows);
   } catch (err) {
     console.error('[quotes GET /]', err);
@@ -66,7 +66,7 @@ router.get('/stats', async (req, res) => {
         COUNT(CASE WHEN status='expired'   THEN 1 END) as expired_count,
         COUNT(CASE WHEN status='converted' THEN 1 END) as converted_count
       FROM quotes WHERE user_id = ?
-    `, [req.userId]);
+    `, [req.workspaceUserId]);
     res.json(stats);
   } catch (err) {
     console.error('[quotes GET /stats]', err);
@@ -87,7 +87,7 @@ router.get('/:id', async (req, res) => {
       FROM quotes q
       LEFT JOIN clients c ON c.id = q.client_id
       WHERE q.id = ? AND q.user_id = ?
-    `, [req.params.id, req.userId]);
+    `, [req.params.id, req.workspaceUserId]);
 
     if (!quote) return res.status(404).json({ error: 'Angebot nicht gefunden' });
 
@@ -113,12 +113,12 @@ router.post('/', async (req, res) => {
     if (!items || items.length === 0)
       return res.status(400).json({ error: 'Mindestens eine Position ist erforderlich' });
 
-    const client = await getOne('SELECT id FROM clients WHERE id = ? AND user_id = ?', [client_id, req.userId]);
+    const client = await getOne('SELECT id FROM clients WHERE id = ? AND user_id = ?', [client_id, req.workspaceUserId]);
     if (!client) return res.status(404).json({ error: 'Kunde nicht gefunden' });
 
-    const settings = await getOne('SELECT quote_prefix FROM settings WHERE user_id = ?', [req.userId]);
+    const settings = await getOne('SELECT quote_prefix FROM settings WHERE user_id = ?', [req.workspaceUserId]);
     const prefix   = settings?.quote_prefix || 'AN';
-    const number   = await generateQuoteNumber(req.userId, prefix);
+    const number   = await generateQuoteNumber(req.workspaceUserId, prefix);
     const { subtotal, tax_total, total } = calcTotals(items);
 
     const pgClient = await pool.connect();
@@ -131,7 +131,7 @@ router.post('/', async (req, res) => {
           (user_id, client_id, quote_number, status, issue_date, valid_until, notes, subtotal, tax_total, total, project_id)
         VALUES ($1, $2, $3, 'draft', $4, $5, $6, $7, $8, $9, $10)
         RETURNING id
-      `, [req.userId, client_id, number, issue_date, valid_until, notes || '', subtotal, tax_total, total, project_id || null]);
+      `, [req.workspaceUserId, client_id, number, issue_date, valid_until, notes || '', subtotal, tax_total, total, project_id || null]);
 
       quoteId = r.rows[0].id;
 
@@ -167,7 +167,7 @@ router.post('/', async (req, res) => {
 // ── UPDATE ───────────────────────────────────────────────────────────────────
 router.put('/:id', async (req, res) => {
   try {
-    const existing = await getOne('SELECT * FROM quotes WHERE id = ? AND user_id = ?', [req.params.id, req.userId]);
+    const existing = await getOne('SELECT * FROM quotes WHERE id = ? AND user_id = ?', [req.params.id, req.workspaceUserId]);
     if (!existing) return res.status(404).json({ error: 'Angebot nicht gefunden' });
 
     const { client_id, issue_date, valid_until, notes, items, status } = req.body;
@@ -196,12 +196,12 @@ router.put('/:id', async (req, res) => {
           valid_until  || existing.valid_until,
           notes !== undefined ? notes : existing.notes,
           subtotal, tax_total, total,
-          req.params.id, req.userId,
+          req.params.id, req.workspaceUserId,
         ]);
       }
       if (status && VALID_STATUSES.includes(status)) {
         await pgClient.query('UPDATE quotes SET status=$1 WHERE id=$2 AND user_id=$3',
-          [status, req.params.id, req.userId]);
+          [status, req.params.id, req.workspaceUserId]);
       }
 
       await pgClient.query('COMMIT');
@@ -230,11 +230,11 @@ router.patch('/:id/status', async (req, res) => {
     if (!VALID_STATUSES.includes(status))
       return res.status(400).json({ error: `Status muss einer von: ${VALID_STATUSES.join(', ')} sein` });
 
-    const quote = await getOne('SELECT id FROM quotes WHERE id = ? AND user_id = ?', [req.params.id, req.userId]);
+    const quote = await getOne('SELECT id FROM quotes WHERE id = ? AND user_id = ?', [req.params.id, req.workspaceUserId]);
     if (!quote) return res.status(404).json({ error: 'Angebot nicht gefunden' });
 
     await run('UPDATE quotes SET status=? WHERE id=? AND user_id=?',
-      [status, req.params.id, req.userId]);
+      [status, req.params.id, req.workspaceUserId]);
 
     res.json(await getOne('SELECT * FROM quotes WHERE id = ?', [req.params.id]));
   } catch (err) {
@@ -252,14 +252,14 @@ router.post('/:id/convert', async (req, res) => {
       FROM quotes q
       LEFT JOIN clients c ON c.id = q.client_id
       WHERE q.id = ? AND q.user_id = ?
-    `, [req.params.id, req.userId]);
+    `, [req.params.id, req.workspaceUserId]);
 
     if (!quote) return res.status(404).json({ error: 'Angebot nicht gefunden' });
     if (quote.status === 'converted')
       return res.status(409).json({ error: 'Angebot wurde bereits umgewandelt' });
 
     const items = await getAll('SELECT * FROM quote_items WHERE quote_id = ? ORDER BY id ASC', [req.params.id]);
-    const settings = await getOne('SELECT invoice_prefix FROM settings WHERE user_id = ?', [req.userId]);
+    const settings = await getOne('SELECT invoice_prefix FROM settings WHERE user_id = ?', [req.workspaceUserId]);
     const prefix   = settings?.invoice_prefix || 'RE';
 
     // Generate invoice number
@@ -268,7 +268,7 @@ router.post('/:id/convert', async (req, res) => {
       SELECT invoice_number FROM invoices
       WHERE user_id = ? AND invoice_number LIKE ?
       ORDER BY id DESC LIMIT 1
-    `, [req.userId, `${prefix}-${year}-%`]);
+    `, [req.workspaceUserId, `${prefix}-${year}-%`]);
     const lastNum  = lastInv ? parseInt(lastInv.invoice_number.split('-').pop(), 10) : 0;
     const invoiceNumber = `${prefix}-${year}-${String(lastNum + 1).padStart(4, '0')}`;
 
@@ -285,7 +285,7 @@ router.post('/:id/convert', async (req, res) => {
           (user_id, client_id, invoice_number, status, issue_date, due_date, notes, subtotal, tax_total, total)
         VALUES ($1, $2, $3, 'draft', $4, $5, $6, $7, $8, $9)
         RETURNING id
-      `, [req.userId, quote.client_id, invoiceNumber, today, dueDate, quote.notes || '', quote.subtotal, quote.tax_total, quote.total]);
+      `, [req.workspaceUserId, quote.client_id, invoiceNumber, today, dueDate, quote.notes || '', quote.subtotal, quote.tax_total, quote.total]);
 
       invoiceId = r.rows[0].id;
 
@@ -332,7 +332,7 @@ router.post('/:id/send', async (req, res) => {
              c.email as client_email, c.phone as client_phone, c.vat_id as client_vat_id
       FROM quotes q LEFT JOIN clients c ON c.id = q.client_id
       WHERE q.id = ? AND q.user_id = ?
-    `, [req.params.id, req.userId]);
+    `, [req.params.id, req.workspaceUserId]);
 
     if (!quote) return res.status(404).json({ error: 'Angebot nicht gefunden' });
 
@@ -341,7 +341,7 @@ router.post('/:id/send', async (req, res) => {
     if (!recipient) return res.status(422).json({ error: 'Kunde hat keine E-Mail-Adresse' });
 
     const items    = await getAll('SELECT * FROM quote_items WHERE quote_id = ? ORDER BY id ASC', [req.params.id]);
-    const settings = await getOne('SELECT * FROM settings WHERE user_id = ?', [req.userId]);
+    const settings = await getOne('SELECT * FROM settings WHERE user_id = ?', [req.workspaceUserId]);
 
     const pdfBytes = await generateDocumentPDF({ ...quote, items }, settings, 'quote');
 
@@ -357,7 +357,7 @@ router.post('/:id/send', async (req, res) => {
       pdfBytes,
     });
 
-    await run("UPDATE quotes SET status='sent' WHERE id=? AND user_id=?", [req.params.id, req.userId]);
+    await run("UPDATE quotes SET status='sent' WHERE id=? AND user_id=?", [req.params.id, req.workspaceUserId]);
     res.json({ success: true, sentTo: recipient });
   } catch (err) {
     console.error('Fehler beim Senden:', err);
@@ -371,9 +371,9 @@ router.post('/:id/send', async (req, res) => {
 // ── DELETE ───────────────────────────────────────────────────────────────────
 router.delete('/:id', async (req, res) => {
   try {
-    const quote = await getOne('SELECT id FROM quotes WHERE id = ? AND user_id = ?', [req.params.id, req.userId]);
+    const quote = await getOne('SELECT id FROM quotes WHERE id = ? AND user_id = ?', [req.params.id, req.workspaceUserId]);
     if (!quote) return res.status(404).json({ error: 'Angebot nicht gefunden' });
-    await run('DELETE FROM quotes WHERE id = ? AND user_id = ?', [req.params.id, req.userId]);
+    await run('DELETE FROM quotes WHERE id = ? AND user_id = ?', [req.params.id, req.workspaceUserId]);
     res.json({ success: true });
   } catch (err) {
     console.error('[quotes DELETE /:id]', err);
@@ -391,12 +391,12 @@ router.get('/:id/pdf', async (req, res) => {
              c.email as client_email, c.phone as client_phone, c.vat_id as client_vat_id
       FROM quotes q LEFT JOIN clients c ON c.id = q.client_id
       WHERE q.id = ? AND q.user_id = ?
-    `, [req.params.id, req.userId]);
+    `, [req.params.id, req.workspaceUserId]);
 
     if (!quote) return res.status(404).json({ error: 'Angebot nicht gefunden' });
 
     const items    = await getAll('SELECT * FROM quote_items WHERE quote_id = ? ORDER BY id ASC', [req.params.id]);
-    const settings = await getOne('SELECT * FROM settings WHERE user_id = ?', [req.userId]);
+    const settings = await getOne('SELECT * FROM settings WHERE user_id = ?', [req.workspaceUserId]);
 
     const pdfBytes = await generateDocumentPDF({ ...quote, items }, settings, 'quote');
     res.set({

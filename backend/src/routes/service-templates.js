@@ -9,7 +9,7 @@ router.get('/', async (req, res) => {
   try {
     const rows = await getAll(
       'SELECT * FROM service_templates WHERE user_id = ? ORDER BY name ASC',
-      [req.userId]
+      [req.workspaceUserId]
     );
     res.json(rows);
   } catch (err) {
@@ -25,7 +25,7 @@ router.post('/', async (req, res) => {
 
     const r = await run(
       'INSERT INTO service_templates (user_id, name, description, unit, unit_price, tax_rate) VALUES (?, ?, ?, ?, ?, ?) RETURNING id',
-      [req.userId, name.trim(), description, unit, Number(unit_price) || 0, Number(tax_rate) || 0]
+      [req.workspaceUserId, name.trim(), description, unit, Number(unit_price) || 0, Number(tax_rate) || 0]
     );
 
     res.status(201).json(await getOne('SELECT * FROM service_templates WHERE id = ?', [r.lastInsertRowid]));
@@ -37,7 +37,7 @@ router.post('/', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
   try {
-    const tmpl = await getOne('SELECT id FROM service_templates WHERE id = ? AND user_id = ?', [req.params.id, req.userId]);
+    const tmpl = await getOne('SELECT id FROM service_templates WHERE id = ? AND user_id = ?', [req.params.id, req.workspaceUserId]);
     if (!tmpl) return res.status(404).json({ error: 'Vorlage nicht gefunden' });
 
     const { name, description, unit, unit_price, tax_rate } = req.body;
@@ -50,7 +50,7 @@ router.put('/:id', async (req, res) => {
     if (tax_rate    !== undefined) { sets.push(`tax_rate=$${paramIdx++}`);    values.push(Number(tax_rate) || 0); }
 
     if (sets.length > 0) {
-      values.push(req.params.id, req.userId);
+      values.push(req.params.id, req.workspaceUserId);
       const pgClient = await pool.connect();
       try {
         await pgClient.query(
@@ -71,10 +71,10 @@ router.put('/:id', async (req, res) => {
 
 router.delete('/:id', async (req, res) => {
   try {
-    const tmpl = await getOne('SELECT id FROM service_templates WHERE id = ? AND user_id = ?', [req.params.id, req.userId]);
+    const tmpl = await getOne('SELECT id FROM service_templates WHERE id = ? AND user_id = ?', [req.params.id, req.workspaceUserId]);
     if (!tmpl) return res.status(404).json({ error: 'Vorlage nicht gefunden' });
 
-    await run('DELETE FROM service_templates WHERE id = ? AND user_id = ?', [req.params.id, req.userId]);
+    await run('DELETE FROM service_templates WHERE id = ? AND user_id = ?', [req.params.id, req.workspaceUserId]);
     res.json({ success: true });
   } catch (err) {
     console.error('[service-templates DELETE /:id]', err);

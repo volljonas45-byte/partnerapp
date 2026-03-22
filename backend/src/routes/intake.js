@@ -8,7 +8,7 @@ const router = express.Router();
 // ── TEMPLATES (auth required) ─────────────────────────────────────────────────
 router.get('/templates', authenticate, async (req, res) => {
   try {
-    const rows = await getAll('SELECT * FROM intake_templates WHERE user_id = ? ORDER BY created_at DESC', [req.userId]);
+    const rows = await getAll('SELECT * FROM intake_templates WHERE user_id = ? ORDER BY created_at DESC', [req.workspaceUserId]);
     res.json(rows.map(r => ({ ...r, fields: JSON.parse(r.fields) })));
   } catch (err) {
     console.error('[intake GET /templates]', err);
@@ -21,7 +21,7 @@ router.post('/templates', authenticate, async (req, res) => {
     const { name, description, fields } = req.body;
     if (!name) return res.status(400).json({ error: 'Name fehlt' });
     const r = await run('INSERT INTO intake_templates (user_id, name, description, fields) VALUES (?, ?, ?, ?) RETURNING id',
-      [req.userId, name, description || '', JSON.stringify(fields || [])]);
+      [req.workspaceUserId, name, description || '', JSON.stringify(fields || [])]);
     const tmpl = await getOne('SELECT * FROM intake_templates WHERE id = ?', [r.lastInsertRowid]);
     res.json({ ...tmpl, fields: JSON.parse(tmpl.fields) });
   } catch (err) {
@@ -33,7 +33,7 @@ router.post('/templates', authenticate, async (req, res) => {
 router.patch('/templates/:id', authenticate, async (req, res) => {
   try {
     const { name, description, fields } = req.body;
-    const existing = await getOne('SELECT * FROM intake_templates WHERE id = ? AND user_id = ?', [req.params.id, req.userId]);
+    const existing = await getOne('SELECT * FROM intake_templates WHERE id = ? AND user_id = ?', [req.params.id, req.workspaceUserId]);
     if (!existing) return res.status(404).json({ error: 'Not found' });
     await run('UPDATE intake_templates SET name = ?, description = ?, fields = ? WHERE id = ?',
       [name ?? existing.name, description ?? existing.description, JSON.stringify(fields ?? JSON.parse(existing.fields)), req.params.id]);
@@ -47,7 +47,7 @@ router.patch('/templates/:id', authenticate, async (req, res) => {
 
 router.delete('/templates/:id', authenticate, async (req, res) => {
   try {
-    await run('DELETE FROM intake_templates WHERE id = ? AND user_id = ?', [req.params.id, req.userId]);
+    await run('DELETE FROM intake_templates WHERE id = ? AND user_id = ?', [req.params.id, req.workspaceUserId]);
     res.json({ ok: true });
   } catch (err) {
     console.error('[intake DELETE /templates/:id]', err);
@@ -68,7 +68,7 @@ router.get('/inbox', authenticate, async (req, res) => {
       LEFT JOIN projects p ON f.project_id = p.id
       WHERE f.user_id = ? AND f.status = 'submitted'
       ORDER BY f.submitted_at DESC
-    `, [req.userId]);
+    `, [req.workspaceUserId]);
     res.json(rows.map(r => ({
       ...r,
       fields:    JSON.parse(r.fields    || '[]'),
@@ -85,7 +85,7 @@ router.get('/unread-count', authenticate, async (req, res) => {
   try {
     const row = await getOne(
       `SELECT COUNT(*) as count FROM intake_forms WHERE user_id = ? AND status = 'submitted' AND seen = 0`,
-      [req.userId]
+      [req.workspaceUserId]
     );
     res.json({ count: parseInt(row.count) });
   } catch (err) {
@@ -103,7 +103,7 @@ router.get('/', authenticate, async (req, res) => {
       LEFT JOIN clients c ON f.client_id = c.id
       LEFT JOIN projects p ON f.project_id = p.id
       WHERE f.user_id = ? ORDER BY f.created_at DESC
-    `, [req.userId]);
+    `, [req.workspaceUserId]);
     res.json(rows);
   } catch (err) {
     console.error('[intake GET /]', err);
@@ -118,7 +118,7 @@ router.post('/', authenticate, async (req, res) => {
     if (!template_id) return res.status(400).json({ error: 'Template fehlt' });
     const token = crypto.randomBytes(24).toString('hex');
     const r = await run('INSERT INTO intake_forms (user_id, template_id, project_id, client_id, title, token) VALUES (?, ?, ?, ?, ?, ?) RETURNING id',
-      [req.userId, template_id, project_id || null, client_id || null, title, token]);
+      [req.workspaceUserId, template_id, project_id || null, client_id || null, title, token]);
     const form = await getOne('SELECT * FROM intake_forms WHERE id = ?', [r.lastInsertRowid]);
     res.json(form);
   } catch (err) {
@@ -136,7 +136,7 @@ router.get('/:id', authenticate, async (req, res) => {
       LEFT JOIN clients c ON f.client_id = c.id
       LEFT JOIN projects p ON f.project_id = p.id
       WHERE f.id = ? AND f.user_id = ?
-    `, [req.params.id, req.userId]);
+    `, [req.params.id, req.workspaceUserId]);
     if (!form) return res.status(404).json({ error: 'Not found' });
     res.json({ ...form, fields: JSON.parse(form.fields || '[]'), responses: JSON.parse(form.responses || '{}') });
   } catch (err) {
@@ -148,7 +148,7 @@ router.get('/:id', authenticate, async (req, res) => {
 // Mark as seen
 router.patch('/:id/seen', authenticate, async (req, res) => {
   try {
-    await run('UPDATE intake_forms SET seen = 1 WHERE id = ? AND user_id = ?', [req.params.id, req.userId]);
+    await run('UPDATE intake_forms SET seen = 1 WHERE id = ? AND user_id = ?', [req.params.id, req.workspaceUserId]);
     res.json({ ok: true });
   } catch (err) {
     console.error('[intake PATCH /:id/seen]', err);
@@ -161,7 +161,7 @@ router.patch('/:id/submit', authenticate, async (req, res) => {
   try {
     const { responses } = req.body;
     await run('UPDATE intake_forms SET responses = ?, status = ?, submitted_at = NOW() WHERE id = ? AND user_id = ?',
-      [JSON.stringify(responses || {}), 'submitted', req.params.id, req.userId]);
+      [JSON.stringify(responses || {}), 'submitted', req.params.id, req.workspaceUserId]);
     const form = await getOne('SELECT * FROM intake_forms WHERE id = ?', [req.params.id]);
     res.json(form);
   } catch (err) {
@@ -172,7 +172,7 @@ router.patch('/:id/submit', authenticate, async (req, res) => {
 
 router.delete('/:id', authenticate, async (req, res) => {
   try {
-    await run('DELETE FROM intake_forms WHERE id = ? AND user_id = ?', [req.params.id, req.userId]);
+    await run('DELETE FROM intake_forms WHERE id = ? AND user_id = ?', [req.params.id, req.workspaceUserId]);
     res.json({ ok: true });
   } catch (err) {
     console.error('[intake DELETE /:id]', err);

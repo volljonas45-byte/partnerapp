@@ -72,7 +72,7 @@ function projectFields(body) {
 router.get('/', async (req, res) => {
   try {
     const clientFilter = req.query.client_id ? ' AND p.client_id = ?' : '';
-    const params = req.query.client_id ? [req.userId, req.query.client_id] : [req.userId];
+    const params = req.query.client_id ? [req.workspaceUserId, req.query.client_id] : [req.workspaceUserId];
     const rows = await getAll(`
       SELECT p.*, c.company_name as client_name,
              COUNT(t.id) as task_count,
@@ -105,7 +105,7 @@ router.get('/:id', async (req, res) => {
       FROM projects p
       LEFT JOIN clients c ON c.id = p.client_id
       WHERE p.id = ? AND p.user_id = ?
-    `, [req.params.id, req.userId]);
+    `, [req.params.id, req.workspaceUserId]);
 
     if (!project) return res.status(404).json({ error: 'Projekt nicht gefunden' });
 
@@ -116,11 +116,11 @@ router.get('/:id', async (req, res) => {
 
     const invoiceCount = await getOne(
       'SELECT COUNT(*) as count FROM invoices WHERE project_id = ? AND user_id = ?',
-      [req.params.id, req.userId]
+      [req.params.id, req.workspaceUserId]
     );
     const quoteCount = await getOne(
       'SELECT COUNT(*) as count FROM quotes WHERE project_id = ? AND user_id = ?',
-      [req.params.id, req.userId]
+      [req.params.id, req.workspaceUserId]
     );
 
     res.json({
@@ -145,7 +145,7 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'name ist erforderlich' });
 
     if (f.client_id) {
-      const client = await getOne('SELECT id FROM clients WHERE id = ? AND user_id = ?', [f.client_id, req.userId]);
+      const client = await getOne('SELECT id FROM clients WHERE id = ? AND user_id = ?', [f.client_id, req.workspaceUserId]);
       if (!client) return res.status(404).json({ error: 'Kunde nicht gefunden' });
     }
 
@@ -155,7 +155,7 @@ router.post('/', async (req, res) => {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       RETURNING id
     `, [
-      req.userId, f.client_id, f.name, f.status || 'planned',
+      req.workspaceUserId, f.client_id, f.name, f.status || 'planned',
       f.start_date ?? null, f.deadline ?? null, f.budget ?? null,
       f.description ?? '', f.type ?? null,
     ]);
@@ -178,7 +178,7 @@ router.post('/', async (req, res) => {
 // ── UPDATE ───────────────────────────────────────────────────────────────────
 router.put('/:id', async (req, res) => {
   try {
-    const existing = await getOne('SELECT id FROM projects WHERE id = ? AND user_id = ?', [req.params.id, req.userId]);
+    const existing = await getOne('SELECT id FROM projects WHERE id = ? AND user_id = ?', [req.params.id, req.workspaceUserId]);
     if (!existing) return res.status(404).json({ error: 'Projekt nicht gefunden' });
 
     // Build SET clause dynamically from provided fields
@@ -210,7 +210,7 @@ router.put('/:id', async (req, res) => {
         }
       }
       // Append id and user_id params
-      values.push(req.params.id, req.userId);
+      values.push(req.params.id, req.workspaceUserId);
       const pgClient = await pool.connect();
       try {
         await pgClient.query(
@@ -237,9 +237,9 @@ router.put('/:id', async (req, res) => {
 // ── DELETE ───────────────────────────────────────────────────────────────────
 router.delete('/:id', async (req, res) => {
   try {
-    const project = await getOne('SELECT id FROM projects WHERE id = ? AND user_id = ?', [req.params.id, req.userId]);
+    const project = await getOne('SELECT id FROM projects WHERE id = ? AND user_id = ?', [req.params.id, req.workspaceUserId]);
     if (!project) return res.status(404).json({ error: 'Projekt nicht gefunden' });
-    await run('DELETE FROM projects WHERE id = ? AND user_id = ?', [req.params.id, req.userId]);
+    await run('DELETE FROM projects WHERE id = ? AND user_id = ?', [req.params.id, req.workspaceUserId]);
     res.json({ success: true });
   } catch (err) {
     console.error('[projects DELETE /:id]', err);
@@ -250,7 +250,7 @@ router.delete('/:id', async (req, res) => {
 // ── CHECKLIST ─────────────────────────────────────────────────────────────────
 router.patch('/:id/checklist/:key', async (req, res) => {
   try {
-    const project = await getOne('SELECT id FROM projects WHERE id = ? AND user_id = ?', [req.params.id, req.userId]);
+    const project = await getOne('SELECT id FROM projects WHERE id = ? AND user_id = ?', [req.params.id, req.workspaceUserId]);
     if (!project) return res.status(404).json({ error: 'Projekt nicht gefunden' });
 
     await ensureChecklist(req.params.id);
@@ -271,7 +271,7 @@ router.patch('/:id/checklist/:key', async (req, res) => {
 
 router.post('/:id/checklist', async (req, res) => {
   try {
-    const project = await getOne('SELECT id FROM projects WHERE id = ? AND user_id = ?', [req.params.id, req.userId]);
+    const project = await getOne('SELECT id FROM projects WHERE id = ? AND user_id = ?', [req.params.id, req.workspaceUserId]);
     if (!project) return res.status(404).json({ error: 'Projekt nicht gefunden' });
 
     const { label } = req.body;
@@ -290,7 +290,7 @@ router.post('/:id/checklist', async (req, res) => {
 
 router.delete('/:id/checklist/:key', async (req, res) => {
   try {
-    const project = await getOne('SELECT id FROM projects WHERE id = ? AND user_id = ?', [req.params.id, req.userId]);
+    const project = await getOne('SELECT id FROM projects WHERE id = ? AND user_id = ?', [req.params.id, req.workspaceUserId]);
     if (!project) return res.status(404).json({ error: 'Projekt nicht gefunden' });
 
     const row = await getOne('SELECT custom FROM project_checklist WHERE project_id = ? AND key = ?', [req.params.id, req.params.key]);
@@ -307,9 +307,15 @@ router.delete('/:id/checklist/:key', async (req, res) => {
 // ── TASKS ─────────────────────────────────────────────────────────────────────
 router.get('/:id/tasks', async (req, res) => {
   try {
-    const project = await getOne('SELECT id FROM projects WHERE id = ? AND user_id = ?', [req.params.id, req.userId]);
+    const project = await getOne('SELECT id FROM projects WHERE id = ? AND user_id = ?', [req.params.id, req.workspaceUserId]);
     if (!project) return res.status(404).json({ error: 'Projekt nicht gefunden' });
-    const tasks = await getAll('SELECT * FROM tasks WHERE project_id = ? ORDER BY created_at ASC', [req.params.id]);
+    const tasks = await getAll(`
+      SELECT t.*, u.name as assignee_name, u.color as assignee_color, u.email as assignee_email
+      FROM tasks t
+      LEFT JOIN users u ON u.id = t.assignee_id
+      WHERE t.project_id = ?
+      ORDER BY t.created_at ASC
+    `, [req.params.id]);
     res.json(tasks);
   } catch (err) {
     console.error('[projects GET /:id/tasks]', err);
@@ -319,16 +325,23 @@ router.get('/:id/tasks', async (req, res) => {
 
 router.post('/:id/tasks', async (req, res) => {
   try {
-    const project = await getOne('SELECT id FROM projects WHERE id = ? AND user_id = ?', [req.params.id, req.userId]);
+    const project = await getOne('SELECT id FROM projects WHERE id = ? AND user_id = ?', [req.params.id, req.workspaceUserId]);
     if (!project) return res.status(404).json({ error: 'Projekt nicht gefunden' });
 
-    const { title } = req.body;
+    const { title, assignee_id } = req.body;
     if (!title) return res.status(400).json({ error: 'title ist erforderlich' });
 
-    const r = await run('INSERT INTO tasks (project_id, user_id, title, status) VALUES (?, ?, ?, ?) RETURNING id',
-      [req.params.id, req.userId, title, 'todo']);
+    const r = await run(
+      'INSERT INTO tasks (project_id, user_id, title, status, assignee_id) VALUES (?, ?, ?, ?, ?) RETURNING id',
+      [req.params.id, req.userId, title, 'todo', assignee_id ?? null]
+    );
 
-    res.status(201).json(await getOne('SELECT * FROM tasks WHERE id = ?', [r.lastInsertRowid]));
+    const task = await getOne(`
+      SELECT t.*, u.name as assignee_name, u.color as assignee_color, u.email as assignee_email
+      FROM tasks t LEFT JOIN users u ON u.id = t.assignee_id
+      WHERE t.id = ?
+    `, [r.lastInsertRowid]);
+    res.status(201).json(task);
   } catch (err) {
     console.error('[projects POST /:id/tasks]', err);
     res.status(500).json({ error: 'Internal server error' });
@@ -339,18 +352,24 @@ router.patch('/:id/tasks/:taskId', async (req, res) => {
   try {
     const task = await getOne(
       'SELECT t.id FROM tasks t JOIN projects p ON p.id = t.project_id WHERE t.id = ? AND p.user_id = ?',
-      [req.params.taskId, req.userId]
+      [req.params.taskId, req.workspaceUserId]
     );
     if (!task) return res.status(404).json({ error: 'Aufgabe nicht gefunden' });
 
-    const { status, title } = req.body;
+    const { status, title, assignee_id } = req.body;
     if (status && !VALID_TASK_STATUSES.includes(status))
       return res.status(400).json({ error: 'Ungültiger Status' });
 
-    if (status) await run('UPDATE tasks SET status=? WHERE id=?', [status, req.params.taskId]);
-    if (title)  await run('UPDATE tasks SET title=?  WHERE id=?', [title,  req.params.taskId]);
+    if (status)                        await run('UPDATE tasks SET status=?      WHERE id=?', [status,       req.params.taskId]);
+    if (title)                         await run('UPDATE tasks SET title=?       WHERE id=?', [title,        req.params.taskId]);
+    if (assignee_id !== undefined)     await run('UPDATE tasks SET assignee_id=? WHERE id=?', [assignee_id ?? null, req.params.taskId]);
 
-    res.json(await getOne('SELECT * FROM tasks WHERE id = ?', [req.params.taskId]));
+    const updated = await getOne(`
+      SELECT t.*, u.name as assignee_name, u.color as assignee_color, u.email as assignee_email
+      FROM tasks t LEFT JOIN users u ON u.id = t.assignee_id
+      WHERE t.id = ?
+    `, [req.params.taskId]);
+    res.json(updated);
   } catch (err) {
     console.error('[projects PATCH /:id/tasks/:taskId]', err);
     res.status(500).json({ error: 'Internal server error' });
@@ -361,7 +380,7 @@ router.delete('/:id/tasks/:taskId', async (req, res) => {
   try {
     const task = await getOne(
       'SELECT t.id FROM tasks t JOIN projects p ON p.id = t.project_id WHERE t.id = ? AND p.user_id = ?',
-      [req.params.taskId, req.userId]
+      [req.params.taskId, req.workspaceUserId]
     );
     if (!task) return res.status(404).json({ error: 'Aufgabe nicht gefunden' });
     await run('DELETE FROM tasks WHERE id = ?', [req.params.taskId]);
@@ -375,7 +394,7 @@ router.delete('/:id/tasks/:taskId', async (req, res) => {
 // ── LINKED INVOICES ───────────────────────────────────────────────────────────
 router.get('/:id/invoices', async (req, res) => {
   try {
-    const project = await getOne('SELECT id FROM projects WHERE id = ? AND user_id = ?', [req.params.id, req.userId]);
+    const project = await getOne('SELECT id FROM projects WHERE id = ? AND user_id = ?', [req.params.id, req.workspaceUserId]);
     if (!project) return res.status(404).json({ error: 'Projekt nicht gefunden' });
 
     const rows = await getAll(`
@@ -383,7 +402,7 @@ router.get('/:id/invoices', async (req, res) => {
       FROM invoices i LEFT JOIN clients c ON c.id = i.client_id
       WHERE i.project_id = ? AND i.user_id = ?
       ORDER BY i.created_at DESC
-    `, [req.params.id, req.userId]);
+    `, [req.params.id, req.workspaceUserId]);
     res.json(rows);
   } catch (err) {
     console.error('[projects GET /:id/invoices]', err);
@@ -394,7 +413,7 @@ router.get('/:id/invoices', async (req, res) => {
 // ── LINKED QUOTES ─────────────────────────────────────────────────────────────
 router.get('/:id/quotes', async (req, res) => {
   try {
-    const project = await getOne('SELECT id FROM projects WHERE id = ? AND user_id = ?', [req.params.id, req.userId]);
+    const project = await getOne('SELECT id FROM projects WHERE id = ? AND user_id = ?', [req.params.id, req.workspaceUserId]);
     if (!project) return res.status(404).json({ error: 'Projekt nicht gefunden' });
 
     const rows = await getAll(`
@@ -402,7 +421,7 @@ router.get('/:id/quotes', async (req, res) => {
       FROM quotes q LEFT JOIN clients c ON c.id = q.client_id
       WHERE q.project_id = ? AND q.user_id = ?
       ORDER BY q.created_at DESC
-    `, [req.params.id, req.userId]);
+    `, [req.params.id, req.workspaceUserId]);
     res.json(rows);
   } catch (err) {
     console.error('[projects GET /:id/quotes]', err);
@@ -415,12 +434,12 @@ const VALID_CRED_TYPES = ['password', 'guide', 'other'];
 
 router.get('/:id/credentials', async (req, res) => {
   try {
-    const project = await getOne('SELECT id FROM projects WHERE id = ? AND user_id = ?', [req.params.id, req.userId]);
+    const project = await getOne('SELECT id FROM projects WHERE id = ? AND user_id = ?', [req.params.id, req.workspaceUserId]);
     if (!project) return res.status(404).json({ error: 'Projekt nicht gefunden' });
 
     const rows = await getAll(
       'SELECT * FROM project_credentials WHERE project_id = ? AND user_id = ? ORDER BY created_at ASC',
-      [req.params.id, req.userId]
+      [req.params.id, req.workspaceUserId]
     );
     res.json(rows);
   } catch (err) {
@@ -431,7 +450,7 @@ router.get('/:id/credentials', async (req, res) => {
 
 router.post('/:id/credentials', async (req, res) => {
   try {
-    const project = await getOne('SELECT id FROM projects WHERE id = ? AND user_id = ?', [req.params.id, req.userId]);
+    const project = await getOne('SELECT id FROM projects WHERE id = ? AND user_id = ?', [req.params.id, req.workspaceUserId]);
     if (!project) return res.status(404).json({ error: 'Projekt nicht gefunden' });
 
     const { label, type = 'other', link, note } = req.body;
@@ -441,7 +460,7 @@ router.post('/:id/credentials', async (req, res) => {
 
     const r = await run(
       'INSERT INTO project_credentials (project_id, user_id, label, type, link, note) VALUES (?, ?, ?, ?, ?, ?) RETURNING id',
-      [req.params.id, req.userId, label, type, link || null, note || null]
+      [req.params.id, req.workspaceUserId, label, type, link || null, note || null]
     );
 
     res.status(201).json(await getOne('SELECT * FROM project_credentials WHERE id = ?', [r.lastInsertRowid]));
@@ -455,7 +474,7 @@ router.patch('/:id/credentials/:credId', async (req, res) => {
   try {
     const cred = await getOne(
       'SELECT c.id FROM project_credentials c JOIN projects p ON p.id = c.project_id WHERE c.id = ? AND p.user_id = ?',
-      [req.params.credId, req.userId]
+      [req.params.credId, req.workspaceUserId]
     );
     if (!cred) return res.status(404).json({ error: 'Eintrag nicht gefunden' });
 
@@ -479,7 +498,7 @@ router.delete('/:id/credentials/:credId', async (req, res) => {
   try {
     const cred = await getOne(
       'SELECT c.id FROM project_credentials c JOIN projects p ON p.id = c.project_id WHERE c.id = ? AND p.user_id = ?',
-      [req.params.credId, req.userId]
+      [req.params.credId, req.workspaceUserId]
     );
     if (!cred) return res.status(404).json({ error: 'Eintrag nicht gefunden' });
 
@@ -495,7 +514,7 @@ router.delete('/:id/credentials/:credId', async (req, res) => {
 
 router.get('/:id/notes', async (req, res) => {
   try {
-    const project = await getOne('SELECT id FROM projects WHERE id = ? AND user_id = ?', [req.params.id, req.userId]);
+    const project = await getOne('SELECT id FROM projects WHERE id = ? AND user_id = ?', [req.params.id, req.workspaceUserId]);
     if (!project) return res.status(404).json({ error: 'Projekt nicht gefunden' });
 
     const notes = await getAll(
@@ -511,7 +530,7 @@ router.get('/:id/notes', async (req, res) => {
 
 router.post('/:id/notes', async (req, res) => {
   try {
-    const project = await getOne('SELECT id FROM projects WHERE id = ? AND user_id = ?', [req.params.id, req.userId]);
+    const project = await getOne('SELECT id FROM projects WHERE id = ? AND user_id = ?', [req.params.id, req.workspaceUserId]);
     if (!project) return res.status(404).json({ error: 'Projekt nicht gefunden' });
 
     const { content } = req.body;
@@ -535,7 +554,7 @@ router.delete('/:id/notes/:noteId', async (req, res) => {
   try {
     const note = await getOne(
       'SELECT n.id FROM project_notes n JOIN projects p ON p.id = n.project_id WHERE n.id = ? AND p.user_id = ?',
-      [req.params.noteId, req.userId]
+      [req.params.noteId, req.workspaceUserId]
     );
     if (!note) return res.status(404).json({ error: 'Notiz nicht gefunden' });
 
@@ -551,7 +570,7 @@ router.delete('/:id/notes/:noteId', async (req, res) => {
 
 router.get('/:id/activity', async (req, res) => {
   try {
-    const project = await getOne('SELECT id FROM projects WHERE id = ? AND user_id = ?', [req.params.id, req.userId]);
+    const project = await getOne('SELECT id FROM projects WHERE id = ? AND user_id = ?', [req.params.id, req.workspaceUserId]);
     if (!project) return res.status(404).json({ error: 'Projekt nicht gefunden' });
 
     const activity = await getAll(

@@ -41,13 +41,18 @@ export function AuthProvider({ children }) {
     setUser(userData);
   };
 
+  /** Convenience getter: role of the current user */
+  const isAdmin     = user?.role === 'admin' || !user?.role;
+  const isPM        = user?.role === 'pm';
+  const isDeveloper = user?.role === 'developer';
+
   const logout = () => {
     setToken(null);
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ token, user, loading, login, logout, isAuthenticated: !!token }}>
+    <AuthContext.Provider value={{ token, user, loading, login, logout, isAuthenticated: !!token, isAdmin, isPM, isDeveloper }}>
       {children}
     </AuthContext.Provider>
   );
