@@ -713,159 +713,78 @@ export default function ProjectDetail() {
               </div>
             </div>
 
-            {/* ── Row 2: Workflow Stepper + Aufgaben ── */}
-            <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: '14px', marginBottom: '14px' }}>
+            {/* ── Row 2: WorkflowPanel full width ── */}
+            <div style={{ marginBottom: '14px' }}>
+              <WorkflowPanel projectId={id} projectName={project?.name} />
+            </div>
 
-              {/* Workflow Stepper */}
-              <div style={card}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px' }}>
-                  <p style={sectionTitle}>Workflow-Phasen</p>
-                  <button onClick={() => setActiveTab('workflow')} style={linkBtn}>Details →</button>
-                </div>
-                <div style={{ position: 'relative' }}>
-                  {PHASE_ORDER.map((phaseKey, i) => {
-                    const phase = PHASES[phaseKey];
-                    const isDone    = i < phaseIdx;
-                    const isCurrent = i === phaseIdx;
-                    const phaseTaskDefs = phase?.tasks || [];
-                    const phaseTaskData = workflow?.phase_data?.[phaseKey]?.tasks || {};
-                    const completedCount = phaseTaskDefs.filter(t => phaseTaskData[t.key]).length;
-                    const isLast = i === PHASE_ORDER.length - 1;
-                    return (
-                      <div key={phaseKey} style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', paddingBottom: isLast ? 0 : '4px' }}>
-                        {/* Timeline column */}
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, width: '20px' }}>
-                          <div style={{
-                            width: '20px', height: '20px', borderRadius: '50%', flexShrink: 0,
-                            background: isDone ? '#34C759' : isCurrent ? '#0071E3' : '#F2F2F7',
-                            border: isCurrent ? '2px solid #0071E3' : 'none',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            transition: 'background 0.2s',
-                          }}>
-                            {isDone    && <Check size={10} color="#fff" strokeWidth={3} />}
-                            {isCurrent && <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#fff' }} />}
-                          </div>
-                          {!isLast && (
-                            <div style={{ width: '2px', flex: 1, minHeight: '24px', background: isDone ? '#34C759' : '#F0F0F5', margin: '3px 0' }} />
-                          )}
-                        </div>
-                        {/* Content */}
-                        <div style={{ flex: 1, paddingBottom: isLast ? 0 : '8px', opacity: i > phaseIdx ? 0.45 : 1 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: isCurrent && phaseTaskDefs.length > 0 ? '6px' : 0 }}>
-                            <span style={{ fontSize: '12px', marginTop: '2px' }}>{phase?.emoji}</span>
-                            <p style={{ fontSize: '13px', fontWeight: isCurrent ? '700' : isDone ? '500' : '400', color: isDone ? '#8E8E93' : isCurrent ? '#1D1D1F' : '#6E6E73', lineHeight: 1.2 }}>
-                              {phase?.label}
-                            </p>
-                            {isCurrent && (
-                              <span style={{ fontSize: '10px', fontWeight: '700', background: 'rgba(0,113,227,0.12)', color: '#0071E3', padding: '2px 7px', borderRadius: '99px', flexShrink: 0 }}>
-                                Aktuell
-                              </span>
-                            )}
-                            {isDone && (
-                              <span style={{ fontSize: '10px', fontWeight: '600', color: '#34C759', flexShrink: 0 }}>✓</span>
-                            )}
-                          </div>
-                          {isCurrent && phaseTaskDefs.length > 0 && (
-                            <div style={{ marginLeft: '0px' }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                                <div style={{ flex: 1, height: '3px', background: '#F2F2F7', borderRadius: '2px' }}>
-                                  <div style={{ height: '100%', borderRadius: '2px', background: '#0071E3', width: `${phaseTaskDefs.length > 0 ? Math.round((completedCount / phaseTaskDefs.length) * 100) : 0}%`, transition: 'width 0.4s' }} />
-                                </div>
-                                <span style={{ fontSize: '11px', color: '#8E8E93', flexShrink: 0 }}>{completedCount}/{phaseTaskDefs.length}</span>
-                              </div>
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                {phaseTaskDefs.map(t => {
-                                  const done = phaseTaskData[t.key];
-                                  return (
-                                    <div key={t.key} style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '5px 8px', borderRadius: '7px', background: done ? 'rgba(52,199,89,0.06)' : 'rgba(0,0,0,0.02)', border: `1px solid ${done ? 'rgba(52,199,89,0.15)' : '#F0F0F5'}` }}>
-                                      <div style={{ width: '14px', height: '14px', borderRadius: '50%', border: `1.5px solid ${done ? '#34C759' : '#C7C7CC'}`, background: done ? '#34C759' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                        {done && <Check size={8} color="#fff" strokeWidth={3} />}
-                                      </div>
-                                      <span style={{ fontSize: '12px', color: done ? '#8E8E93' : '#3C3C43', textDecoration: done ? 'line-through' : 'none', lineHeight: 1.3 }}>{t.label}</span>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+            {/* ── Row 3: Aufgaben + Änderungen + Quick Links + Finanzen ── */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '14px' }}>
 
-              {/* Top 4 Aufgaben */}
+              {/* Top 4 Aufgaben (moved from row 2) */}
               <div style={card}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
                   <p style={sectionTitle}>Aufgaben</p>
                   <button onClick={() => setActiveTab('tasks')} style={linkBtn}>Alle →</button>
                 </div>
                 {topTasks.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '24px 0' }}>
-                    <CheckCircle2 size={28} color="#D1D1D6" style={{ margin: '0 auto 8px' }} />
-                    <p style={{ fontSize: '13px', color: '#8E8E93' }}>Alle Aufgaben erledigt</p>
-                    <button onClick={() => setActiveTab('tasks')} style={{ ...linkBtn, marginTop: '8px', display: 'block', margin: '8px auto 0' }}>+ Neue Aufgabe</button>
+                  <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                    <CheckCircle2 size={24} color="#D1D1D6" style={{ margin: '0 auto 8px' }} />
+                    <p style={{ fontSize: '12px', color: '#8E8E93' }}>Alle erledigt</p>
                   </div>
                 ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
                     {topTasks.map(task => {
                       const isIn = task.status === 'doing';
                       return (
-                        <div
-                          key={task.id}
-                          onClick={() => cycleTask(task)}
-                          style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 11px', borderRadius: '10px', border: `1px solid ${isIn ? 'rgba(0,113,227,0.2)' : '#F2F2F7'}`, background: isIn ? 'rgba(0,113,227,0.03)' : '#FAFAFA', cursor: 'pointer', transition: 'all 0.12s' }}
+                        <div key={task.id} onClick={() => cycleTask(task)}
+                          style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', borderRadius: '8px', border: `1px solid ${isIn ? 'rgba(0,113,227,0.2)' : '#F2F2F7'}`, background: isIn ? 'rgba(0,113,227,0.03)' : '#FAFAFA', cursor: 'pointer' }}
                           onMouseEnter={e => e.currentTarget.style.background = '#F5F5F7'}
                           onMouseLeave={e => e.currentTarget.style.background = isIn ? 'rgba(0,113,227,0.03)' : '#FAFAFA'}
                         >
-                          <div style={{ width: '18px', height: '18px', borderRadius: '50%', flexShrink: 0, border: `2px solid ${isIn ? '#0071E3' : '#D1D1D6'}`, background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            {isIn && <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#0071E3' }} />}
+                          <div style={{ width: '16px', height: '16px', borderRadius: '50%', flexShrink: 0, border: `2px solid ${isIn ? '#0071E3' : '#D1D1D6'}`, background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            {isIn && <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#0071E3' }} />}
                           </div>
-                          <span style={{ flex: 1, fontSize: '13px', color: '#1D1D1F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{task.title}</span>
-                          {isIn && <span style={{ fontSize: '10px', fontWeight: '700', background: '#0071E3', color: '#fff', padding: '2px 6px', borderRadius: '4px', flexShrink: 0 }}>Aktiv</span>}
+                          <span style={{ flex: 1, fontSize: '12px', color: '#1D1D1F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{task.title}</span>
+                          {isIn && <span style={{ fontSize: '9px', fontWeight: '700', background: '#0071E3', color: '#fff', padding: '1px 5px', borderRadius: '4px', flexShrink: 0 }}>Aktiv</span>}
                         </div>
                       );
                     })}
                     {tasks.filter(t => t.status !== 'done').length > 4 && (
-                      <button onClick={() => setActiveTab('tasks')} style={{ ...linkBtn, fontSize: '12px', color: '#8E8E93', padding: '4px 0', textAlign: 'left' }}>
-                        +{tasks.filter(t => t.status !== 'done').length - 4} weitere offen
+                      <button onClick={() => setActiveTab('tasks')} style={{ fontSize: '11px', color: '#8E8E93', background: 'none', border: 'none', cursor: 'pointer', padding: '3px 0', textAlign: 'left' }}>
+                        +{tasks.filter(t => t.status !== 'done').length - 4} weitere
                       </button>
                     )}
                   </div>
                 )}
               </div>
-            </div>
 
-            {/* ── Row 3: Änderungen + Quick Links + Finanzen ── */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px' }}>
-
-              {/* Top 4 Änderungen */}
+              {/* Top 4 Änderungen (moved from row 3) */}
               <div style={card}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
                   <p style={sectionTitle}>Änderungen</p>
                   <button onClick={() => setActiveTab('changes')} style={linkBtn}>Alle →</button>
                 </div>
                 {topChanges.length === 0 ? (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '13px', background: 'rgba(52,199,89,0.06)', borderRadius: '10px', border: '1px solid rgba(52,199,89,0.15)' }}>
-                    <CheckCircle2 size={14} color="#34C759" />
-                    <p style={{ fontSize: '13px', color: '#34C759', fontWeight: '500' }}>Alle erledigt</p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '11px', background: 'rgba(52,199,89,0.06)', borderRadius: '9px', border: '1px solid rgba(52,199,89,0.15)' }}>
+                    <CheckCircle2 size={13} color="#34C759" />
+                    <p style={{ fontSize: '12px', color: '#34C759', fontWeight: '500' }}>Alle erledigt</p>
                   </div>
                 ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
                     {topChanges.map(ch => {
                       const tc = CHANGE_TYPE_CONFIG[ch.type] || CHANGE_TYPE_CONFIG.intern;
                       const pc = PRIORITY_CONFIG[ch.priority] || PRIORITY_CONFIG.mittel;
                       return (
-                        <div key={ch.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '9px 11px', borderRadius: '10px', border: '1px solid #F2F2F7', background: '#FAFAFA' }}>
+                        <div key={ch.id} style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '8px 10px', borderRadius: '8px', border: '1px solid #F2F2F7', background: '#FAFAFA' }}>
                           <div style={{ width: '3px', alignSelf: 'stretch', borderRadius: '2px', background: pc.color, flexShrink: 0 }} />
-                          <span style={{ fontSize: '10px', fontWeight: '700', padding: '2px 6px', borderRadius: '5px', background: tc.bg, color: tc.color, flexShrink: 0 }}>{tc.label}</span>
+                          <span style={{ fontSize: '10px', fontWeight: '700', padding: '1px 5px', borderRadius: '4px', background: tc.bg, color: tc.color, flexShrink: 0 }}>{tc.label}</span>
                           <span style={{ flex: 1, fontSize: '12px', color: '#1D1D1F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ch.title}</span>
                         </div>
                       );
                     })}
                     {openCh.length > 4 && (
-                      <button onClick={() => setActiveTab('changes')} style={{ ...linkBtn, fontSize: '12px', color: '#8E8E93', padding: '4px 0', textAlign: 'left' }}>
+                      <button onClick={() => setActiveTab('changes')} style={{ fontSize: '11px', color: '#8E8E93', background: 'none', border: 'none', cursor: 'pointer', padding: '3px 0', textAlign: 'left' }}>
                         +{openCh.length - 4} weitere
                       </button>
                     )}
