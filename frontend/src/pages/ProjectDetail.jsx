@@ -773,21 +773,18 @@ export default function ProjectDetail() {
                                 </div>
                                 <span style={{ fontSize: '11px', color: '#8E8E93', flexShrink: 0 }}>{completedCount}/{phaseTaskDefs.length}</span>
                               </div>
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                                {phaseTaskDefs.slice(0, 3).map(t => {
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                {phaseTaskDefs.map(t => {
                                   const done = phaseTaskData[t.key];
                                   return (
-                                    <div key={t.key} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                      <div style={{ width: '12px', height: '12px', borderRadius: '50%', border: `1.5px solid ${done ? '#34C759' : '#D1D1D6'}`, background: done ? '#34C759' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                        {done && <Check size={7} color="#fff" strokeWidth={3} />}
+                                    <div key={t.key} style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '5px 8px', borderRadius: '7px', background: done ? 'rgba(52,199,89,0.06)' : 'rgba(0,0,0,0.02)', border: `1px solid ${done ? 'rgba(52,199,89,0.15)' : '#F0F0F5'}` }}>
+                                      <div style={{ width: '14px', height: '14px', borderRadius: '50%', border: `1.5px solid ${done ? '#34C759' : '#C7C7CC'}`, background: done ? '#34C759' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                        {done && <Check size={8} color="#fff" strokeWidth={3} />}
                                       </div>
-                                      <span style={{ fontSize: '11px', color: done ? '#8E8E93' : '#6E6E73', textDecoration: done ? 'line-through' : 'none' }}>{t.label}</span>
+                                      <span style={{ fontSize: '12px', color: done ? '#8E8E93' : '#3C3C43', textDecoration: done ? 'line-through' : 'none', lineHeight: 1.3 }}>{t.label}</span>
                                     </div>
                                   );
                                 })}
-                                {phaseTaskDefs.length > 3 && (
-                                  <span style={{ fontSize: '11px', color: '#8E8E93', marginLeft: '18px' }}>+{phaseTaskDefs.length - 3} weitere...</span>
-                                )}
                               </div>
                             </div>
                           )}
