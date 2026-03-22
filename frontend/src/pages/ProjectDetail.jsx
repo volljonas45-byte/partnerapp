@@ -533,90 +533,245 @@ export default function ProjectDetail() {
     </button>
   );
 
+  // ── Sidebar computed values ─────────────────────────────────────────────────
+  const phaseIdx   = workflow?.current_phase ? PHASE_ORDER.indexOf(workflow.current_phase) : 0;
+  const phaseCfg   = workflow?.current_phase ? PHASES[workflow.current_phase] : null;
+  const isLastPhase = workflow?.current_phase === PHASE_ORDER[PHASE_ORDER.length - 1];
+  const openChanges = changes.filter(c => c.status !== 'erledigt').length;
+
   return (
-    <div className="p-8 max-w-5xl mx-auto">
-      {/* Header */}
-      <div className="flex items-start justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <button onClick={() => navigate('/websites')} className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
-            <ArrowLeft size={18} />
-          </button>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-semibold text-gray-900">{project.name}</h1>
-              {project.type && (
-                <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-medium">
-                  {TYPE_LABELS[project.type] || project.type}
-                </span>
-              )}
-            </div>
-            <p className="text-sm text-gray-500 mt-0.5">{project.client_name}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {(() => {
-            const phase = workflow?.current_phase;
-            const cfg = phase ? PHASES[phase] : null;
-            const isLast = phase === PHASE_ORDER[PHASE_ORDER.length - 1];
-            return (
-              <span style={{
-                padding: '3px 10px',
-                borderRadius: '99px',
-                fontSize: '12px',
-                fontWeight: 600,
-                background: isLast ? 'rgba(52,199,89,0.12)' : 'rgba(0,113,227,0.10)',
-                color: isLast ? '#34C759' : '#0071E3',
-              }}>
-                {cfg?.label || 'Start'}
-              </span>
-            );
-          })()}
-          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ring-1 ${healthCfg.cls}`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${healthCfg.dot}`} />
-            {healthCfg.label}
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#F5F5F7', overflow: 'hidden' }}>
+
+      {/* ── TOP BAR ─────────────────────────────────────────────────────────── */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: '12px',
+        padding: '0 20px', height: '52px', flexShrink: 0,
+        background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(20px)',
+        borderBottom: '1px solid rgba(0,0,0,0.07)',
+      }}>
+        <button
+          onClick={() => navigate('/websites')}
+          style={{
+            display: 'flex', alignItems: 'center', gap: '5px',
+            padding: '5px 10px', borderRadius: '8px', border: 'none',
+            background: 'transparent', color: '#86868B', fontSize: '13px',
+            cursor: 'pointer', transition: 'background 0.12s, color 0.12s',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.05)'; e.currentTarget.style.color = '#1D1D1F'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#86868B'; }}
+        >
+          <ArrowLeft size={14} /> Websites
+        </button>
+        <span style={{ color: '#C7C7CC', fontSize: '14px' }}>/</span>
+        <span style={{ fontSize: '14px', fontWeight: '600', color: '#1D1D1F', letterSpacing: '-0.01em' }}>{project.name}</span>
+        {project.type && (
+          <span style={{ fontSize: '11px', fontWeight: '500', color: '#6E6E73', background: '#F2F2F7', padding: '2px 8px', borderRadius: '6px' }}>
+            {TYPE_LABELS[project.type] || project.type}
           </span>
-        </div>
+        )}
       </div>
 
-      {/* Next step banner */}
-      <div className={`flex items-center gap-3 px-4 py-2.5 rounded-xl mb-5 text-sm ${nextStep.urgent ? 'bg-red-50 border border-red-100' : 'bg-gray-50 border border-gray-100'}`}>
-        {nextStep.urgent
-          ? <AlertTriangle size={14} className="text-red-500 shrink-0" />
-          : <ChevronRight size={14} className="text-gray-400 shrink-0" />
-        }
-        <span className={nextStep.urgent ? 'text-red-700 font-medium' : 'text-gray-600'}>
-          <span className="font-semibold text-gray-500 text-xs uppercase tracking-wide mr-2">Nächster Schritt</span>
-          {nextStep.text}
-        </span>
-      </div>
+      {/* ── TWO-COLUMN BODY ─────────────────────────────────────────────────── */}
+      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
 
-      {/* Tabs */}
-      <div className="flex gap-0 border-b border-gray-200 mb-6">
-        {TABS.map(tab => (
+        {/* ── LEFT SIDEBAR ──────────────────────────────────────────────────── */}
+        <aside style={{
+          width: '256px', flexShrink: 0,
+          background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(20px)',
+          borderRight: '1px solid rgba(0,0,0,0.07)',
+          overflowY: 'auto', padding: '20px 16px',
+          display: 'flex', flexDirection: 'column', gap: '20px',
+        }}>
+
+          {/* Health + Phase */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: '5px',
+                padding: '4px 10px', borderRadius: '99px', fontSize: '12px', fontWeight: '600',
+                background: health === 'critical' ? 'rgba(239,68,68,0.10)' : health === 'warning' ? 'rgba(245,158,11,0.10)' : 'rgba(52,199,89,0.10)',
+                color:      health === 'critical' ? '#EF4444'               : health === 'warning' ? '#F59E0B'               : '#34C759',
+              }}>
+                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'currentColor' }} />
+                {healthCfg.label}
+              </span>
+            </div>
+            <div>
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: '5px',
+                padding: '3px 10px', borderRadius: '99px', fontSize: '12px', fontWeight: '600',
+                background: isLastPhase ? 'rgba(52,199,89,0.10)' : 'rgba(0,113,227,0.10)',
+                color: isLastPhase ? '#34C759' : '#0071E3',
+              }}>
+                {phaseCfg?.label || 'Startphase'}
+              </span>
+              <div style={{ marginTop: '8px', height: '3px', background: '#F2F2F7', borderRadius: '2px' }}>
+                <div style={{
+                  height: '100%', borderRadius: '2px', transition: 'width 0.4s',
+                  background: isLastPhase ? '#34C759' : '#0071E3',
+                  width: `${Math.round(((phaseIdx + 1) / PHASE_ORDER.length) * 100)}%`,
+                }} />
+              </div>
+              <p style={{ fontSize: '10px', color: '#8E8E93', marginTop: '4px' }}>
+                Schritt {phaseIdx + 1} von {PHASE_ORDER.length}
+              </p>
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div style={{ height: '1px', background: '#F2F2F7', margin: '0 -4px' }} />
+
+          {/* Project info */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {project.client_name && (
+              <div>
+                <p style={{ fontSize: '10px', fontWeight: '600', color: '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '3px' }}>Kunde</p>
+                <button
+                  onClick={() => project.client_id && navigate(`/clients/${project.client_id}`)}
+                  style={{ fontSize: '13px', fontWeight: '500', color: project.client_id ? '#0071E3' : '#1D1D1F', background: 'none', border: 'none', padding: 0, cursor: project.client_id ? 'pointer' : 'default', textAlign: 'left' }}
+                >
+                  {project.client_name}
+                </button>
+              </div>
+            )}
+            {(project.assignee_name || project.assignee) && (
+              <div>
+                <p style={{ fontSize: '10px', fontWeight: '600', color: '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>Zuständig</p>
+                {project.assignee_name ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+                    <div style={{
+                      width: '22px', height: '22px', borderRadius: '50%', flexShrink: 0,
+                      background: project.assignee_color || '#6366f1',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: '9px', fontWeight: '700', color: '#fff',
+                    }}>
+                      {project.assignee_name.trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase()}
+                    </div>
+                    <span style={{ fontSize: '13px', fontWeight: '500', color: '#1D1D1F' }}>{project.assignee_name}</span>
+                  </div>
+                ) : (
+                  <span style={{ fontSize: '13px', color: '#1D1D1F' }}>{project.assignee}</span>
+                )}
+              </div>
+            )}
+            {project.deadline && (
+              <div>
+                <p style={{ fontSize: '10px', fontWeight: '600', color: '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '3px' }}>Deadline</p>
+                <p style={{ fontSize: '13px', fontWeight: '500', color: isPast(project.deadline) ? '#EF4444' : '#1D1D1F' }}>
+                  {formatDate(project.deadline)}
+                  {isPast(project.deadline) && <span style={{ fontSize: '11px', marginLeft: '4px', color: '#EF4444' }}>überschritten</span>}
+                </p>
+              </div>
+            )}
+            {project.budget != null && (
+              <div>
+                <p style={{ fontSize: '10px', fontWeight: '600', color: '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '3px' }}>Budget</p>
+                <p style={{ fontSize: '13px', fontWeight: '500', color: '#1D1D1F' }}>{formatCurrency(project.budget)}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Divider */}
+          <div style={{ height: '1px', background: '#F2F2F7', margin: '0 -4px' }} />
+
+          {/* Quick Stats */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <p style={{ fontSize: '10px', fontWeight: '600', color: '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Übersicht</p>
+            {tasks.length > 0 && (
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+                  <span style={{ fontSize: '12px', color: '#3C3C43' }}>Aufgaben</span>
+                  <span style={{ fontSize: '12px', fontWeight: '600', color: '#1D1D1F' }}>{doneTasks}/{tasks.length}</span>
+                </div>
+                <div style={{ height: '3px', background: '#F2F2F7', borderRadius: '2px' }}>
+                  <div style={{ height: '100%', borderRadius: '2px', background: '#34C759', width: `${tasks.length ? Math.round((doneTasks / tasks.length) * 100) : 0}%`, transition: 'width 0.3s' }} />
+                </div>
+              </div>
+            )}
+            {openChanges > 0 && (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '12px', color: '#3C3C43' }}>Offene Änderungen</span>
+                <span style={{ fontSize: '11px', fontWeight: '700', color: '#F59E0B', background: 'rgba(245,158,11,0.12)', padding: '2px 7px', borderRadius: '99px' }}>{openChanges}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Divider */}
+          <div style={{ height: '1px', background: '#F2F2F7', margin: '0 -4px' }} />
+
+          {/* Next Step */}
+          <div style={{
+            padding: '10px 12px', borderRadius: '10px',
+            background: nextStep.urgent ? 'rgba(239,68,68,0.06)' : '#F9F9FB',
+            border: `1px solid ${nextStep.urgent ? 'rgba(239,68,68,0.15)' : '#F2F2F7'}`,
+          }}>
+            <p style={{ fontSize: '10px', fontWeight: '600', color: nextStep.urgent ? '#EF4444' : '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
+              Nächster Schritt
+            </p>
+            <p style={{ fontSize: '12px', color: nextStep.urgent ? '#EF4444' : '#3C3C43', lineHeight: 1.4 }}>
+              {nextStep.text}
+            </p>
+          </div>
+
+          {/* Edit button */}
           <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px flex items-center gap-1.5 ${
-              activeTab === tab.key
-                ? 'border-gray-900 text-gray-900'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
+            onClick={() => setActiveTab('overview')}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+              padding: '8px', borderRadius: '10px', fontSize: '12px', fontWeight: '500',
+              color: '#86868B', background: '#F2F2F7', border: 'none', cursor: 'pointer',
+              transition: 'background 0.12s, color 0.12s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = '#E5E5EA'; e.currentTarget.style.color = '#1D1D1F'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = '#F2F2F7'; e.currentTarget.style.color = '#86868B'; }}
           >
-            {tab.icon && <tab.icon size={13} />}
-            {tab.label}
-            {tab.key === 'tasks' && tasks.length > 0 && (
-              <span className="ml-1.5 text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full">
-                {doneTasks}/{tasks.length}
-              </span>
-            )}
-            {tab.key === 'changes' && changes.filter(c => c.status !== 'erledigt').length > 0 && (
-              <span className="ml-1.5 text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-medium">
-                {changes.filter(c => c.status !== 'erledigt').length}
-              </span>
-            )}
+            <Pencil size={12} /> Projekt bearbeiten
           </button>
-        ))}
-      </div>
+        </aside>
+
+        {/* ── RIGHT MAIN ────────────────────────────────────────────────────── */}
+        <main style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
+
+          {/* Tab bar */}
+          <div style={{
+            display: 'flex', gap: 0,
+            borderBottom: '1px solid rgba(0,0,0,0.07)',
+            background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(10px)',
+            paddingLeft: '24px', flexShrink: 0, position: 'sticky', top: 0, zIndex: 10,
+          }}>
+            {TABS.map(tab => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                style={{
+                  padding: '12px 16px', fontSize: '13px', fontWeight: activeTab === tab.key ? '600' : '400',
+                  color: activeTab === tab.key ? '#1D1D1F' : '#86868B',
+                  background: 'transparent', border: 'none', borderBottom: `2px solid ${activeTab === tab.key ? '#1D1D1F' : 'transparent'}`,
+                  cursor: 'pointer', transition: 'color 0.12s, border-color 0.12s',
+                  display: 'flex', alignItems: 'center', gap: '6px',
+                  marginBottom: '-1px', letterSpacing: '-0.01em',
+                }}
+                onMouseEnter={e => { if (activeTab !== tab.key) e.currentTarget.style.color = '#3C3C43'; }}
+                onMouseLeave={e => { if (activeTab !== tab.key) e.currentTarget.style.color = '#86868B'; }}
+              >
+                {tab.icon && <tab.icon size={12} />}
+                {tab.label}
+                {tab.key === 'tasks' && tasks.length > 0 && (
+                  <span style={{ fontSize: '10px', fontWeight: '600', background: '#F2F2F7', color: '#6E6E73', padding: '1px 6px', borderRadius: '99px' }}>
+                    {doneTasks}/{tasks.length}
+                  </span>
+                )}
+                {tab.key === 'changes' && openChanges > 0 && (
+                  <span style={{ fontSize: '10px', fontWeight: '700', background: 'rgba(245,158,11,0.15)', color: '#F59E0B', padding: '1px 6px', borderRadius: '99px' }}>
+                    {openChanges}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* Tab content */}
+          <div style={{ padding: '28px 32px', flex: 1 }}>
 
       {/* ── WORKFLOW ──────────────────────────────────────────────────────── */}
       {activeTab === 'workflow' && (
@@ -1865,6 +2020,9 @@ export default function ProjectDetail() {
       )}
 
       {ConfirmDialogNode}
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
