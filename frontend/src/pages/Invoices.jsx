@@ -69,7 +69,35 @@ export default function Invoices() {
   const overdueCount = invoices.filter(i => i.status === 'overdue').length;
   const openCount    = invoices.filter(i => ['sent', 'unpaid'].includes(i.status)).length;
 
-  if (isLoading) return <LoadingSpinner className="h-64" />;
+  if (isLoading) return (
+    <div className="p-8">
+      <div className="page-header">
+        <div>
+          <div className="skeleton h-7 w-36 mb-2" />
+          <div className="skeleton h-4 w-24" />
+        </div>
+        <div className="skeleton h-9 w-40 rounded-full" />
+      </div>
+      <div style={{ display: 'flex', gap: '12px', marginBottom: '24px' }}>
+        <div className="skeleton h-9 w-56 rounded-xl" />
+        <div className="skeleton h-9 w-72 rounded-lg" />
+      </div>
+      <div className="card p-0 overflow-hidden">
+        <div style={{ padding: '10px 18px', background: 'rgba(118,118,128,0.06)', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+          <div className="skeleton h-3 w-32" />
+        </div>
+        {[...Array(5)].map((_, i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '12px 18px 12px 20px', borderBottom: i < 4 ? '1px solid rgba(0,0,0,0.04)' : 'none' }}>
+            <div className="skeleton h-4" style={{ width: '100px' }} />
+            <div className="skeleton h-4" style={{ width: `${120 + i * 15}px` }} />
+            <div className="skeleton h-4 hidden md:block" style={{ width: '80px' }} />
+            <div className="skeleton h-5 rounded-full" style={{ width: '72px' }} />
+            <div className="skeleton h-4 ml-auto" style={{ width: '64px' }} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 
   return (
     <div className="p-8 animate-fade-in">

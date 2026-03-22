@@ -254,7 +254,29 @@ export default function Team() {
     setModal('edit');
   };
 
-  if (isLoading) return <LoadingSpinner className="h-64" />;
+  if (isLoading) return (
+    <div className="p-8">
+      <div className="page-header">
+        <div>
+          <div className="skeleton h-7 w-24 mb-2" />
+          <div className="skeleton h-4 w-28" />
+        </div>
+        <div className="skeleton h-9 w-40 rounded-full" />
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="card" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div className="skeleton rounded-full shrink-0" style={{ width: 44, height: 44 }} />
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div className="skeleton h-4" style={{ width: '120px' }} />
+              <div className="skeleton h-3" style={{ width: '160px' }} />
+              <div className="skeleton h-5 rounded-full" style={{ width: '60px' }} />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 
   return (
     <div className="p-8 animate-fade-in">

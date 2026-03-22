@@ -39,24 +39,26 @@ export default function Modal({ open, onClose, title, children, maxWidth = 'max-
         inset: 0,
         zIndex: 9999,
         background: 'rgba(0,0,0,0.35)',
-        backdropFilter: 'blur(4px)',
-        WebkitBackdropFilter: 'blur(4px)',
+        backdropFilter: 'blur(6px)',
+        WebkitBackdropFilter: 'blur(6px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         padding: '24px',
         overflowY: 'auto',
+        animation: 'backdropIn 0.2s ease both',
       }}
     >
       <div
         onClick={e => e.stopPropagation()}
+        className="animate-modal-in"
         style={{
           position: 'relative',
           width: '100%',
           maxWidth: maxWidthPx,
           background: '#fff',
           borderRadius: '16px',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+          boxShadow: '0 24px 72px rgba(0,0,0,0.18), 0 8px 24px rgba(0,0,0,0.08)',
           flexShrink: 0,
           margin: 'auto',
         }}
