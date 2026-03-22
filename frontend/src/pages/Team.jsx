@@ -1,10 +1,9 @@
-import { useState } from 'react';
+import { useState } from 'react'; // used for ConfirmDialog internal state
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Pencil, Trash2, Shield, Briefcase, Code2, Crown } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { teamApi } from '../api/team';
-import Modal from '../components/Modal';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useAuth } from '../context/AuthContext';
 import { useConfirm } from '../hooks/useConfirm';
@@ -18,12 +17,7 @@ const ROLES = [
   { value: 'developer', label: 'Developer', icon: Code2,    color: '#065F46', bg: '#D1FAE5', desc: 'Nur Projekte & Aufgaben' },
 ];
 
-const COLORS = [
-  '#6366f1', '#0071E3', '#10B981', '#F59E0B',
-  '#EF4444', '#EC4899', '#8B5CF6', '#06B6D4',
-];
 
-const EMPTY_INVITE = { email: '', password: '', name: '', role: 'developer', color: '#6366f1' };
 
 // ── Hilfsfunktionen ───────────────────────────────────────────────────────────
 
@@ -66,140 +60,6 @@ function RoleBadge({ role }) {
   );
 }
 
-// ── Formulare ─────────────────────────────────────────────────────────────────
-
-function InviteForm({ values, onChange }) {
-  return (
-    <div className="space-y-3">
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="label">Name</label>
-          <input className="input" placeholder="Max Mustermann" value={values.name}
-            onChange={e => onChange('name', e.target.value)} />
-        </div>
-        <div>
-          <label className="label">E-Mail *</label>
-          <input className="input" type="email" placeholder="max@example.com" value={values.email}
-            onChange={e => onChange('email', e.target.value)} />
-        </div>
-      </div>
-      <div>
-        <label className="label">Passwort * (min. 6 Zeichen)</label>
-        <input className="input" type="password" placeholder="••••••" value={values.password}
-          onChange={e => onChange('password', e.target.value)} />
-      </div>
-      <div>
-        <label className="label">Rolle</label>
-        <div className="space-y-2 mt-1">
-          {ROLES.map(r => {
-            const Icon = r.icon;
-            return (
-              <label key={r.value} style={{
-                display: 'flex', alignItems: 'center', gap: '10px',
-                padding: '10px 12px',
-                borderRadius: '10px',
-                border: `1.5px solid ${values.role === r.value ? r.color : '#E5E7EB'}`,
-                background: values.role === r.value ? r.bg : '#fff',
-                cursor: 'pointer',
-                transition: 'all 0.15s',
-              }}>
-                <input type="radio" name="role" value={r.value} checked={values.role === r.value}
-                  onChange={() => onChange('role', r.value)} style={{ display: 'none' }} />
-                <div style={{
-                  width: 32, height: 32, borderRadius: '8px',
-                  background: r.bg, color: r.color,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
-                  <Icon size={14} strokeWidth={2} />
-                </div>
-                <div>
-                  <p style={{ fontSize: '13px', fontWeight: '600', color: '#1D1D1F' }}>{r.label}</p>
-                  <p style={{ fontSize: '11px', color: '#6E6E73' }}>{r.desc}</p>
-                </div>
-              </label>
-            );
-          })}
-        </div>
-      </div>
-      <div>
-        <label className="label">Farbe (Avatar)</label>
-        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '4px' }}>
-          {COLORS.map(c => (
-            <button key={c} type="button" onClick={() => onChange('color', c)}
-              style={{
-                width: 24, height: 24, borderRadius: '50%', background: c, border: 'none',
-                cursor: 'pointer',
-                outline: values.color === c ? `2px solid ${c}` : 'none',
-                outlineOffset: '2px',
-              }}
-            />
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function EditForm({ values, onChange }) {
-  return (
-    <div className="space-y-3">
-      <div>
-        <label className="label">Name</label>
-        <input className="input" placeholder="Max Mustermann" value={values.name || ''}
-          onChange={e => onChange('name', e.target.value)} />
-      </div>
-      <div>
-        <label className="label">Rolle</label>
-        <div className="space-y-2 mt-1">
-          {ROLES.map(r => {
-            const Icon = r.icon;
-            return (
-              <label key={r.value} style={{
-                display: 'flex', alignItems: 'center', gap: '10px',
-                padding: '10px 12px',
-                borderRadius: '10px',
-                border: `1.5px solid ${values.role === r.value ? r.color : '#E5E7EB'}`,
-                background: values.role === r.value ? r.bg : '#fff',
-                cursor: 'pointer',
-                transition: 'all 0.15s',
-              }}>
-                <input type="radio" name="edit-role" value={r.value} checked={values.role === r.value}
-                  onChange={() => onChange('role', r.value)} style={{ display: 'none' }} />
-                <div style={{
-                  width: 32, height: 32, borderRadius: '8px',
-                  background: r.bg, color: r.color,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
-                  <Icon size={14} strokeWidth={2} />
-                </div>
-                <div>
-                  <p style={{ fontSize: '13px', fontWeight: '600', color: '#1D1D1F' }}>{r.label}</p>
-                  <p style={{ fontSize: '11px', color: '#6E6E73' }}>{r.desc}</p>
-                </div>
-              </label>
-            );
-          })}
-        </div>
-      </div>
-      <div>
-        <label className="label">Farbe (Avatar)</label>
-        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '4px' }}>
-          {COLORS.map(c => (
-            <button key={c} type="button" onClick={() => onChange('color', c)}
-              style={{
-                width: 24, height: 24, borderRadius: '50%', background: c, border: 'none',
-                cursor: 'pointer',
-                outline: values.color === c ? `2px solid ${c}` : 'none',
-                outlineOffset: '2px',
-              }}
-            />
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ── Hauptkomponente ───────────────────────────────────────────────────────────
 
 export default function Team() {
@@ -208,24 +68,10 @@ export default function Team() {
   const { user, isAdmin } = useAuth();
   const { confirm, ConfirmDialogNode } = useConfirm();
 
-  const [modal, setModal]     = useState(null); // 'edit'
-  const [editing, setEditing] = useState(null);
-  const [form, setForm]       = useState(EMPTY_INVITE);
 
   const { data: members = [], isLoading } = useQuery({
     queryKey: ['team'],
     queryFn: () => teamApi.list().then(r => r.data),
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => teamApi.update(id, data),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['team'] });
-      toast.success('Mitglied aktualisiert');
-      setModal(null);
-      setEditing(null);
-    },
-    onError: err => toast.error(err.response?.data?.error || 'Fehler beim Aktualisieren'),
   });
 
   const removeMutation = useMutation({
@@ -237,23 +83,12 @@ export default function Team() {
     onError: err => toast.error(err.response?.data?.error || 'Fehler beim Entfernen'),
   });
 
-  const handleFieldChange = (key, val) => setForm(f => ({ ...f, [key]: val }));
-
-  const handleUpdate = () => {
-    updateMutation.mutate({ id: editing.id, data: { name: form.name, role: form.role, color: form.color } });
-  };
-
   const handleRemove = async (m) => {
     const ok = await confirm(`„${m.name || m.email}" wird aus dem Team entfernt.`, { title: 'Mitglied entfernen' });
     if (!ok) return;
     removeMutation.mutate(m.id);
   };
 
-  const openEdit = (m) => {
-    setEditing(m);
-    setForm({ name: m.name || '', role: m.role || 'developer', color: m.color || '#6366f1' });
-    setModal('edit');
-  };
 
   if (isLoading) return (
     <div className="p-8">
@@ -354,7 +189,7 @@ export default function Team() {
                     {isAdmin && (
                       <div className="flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
-                          onClick={() => openEdit(m)}
+                          onClick={() => navigate(`/team/${m.id}/edit`)}
                           title="Bearbeiten"
                           className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
                         >
@@ -380,21 +215,6 @@ export default function Team() {
       </div>
 
       {ConfirmDialogNode}
-
-      {/* Bearbeiten-Modal */}
-      <Modal open={modal === 'edit'} onClose={() => setModal(null)} title="Mitglied bearbeiten" maxWidth="max-w-md">
-        <EditForm values={form} onChange={handleFieldChange} />
-        <div className="flex justify-end gap-2 mt-6">
-          <button onClick={() => setModal(null)} className="btn-secondary">Abbrechen</button>
-          <button
-            onClick={handleUpdate}
-            disabled={updateMutation.isPending}
-            className="btn-primary"
-          >
-            {updateMutation.isPending ? 'Wird gespeichert…' : 'Speichern'}
-          </button>
-        </div>
-      </Modal>
     </div>
   );
 }
