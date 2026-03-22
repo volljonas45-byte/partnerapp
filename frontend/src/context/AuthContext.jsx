@@ -42,7 +42,7 @@ export function AuthProvider({ children }) {
   };
 
   /** Convenience getter: role of the current user */
-  const isAdmin     = user?.role === 'admin' || !user?.role;
+  const isAdmin     = user?.role === 'admin';
   const isPM        = user?.role === 'pm';
   const isDeveloper = user?.role === 'developer';
 

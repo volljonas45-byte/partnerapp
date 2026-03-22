@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 
 const authRoutes     = require('./routes/auth');
@@ -20,6 +21,11 @@ const teamRoutes     = require('./routes/team');
 
 const app = express();
 
+// ─── SECURITY HEADERS ─────────────────────────────────────────────────────────
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' }, // allow fonts/images from frontend
+}));
+
 // ─── MIDDLEWARE ───────────────────────────────────────────────────────────────
 const allowedOrigins = [
   ...(process.env.FRONTEND_URL || '').split(',').map(o => o.trim()).filter(Boolean),
@@ -29,11 +35,9 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, curl, etc.)
+    // Allow requests with no origin (mobile apps, curl, Render health checks)
     if (!origin) return callback(null, true);
-    // Allow any vercel.app subdomain (covers preview deployments too)
-    if (origin.endsWith('.vercel.app')) return callback(null, true);
-    // Allow explicitly listed origins
+    // Allow explicitly listed origins only
     if (allowedOrigins.includes(origin)) return callback(null, true);
     callback(new Error(`CORS: ${origin} not allowed`));
   },

@@ -56,7 +56,7 @@ router.post('/invite', async (req, res) => {
       return res.status(409).json({ error: 'E-Mail ist bereits registriert' });
     }
 
-    const passwordHash = await bcrypt.hash(password, 10);
+    const passwordHash = await bcrypt.hash(password, 12);
 
     const result = await run(`
       INSERT INTO users (email, password_hash, name, color, role, workspace_owner_id)

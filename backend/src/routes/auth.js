@@ -16,6 +16,9 @@ router.post('/register', async (req, res) => {
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required' });
     }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ error: 'Ungültige E-Mail-Adresse' });
+    }
     if (password.length < 6) {
       return res.status(400).json({ error: 'Password must be at least 6 characters' });
     }
@@ -36,7 +39,7 @@ router.post('/register', async (req, res) => {
       return res.status(409).json({ error: 'Email already registered' });
     }
 
-    const passwordHash = await bcrypt.hash(password, 10);
+    const passwordHash = await bcrypt.hash(password, 12);
 
     const result = await run(
       'INSERT INTO users (email, password_hash) VALUES (?, ?) RETURNING id',
@@ -49,7 +52,7 @@ router.post('/register', async (req, res) => {
     const token = jwt.sign(
       { userId: result.lastInsertRowid },
       process.env.JWT_SECRET,
-      { expiresIn: '365d' }
+      { expiresIn: '30d' }
     );
 
     res.status(201).json({ token, email });
@@ -84,7 +87,7 @@ router.post('/login', async (req, res) => {
     const token = jwt.sign(
       { userId: user.id },
       process.env.JWT_SECRET,
-      { expiresIn: '365d' }
+      { expiresIn: '30d' }
     );
 
     res.json({ token, email: user.email });

@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Save, Shield, Briefcase, Code2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { teamApi } from '../api/team';
+import { useAuth } from '../context/AuthContext';
 
 const ROLES = [
   { value: 'admin',     label: 'Admin',     icon: Shield,    color: '#7C3AED', bg: '#EDE9FE', desc: 'Voller Zugriff auf alle Bereiche' },
@@ -21,7 +22,15 @@ const EMPTY = { email: '', password: '', name: '', role: 'developer', color: '#6
 export default function NewTeamMember() {
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const { isAdmin } = useAuth();
   const [form, setForm] = useState(EMPTY);
+
+  // Redirect non-admins away
+  useEffect(() => {
+    if (!isAdmin) {
+      navigate('/team', { replace: true });
+    }
+  }, [isAdmin, navigate]);
 
   const set = (key, val) => setForm(f => ({ ...f, [key]: val }));
 
