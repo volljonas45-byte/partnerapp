@@ -472,7 +472,7 @@ export default function ProjectDetail() {
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate('/projects')} className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+          <button onClick={() => navigate('/websites')} className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
             <ArrowLeft size={18} />
           </button>
           <div>
