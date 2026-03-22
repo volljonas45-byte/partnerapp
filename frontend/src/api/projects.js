@@ -35,4 +35,10 @@ export const projectsApi = {
 
   // Activity log
   getActivity: (id) => api.get(`/api/projects/${id}/activity`),
+
+  // Change requests
+  getChanges:    (id)           => api.get(`/api/projects/${id}/changes`).then(r => r.data),
+  createChange:  (id, data)     => api.post(`/api/projects/${id}/changes`, data).then(r => r.data),
+  updateChange:  (id, cid, data) => api.put(`/api/projects/${id}/changes/${cid}`, data).then(r => r.data),
+  deleteChange:  (id, cid)      => api.delete(`/api/projects/${id}/changes/${cid}`),
 };

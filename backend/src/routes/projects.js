@@ -591,4 +591,89 @@ router.get('/:id/activity', async (req, res) => {
   }
 });
 
+// ── CHANGE REQUESTS ───────────────────────────────────────────────────────────
+
+router.get('/:id/changes', async (req, res) => {
+  try {
+    const project = await getOne('SELECT id FROM projects WHERE id = ? AND user_id = ?', [req.params.id, req.workspaceUserId]);
+    if (!project) return res.status(404).json({ error: 'Projekt nicht gefunden' });
+    const changes = await getAll(`
+      SELECT cr.*, u.name as assignee_name, u.color as assignee_color
+      FROM change_requests cr
+      LEFT JOIN users u ON u.id = cr.assignee_id
+      WHERE cr.project_id = ?
+      ORDER BY cr.created_at DESC
+    `, [req.params.id]);
+    res.json(changes);
+  } catch (err) {
+    console.error('[projects GET /:id/changes]', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.post('/:id/changes', async (req, res) => {
+  try {
+    const project = await getOne('SELECT id FROM projects WHERE id = ? AND user_id = ?', [req.params.id, req.workspaceUserId]);
+    if (!project) return res.status(404).json({ error: 'Projekt nicht gefunden' });
+    const { title, description, type, priority, assignee_id } = req.body;
+    if (!title) return res.status(400).json({ error: 'Titel ist erforderlich' });
+    const result = await run(`
+      INSERT INTO change_requests (project_id, user_id, title, description, type, priority, assignee_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id
+    `, [req.params.id, req.userId, title, description || '', type || 'intern', priority || 'mittel', assignee_id || null]);
+    const cr = await getOne(`
+      SELECT cr.*, u.name as assignee_name, u.color as assignee_color
+      FROM change_requests cr LEFT JOIN users u ON u.id = cr.assignee_id
+      WHERE cr.id = ?
+    `, [result.lastInsertRowid]);
+    res.status(201).json(cr);
+  } catch (err) {
+    console.error('[projects POST /:id/changes]', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.put('/:id/changes/:cid', async (req, res) => {
+  try {
+    const project = await getOne('SELECT id FROM projects WHERE id = ? AND user_id = ?', [req.params.id, req.workspaceUserId]);
+    if (!project) return res.status(404).json({ error: 'Projekt nicht gefunden' });
+    const cr = await getOne('SELECT id FROM change_requests WHERE id = ? AND project_id = ?', [req.params.cid, req.params.id]);
+    if (!cr) return res.status(404).json({ error: 'Änderung nicht gefunden' });
+    const { title, description, type, priority, status, assignee_id } = req.body;
+    await run(`
+      UPDATE change_requests SET
+        title       = COALESCE(?, title),
+        description = COALESCE(?, description),
+        type        = COALESCE(?, type),
+        priority    = COALESCE(?, priority),
+        status      = COALESCE(?, status),
+        assignee_id = CASE WHEN ? THEN ? ELSE assignee_id END,
+        updated_at  = NOW()
+      WHERE id = ?
+    `, [title ?? null, description ?? null, type ?? null, priority ?? null, status ?? null,
+        assignee_id !== undefined, assignee_id ?? null, req.params.cid]);
+    const updated = await getOne(`
+      SELECT cr.*, u.name as assignee_name, u.color as assignee_color
+      FROM change_requests cr LEFT JOIN users u ON u.id = cr.assignee_id
+      WHERE cr.id = ?
+    `, [req.params.cid]);
+    res.json(updated);
+  } catch (err) {
+    console.error('[projects PUT /:id/changes/:cid]', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.delete('/:id/changes/:cid', async (req, res) => {
+  try {
+    const project = await getOne('SELECT id FROM projects WHERE id = ? AND user_id = ?', [req.params.id, req.workspaceUserId]);
+    if (!project) return res.status(404).json({ error: 'Projekt nicht gefunden' });
+    await run('DELETE FROM change_requests WHERE id = ? AND project_id = ?', [req.params.cid, req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('[projects DELETE /:id/changes/:cid]', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 module.exports = router;

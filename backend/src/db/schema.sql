@@ -450,6 +450,25 @@ DO $$ BEGIN ALTER TABLE clients ADD COLUMN website  TEXT DEFAULT ''; EXCEPTION W
 DO $$ BEGIN ALTER TABLE users ADD COLUMN show_in_dashboard BOOLEAN DEFAULT TRUE; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
 DO $$ BEGIN ALTER TABLE users ADD COLUMN avatar_base64 TEXT DEFAULT NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
 
+-- ── CHANGE REQUESTS ───────────────────────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS change_requests (
+  id          SERIAL PRIMARY KEY,
+  project_id  INTEGER NOT NULL,
+  user_id     INTEGER NOT NULL,
+  title       TEXT NOT NULL,
+  description TEXT DEFAULT '',
+  type        TEXT DEFAULT 'intern',
+  priority    TEXT DEFAULT 'mittel',
+  status      TEXT DEFAULT 'offen',
+  assignee_id INTEGER DEFAULT NULL,
+  created_at  TIMESTAMP DEFAULT NOW(),
+  updated_at  TIMESTAMP DEFAULT NOW(),
+  FOREIGN KEY (project_id)  REFERENCES projects(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id)     REFERENCES users(id),
+  FOREIGN KEY (assignee_id) REFERENCES users(id) ON DELETE SET NULL
+);
+
 -- ── TIME TRACKING SCHEMA ───────────────────────────────────────────────────────
 
 CREATE TABLE IF NOT EXISTS time_entries (
