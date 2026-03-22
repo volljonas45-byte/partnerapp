@@ -1443,106 +1443,123 @@ export default function ProjectDetail() {
       )}
       {/* ── CHANGES ───────────────────────────────────────────────────────── */}
       {activeTab === 'changes' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
           {/* Quick-add form */}
-          <div style={{ background: '#fff', borderRadius: '14px', border: '1px solid #F2F2F7', padding: '16px' }}>
-            <p style={{ fontSize: '12px', fontWeight: '600', color: '#86868B', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '12px' }}>
-              Neue Änderung
-            </p>
+          <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #E5E5EA', padding: '20px' }}>
             <form
               onSubmit={e => {
                 e.preventDefault();
                 if (!changeForm.title.trim()) return toast.error('Titel ist erforderlich');
                 createChangeMutation.mutate(changeForm);
               }}
-              style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}
             >
               <input
                 className="input w-full"
-                placeholder="Was soll geändert werden?"
+                placeholder="Was soll geändert oder behoben werden?"
                 value={changeForm.title}
                 onChange={e => setChangeForm(f => ({ ...f, title: e.target.value }))}
-                style={{ fontSize: '14px' }}
+                style={{ fontSize: '14px', marginBottom: '14px', borderRadius: '10px' }}
               />
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '14px' }}>
                 {/* Type */}
-                <div style={{ display: 'flex', gap: '4px' }}>
-                  {Object.entries(CHANGE_TYPE_CONFIG).map(([k, v]) => (
-                    <button
-                      key={k} type="button"
-                      onClick={() => setChangeForm(f => ({ ...f, type: k }))}
-                      style={{
-                        padding: '5px 12px', borderRadius: '99px', fontSize: '12px', fontWeight: '500',
-                        border: 'none', cursor: 'pointer', transition: 'all 0.12s',
-                        background: changeForm.type === k ? v.bg : '#F2F2F7',
-                        color: changeForm.type === k ? v.color : '#6E6E73',
-                      }}
-                    >{v.label}</button>
-                  ))}
-                </div>
-                {/* Priority */}
-                <div style={{ display: 'flex', gap: '4px' }}>
-                  {PRIORITY_ORDER.map(k => {
-                    const v = PRIORITY_CONFIG[k];
-                    return (
-                      <button
-                        key={k} type="button"
-                        onClick={() => setChangeForm(f => ({ ...f, priority: k }))}
+                <div>
+                  <p style={{ fontSize: '11px', fontWeight: '600', color: '#86868B', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '7px' }}>Typ</p>
+                  <div style={{ display: 'flex', gap: '5px' }}>
+                    {Object.entries(CHANGE_TYPE_CONFIG).map(([k, v]) => (
+                      <button key={k} type="button"
+                        onClick={() => setChangeForm(f => ({ ...f, type: k }))}
                         style={{
-                          padding: '5px 12px', borderRadius: '99px', fontSize: '12px', fontWeight: '500',
-                          border: `1.5px solid ${changeForm.priority === k ? v.color : 'transparent'}`,
-                          background: changeForm.priority === k ? v.color + '18' : '#F2F2F7',
-                          color: changeForm.priority === k ? v.color : '#6E6E73',
+                          flex: 1, padding: '6px 4px', borderRadius: '8px', fontSize: '12px', fontWeight: '600',
+                          border: `1.5px solid ${changeForm.type === k ? v.color : '#E5E5EA'}`,
+                          background: changeForm.type === k ? v.bg : '#FAFAFA',
+                          color: changeForm.type === k ? v.color : '#8E8E93',
                           cursor: 'pointer', transition: 'all 0.12s',
                         }}
                       >{v.label}</button>
-                    );
-                  })}
+                    ))}
+                  </div>
                 </div>
+                {/* Priority */}
+                <div>
+                  <p style={{ fontSize: '11px', fontWeight: '600', color: '#86868B', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '7px' }}>Priorität</p>
+                  <div style={{ display: 'flex', gap: '5px' }}>
+                    {PRIORITY_ORDER.map(k => {
+                      const v = PRIORITY_CONFIG[k];
+                      const active = changeForm.priority === k;
+                      return (
+                        <button key={k} type="button"
+                          onClick={() => setChangeForm(f => ({ ...f, priority: k }))}
+                          style={{
+                            flex: 1, padding: '6px 4px', borderRadius: '8px', fontSize: '12px', fontWeight: '600',
+                            border: `1.5px solid ${active ? v.color : '#E5E5EA'}`,
+                            background: active ? v.color + '15' : '#FAFAFA',
+                            color: active ? v.color : '#8E8E93',
+                            cursor: 'pointer', transition: 'all 0.12s',
+                          }}
+                        >
+                          <span style={{ display: 'block', width: '6px', height: '6px', borderRadius: '50%', background: v.color, margin: '0 auto 3px' }} />
+                          {v.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                 <button
                   type="submit"
                   disabled={!changeForm.title.trim() || createChangeMutation.isPending}
                   className="btn-primary"
-                  style={{ fontSize: '13px', marginLeft: 'auto' }}
+                  style={{ fontSize: '13px', padding: '8px 18px' }}
                 >
-                  <Plus size={13}/> Hinzufügen
+                  <Plus size={13}/> Änderung anlegen
                 </button>
               </div>
             </form>
           </div>
 
-          {/* Filter bar */}
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <select
-              className="input"
-              value={changeTypeFilter}
-              onChange={e => setChangeTypeFilter(e.target.value)}
-              style={{ fontSize: '13px', width: 'auto' }}
-            >
-              <option value="all">Alle Typen</option>
-              <option value="bug">Bug</option>
-              <option value="kunde">Kunde</option>
-              <option value="intern">Intern</option>
-            </select>
-            <select
-              className="input"
-              value={changeStatusFilter}
-              onChange={e => setChangeStatusFilter(e.target.value)}
-              style={{ fontSize: '13px', width: 'auto' }}
-            >
-              <option value="all">Alle Status</option>
-              <option value="offen">Offen</option>
-              <option value="in_bearbeitung">In Bearbeitung</option>
-              <option value="erledigt">Erledigt</option>
-            </select>
-            <span style={{ fontSize: '12px', color: '#86868B', marginLeft: 'auto' }}>
-              {changes.filter(c =>
-                (changeTypeFilter === 'all' || c.type === changeTypeFilter) &&
-                (changeStatusFilter === 'all' || c.status === changeStatusFilter)
-              ).length} Einträge
-            </span>
-          </div>
+          {/* Filter + count bar */}
+          {changes.length > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              {/* Type filter pills */}
+              <div style={{ display: 'flex', gap: '4px', background: '#F2F2F7', borderRadius: '10px', padding: '3px' }}>
+                {[['all','Alle'], ['bug','Bug'], ['kunde','Kunde'], ['intern','Intern']].map(([k, label]) => (
+                  <button key={k} type="button"
+                    onClick={() => setChangeTypeFilter(k)}
+                    style={{
+                      padding: '4px 12px', borderRadius: '7px', fontSize: '12px', fontWeight: '500',
+                      border: 'none', cursor: 'pointer', transition: 'all 0.12s',
+                      background: changeTypeFilter === k ? '#fff' : 'transparent',
+                      color: changeTypeFilter === k ? '#1D1D1F' : '#86868B',
+                      boxShadow: changeTypeFilter === k ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                    }}
+                  >{label}</button>
+                ))}
+              </div>
+              {/* Status filter pills */}
+              <div style={{ display: 'flex', gap: '4px', background: '#F2F2F7', borderRadius: '10px', padding: '3px' }}>
+                {[['all','Alle'], ['offen','Offen'], ['in_bearbeitung','In Arbeit'], ['erledigt','Erledigt']].map(([k, label]) => (
+                  <button key={k} type="button"
+                    onClick={() => setChangeStatusFilter(k)}
+                    style={{
+                      padding: '4px 12px', borderRadius: '7px', fontSize: '12px', fontWeight: '500',
+                      border: 'none', cursor: 'pointer', transition: 'all 0.12s',
+                      background: changeStatusFilter === k ? '#fff' : 'transparent',
+                      color: changeStatusFilter === k ? '#1D1D1F' : '#86868B',
+                      boxShadow: changeStatusFilter === k ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                    }}
+                  >{label}</button>
+                ))}
+              </div>
+              <span style={{ fontSize: '12px', color: '#C7C7CC', marginLeft: 'auto' }}>
+                {changes.filter(c =>
+                  (changeTypeFilter === 'all' || c.type === changeTypeFilter) &&
+                  (changeStatusFilter === 'all' || c.status === changeStatusFilter)
+                ).length} von {changes.length}
+              </span>
+            </div>
+          )}
 
           {/* List */}
           {(() => {
@@ -1552,25 +1569,29 @@ export default function ProjectDetail() {
                 (changeStatusFilter === 'all' || c.status === changeStatusFilter)
               )
               .sort((a, b) => {
-                // Erledigte ans Ende
                 if (a.status === 'erledigt' && b.status !== 'erledigt') return 1;
                 if (b.status === 'erledigt' && a.status !== 'erledigt') return -1;
-                // Nach Priorität
                 return PRIORITY_ORDER.indexOf(a.priority) - PRIORITY_ORDER.indexOf(b.priority);
               });
 
             if (filtered.length === 0) {
               return (
-                <div style={{ background: '#fff', borderRadius: '14px', border: '1px solid #F2F2F7', padding: '40px', textAlign: 'center' }}>
-                  <p style={{ fontSize: '14px', color: '#86868B' }}>
-                    {changes.length === 0 ? 'Noch keine Änderungen — leg die erste an.' : 'Keine Einträge für diesen Filter.'}
+                <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #E5E5EA', padding: '48px', textAlign: 'center' }}>
+                  <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: '#F2F2F7', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
+                    <CheckSquare size={18} color="#C7C7CC" />
+                  </div>
+                  <p style={{ fontSize: '14px', fontWeight: '500', color: '#3C3C43', marginBottom: '4px' }}>
+                    {changes.length === 0 ? 'Noch keine Änderungen' : 'Keine Einträge'}
+                  </p>
+                  <p style={{ fontSize: '13px', color: '#8E8E93' }}>
+                    {changes.length === 0 ? 'Leg die erste Änderung oben an.' : 'Passe den Filter an.'}
                   </p>
                 </div>
               );
             }
 
             return (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 {filtered.map(ch => {
                   const priCfg = PRIORITY_CONFIG[ch.priority] || PRIORITY_CONFIG.mittel;
                   const typCfg = CHANGE_TYPE_CONFIG[ch.type]  || CHANGE_TYPE_CONFIG.intern;
@@ -1580,44 +1601,49 @@ export default function ProjectDetail() {
                   const isDone     = ch.status === 'erledigt';
 
                   return (
-                    <div
-                      key={ch.id}
-                      style={{
-                        background: '#fff',
-                        borderRadius: '14px',
-                        border: '1px solid #F2F2F7',
-                        borderLeft: `3px solid ${isDone ? '#D1FAE5' : priCfg.color}`,
-                        overflow: 'hidden',
-                        opacity: isDone ? 0.7 : 1,
-                        transition: 'opacity 0.15s',
-                      }}
+                    <div key={ch.id} style={{
+                      background: isDone ? '#FAFAFA' : '#fff',
+                      borderRadius: '14px',
+                      border: '1px solid #E5E5EA',
+                      borderLeft: `3px solid ${isDone ? '#D1FAE5' : priCfg.color}`,
+                      overflow: 'hidden',
+                      transition: 'box-shadow 0.15s',
+                    }}
+                      onMouseEnter={e => { if (!isDone) e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06)'; }}
+                      onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}
                     >
                       {/* Card header */}
                       <div
-                        style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}
+                        style={{ padding: '13px 16px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', userSelect: 'none' }}
                         onClick={() => setExpandedChangeId(isExpanded ? null : ch.id)}
                       >
-                        {/* Priority dot */}
-                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: priCfg.color, flexShrink: 0 }} />
+                        {/* Priority dot + label */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', minWidth: '68px', flexShrink: 0 }}>
+                          <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: isDone ? '#34C759' : priCfg.color }} />
+                          <span style={{ fontSize: '11px', fontWeight: '600', color: isDone ? '#34C759' : priCfg.color }}>
+                            {isDone ? 'Erledigt' : priCfg.label}
+                          </span>
+                        </div>
 
                         {/* Title */}
                         <span style={{
-                          flex: 1, fontSize: '14px', fontWeight: '500',
+                          flex: 1, fontSize: '13.5px', fontWeight: '500',
                           color: isDone ? '#8E8E93' : '#1D1D1F',
                           textDecoration: isDone ? 'line-through' : 'none',
+                          letterSpacing: '-0.01em',
                         }}>
                           {ch.title}
                         </span>
 
                         {/* Type badge */}
                         <span style={{
-                          fontSize: '11px', fontWeight: '600', padding: '2px 8px', borderRadius: '99px',
-                          background: typCfg.bg, color: typCfg.color, flexShrink: 0,
+                          fontSize: '11px', fontWeight: '600', padding: '3px 9px', borderRadius: '6px',
+                          background: typCfg.bg, color: typCfg.color, flexShrink: 0, letterSpacing: '0.01em',
                         }}>
                           {typCfg.label}
                         </span>
 
-                        {/* Status chip (clickable to cycle) */}
+                        {/* Status chip */}
                         <button
                           onClick={e => {
                             e.stopPropagation();
@@ -1625,14 +1651,13 @@ export default function ProjectDetail() {
                             updateChangeMutation.mutate({ cid: ch.id, data: { status: next } });
                           }}
                           style={{
-                            fontSize: '11px', fontWeight: '600', padding: '3px 10px', borderRadius: '99px',
+                            fontSize: '11px', fontWeight: '600', padding: '4px 10px', borderRadius: '99px',
                             background: staCfg.bg, color: staCfg.color,
-                            border: 'none', cursor: 'pointer', flexShrink: 0,
-                            transition: 'opacity 0.12s',
+                            border: 'none', cursor: 'pointer', flexShrink: 0, transition: 'filter 0.12s',
                           }}
-                          onMouseEnter={e => e.currentTarget.style.opacity = '0.75'}
-                          onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-                          title="Klicken zum Wechseln"
+                          onMouseEnter={e => e.currentTarget.style.filter = 'brightness(0.93)'}
+                          onMouseLeave={e => e.currentTarget.style.filter = 'none'}
+                          title="Status wechseln"
                         >
                           {staCfg.label}
                         </button>
@@ -1640,27 +1665,26 @@ export default function ProjectDetail() {
                         {/* Assignee avatar */}
                         {ch.assignee_name && (
                           <div style={{
-                            width: '22px', height: '22px', borderRadius: '50%', flexShrink: 0,
+                            width: '24px', height: '24px', borderRadius: '50%', flexShrink: 0,
                             background: ch.assignee_color || '#6366f1',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             fontSize: '9px', fontWeight: '700', color: '#fff',
+                            border: '2px solid #fff', boxShadow: '0 0 0 1px #E5E5EA',
                           }} title={ch.assignee_name}>
                             {ch.assignee_name.trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase()}
                           </div>
                         )}
 
-                        <ChevronDown
-                          size={14}
-                          color="#8E8E93"
-                          style={{ flexShrink: 0, transform: isExpanded ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s' }}
+                        <ChevronDown size={14} color="#C7C7CC"
+                          style={{ flexShrink: 0, transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}
                         />
                       </div>
 
                       {/* Expanded section */}
                       {isExpanded && (
-                        <div style={{ borderTop: '1px solid #F2F2F7', padding: '14px 16px', background: '#FAFAFA' }}>
+                        <div style={{ borderTop: '1px solid #F2F2F7', padding: '16px', background: '#FAFAFA' }}>
                           {isEditing ? (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                               <input
                                 className="input w-full"
                                 value={editChangeForm.title || ''}
@@ -1676,59 +1700,61 @@ export default function ProjectDetail() {
                                 placeholder="Beschreibung (optional)"
                                 style={{ fontSize: '13px' }}
                               />
-                              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                                {/* Type */}
-                                <div style={{ display: 'flex', gap: '4px' }}>
-                                  {Object.entries(CHANGE_TYPE_CONFIG).map(([k, v]) => (
-                                    <button key={k} type="button"
-                                      onClick={() => setEditChangeForm(f => ({ ...f, type: k }))}
-                                      style={{
-                                        padding: '4px 10px', borderRadius: '99px', fontSize: '12px', fontWeight: '500', border: 'none', cursor: 'pointer',
-                                        background: editChangeForm.type === k ? v.bg : '#F2F2F7',
-                                        color: editChangeForm.type === k ? v.color : '#6E6E73',
-                                      }}
-                                    >{v.label}</button>
-                                  ))}
-                                </div>
-                                {/* Priority */}
-                                <div style={{ display: 'flex', gap: '4px' }}>
-                                  {PRIORITY_ORDER.map(k => {
-                                    const v = PRIORITY_CONFIG[k];
-                                    return (
+                              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                                <div>
+                                  <p style={{ fontSize: '11px', fontWeight: '600', color: '#86868B', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Typ</p>
+                                  <div style={{ display: 'flex', gap: '4px' }}>
+                                    {Object.entries(CHANGE_TYPE_CONFIG).map(([k, v]) => (
                                       <button key={k} type="button"
-                                        onClick={() => setEditChangeForm(f => ({ ...f, priority: k }))}
+                                        onClick={() => setEditChangeForm(f => ({ ...f, type: k }))}
                                         style={{
-                                          padding: '4px 10px', borderRadius: '99px', fontSize: '12px', fontWeight: '500', cursor: 'pointer',
-                                          border: `1.5px solid ${editChangeForm.priority === k ? v.color : 'transparent'}`,
-                                          background: editChangeForm.priority === k ? v.color + '18' : '#F2F2F7',
-                                          color: editChangeForm.priority === k ? v.color : '#6E6E73',
+                                          flex: 1, padding: '5px 4px', borderRadius: '7px', fontSize: '12px', fontWeight: '600',
+                                          border: `1.5px solid ${editChangeForm.type === k ? v.color : '#E5E5EA'}`,
+                                          background: editChangeForm.type === k ? v.bg : '#fff',
+                                          color: editChangeForm.type === k ? v.color : '#8E8E93', cursor: 'pointer',
                                         }}
                                       >{v.label}</button>
-                                    );
-                                  })}
+                                    ))}
+                                  </div>
                                 </div>
-                                {/* Assignee */}
+                                <div>
+                                  <p style={{ fontSize: '11px', fontWeight: '600', color: '#86868B', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Priorität</p>
+                                  <div style={{ display: 'flex', gap: '4px' }}>
+                                    {PRIORITY_ORDER.map(k => {
+                                      const v = PRIORITY_CONFIG[k];
+                                      const active = editChangeForm.priority === k;
+                                      return (
+                                        <button key={k} type="button"
+                                          onClick={() => setEditChangeForm(f => ({ ...f, priority: k }))}
+                                          style={{
+                                            flex: 1, padding: '5px 4px', borderRadius: '7px', fontSize: '12px', fontWeight: '600',
+                                            border: `1.5px solid ${active ? v.color : '#E5E5EA'}`,
+                                            background: active ? v.color + '15' : '#fff',
+                                            color: active ? v.color : '#8E8E93', cursor: 'pointer',
+                                          }}
+                                        >{v.label}</button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              </div>
+                              <div>
+                                <p style={{ fontSize: '11px', fontWeight: '600', color: '#86868B', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Zuständig</p>
                                 <select
                                   className="input"
                                   value={editChangeForm.assignee_id || ''}
                                   onChange={e => setEditChangeForm(f => ({ ...f, assignee_id: e.target.value ? Number(e.target.value) : null }))}
-                                  style={{ fontSize: '13px', width: 'auto' }}
+                                  style={{ fontSize: '13px', width: '100%' }}
                                 >
-                                  <option value="">— Zuständig —</option>
+                                  <option value="">— Niemand —</option>
                                   {teamMembers.map(m => <option key={m.id} value={m.id}>{m.name || m.email}</option>)}
                                 </select>
                               </div>
-                              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                                <button
-                                  className="btn-secondary"
-                                  style={{ fontSize: '13px', padding: '6px 14px' }}
-                                  onClick={() => setEditingChangeId(null)}
-                                >
+                              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', paddingTop: '4px' }}>
+                                <button className="btn-secondary" style={{ fontSize: '13px' }} onClick={() => setEditingChangeId(null)}>
                                   <X size={13}/> Abbrechen
                                 </button>
-                                <button
-                                  className="btn-primary"
-                                  style={{ fontSize: '13px', padding: '6px 14px' }}
+                                <button className="btn-primary" style={{ fontSize: '13px' }}
                                   disabled={updateChangeMutation.isPending}
                                   onClick={() => {
                                     if (!editChangeForm.title?.trim()) return toast.error('Titel erforderlich');
@@ -1741,33 +1767,34 @@ export default function ProjectDetail() {
                             </div>
                           ) : (
                             <div>
-                              {ch.description && (
-                                <p style={{ fontSize: '13px', color: '#3C3C43', marginBottom: '12px', lineHeight: 1.5 }}>
+                              {ch.description ? (
+                                <p style={{ fontSize: '13px', color: '#3C3C43', marginBottom: '14px', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
                                   {ch.description}
                                 </p>
+                              ) : (
+                                <p style={{ fontSize: '13px', color: '#C7C7CC', marginBottom: '14px', fontStyle: 'italic' }}>Keine Beschreibung</p>
                               )}
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#86868B', marginBottom: '12px' }}>
-                                <span style={{
-                                  padding: '2px 8px', borderRadius: '99px',
-                                  background: PRIORITY_CONFIG[ch.priority]?.color + '18',
-                                  color: PRIORITY_CONFIG[ch.priority]?.color,
-                                  fontWeight: '600',
-                                }}>
-                                  {PRIORITY_CONFIG[ch.priority]?.label}
-                                </span>
-                                {ch.assignee_name ? (
-                                  <span>Zuständig: <strong style={{ color: '#3C3C43' }}>{ch.assignee_name}</strong></span>
-                                ) : (
-                                  <span>Niemand zugewiesen</span>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px', flexWrap: 'wrap' }}>
+                                {ch.assignee_name && (
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                    <div style={{
+                                      width: '18px', height: '18px', borderRadius: '50%',
+                                      background: ch.assignee_color || '#6366f1',
+                                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                      fontSize: '8px', fontWeight: '700', color: '#fff',
+                                    }}>
+                                      {ch.assignee_name.trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase()}
+                                    </div>
+                                    <span style={{ fontSize: '12px', color: '#3C3C43', fontWeight: '500' }}>{ch.assignee_name}</span>
+                                  </div>
                                 )}
-                                <span style={{ marginLeft: 'auto' }}>
+                                <span style={{ fontSize: '11px', color: '#C7C7CC' }}>·</span>
+                                <span style={{ fontSize: '12px', color: '#8E8E93' }}>
                                   {new Date(ch.created_at).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                                 </span>
                               </div>
-                              <div style={{ display: 'flex', gap: '8px' }}>
-                                <button
-                                  className="btn-secondary"
-                                  style={{ fontSize: '12px', padding: '5px 12px' }}
+                              <div style={{ display: 'flex', gap: '6px' }}>
+                                <button className="btn-secondary" style={{ fontSize: '12px', padding: '5px 12px' }}
                                   onClick={() => {
                                     setEditChangeForm({ title: ch.title, description: ch.description || '', type: ch.type, priority: ch.priority, assignee_id: ch.assignee_id });
                                     setEditingChangeId(ch.id);
@@ -1776,7 +1803,7 @@ export default function ProjectDetail() {
                                   <Pencil size={12}/> Bearbeiten
                                 </button>
                                 <button
-                                  style={{ fontSize: '12px', padding: '5px 12px', background: 'none', border: '1px solid #FFE5E5', borderRadius: '8px', color: '#EF4444', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}
+                                  style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', padding: '5px 12px', background: 'none', border: '1px solid #FFE5E5', borderRadius: '8px', color: '#EF4444', cursor: 'pointer' }}
                                   onClick={async () => {
                                     const ok = await confirm(`„${ch.title}" wird gelöscht.`, { title: 'Änderung löschen' });
                                     if (ok) deleteChangeMutation.mutate(ch.id);
