@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { teamApi } from '../api/team';
 import {
   User, Globe, Check, Sparkles, X, Plus,
   ChevronLeft, ChevronRight,
@@ -109,6 +111,8 @@ const INITIAL = {
   // Step 3 – Tech (all optional)
   build_type: '', hosting: '', domain_new: null, domain_url: '',
   project_value: '', notes: '',
+  // Assignee
+  assignee_id: null,
 };
 
 // ── Sub-components ──────────────────────────────────────────────────────────────
@@ -688,6 +692,11 @@ export default function Wizard() {
   const [data,    setData]    = useState(INITIAL);
   const [loading, setLoading] = useState(false);
 
+  const { data: teamMembers = [] } = useQuery({
+    queryKey: ['team'],
+    queryFn: () => teamApi.list().then(r => r.data),
+  });
+
   const set = (key) => (val) => setData(d => ({ ...d, [key]: val }));
 
   const autoProjectName = () => {
@@ -755,6 +764,7 @@ export default function Wizard() {
         budget:           data.project_value ? parseFloat(data.project_value) : null,
         description:      descParts.join('\n\n'),
         project_type:     'website',
+        assignee_id:      data.assignee_id || null,
       });
 
       // 3. Set workflow decisions (build_type + goal)
@@ -1018,6 +1028,41 @@ export default function Wizard() {
                   onCustomChange={set('goal_custom')}
                 />
               </SectionCard>
+
+              {teamMembers.length > 0 && (
+                <SectionCard title="ANSPRECHPARTNER">
+                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                    {teamMembers.map(m => {
+                      const initials = (m.name || m.email).trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+                      const active = data.assignee_id === m.id;
+                      return (
+                        <button
+                          key={m.id}
+                          type="button"
+                          onClick={() => set('assignee_id')(active ? null : m.id)}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: '8px',
+                            padding: '8px 14px', borderRadius: '99px',
+                            border: `2px solid ${active ? m.color || '#0071E3' : '#E5E7EB'}`,
+                            background: active ? (m.color || '#0071E3') + '18' : '#fff',
+                            cursor: 'pointer', transition: 'all 0.15s',
+                          }}
+                        >
+                          <div style={{
+                            width: 26, height: 26, borderRadius: '50%',
+                            background: m.color || '#6366f1',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: '10px', fontWeight: '700', color: '#fff', flexShrink: 0,
+                          }}>{initials}</div>
+                          <span style={{ fontSize: '13px', fontWeight: active ? '600' : '400', color: '#1D1D1F' }}>
+                            {m.name || m.email}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </SectionCard>
+              )}
             </div>
           )}
 

@@ -437,6 +437,7 @@ DO $$ BEGIN ALTER TABLE settings          ADD COLUMN email_signature TEXT DEFAUL
 DO $$ BEGIN ALTER TABLE invoice_items     ADD COLUMN billing_cycle   TEXT DEFAULT 'once'; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
 DO $$ BEGIN ALTER TABLE quote_items       ADD COLUMN billing_cycle   TEXT DEFAULT 'once'; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
 DO $$ BEGIN ALTER TABLE service_templates ADD COLUMN billing_cycle   TEXT DEFAULT 'once'; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE projects          ADD COLUMN assignee_id     INTEGER DEFAULT NULL REFERENCES users(id); EXCEPTION WHEN duplicate_column THEN NULL; END $$;
 
 -- ── TEAM MANAGEMENT MIGRATIONS ─────────────────────────────────────────────────
 DO $$ BEGIN ALTER TABLE users ADD COLUMN role               TEXT    DEFAULT 'admin'; EXCEPTION WHEN duplicate_column THEN NULL; END $$;

@@ -346,6 +346,21 @@ function ProjectCard({ project, area, onDelete }) {
           </span>
         )}
 
+        {/* Assignee avatar */}
+        {project.assignee_name || project.assignee_email ? (() => {
+          const label = project.assignee_name || project.assignee_email || '';
+          const initials = label.trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+          return (
+            <div title={label} style={{
+              width: 26, height: 26, borderRadius: '50%',
+              background: project.assignee_color || '#6366f1',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '10px', fontWeight: '700', color: '#fff',
+              flexShrink: 0,
+            }}>{initials}</div>
+          );
+        })() : null}
+
         {/* OPEN BUTTON - big and obvious */}
         <button
           onClick={() => navigate(`/projects/${project.id}`)}

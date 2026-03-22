@@ -77,13 +77,15 @@ router.get('/', async (req, res) => {
       SELECT p.*, c.company_name as client_name,
              COUNT(t.id) as task_count,
              COUNT(CASE WHEN t.status = 'done' THEN 1 END) as task_done_count,
-             pw.current_phase
+             pw.current_phase,
+             u.name as assignee_name, u.color as assignee_color, u.email as assignee_email
       FROM projects p
       LEFT JOIN clients c ON c.id = p.client_id
       LEFT JOIN tasks t ON t.project_id = p.id
       LEFT JOIN project_workflow pw ON pw.project_id = p.id
+      LEFT JOIN users u ON u.id = p.assignee_id
       WHERE p.user_id = ?${clientFilter}
-      GROUP BY p.id, c.company_name, pw.current_phase
+      GROUP BY p.id, c.company_name, pw.current_phase, u.name, u.color, u.email
       ORDER BY p.created_at DESC
     `, params);
     res.json(rows);
@@ -101,9 +103,11 @@ router.get('/:id', async (req, res) => {
              c.email as client_email, c.phone as client_phone,
              c.address as client_address, c.postal_code as client_postal_code,
              c.city as client_city, c.country as client_country,
-             c.id as client_db_id
+             c.id as client_db_id,
+             u.name as assignee_name, u.color as assignee_color, u.email as assignee_email
       FROM projects p
       LEFT JOIN clients c ON c.id = p.client_id
+      LEFT JOIN users u ON u.id = p.assignee_id
       WHERE p.id = ? AND p.user_id = ?
     `, [req.params.id, req.workspaceUserId]);
 
@@ -149,15 +153,17 @@ router.post('/', async (req, res) => {
       if (!client) return res.status(404).json({ error: 'Kunde nicht gefunden' });
     }
 
+    const assigneeId = req.body.assignee_id ? parseInt(req.body.assignee_id) : null;
+
     const r = await run(`
       INSERT INTO projects
-        (user_id, client_id, name, status, start_date, deadline, budget, description, type)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (user_id, client_id, name, status, start_date, deadline, budget, description, type, assignee_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       RETURNING id
     `, [
       req.workspaceUserId, f.client_id, f.name, f.status || 'planned',
       f.start_date ?? null, f.deadline ?? null, f.budget ?? null,
-      f.description ?? '', f.type ?? null,
+      f.description ?? '', f.type ?? null, assigneeId,
     ]);
 
     await ensureChecklist(r.lastInsertRowid);
@@ -186,7 +192,7 @@ router.put('/:id', async (req, res) => {
       'client_id','name','status','start_date','deadline','budget','description','type',
       'build_type','frontend','hosting_provider','hosting_owner','domain_provider','domain_name','repository_url',
       'dsgvo_type','live_url','admin_access_note',
-      'billing_type','price','payment_status','assignee',
+      'billing_type','price','payment_status','assignee','assignee_id',
     ];
 
     const sets   = [];
