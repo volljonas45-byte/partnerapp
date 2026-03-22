@@ -30,6 +30,96 @@ router.get('/', async (req, res) => {
 });
 
 /**
+ * GET /api/team/stats
+ * Returns per-member task counts, project count, and time this week.
+ */
+router.get('/stats', async (req, res) => {
+  try {
+    const wsId = req.workspaceUserId;
+
+    // All workspace member IDs
+    const members = await getAll(`
+      SELECT id, email, name, color, role
+      FROM users WHERE id = ? OR workspace_owner_id = ?
+      ORDER BY id ASC
+    `, [wsId, wsId]);
+
+    const memberIds = members.map(m => m.id);
+    if (memberIds.length === 0) return res.json([]);
+
+    // Tasks per assignee grouped by status
+    const taskRows = await getAll(`
+      SELECT t.assignee_id, t.status, COUNT(*) AS cnt
+      FROM tasks t
+      JOIN projects p ON p.id = t.project_id
+      WHERE p.user_id = ?
+        AND t.assignee_id IS NOT NULL
+      GROUP BY t.assignee_id, t.status
+    `, [wsId]);
+
+    // Active projects per assignee
+    const projectRows = await getAll(`
+      SELECT assignee_id, COUNT(*) AS cnt
+      FROM projects
+      WHERE user_id = ? AND status != 'completed' AND assignee_id IS NOT NULL
+      GROUP BY assignee_id
+    `, [wsId]);
+
+    // Time this week per workspace member
+    const now = new Date();
+    const day = now.getDay() || 7;
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - day + 1);
+    weekStart.setHours(0, 0, 0, 0);
+
+    const idPlaceholders = memberIds.map(() => '?').join(',');
+    const timeRows = await getAll(`
+      SELECT user_id, SUM(duration) AS week_seconds
+      FROM time_entries
+      WHERE user_id IN (${idPlaceholders})
+        AND start_time >= ?
+        AND duration IS NOT NULL
+      GROUP BY user_id
+    `, [...memberIds, weekStart.toISOString()]);
+
+    // Merge into per-member objects
+    const taskMap = {};
+    for (const row of taskRows) {
+      if (!taskMap[row.assignee_id]) taskMap[row.assignee_id] = { todo: 0, doing: 0, done: 0 };
+      if (row.status === 'todo')  taskMap[row.assignee_id].todo  += parseInt(row.cnt);
+      if (row.status === 'doing') taskMap[row.assignee_id].doing += parseInt(row.cnt);
+      if (row.status === 'done')  taskMap[row.assignee_id].done  += parseInt(row.cnt);
+    }
+    const projectMap = {};
+    for (const row of projectRows) {
+      projectMap[row.assignee_id] = parseInt(row.cnt);
+    }
+    const timeMap = {};
+    for (const row of timeRows) {
+      timeMap[row.user_id] = parseInt(row.week_seconds) || 0;
+    }
+
+    const stats = members.map(m => ({
+      user_id:      m.id,
+      name:         m.name || m.email,
+      color:        m.color,
+      email:        m.email,
+      role:         m.role,
+      task_todo:    taskMap[m.id]?.todo    || 0,
+      task_doing:   taskMap[m.id]?.doing   || 0,
+      task_done:    taskMap[m.id]?.done    || 0,
+      project_count: projectMap[m.id]     || 0,
+      week_seconds: timeMap[m.id]         || 0,
+    }));
+
+    res.json(stats);
+  } catch (err) {
+    console.error('[team GET /stats]', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
  * POST /api/team/invite
  * Admin only: create a new team member account linked to this workspace.
  */

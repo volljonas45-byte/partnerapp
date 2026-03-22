@@ -16,20 +16,36 @@ function formatDuration(seconds) {
 
 /**
  * GET /api/time/entries
- * Query params: project_id, from (YYYY-MM-DD), to (YYYY-MM-DD)
+ * Query params: project_id, from (YYYY-MM-DD), to (YYYY-MM-DD), scope (workspace)
+ * scope=workspace returns entries for all workspace members (for calendar view)
  */
 router.get('/entries', async (req, res) => {
   try {
-    const userId = req.userId;
-    const { project_id, from, to } = req.query;
+    const { project_id, from, to, scope } = req.query;
 
-    let sql = `
-      SELECT te.*, p.name AS project_name
-      FROM time_entries te
-      LEFT JOIN projects p ON p.id = te.project_id
-      WHERE te.user_id = ?
-    `;
-    const params = [userId];
+    let sql, params;
+
+    if (scope === 'workspace') {
+      // All members of the workspace
+      const wsId = req.workspaceUserId;
+      sql = `
+        SELECT te.*, p.name AS project_name,
+               u.name AS user_name, u.color AS user_color
+        FROM time_entries te
+        LEFT JOIN projects p ON p.id = te.project_id
+        LEFT JOIN users u ON u.id = te.user_id
+        WHERE (te.user_id = ? OR u.workspace_owner_id = ?)
+      `;
+      params = [wsId, wsId];
+    } else {
+      sql = `
+        SELECT te.*, p.name AS project_name
+        FROM time_entries te
+        LEFT JOIN projects p ON p.id = te.project_id
+        WHERE te.user_id = ?
+      `;
+      params = [req.userId];
+    }
 
     if (project_id) { sql += ' AND te.project_id = ?'; params.push(project_id); }
     if (from)       { sql += ' AND DATE(te.start_time) >= ?'; params.push(from); }
