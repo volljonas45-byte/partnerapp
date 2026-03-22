@@ -1445,6 +1445,45 @@ export default function ProjectDetail() {
       {activeTab === 'changes' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
+          {/* Open changes banner */}
+          {(() => {
+            const open    = changes.filter(c => c.status === 'offen').length;
+            const inProg  = changes.filter(c => c.status === 'in_bearbeitung').length;
+            const critical = changes.filter(c => c.status !== 'erledigt' && c.priority === 'kritisch').length;
+            const high     = changes.filter(c => c.status !== 'erledigt' && c.priority === 'hoch').length;
+            if (open + inProg === 0) return null;
+            return (
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: '12px',
+                padding: '12px 16px',
+                background: critical > 0 ? 'rgba(239,68,68,0.06)' : 'rgba(245,158,11,0.06)',
+                border: `1px solid ${critical > 0 ? 'rgba(239,68,68,0.15)' : 'rgba(245,158,11,0.15)'}`,
+                borderRadius: '12px',
+              }}>
+                <div style={{
+                  width: '32px', height: '32px', borderRadius: '8px', flexShrink: 0,
+                  background: critical > 0 ? 'rgba(239,68,68,0.1)' : 'rgba(245,158,11,0.1)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <AlertTriangle size={15} color={critical > 0 ? '#EF4444' : '#F59E0B'} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: '13px', fontWeight: '600', color: '#1D1D1F', marginBottom: '2px' }}>
+                    {open + inProg} offene {open + inProg === 1 ? 'Änderung' : 'Änderungen'}
+                  </p>
+                  <p style={{ fontSize: '12px', color: '#86868B' }}>
+                    {[
+                      open > 0 && `${open} offen`,
+                      inProg > 0 && `${inProg} in Bearbeitung`,
+                      critical > 0 && `${critical} kritisch`,
+                      high > 0 && `${high} hoch`,
+                    ].filter(Boolean).join(' · ')}
+                  </p>
+                </div>
+              </div>
+            );
+          })()}
+
           {/* Quick-add form */}
           <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #E5E5EA', padding: '20px' }}>
             <form
