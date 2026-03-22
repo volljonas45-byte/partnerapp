@@ -158,27 +158,6 @@ export default function Login() {
           </form>
         </div>
 
-        {/* Toggle register/login */}
-        <p style={{
-          textAlign: 'center',
-          fontSize: '13px', color: '#86868B',
-          marginTop: '18px',
-          letterSpacing: '-0.01em',
-        }}>
-          {isRegister ? 'Bereits ein Konto? ' : 'Noch kein Konto? '}
-          <button
-            onClick={() => setIsRegister(r => !r)}
-            style={{
-              background: 'none', border: 'none',
-              color: '#0071E3', fontWeight: '500',
-              fontSize: '13px', cursor: 'pointer',
-              padding: 0, fontFamily: 'inherit',
-              letterSpacing: '-0.01em',
-            }}
-          >
-            {isRegister ? 'Anmelden' : 'Registrieren'}
-          </button>
-        </p>
       </div>
     </div>
   );
