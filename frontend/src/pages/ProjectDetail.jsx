@@ -713,15 +713,132 @@ export default function ProjectDetail() {
               </div>
             </div>
 
-            {/* ── Row 2: WorkflowPanel full width ── */}
-            <div style={{ marginBottom: '14px' }}>
-              <WorkflowPanel projectId={id} projectName={project?.name} />
-            </div>
+            {/* ── Row 2: Aktuelle Phase + Änderungen ── */}
+            {(() => {
+              const curPhaseKey   = workflow?.current_phase;
+              const curPhase      = curPhaseKey ? PHASES[curPhaseKey] : null;
+              const curPhaseIdx   = curPhaseKey ? PHASE_ORDER.indexOf(curPhaseKey) : 0;
+              const phaseTaskDefs = curPhase?.tasks || [];
+              const phaseTaskData = workflow?.phase_data?.[curPhaseKey]?.tasks || {};
+              const completedCnt  = phaseTaskDefs.filter(t => phaseTaskData[t.key]).length;
+              const phasePct      = phaseTaskDefs.length > 0 ? Math.round((completedCnt / phaseTaskDefs.length) * 100) : 0;
+              const isLastPh      = curPhaseIdx === PHASE_ORDER.length - 1;
+              const nextPhaseKey  = PHASE_ORDER[curPhaseIdx + 1];
+              const nextPhaseLabel = nextPhaseKey ? PHASES[nextPhaseKey]?.label : null;
+              return (
+                <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: '14px', marginBottom: '14px' }}>
 
-            {/* ── Row 3: Aufgaben + Änderungen + Quick Links + Finanzen ── */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '14px' }}>
+                  {/* Aktuelle Phase Widget */}
+                  <div style={card}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <span style={{ fontSize: '20px' }}>{curPhase?.emoji || '📋'}</span>
+                        <div>
+                          <p style={sectionTitle}>Aktuelle Phase</p>
+                          <p style={{ fontSize: '15px', fontWeight: '700', color: '#1D1D1F', letterSpacing: '-0.02em' }}>{curPhase?.label || '—'}</p>
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <span style={{ fontSize: '12px', fontWeight: '600', color: completedCnt === phaseTaskDefs.length && phaseTaskDefs.length > 0 ? '#34C759' : '#8E8E93' }}>
+                          {completedCnt}/{phaseTaskDefs.length}
+                        </span>
+                        <button onClick={() => setActiveTab('workflow')} style={linkBtn}>Workflow →</button>
+                      </div>
+                    </div>
 
-              {/* Top 4 Aufgaben (moved from row 2) */}
+                    {/* Progress bar */}
+                    <div style={{ height: '4px', background: '#F2F2F7', borderRadius: '2px', marginBottom: '16px' }}>
+                      <div style={{ height: '100%', borderRadius: '2px', background: phasePct === 100 ? '#34C759' : '#0071E3', width: `${phasePct}%`, transition: 'width 0.4s' }} />
+                    </div>
+
+                    {curPhase ? (
+                      <>
+                        {/* Task list */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '16px' }}>
+                          {phaseTaskDefs.map(t => {
+                            const done = phaseTaskData[t.key];
+                            return (
+                              <div
+                                key={t.key}
+                                onClick={() => toggleWorkflowTask(curPhaseKey, t.key, done)}
+                                style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 12px', borderRadius: '10px', background: done ? 'rgba(52,199,89,0.05)' : '#FAFAFA', border: `1px solid ${done ? 'rgba(52,199,89,0.18)' : '#F0F0F5'}`, cursor: 'pointer', transition: 'background 0.12s' }}
+                                onMouseEnter={e => e.currentTarget.style.background = done ? 'rgba(52,199,89,0.09)' : '#F2F2F7'}
+                                onMouseLeave={e => e.currentTarget.style.background = done ? 'rgba(52,199,89,0.05)' : '#FAFAFA'}
+                              >
+                                <div style={{ width: '18px', height: '18px', borderRadius: '50%', flexShrink: 0, border: `2px solid ${done ? '#34C759' : '#C7C7CC'}`, background: done ? '#34C759' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                  {done && <Check size={10} color="#fff" strokeWidth={3} />}
+                                </div>
+                                <span style={{ flex: 1, fontSize: '13px', color: done ? '#8E8E93' : '#1D1D1F', textDecoration: done ? 'line-through' : 'none' }}>{t.label}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* Advance phase button */}
+                        {!isLastPh ? (
+                          <button
+                            onClick={() => workflowUpdateMutation.mutate({ current_phase: nextPhaseKey })}
+                            disabled={workflowUpdateMutation.isPending}
+                            style={{ width: '100%', padding: '11px', borderRadius: '10px', background: '#0071E3', color: '#fff', border: 'none', fontSize: '13px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                          >
+                            <Check size={14} strokeWidth={3} /> Phase abschließen → {nextPhaseLabel}
+                          </button>
+                        ) : (
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '11px', background: 'rgba(52,199,89,0.08)', borderRadius: '10px', border: '1px solid rgba(52,199,89,0.2)' }}>
+                            <CheckCircle2 size={14} color="#34C759" />
+                            <span style={{ fontSize: '13px', fontWeight: '600', color: '#34C759' }}>Projekt abgeschlossen 🎉</span>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                        <p style={{ fontSize: '13px', color: '#8E8E93' }}>Kein Workflow gestartet.</p>
+                        <button onClick={() => setActiveTab('workflow')} style={{ ...linkBtn, marginTop: '8px' }}>Jetzt starten →</button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Änderungen */}
+                  <div style={card}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                      <p style={sectionTitle}>Änderungen</p>
+                      <button onClick={() => setActiveTab('changes')} style={linkBtn}>Alle →</button>
+                    </div>
+                    {topChanges.length === 0 ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '13px', background: 'rgba(52,199,89,0.06)', borderRadius: '10px', border: '1px solid rgba(52,199,89,0.15)' }}>
+                        <CheckCircle2 size={14} color="#34C759" />
+                        <p style={{ fontSize: '13px', color: '#34C759', fontWeight: '500' }}>Alle erledigt</p>
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        {topChanges.map(ch => {
+                          const tc = CHANGE_TYPE_CONFIG[ch.type] || CHANGE_TYPE_CONFIG.intern;
+                          const pc = PRIORITY_CONFIG[ch.priority] || PRIORITY_CONFIG.mittel;
+                          return (
+                            <div key={ch.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '9px 11px', borderRadius: '10px', border: '1px solid #F2F2F7', background: '#FAFAFA' }}>
+                              <div style={{ width: '3px', alignSelf: 'stretch', borderRadius: '2px', background: pc.color, flexShrink: 0 }} />
+                              <span style={{ fontSize: '10px', fontWeight: '700', padding: '2px 6px', borderRadius: '5px', background: tc.bg, color: tc.color, flexShrink: 0 }}>{tc.label}</span>
+                              <span style={{ flex: 1, fontSize: '13px', color: '#1D1D1F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ch.title}</span>
+                            </div>
+                          );
+                        })}
+                        {openCh.length > 4 && (
+                          <button onClick={() => setActiveTab('changes')} style={{ fontSize: '12px', color: '#8E8E93', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0', textAlign: 'left' }}>
+                            +{openCh.length - 4} weitere
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                </div>
+              );
+            })()}
+
+            {/* ── Row 3: Aufgaben + Quick Links + Finanzen ── */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px' }}>
+
+              {/* Top 4 Aufgaben */}
               <div style={card}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
                   <p style={sectionTitle}>Aufgaben</p>
@@ -753,39 +870,6 @@ export default function ProjectDetail() {
                     {tasks.filter(t => t.status !== 'done').length > 4 && (
                       <button onClick={() => setActiveTab('tasks')} style={{ fontSize: '11px', color: '#8E8E93', background: 'none', border: 'none', cursor: 'pointer', padding: '3px 0', textAlign: 'left' }}>
                         +{tasks.filter(t => t.status !== 'done').length - 4} weitere
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Top 4 Änderungen (moved from row 3) */}
-              <div style={card}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-                  <p style={sectionTitle}>Änderungen</p>
-                  <button onClick={() => setActiveTab('changes')} style={linkBtn}>Alle →</button>
-                </div>
-                {topChanges.length === 0 ? (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '11px', background: 'rgba(52,199,89,0.06)', borderRadius: '9px', border: '1px solid rgba(52,199,89,0.15)' }}>
-                    <CheckCircle2 size={13} color="#34C759" />
-                    <p style={{ fontSize: '12px', color: '#34C759', fontWeight: '500' }}>Alle erledigt</p>
-                  </div>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                    {topChanges.map(ch => {
-                      const tc = CHANGE_TYPE_CONFIG[ch.type] || CHANGE_TYPE_CONFIG.intern;
-                      const pc = PRIORITY_CONFIG[ch.priority] || PRIORITY_CONFIG.mittel;
-                      return (
-                        <div key={ch.id} style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '8px 10px', borderRadius: '8px', border: '1px solid #F2F2F7', background: '#FAFAFA' }}>
-                          <div style={{ width: '3px', alignSelf: 'stretch', borderRadius: '2px', background: pc.color, flexShrink: 0 }} />
-                          <span style={{ fontSize: '10px', fontWeight: '700', padding: '1px 5px', borderRadius: '4px', background: tc.bg, color: tc.color, flexShrink: 0 }}>{tc.label}</span>
-                          <span style={{ flex: 1, fontSize: '12px', color: '#1D1D1F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ch.title}</span>
-                        </div>
-                      );
-                    })}
-                    {openCh.length > 4 && (
-                      <button onClick={() => setActiveTab('changes')} style={{ fontSize: '11px', color: '#8E8E93', background: 'none', border: 'none', cursor: 'pointer', padding: '3px 0', textAlign: 'left' }}>
-                        +{openCh.length - 4} weitere
                       </button>
                     )}
                   </div>
