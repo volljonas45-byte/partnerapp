@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { Plus, Pencil, Trash2, Shield, Briefcase, Code2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { teamApi } from '../api/team';
@@ -202,27 +203,17 @@ function EditForm({ values, onChange }) {
 
 export default function Team() {
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const { user, isAdmin } = useAuth();
   const { confirm, ConfirmDialogNode } = useConfirm();
 
-  const [modal, setModal]     = useState(null); // 'invite' | 'edit'
+  const [modal, setModal]     = useState(null); // 'edit'
   const [editing, setEditing] = useState(null);
   const [form, setForm]       = useState(EMPTY_INVITE);
 
   const { data: members = [], isLoading } = useQuery({
     queryKey: ['team'],
     queryFn: () => teamApi.list().then(r => r.data),
-  });
-
-  const inviteMutation = useMutation({
-    mutationFn: teamApi.invite,
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['team'] });
-      toast.success('Mitglied eingeladen');
-      setModal(null);
-      setForm(EMPTY_INVITE);
-    },
-    onError: err => toast.error(err.response?.data?.error || 'Fehler beim Einladen'),
   });
 
   const updateMutation = useMutation({
@@ -246,12 +237,6 @@ export default function Team() {
   });
 
   const handleFieldChange = (key, val) => setForm(f => ({ ...f, [key]: val }));
-
-  const handleInvite = () => {
-    if (!form.email.trim()) { toast.error('E-Mail ist erforderlich'); return; }
-    if (!form.password || form.password.length < 6) { toast.error('Passwort muss mindestens 6 Zeichen haben'); return; }
-    inviteMutation.mutate(form);
-  };
 
   const handleUpdate = () => {
     updateMutation.mutate({ id: editing.id, data: { name: form.name, role: form.role, color: form.color } });
@@ -281,7 +266,7 @@ export default function Team() {
           <p className="page-subtitle">{members.length} {members.length === 1 ? 'Mitglied' : 'Mitglieder'}</p>
         </div>
         {isAdmin && (
-          <button onClick={() => { setForm(EMPTY_INVITE); setModal('invite'); }} className="btn-primary">
+          <button onClick={() => navigate('/team/invite')} className="btn-primary">
             <Plus size={15} /> Mitglied einladen
           </button>
         )}
@@ -372,21 +357,6 @@ export default function Team() {
       </div>
 
       {ConfirmDialogNode}
-
-      {/* Einladen-Modal */}
-      <Modal open={modal === 'invite'} onClose={() => setModal(null)} title="Mitglied einladen" maxWidth="max-w-md">
-        <InviteForm values={form} onChange={handleFieldChange} />
-        <div className="flex justify-end gap-2 mt-6">
-          <button onClick={() => setModal(null)} className="btn-secondary">Abbrechen</button>
-          <button
-            onClick={handleInvite}
-            disabled={inviteMutation.isPending}
-            className="btn-primary"
-          >
-            {inviteMutation.isPending ? 'Wird eingeladen…' : 'Einladen'}
-          </button>
-        </div>
-      </Modal>
 
       {/* Bearbeiten-Modal */}
       <Modal open={modal === 'edit'} onClose={() => setModal(null)} title="Mitglied bearbeiten" maxWidth="max-w-md">
