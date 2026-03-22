@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Pencil, Trash2, Shield, Briefcase, Code2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Shield, Briefcase, Code2, Crown } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { teamApi } from '../api/team';
 import Modal from '../components/Modal';
@@ -12,6 +12,7 @@ import { useConfirm } from '../hooks/useConfirm';
 // ── Konstanten ────────────────────────────────────────────────────────────────
 
 const ROLES = [
+  { value: 'ceo',       label: 'CEO',       icon: Crown,    color: '#B45309', bg: '#FEF3C7', desc: 'Eigentümer — voller Zugriff auf alles' },
   { value: 'admin',     label: 'Admin',     icon: Shield,   color: '#7C3AED', bg: '#EDE9FE', desc: 'Voller Zugriff auf alle Bereiche' },
   { value: 'pm',        label: 'PM',        icon: Briefcase,color: '#1D4ED8', bg: '#DBEAFE', desc: 'Alles außer Einstellungen' },
   { value: 'developer', label: 'Developer', icon: Code2,    color: '#065F46', bg: '#D1FAE5', desc: 'Nur Projekte & Aufgaben' },

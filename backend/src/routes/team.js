@@ -7,7 +7,8 @@ const { sendWelcomeEmail } = require('../services/emailService');
 const router = express.Router();
 router.use(authenticate);
 
-const VALID_ROLES = ['admin', 'pm', 'developer'];
+const VALID_ROLES = ['ceo', 'admin', 'pm', 'developer'];
+const PRIVILEGED  = ['ceo', 'admin'];
 
 /**
  * GET /api/team
@@ -125,7 +126,7 @@ router.get('/stats', async (req, res) => {
  */
 router.post('/invite', async (req, res) => {
   try {
-    if (req.userRole !== 'admin') {
+    if (!PRIVILEGED.includes(req.userRole)) {
       return res.status(403).json({ error: 'Nur Admins können Mitglieder einladen' });
     }
 
@@ -188,7 +189,7 @@ router.post('/invite', async (req, res) => {
  */
 router.put('/:id', async (req, res) => {
   try {
-    if (req.userRole !== 'admin') {
+    if (!PRIVILEGED.includes(req.userRole)) {
       return res.status(403).json({ error: 'Nur Admins können Mitglieder bearbeiten' });
     }
 
@@ -206,14 +207,14 @@ router.put('/:id', async (req, res) => {
       return res.status(400).json({ error: 'Ungültige Rolle' });
     }
 
-    // Prevent demoting yourself if you're the only admin
-    if (role && role !== 'admin' && member.id === req.userId) {
-      const adminCount = await getOne(`
+    // Prevent demoting yourself if you're the only privileged user
+    if (role && !PRIVILEGED.includes(role) && member.id === req.userId) {
+      const privCount = await getOne(`
         SELECT COUNT(*) as count FROM users
-        WHERE (id = ? OR workspace_owner_id = ?) AND role = 'admin'
+        WHERE (id = ? OR workspace_owner_id = ?) AND role IN ('ceo', 'admin')
       `, [wsId, wsId]);
-      if (parseInt(adminCount.count) <= 1) {
-        return res.status(400).json({ error: 'Der letzte Admin kann nicht degradiert werden' });
+      if (parseInt(privCount.count) <= 1) {
+        return res.status(400).json({ error: 'Der letzte Admin/CEO kann nicht degradiert werden' });
       }
     }
 
@@ -245,7 +246,7 @@ router.put('/:id', async (req, res) => {
  */
 router.delete('/:id', async (req, res) => {
   try {
-    if (req.userRole !== 'admin') {
+    if (!PRIVILEGED.includes(req.userRole)) {
       return res.status(403).json({ error: 'Nur Admins können Mitglieder entfernen' });
     }
 

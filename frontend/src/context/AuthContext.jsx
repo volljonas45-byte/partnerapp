@@ -42,7 +42,8 @@ export function AuthProvider({ children }) {
   };
 
   /** Convenience getter: role of the current user */
-  const isAdmin     = user?.role === 'admin';
+  const isCEO       = user?.role === 'ceo';
+  const isAdmin     = isCEO || user?.role === 'admin';
   const isPM        = user?.role === 'pm';
   const isDeveloper = user?.role === 'developer';
 
@@ -52,7 +53,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ token, user, loading, login, logout, isAuthenticated: !!token, isAdmin, isPM, isDeveloper }}>
+    <AuthContext.Provider value={{ token, user, loading, login, logout, isAuthenticated: !!token, isCEO, isAdmin, isPM, isDeveloper }}>
       {children}
     </AuthContext.Provider>
   );
