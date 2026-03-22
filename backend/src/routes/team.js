@@ -2,6 +2,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const { getOne, getAll, run } = require('../db/pg');
 const authenticate = require('../middleware/auth');
+const { sendWelcomeEmail } = require('../services/emailService');
 
 const router = express.Router();
 router.use(authenticate);
@@ -63,10 +64,26 @@ router.post('/invite', async (req, res) => {
       RETURNING id
     `, [email, passwordHash, name || '', color, role, req.workspaceUserId]);
 
+    const newUserId = result.lastInsertRowid ?? result.id;
+
+    // Create default settings row for the new member
+    await run('INSERT INTO settings (user_id) VALUES (?) ON CONFLICT (user_id) DO NOTHING', [newUserId]);
+
     const member = await getOne(
       'SELECT id, email, name, color, role, workspace_owner_id, created_at FROM users WHERE id = ?',
-      [result.lastInsertRowid]
+      [newUserId]
     );
+
+    // Send welcome email with credentials (non-blocking — don't fail invite if email fails)
+    const ownerSettings = await getOne('SELECT company_name FROM settings WHERE user_id = ?', [req.workspaceUserId]);
+    sendWelcomeEmail({
+      to:         email,
+      name:       name || '',
+      password,
+      role,
+      agencyName: ownerSettings?.company_name || '',
+      appUrl:     process.env.APP_URL,
+    }).catch(err => console.warn('[team invite] welcome email failed:', err.message));
 
     res.status(201).json(member);
   } catch (err) {

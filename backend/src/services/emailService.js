@@ -160,4 +160,100 @@ async function sendDocument({ type, doc, agencyName, to, subject, message, fromA
   });
 }
 
-module.exports = { sendDocument };
+/**
+ * Send a welcome / invitation email to a newly created team member.
+ * @param {object} opts
+ * @param {string} opts.to          - invited member's email
+ * @param {string} opts.name        - invited member's name (optional)
+ * @param {string} opts.password    - plaintext password set by admin
+ * @param {string} opts.role        - 'admin' | 'pm' | 'developer'
+ * @param {string} opts.agencyName  - settings.company_name of the workspace
+ * @param {string} [opts.appUrl]    - base URL of the frontend app
+ */
+async function sendWelcomeEmail({ to, name, password, role, agencyName, appUrl }) {
+  const transporter = createTransporter();
+  if (!transporter) return; // silently skip if email not configured
+
+  const agency   = agencyName || 'Dein Team';
+  const greeting = name ? `Hallo ${name.split(' ')[0]}` : 'Hallo';
+  const roleLabels = { admin: 'Admin', pm: 'Projektmanager', developer: 'Developer' };
+  const roleLabel  = roleLabels[role] || role;
+  const loginUrl   = appUrl || process.env.APP_URL || 'https://app.vecturo.de';
+
+  const html = `<!DOCTYPE html>
+<html lang="de">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#F5F5F7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#F5F5F7;padding:40px 20px">
+    <tr><td align="center">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+
+        <tr><td style="background:#0071E3;padding:24px 32px">
+          <p style="margin:0;color:#fff;font-size:18px;font-weight:600">${agency}</p>
+        </td></tr>
+
+        <tr><td style="padding:32px">
+          <p style="margin:0 0 8px;font-size:20px;font-weight:700;color:#1D1D1F">${greeting},</p>
+          <p style="margin:0 0 24px;font-size:15px;color:#1D1D1F;line-height:1.5">
+            du wurdest als <strong>${roleLabel}</strong> zu <strong>${agency}</strong> eingeladen. Hier sind deine Zugangsdaten:
+          </p>
+
+          <table width="100%" cellpadding="0" cellspacing="0"
+                 style="background:#F5F5F7;border-radius:12px;padding:16px 20px;margin-bottom:24px">
+            <tr>
+              <td style="color:#6E6E73;padding:6px 0;width:40%">E-Mail</td>
+              <td style="font-weight:600;font-family:monospace">${to}</td>
+            </tr>
+            <tr>
+              <td style="color:#6E6E73;padding:6px 0">Passwort</td>
+              <td style="font-weight:600;font-family:monospace">${password}</td>
+            </tr>
+            <tr>
+              <td style="color:#6E6E73;padding:6px 0">Rolle</td>
+              <td style="font-weight:600">${roleLabel}</td>
+            </tr>
+          </table>
+
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px">
+            <tr><td align="center">
+              <a href="${loginUrl}" style="
+                display:inline-block;
+                background:#0071E3;
+                color:#fff;
+                text-decoration:none;
+                padding:12px 32px;
+                border-radius:10px;
+                font-size:15px;
+                font-weight:500;
+              ">Jetzt anmelden →</a>
+            </td></tr>
+          </table>
+
+          <p style="margin:0;font-size:13px;color:#86868B;line-height:1.5">
+            Melde dich mit deiner E-Mail-Adresse und dem oben stehenden Passwort an.<br>
+            Du kannst dein Passwort nach dem Login in den Einstellungen ändern.
+          </p>
+        </td></tr>
+
+        <tr><td style="border-top:1px solid #E5E5EA;padding:20px 32px;text-align:right">
+          <p style="margin:0;font-size:14px;color:#1D1D1F">
+            Mit freundlichen Grüßen,<br>
+            <strong>${agency}</strong>
+          </p>
+        </td></tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+  await transporter.sendMail({
+    from:    process.env.EMAIL_FROM || process.env.EMAIL_USER,
+    to,
+    subject: `Du wurdest zu ${agency} eingeladen`,
+    html,
+  });
+}
+
+module.exports = { sendDocument, sendWelcomeEmail };
