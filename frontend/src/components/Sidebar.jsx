@@ -50,7 +50,7 @@ export default function Sidebar() {
       items: [
         { to: '/clients', icon: Users,    label: 'Kunden' },
         { to: '/team',    icon: UserCog,  label: 'Team'   },
-        { to: '/settings', icon: Settings, label: 'Einstellungen' },
+        ...(isAdmin ? [{ to: '/settings', icon: Settings, label: 'Einstellungen' }] : []),
       ],
     },
   ];
