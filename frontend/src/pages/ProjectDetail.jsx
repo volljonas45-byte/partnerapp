@@ -660,28 +660,33 @@ export default function ProjectDetail() {
         return (
           <div>
             {/* ── KPI Row ── */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '14px', marginBottom: '18px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px', marginBottom: '18px' }}>
 
-              {/* Aufgaben */}
-              <div style={card}>
-                <p style={{ ...sectionTitle, marginBottom: '12px' }}>Aufgaben</p>
-                <p style={{ fontSize: '32px', fontWeight: '700', letterSpacing: '-0.04em', lineHeight: 1, marginBottom: '12px', color: doneTasks === tasks.length && tasks.length > 0 ? '#34C759' : '#1D1D1F' }}>
-                  {doneTasks}<span style={{ fontSize: '18px', color: '#C7C7CC', fontWeight: '400' }}>/{tasks.length || 0}</span>
-                </p>
-                <div style={{ height: '4px', background: '#F2F2F7', borderRadius: '2px' }}>
-                  <div style={{ height: '100%', borderRadius: '2px', transition: 'width 0.5s', background: doneTasks === tasks.length && tasks.length > 0 ? '#34C759' : '#0071E3', width: `${taskPct}%` }} />
-                </div>
-              </div>
-
-              {/* Änderungen */}
-              <div style={{ ...card, background: urgentCh.length > 0 ? 'rgba(239,68,68,0.03)' : openCh.length > 0 ? 'rgba(245,158,11,0.03)' : '#fff', border: `1px solid ${urgentCh.length > 0 ? 'rgba(239,68,68,0.2)' : openCh.length > 0 ? 'rgba(245,158,11,0.2)' : 'rgba(0,0,0,0.06)'}` }}>
-                <p style={{ ...sectionTitle, marginBottom: '12px' }}>Offene Änderungen</p>
-                <p style={{ fontSize: '32px', fontWeight: '700', letterSpacing: '-0.04em', lineHeight: 1, marginBottom: '6px', color: urgentCh.length > 0 ? '#EF4444' : openCh.length > 0 ? '#F59E0B' : '#34C759' }}>
-                  {openCh.length}
-                </p>
-                <p style={{ fontSize: '12px', color: '#8E8E93' }}>
-                  {openCh.length === 0 ? 'Alle erledigt ✓' : urgentCh.length > 0 ? `${urgentCh.length} dringend` : 'offen'}
-                </p>
+              {/* Website */}
+              <div
+                style={{ ...card, cursor: project.live_url ? 'pointer' : 'default', transition: 'box-shadow 0.15s' }}
+                onClick={() => project.live_url && window.open(project.live_url, '_blank')}
+                onMouseEnter={e => { if (project.live_url) e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,113,227,0.12)'; }}
+                onMouseLeave={e => e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.04)'}
+              >
+                <p style={{ ...sectionTitle, marginBottom: '12px' }}>Live-Website</p>
+                {project.live_url ? (
+                  <>
+                    <p style={{ fontSize: '15px', fontWeight: '700', color: '#0071E3', letterSpacing: '-0.02em', lineHeight: 1.3, marginBottom: '6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {project.live_url.replace(/^https?:\/\//, '')}
+                    </p>
+                    <p style={{ fontSize: '12px', color: '#8E8E93', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <ExternalLink size={11} /> öffnen
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p style={{ fontSize: '28px', fontWeight: '700', color: '#C7C7CC', letterSpacing: '-0.04em', lineHeight: 1, marginBottom: '6px' }}>—</p>
+                    <button onClick={e => { e.stopPropagation(); setActiveTab('setup'); }} style={{ fontSize: '12px', color: '#0071E3', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                      URL eintragen →
+                    </button>
+                  </>
+                )}
               </div>
 
               {/* Budget */}
@@ -800,25 +805,64 @@ export default function ProjectDetail() {
 
                   {/* Änderungen */}
                   <div style={card}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
                       <p style={sectionTitle}>Änderungen</p>
                       <button onClick={() => setActiveTab('changes')} style={linkBtn}>Alle →</button>
                     </div>
+
+                    {/* Quick-add form */}
+                    <form onSubmit={e => { e.preventDefault(); if (!changeForm.title.trim()) return; createChangeMutation.mutate({ ...changeForm }); }} style={{ marginBottom: '12px' }}>
+                      <div style={{ display: 'flex', gap: '6px', marginBottom: '7px' }}>
+                        <input
+                          value={changeForm.title}
+                          onChange={e => setChangeForm(f => ({ ...f, title: e.target.value }))}
+                          placeholder="Neue Änderung..."
+                          style={{ flex: 1, fontSize: '12px', padding: '7px 10px', borderRadius: '8px', border: '1px solid #E5E5EA', outline: 'none', background: '#FAFAFA', color: '#1D1D1F' }}
+                        />
+                        <button type="submit" disabled={!changeForm.title.trim() || createChangeMutation.isPending}
+                          style={{ padding: '7px 11px', borderRadius: '8px', background: changeForm.title.trim() ? '#0071E3' : '#E5E5EA', border: 'none', color: changeForm.title.trim() ? '#fff' : '#8E8E93', cursor: changeForm.title.trim() ? 'pointer' : 'default', display: 'flex', alignItems: 'center', transition: 'background 0.12s' }}>
+                          <Plus size={14} />
+                        </button>
+                      </div>
+                      <div style={{ display: 'flex', gap: '5px' }}>
+                        {Object.entries(CHANGE_TYPE_CONFIG).map(([key, tc]) => (
+                          <button key={key} type="button"
+                            onClick={() => setChangeForm(f => ({ ...f, type: key }))}
+                            style={{ fontSize: '11px', fontWeight: '600', padding: '3px 9px', borderRadius: '6px', cursor: 'pointer',
+                              background: changeForm.type === key ? tc.bg : '#F2F2F7',
+                              color: changeForm.type === key ? tc.color : '#8E8E93',
+                              border: `1px solid ${changeForm.type === key ? tc.color + '40' : 'transparent'}`,
+                              transition: 'all 0.1s' }}>
+                            {tc.label}
+                          </button>
+                        ))}
+                      </div>
+                    </form>
+
                     {topChanges.length === 0 ? (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '13px', background: 'rgba(52,199,89,0.06)', borderRadius: '10px', border: '1px solid rgba(52,199,89,0.15)' }}>
-                        <CheckCircle2 size={14} color="#34C759" />
-                        <p style={{ fontSize: '13px', color: '#34C759', fontWeight: '500' }}>Alle erledigt</p>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '11px', background: 'rgba(52,199,89,0.06)', borderRadius: '10px', border: '1px solid rgba(52,199,89,0.15)' }}>
+                        <CheckCircle2 size={13} color="#34C759" />
+                        <p style={{ fontSize: '12px', color: '#34C759', fontWeight: '500' }}>Alle erledigt</p>
                       </div>
                     ) : (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
                         {topChanges.map(ch => {
                           const tc = CHANGE_TYPE_CONFIG[ch.type] || CHANGE_TYPE_CONFIG.intern;
                           const pc = PRIORITY_CONFIG[ch.priority] || PRIORITY_CONFIG.mittel;
                           return (
-                            <div key={ch.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '9px 11px', borderRadius: '10px', border: '1px solid #F2F2F7', background: '#FAFAFA' }}>
+                            <div key={ch.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', borderRadius: '10px', border: '1px solid #F2F2F7', background: '#FAFAFA' }}>
                               <div style={{ width: '3px', alignSelf: 'stretch', borderRadius: '2px', background: pc.color, flexShrink: 0 }} />
                               <span style={{ fontSize: '10px', fontWeight: '700', padding: '2px 6px', borderRadius: '5px', background: tc.bg, color: tc.color, flexShrink: 0 }}>{tc.label}</span>
-                              <span style={{ flex: 1, fontSize: '13px', color: '#1D1D1F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ch.title}</span>
+                              <span style={{ flex: 1, fontSize: '12px', color: '#1D1D1F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ch.title}</span>
+                              <button
+                                onClick={() => updateChangeMutation.mutate({ cid: ch.id, data: { status: 'erledigt' } })}
+                                title="Als erledigt markieren"
+                                style={{ width: '22px', height: '22px', borderRadius: '50%', border: '1.5px solid #D1D1D6', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.12s' }}
+                                onMouseEnter={e => { e.currentTarget.style.borderColor = '#34C759'; e.currentTarget.style.background = 'rgba(52,199,89,0.1)'; }}
+                                onMouseLeave={e => { e.currentTarget.style.borderColor = '#D1D1D6'; e.currentTarget.style.background = 'transparent'; }}
+                              >
+                                <Check size={10} color="#8E8E93" strokeWidth={3} />
+                              </button>
                             </div>
                           );
                         })}
@@ -835,46 +879,8 @@ export default function ProjectDetail() {
               );
             })()}
 
-            {/* ── Row 3: Aufgaben + Quick Links + Finanzen ── */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px' }}>
-
-              {/* Top 4 Aufgaben */}
-              <div style={card}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-                  <p style={sectionTitle}>Aufgaben</p>
-                  <button onClick={() => setActiveTab('tasks')} style={linkBtn}>Alle →</button>
-                </div>
-                {topTasks.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '20px 0' }}>
-                    <CheckCircle2 size={24} color="#D1D1D6" style={{ margin: '0 auto 8px' }} />
-                    <p style={{ fontSize: '12px', color: '#8E8E93' }}>Alle erledigt</p>
-                  </div>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                    {topTasks.map(task => {
-                      const isIn = task.status === 'doing';
-                      return (
-                        <div key={task.id} onClick={() => cycleTask(task)}
-                          style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', borderRadius: '8px', border: `1px solid ${isIn ? 'rgba(0,113,227,0.2)' : '#F2F2F7'}`, background: isIn ? 'rgba(0,113,227,0.03)' : '#FAFAFA', cursor: 'pointer' }}
-                          onMouseEnter={e => e.currentTarget.style.background = '#F5F5F7'}
-                          onMouseLeave={e => e.currentTarget.style.background = isIn ? 'rgba(0,113,227,0.03)' : '#FAFAFA'}
-                        >
-                          <div style={{ width: '16px', height: '16px', borderRadius: '50%', flexShrink: 0, border: `2px solid ${isIn ? '#0071E3' : '#D1D1D6'}`, background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            {isIn && <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#0071E3' }} />}
-                          </div>
-                          <span style={{ flex: 1, fontSize: '12px', color: '#1D1D1F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{task.title}</span>
-                          {isIn && <span style={{ fontSize: '9px', fontWeight: '700', background: '#0071E3', color: '#fff', padding: '1px 5px', borderRadius: '4px', flexShrink: 0 }}>Aktiv</span>}
-                        </div>
-                      );
-                    })}
-                    {tasks.filter(t => t.status !== 'done').length > 4 && (
-                      <button onClick={() => setActiveTab('tasks')} style={{ fontSize: '11px', color: '#8E8E93', background: 'none', border: 'none', cursor: 'pointer', padding: '3px 0', textAlign: 'left' }}>
-                        +{tasks.filter(t => t.status !== 'done').length - 4} weitere
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
+            {/* ── Row 3: Quick Links + Finanzen ── */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '14px' }}>
 
               {/* Quick Links */}
               <div style={card}>
