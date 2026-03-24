@@ -226,7 +226,7 @@ export default function Clients() {
                 <th className="table-header-cell pl-5 w-full">Unternehmen</th>
                 <th className="table-header-cell hidden sm:table-cell">Ansprechpartner</th>
                 <th className="table-header-cell hidden md:table-cell">E-Mail</th>
-                <th className="table-header-cell hidden lg:table-cell">Stadt</th>
+                <th className="table-header-cell hidden lg:table-cell">Adresse</th>
                 <th className="table-header-cell hidden xl:table-cell">USt-IdNr.</th>
                 <th className="table-header-cell w-10" />
               </tr>
@@ -262,7 +262,7 @@ export default function Clients() {
                     }
                   </td>
                   <td className="table-cell text-gray-500 hidden lg:table-cell">
-                    {c.city || <span className="text-gray-300">—</span>}
+                    {[c.address, c.postal_code, c.city].filter(Boolean).join(', ') || <span className="text-gray-300">—</span>}
                   </td>
                   <td className="table-cell text-gray-400 font-mono text-xs hidden xl:table-cell">
                     {c.vat_id || <span className="text-gray-300">—</span>}
