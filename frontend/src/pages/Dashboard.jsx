@@ -2,37 +2,39 @@ import { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import {
-  Folder, Clock, AlertTriangle, Euro, Plus, ArrowRight,
-  FileText, ChevronRight, CheckCircle2,
-  AlertCircle, ChevronDown, UserCheck, TrendingUp,
-  MessageSquare, PlayCircle, Zap,
-  CalendarClock, BadgeCheck, Send, Bell,
+  Globe, Plus, ChevronRight, CheckCircle2, Check,
+  AlertTriangle, Euro, Bell, ExternalLink,
+  ChevronDown, AlertCircle, Send, TrendingUp,
+  MessageSquare, Clock,
 } from 'lucide-react';
 import { projectsApi } from '../api/projects';
 import { invoicesApi } from '../api/invoices';
-import { onboardingApi } from '../api/onboarding';
 import { workflowApi } from '../api/workflow';
 import { formatCurrency, formatDate, isPast } from '../utils/formatters';
 import toast from 'react-hot-toast';
 import ReminderCard from '../components/workflow/ReminderCard';
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// ── Status config ─────────────────────────────────────────────────────────────
 
-const PROJECT_STATUSES = [
-  { value: 'planned',            label: 'Geplant',          dot: 'bg-gray-400',    pill: 'bg-gray-100 text-gray-600 ring-gray-200' },
-  { value: 'active',             label: 'Aktiv',            dot: 'bg-blue-500',    pill: 'bg-blue-50 text-blue-700 ring-blue-200' },
-  { value: 'waiting_for_client', label: 'Warten auf Kunde', dot: 'bg-amber-500',   pill: 'bg-amber-50 text-amber-700 ring-amber-200' },
-  { value: 'feedback',           label: 'Überarbeitung',    dot: 'bg-orange-500',  pill: 'bg-orange-50 text-orange-700 ring-orange-200' },
-  { value: 'review',             label: 'Review',           dot: 'bg-violet-500',  pill: 'bg-violet-50 text-violet-700 ring-violet-200' },
-  { value: 'waiting',            label: 'Fertigstellung',   dot: 'bg-violet-500',  pill: 'bg-violet-50 text-violet-700 ring-violet-200' },
-  { value: 'completed',          label: 'Abgeschlossen',    dot: 'bg-emerald-500', pill: 'bg-emerald-50 text-emerald-700 ring-emerald-200' },
-];
+const STATUS_CFG = {
+  planned:            { label: 'Geplant',          color: '#6E6E73', bg: '#F2F2F7',               dot: '#9CA3AF' },
+  active:             { label: 'Aktiv',            color: '#0071E3', bg: 'rgba(0,113,227,0.09)',  dot: '#3B82F6' },
+  waiting_for_client: { label: 'Warten auf Kunde', color: '#D97706', bg: 'rgba(245,158,11,0.1)',  dot: '#F59E0B' },
+  feedback:           { label: 'Überarbeitung',    color: '#7C3AED', bg: 'rgba(124,58,237,0.08)', dot: '#8B5CF6' },
+  review:             { label: 'Review',           color: '#7C3AED', bg: 'rgba(124,58,237,0.08)', dot: '#8B5CF6' },
+  waiting:            { label: 'Fertigstellung',   color: '#7C3AED', bg: 'rgba(124,58,237,0.08)', dot: '#8B5CF6' },
+  completed:          { label: 'Abgeschlossen',    color: '#34C759', bg: 'rgba(52,199,89,0.08)',  dot: '#22C55E' },
+};
+const STATUS_OPTIONS = ['planned','active','waiting_for_client','feedback','review','waiting','completed'];
 
-function statusCfg(s) {
-  return PROJECT_STATUSES.find(x => x.value === s) || PROJECT_STATUSES[0];
-}
+const HEALTH_CFG = {
+  good:     { color: '#34C759', border: 'rgba(52,199,89,0.5)',   bg: '#fff' },
+  warning:  { color: '#F59E0B', border: 'rgba(245,158,11,0.5)', bg: '#fff' },
+  critical: { color: '#EF4444', border: 'rgba(239,68,68,0.5)',  bg: '#fff' },
+  done:     { color: '#C7C7CC', border: 'rgba(0,0,0,0.07)',     bg: '#FAFAFA' },
+};
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 function getGreeting() {
   const h = new Date().getHours();
@@ -43,78 +45,26 @@ function getGreeting() {
 
 function daysUntil(dateStr) {
   if (!dateStr) return null;
-  const now  = new Date(); now.setHours(0, 0, 0, 0);
+  const now = new Date(); now.setHours(0, 0, 0, 0);
   const then = new Date(dateStr); then.setHours(0, 0, 0, 0);
   return Math.round((then - now) / 86400000);
 }
 
-function nextStep(project) {
-  const days   = daysUntil(project.deadline);
-  const overdue = project.deadline && isPast(project.deadline) && project.status !== 'completed';
-
-  if (project.status === 'completed')
-    return { label: 'Abgeschlossen', color: 'text-emerald-600', urgent: false };
-  if (overdue)
-    return { label: 'Deadline überschritten', color: 'text-red-600', urgent: true };
-  if (project.status === 'waiting_for_client')
-    return { label: 'Kunde kontaktieren', color: 'text-amber-600', urgent: true };
-  if (project.status === 'planned')
-    return { label: 'Kick-off planen', color: 'text-blue-600', urgent: false };
-  if (project.status === 'active' && days !== null && days <= 3)
-    return { label: `${days}d bis Deadline`, color: 'text-orange-600', urgent: true };
-  if (project.status === 'active')
-    return { label: 'In Bearbeitung', color: 'text-blue-600', urgent: false };
-  if (project.status === 'review' || project.status === 'feedback')
-    return { label: 'Feedback einarbeiten', color: 'text-violet-600', urgent: false };
-  if (project.status === 'waiting')
-    return { label: 'Fertigstellung prüfen', color: 'text-violet-600', urgent: false };
-  return { label: '—', color: 'text-gray-400', urgent: false };
+function computeHealth(p) {
+  if (p.status === 'completed') return 'done';
+  if (p.deadline && isPast(p.deadline)) return 'critical';
+  if (p.status === 'waiting_for_client') return 'warning';
+  const d = daysUntil(p.deadline);
+  if (d !== null && d <= 5) return 'warning';
+  return 'good';
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
+// ── StatusDropdown ────────────────────────────────────────────────────────────
 
-function KPICard({ label, value, sub, icon: Icon, iconBg, iconColor, urgent, onClick }) {
-  return (
-    <button
-      onClick={onClick}
-      className="card text-left w-full hover:shadow-md transition-all duration-150 group cursor-pointer"
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">{label}</p>
-          <p className={`text-2xl font-bold tracking-tight ${urgent ? 'text-red-600' : 'text-gray-900'}`}>
-            {value}
-          </p>
-          {sub && <p className="text-xs text-gray-400 mt-1 leading-snug">{sub}</p>}
-        </div>
-        <div className={`p-2.5 rounded-xl shrink-0 mt-0.5 ${iconBg}`}>
-          <Icon size={16} className={iconColor} />
-        </div>
-      </div>
-    </button>
-  );
-}
-
-function TodayCard({ borderColor, bg, icon: Icon, iconColor, title, subtitle, onClick }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`flex items-center gap-3 px-4 py-3 rounded-xl border-l-4 ${borderColor} ${bg} hover:brightness-95 transition-all duration-100 text-left min-w-[220px] max-w-[280px] shrink-0 group`}
-    >
-      <Icon size={15} className={`shrink-0 ${iconColor}`} />
-      <div className="min-w-0 flex-1">
-        <p className="text-xs font-semibold text-gray-800 leading-tight">{title}</p>
-        <p className="text-[11px] text-gray-500 mt-0.5 leading-tight">{subtitle}</p>
-      </div>
-      <ArrowRight size={12} className="shrink-0 text-gray-400 group-hover:translate-x-0.5 transition-transform" />
-    </button>
-  );
-}
-
-function StatusSelector({ status, onChange }) {
+function StatusDropdown({ status, onChange }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
-  const cfg = statusCfg(status);
+  const cfg = STATUS_CFG[status] || STATUS_CFG.planned;
 
   useEffect(() => {
     const h = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
@@ -123,96 +73,121 @@ function StatusSelector({ status, onChange }) {
   }, []);
 
   return (
-    <div className="relative" ref={ref}>
+    <div style={{ position: 'relative' }} ref={ref}>
       <button
         onClick={e => { e.stopPropagation(); setOpen(o => !o); }}
-        className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[11px] font-medium ring-1 hover:opacity-80 transition-opacity ${cfg.pill}`}
+        style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '3px 8px', borderRadius: '6px', background: cfg.bg, border: 'none', cursor: 'pointer', fontSize: '11px', fontWeight: '600', color: cfg.color }}
       >
-        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${cfg.dot}`} />
+        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: cfg.dot, flexShrink: 0 }} />
         {cfg.label}
         <ChevronDown size={9} />
       </button>
       {open && (
-        <div className="absolute left-0 top-full mt-1 w-52 bg-white rounded-xl shadow-xl border border-gray-100 py-1.5 z-30">
-          {PROJECT_STATUSES.map(s => (
-            <button
-              key={s.value}
-              onClick={e => { e.stopPropagation(); onChange(s.value); setOpen(false); }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 text-xs hover:bg-gray-50 transition-colors text-left"
-            >
-              <span className={`w-2 h-2 rounded-full shrink-0 ${s.dot}`} />
-              <span className={s.value === status ? 'font-semibold text-gray-900' : 'text-gray-600'}>
-                {s.label}
-              </span>
-              {s.value === status && <CheckCircle2 size={11} className="ml-auto text-gray-400" />}
-            </button>
-          ))}
+        <>
+          <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setOpen(false)} />
+          <div style={{ position: 'absolute', left: 0, top: '100%', marginTop: '4px', zIndex: 50, width: '190px', background: '#fff', borderRadius: '12px', boxShadow: '0 8px 28px rgba(0,0,0,0.12)', border: '1px solid rgba(0,0,0,0.06)', padding: '4px' }}>
+            {STATUS_OPTIONS.map(key => {
+              const c = STATUS_CFG[key];
+              const isActive = status === key;
+              return (
+                <button key={key}
+                  onClick={e => { e.stopPropagation(); onChange(key); setOpen(false); }}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 10px', borderRadius: '8px', background: isActive ? '#F5F5F7' : 'transparent', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: isActive ? '600' : '400', color: '#1D1D1F', textAlign: 'left' }}
+                >
+                  <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: c.dot, flexShrink: 0 }} />
+                  {c.label}
+                  {isActive && <Check size={11} style={{ marginLeft: 'auto', color: '#8E8E93' }} />}
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ── WebsiteCard ───────────────────────────────────────────────────────────────
+
+function WebsiteCard({ project, onStatusChange, onClick }) {
+  const h = computeHealth(project);
+  const hc = HEALTH_CFG[h];
+  const tasks = project.tasks || [];
+  const doneTasks = tasks.filter(t => t.status === 'done').length;
+  const taskPct = tasks.length > 0 ? Math.round((doneTasks / tasks.length) * 100) : null;
+  const days = daysUntil(project.deadline);
+  const isOverdue = project.deadline && isPast(project.deadline) && project.status !== 'completed';
+
+  return (
+    <div
+      onClick={onClick}
+      style={{
+        background: hc.bg,
+        borderRadius: '14px',
+        border: `1px solid ${hc.border}`,
+        borderLeft: `3px solid ${hc.color}`,
+        padding: '16px 16px 14px',
+        cursor: 'pointer',
+        transition: 'box-shadow 0.15s, transform 0.1s',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '10px',
+      }}
+      onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,0.08)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+      onMouseLeave={e => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'none'; }}
+    >
+      {/* Name + Live URL */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px' }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
+            <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: hc.color, flexShrink: 0 }} />
+            <p style={{ fontSize: '14px', fontWeight: '700', color: '#1D1D1F', letterSpacing: '-0.02em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0 }}>
+              {project.name}
+            </p>
+          </div>
+          <p style={{ fontSize: '12px', color: '#8E8E93', paddingLeft: '13px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0 }}>
+            {project.client_name || '—'}
+          </p>
+        </div>
+        {project.live_url && (
+          <button
+            onClick={e => { e.stopPropagation(); window.open(project.live_url, '_blank'); }}
+            title={project.live_url}
+            style={{ padding: '5px 7px', borderRadius: '8px', background: 'rgba(0,113,227,0.07)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0, color: '#0071E3', fontSize: '10px', fontWeight: '600' }}
+          >
+            <ExternalLink size={11} color="#0071E3" />
+          </button>
+        )}
+      </div>
+
+      {/* Status + Deadline */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }} onClick={e => e.stopPropagation()}>
+        <StatusDropdown status={project.status} onChange={onStatusChange} />
+        {project.deadline && (
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontSize: '11px', fontWeight: '500', color: isOverdue ? '#EF4444' : days !== null && days <= 5 ? '#F59E0B' : '#6E6E73' }}>
+            {isOverdue ? <AlertTriangle size={10} /> : <Clock size={10} />}
+            {isOverdue ? `+${Math.abs(days)}d überfällig` : days === 0 ? 'heute' : `${days}d`}
+          </span>
+        )}
+      </div>
+
+      {/* Task progress */}
+      {taskPct !== null && (
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+            <span style={{ fontSize: '10px', color: '#8E8E93' }}>Aufgaben</span>
+            <span style={{ fontSize: '10px', color: '#8E8E93' }}>{doneTasks}/{tasks.length}</span>
+          </div>
+          <div style={{ height: '3px', background: '#F2F2F7', borderRadius: '2px', overflow: 'hidden' }}>
+            <div style={{ height: '100%', borderRadius: '2px', background: taskPct === 100 ? '#34C759' : '#0071E3', width: `${taskPct}%`, transition: 'width 0.3s ease' }} />
+          </div>
         </div>
       )}
     </div>
   );
 }
 
-function DeadlineCell({ value, onChange }) {
-  const [editing, setEditing] = useState(false);
-  const overdue = value && isPast(value);
-
-  if (editing) {
-    return (
-      <input
-        type="date"
-        defaultValue={value || ''}
-        autoFocus
-        onBlur={e => { onChange(e.target.value || null); setEditing(false); }}
-        onKeyDown={e => e.key === 'Escape' && setEditing(false)}
-        onClick={e => e.stopPropagation()}
-        className="text-xs border border-indigo-300 rounded-md px-2 py-1 outline-none focus:ring-2 focus:ring-indigo-200 w-32"
-      />
-    );
-  }
-
-  return (
-    <button
-      onClick={e => { e.stopPropagation(); setEditing(true); }}
-      className={`text-xs flex items-center gap-1 hover:underline transition-colors ${
-        overdue
-          ? 'text-red-600 font-medium'
-          : value
-            ? 'text-gray-500'
-            : 'text-gray-300 hover:text-gray-400'
-      }`}
-    >
-      {overdue && <AlertTriangle size={11} />}
-      {value ? formatDate(value) : 'Setzen…'}
-    </button>
-  );
-}
-
-function OnboardingProgressBar({ flow, templates }) {
-  const template  = templates.find(t => t.id === flow.template_id);
-  const total     = template?.steps?.length ?? template?.step_count ?? flow.total_steps ?? 1;
-  const completed = flow.completed_steps ?? flow.current_step ?? 0;
-  const pct       = total > 0 ? Math.round((completed / total) * 100) : 0;
-
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-1">
-        <span className="text-xs text-gray-700 font-medium truncate max-w-[160px]">
-          {flow.client_name || flow.name || 'Onboarding'}
-        </span>
-        <span className="text-[11px] text-gray-400 ml-2 shrink-0">{completed}/{total}</span>
-      </div>
-      <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-        <div
-          className="h-full bg-indigo-500 rounded-full transition-all duration-500"
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-    </div>
-  );
-}
-
-// ─── Main Component ───────────────────────────────────────────────────────────
+// ── Main Component ────────────────────────────────────────────────────────────
 
 export default function Dashboard() {
   const navigate    = useNavigate();
@@ -230,24 +205,9 @@ export default function Dashboard() {
     queryKey: ['invoices'],
     queryFn: () => invoicesApi.list().then(r => r.data),
   });
-  const { data: flows = [] } = useQuery({
-    queryKey: ['onboarding', 'flows'],
-    queryFn: () => onboardingApi.listFlows().then(r => r.data),
-  });
-  const { data: templates = [] } = useQuery({
-    queryKey: ['onboarding', 'templates'],
-    queryFn: () => onboardingApi.listTemplates().then(r => r.data),
-  });
-
   const { data: workflowReminders = [] } = useQuery({
     queryKey: ['workflow-reminders'],
     queryFn: () => workflowApi.getDashboardReminders().then(r => r.data),
-  });
-
-  const doneReminderMutation = useMutation({
-    mutationFn: ({ projectId, id }) => workflowApi.updateReminder(projectId, id, { done: true }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['workflow-reminders'] }),
-    onError: () => toast.error('Fehler'),
   });
 
   const updateProject = useMutation({
@@ -256,25 +216,22 @@ export default function Dashboard() {
     onError: () => toast.error('Fehler beim Speichern'),
   });
 
-  // ── Derived data ─────────────────────────────────────────────────────────────
+  const doneReminderMutation = useMutation({
+    mutationFn: ({ projectId, id }) => workflowApi.updateReminder(projectId, id, { done: true }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['workflow-reminders'] }),
+    onError: () => toast.error('Fehler'),
+  });
 
-  const activeCount         = projects.filter(p => p.status === 'active').length;
-  const waitingCount        = projects.filter(p => p.status === 'waiting_for_client').length;
-  const overdueProjectCount = projects.filter(
-    p => p.status !== 'completed' && p.deadline && isPast(p.deadline)
-  ).length;
-  const openAmount          = (stats?.unpaid_revenue || 0) + (stats?.overdue_revenue || 0);
-  const overdueInvoiceCount = stats?.overdue_count || 0;
+  // ── Derived ───────────────────────────────────────────────────────────────────
 
-  const tableProjects = projects.filter(p => p.status !== 'completed').slice(0, 12);
-  const activeFlows   = flows.filter(f => f.status !== 'completed').slice(0, 5);
-  const openInvoices  = invoices
-    .filter(i => ['sent', 'unpaid', 'overdue'].includes(i.status))
-    .slice(0, 5);
-
-  // ── Workflow Reminders ────────────────────────────────────────────────────────
+  const activeWebsites  = projects.filter(p => p.status !== 'completed');
+  const waitingCount    = projects.filter(p => p.status === 'waiting_for_client').length;
+  const overdueCount    = projects.filter(p => p.status !== 'completed' && p.deadline && isPast(p.deadline)).length;
+  const openAmount      = (stats?.unpaid_revenue || 0) + (stats?.overdue_revenue || 0);
+  const overdueInvCount = stats?.overdue_count || 0;
 
   const today0 = new Date(); today0.setHours(0, 0, 0, 0);
+
   const dueTodayReminders = workflowReminders.filter(r => {
     if (r.done) return false;
     const d = new Date(r.due_date); d.setHours(0, 0, 0, 0);
@@ -286,433 +243,302 @@ export default function Dashboard() {
     return d > today0;
   });
 
-  // ── "Heute" items ─────────────────────────────────────────────────────────────
+  const openInvoices = invoices
+    .filter(i => ['sent', 'unpaid', 'overdue'].includes(i.status))
+    .slice(0, 6);
 
-  const deadlineSoonCount = projects.filter(p => {
-    if (p.status === 'completed' || !p.deadline) return false;
-    const d = daysUntil(p.deadline);
-    return d !== null && d >= 0 && d <= 3;
-  }).length;
+  // Alert chips
+  const alertItems = [
+    waitingCount > 0 && {
+      key: 'waiting', icon: MessageSquare, color: '#D97706',
+      bg: 'rgba(245,158,11,0.1)', border: 'rgba(245,158,11,0.3)',
+      label: `${waitingCount} warten auf Kunde`,
+      onClick: () => navigate('/websites'),
+    },
+    overdueCount > 0 && {
+      key: 'overdue', icon: AlertTriangle, color: '#EF4444',
+      bg: 'rgba(239,68,68,0.08)', border: 'rgba(239,68,68,0.25)',
+      label: `${overdueCount} Deadline${overdueCount > 1 ? 's' : ''} überschritten`,
+      onClick: () => navigate('/websites'),
+    },
+    overdueInvCount > 0 && {
+      key: 'invoices', icon: Euro, color: '#EF4444',
+      bg: 'rgba(239,68,68,0.08)', border: 'rgba(239,68,68,0.25)',
+      label: `${overdueInvCount} Rechnung${overdueInvCount > 1 ? 'en' : ''} überfällig`,
+      onClick: () => navigate('/invoices'),
+    },
+    dueTodayReminders.length > 0 && {
+      key: 'reminders', icon: Bell, color: '#7C3AED',
+      bg: 'rgba(124,58,237,0.08)', border: 'rgba(124,58,237,0.25)',
+      label: `${dueTodayReminders.length} Follow-up${dueTodayReminders.length > 1 ? 's' : ''} heute fällig`,
+      onClick: null,
+    },
+  ].filter(Boolean);
 
-  const todayItems = [];
+  const card = {
+    background: '#fff',
+    borderRadius: '16px',
+    padding: '20px',
+    border: '1px solid rgba(0,0,0,0.06)',
+    boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+  };
 
-  if (waitingCount > 0) {
-    todayItems.push({
-      key: 'waiting',
-      borderColor: 'border-amber-400',
-      bg: 'bg-amber-50',
-      icon: MessageSquare,
-      iconColor: 'text-amber-600',
-      title: `${waitingCount} ${waitingCount === 1 ? 'Projekt wartet' : 'Projekte warten'} auf Kundeneingabe`,
-      subtitle: 'Erinnerung senden oder Status prüfen',
-      onClick: () => navigate('/projects?filter=waiting_for_client'),
-    });
-  }
-
-  if (deadlineSoonCount > 0) {
-    todayItems.push({
-      key: 'deadline-soon',
-      borderColor: 'border-orange-400',
-      bg: 'bg-orange-50',
-      icon: CalendarClock,
-      iconColor: 'text-orange-600',
-      title: `${deadlineSoonCount} ${deadlineSoonCount === 1 ? 'Deadline' : 'Deadlines'} in den nächsten 3 Tagen`,
-      subtitle: 'Rechtzeitig fertigstellen',
-      onClick: () => navigate('/projects'),
-    });
-  }
-
-  if (overdueProjectCount > 0) {
-    todayItems.push({
-      key: 'overdue-projects',
-      borderColor: 'border-red-400',
-      bg: 'bg-red-50',
-      icon: AlertTriangle,
-      iconColor: 'text-red-600',
-      title: `${overdueProjectCount} überfällige ${overdueProjectCount === 1 ? 'Deadline' : 'Deadlines'}`,
-      subtitle: 'Sofort handeln',
-      onClick: () => navigate('/projects'),
-    });
-  }
-
-  if (overdueInvoiceCount > 0) {
-    todayItems.push({
-      key: 'overdue-invoices',
-      borderColor: 'border-red-500',
-      bg: 'bg-red-50',
-      icon: Euro,
-      iconColor: 'text-red-600',
-      title: `${overdueInvoiceCount} überfällige ${overdueInvoiceCount === 1 ? 'Rechnung' : 'Rechnungen'}`,
-      subtitle: 'Zahlungserinnerung versenden',
-      onClick: () => navigate('/invoices?filter=overdue'),
-    });
-  }
-
-  if (dueTodayReminders.length > 0) {
-    todayItems.push({
-      key: 'reminders-due',
-      borderColor: 'border-purple-400',
-      bg: 'bg-purple-50',
-      icon: Bell,
-      iconColor: 'text-purple-600',
-      title: `${dueTodayReminders.length} ${dueTodayReminders.length === 1 ? 'Follow-up fällig' : 'Follow-ups fällig'}`,
-      subtitle: dueTodayReminders[0]?.project_name ? `u.a. ${dueTodayReminders[0].project_name}` : 'Kunden nachfassen',
-      onClick: () => navigate('/projects'),
-    });
-  }
-
-  // ── Greeting ──────────────────────────────────────────────────────────────────
-
-  const greeting = getGreeting();
-  const today = new Date().toLocaleDateString('de-DE', {
-    weekday: 'long', day: 'numeric', month: 'long',
-  });
-
-  // ── Loading ───────────────────────────────────────────────────────────────────
+  const greeting  = getGreeting();
+  const todayLabel = new Date().toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' });
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '50vh' }}>
+        <div style={{ width: '24px', height: '24px', border: '2px solid #0071E3', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
       </div>
     );
   }
 
-  // ── Render ────────────────────────────────────────────────────────────────────
-
   return (
-    <div className="space-y-6 pb-10 px-8 pt-8">
+    <div style={{ padding: '28px 32px', maxWidth: '1380px', margin: '0 auto', paddingBottom: '56px' }}>
 
       {/* ── Header ── */}
-      <div className="flex items-start justify-between gap-4">
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '18px' }}>
         <div>
-          <h1 className="text-xl font-semibold text-gray-900 tracking-tight">{greeting}</h1>
-          <p className="text-sm text-gray-400 mt-0.5">{today}</p>
+          <h1 style={{ fontSize: '22px', fontWeight: '700', color: '#1D1D1F', letterSpacing: '-0.03em', margin: 0, lineHeight: 1.2 }}>
+            {greeting}
+          </h1>
+          <p style={{ fontSize: '13px', color: '#8E8E93', marginTop: '3px' }}>{todayLabel}</p>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
           <button
-            onClick={() => navigate('/onboarding/wizard')}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 text-xs font-medium text-gray-600 bg-white hover:bg-gray-50 transition-colors"
+            onClick={() => navigate('/projects/new')}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 15px', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.1)', background: '#fff', color: '#1D1D1F', fontSize: '13px', fontWeight: '500', cursor: 'pointer', transition: 'background 0.12s' }}
+            onMouseEnter={e => e.currentTarget.style.background = '#F5F5F7'}
+            onMouseLeave={e => e.currentTarget.style.background = '#fff'}
           >
-            <Zap size={13} className="text-indigo-500" />
-            Wizard
+            <Plus size={14} /> Website
           </button>
           <button
             onClick={() => navigate('/invoices/new')}
-            className="btn-primary inline-flex items-center gap-1.5 text-xs px-3 py-2"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 15px', borderRadius: '10px', border: 'none', background: '#0071E3', color: '#fff', fontSize: '13px', fontWeight: '600', cursor: 'pointer', transition: 'background 0.12s' }}
+            onMouseEnter={e => e.currentTarget.style.background = '#0062C4'}
+            onMouseLeave={e => e.currentTarget.style.background = '#0071E3'}
           >
-            <Plus size={13} />
-            Neue Rechnung
+            <Plus size={14} /> Rechnung
           </button>
         </div>
       </div>
 
-      {/* ── Heute ── */}
-      {todayItems.length === 0 ? (
-        <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-emerald-50 border border-emerald-100">
-          <BadgeCheck size={16} className="text-emerald-500 shrink-0" />
-          <div>
-            <p className="text-xs font-semibold text-emerald-700">Alles erledigt</p>
-            <p className="text-[11px] text-emerald-600 mt-0.5">
-              Keine dringenden Aufgaben heute. Gute Arbeit!
-            </p>
+      {/* ── Alert Strip ── */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '16px', flexWrap: 'wrap' }}>
+        {alertItems.length === 0 ? (
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '5px 13px', borderRadius: '99px', background: 'rgba(52,199,89,0.09)', border: '1px solid rgba(52,199,89,0.22)' }}>
+            <CheckCircle2 size={13} color="#34C759" />
+            <span style={{ fontSize: '12px', fontWeight: '600', color: '#34C759' }}>Alles im Griff</span>
           </div>
-        </div>
-      ) : (
-        <div>
-          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Heute</p>
-          <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
-            {todayItems.map(item => (
-              <TodayCard key={item.key} {...item} />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ── KPI Cards ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <KPICard
-          label="Aktive Projekte"
-          value={activeCount}
-          sub={`${projects.length} Projekte gesamt`}
-          icon={Folder}
-          iconBg="bg-blue-50"
-          iconColor="text-blue-500"
-          onClick={() => navigate('/projects')}
-        />
-        <KPICard
-          label="Warten auf Kunde"
-          value={waitingCount}
-          sub={waitingCount > 0 ? 'Reaktion ausstehend' : 'Keine offenen Eingaben'}
-          icon={MessageSquare}
-          iconBg={waitingCount > 0 ? 'bg-amber-50' : 'bg-gray-50'}
-          iconColor={waitingCount > 0 ? 'text-amber-500' : 'text-gray-400'}
-          urgent={false}
-          onClick={() => navigate('/projects?filter=waiting_for_client')}
-        />
-        <KPICard
-          label="Überfällig"
-          value={overdueProjectCount}
-          sub={overdueProjectCount > 0 ? 'Sofort prüfen' : 'Alles im Zeitplan'}
-          icon={AlertTriangle}
-          iconBg={overdueProjectCount > 0 ? 'bg-red-50' : 'bg-gray-50'}
-          iconColor={overdueProjectCount > 0 ? 'text-red-500' : 'text-gray-400'}
-          urgent={overdueProjectCount > 0}
-          onClick={() => navigate('/projects')}
-        />
-        <KPICard
-          label="Offene Rechnungen"
-          value={formatCurrency(openAmount)}
-          sub={`${(stats?.unpaid_count || 0) + (stats?.overdue_count || 0)} Rechnungen offen`}
-          icon={Euro}
-          iconBg="bg-emerald-50"
-          iconColor="text-emerald-500"
-          onClick={() => navigate('/invoices')}
-        />
+        ) : (
+          alertItems.map(item => (
+            <button key={item.key}
+              onClick={item.onClick || undefined}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '5px 12px', borderRadius: '99px', background: item.bg, border: `1px solid ${item.border}`, cursor: item.onClick ? 'pointer' : 'default', fontSize: '12px', fontWeight: '600', color: item.color, transition: 'opacity 0.1s' }}
+              onMouseEnter={e => { if (item.onClick) e.currentTarget.style.opacity = '0.8'; }}
+              onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+            >
+              <item.icon size={12} />
+              {item.label}
+            </button>
+          ))
+        )}
       </div>
 
-      {/* ── Main 2-column layout ── */}
-      <div className="grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-5 items-start">
+      {/* ── Mini KPI Strip ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: 'rgba(0,0,0,0.06)', borderRadius: '14px', overflow: 'hidden', marginBottom: '26px', border: '1px solid rgba(0,0,0,0.06)' }}>
+        {[
+          {
+            label: 'Aktive Websites',
+            value: activeWebsites.length,
+            sub: `${projects.length} gesamt`,
+            urgent: false,
+            onClick: () => navigate('/websites'),
+          },
+          {
+            label: 'Offener Umsatz',
+            value: formatCurrency(openAmount),
+            sub: `${(stats?.unpaid_count || 0) + (stats?.overdue_count || 0)} Rechnungen offen`,
+            urgent: overdueInvCount > 0,
+            onClick: () => navigate('/invoices'),
+          },
+          {
+            label: 'Follow-ups heute',
+            value: dueTodayReminders.length,
+            sub: dueTodayReminders.length > 0 ? 'Kunden nachfassen' : 'Keine fälligen',
+            urgent: dueTodayReminders.length > 0,
+            onClick: null,
+          },
+        ].map((kpi, i) => (
+          <button key={i}
+            onClick={kpi.onClick || undefined}
+            style={{ padding: '15px 20px', background: '#fff', border: 'none', cursor: kpi.onClick ? 'pointer' : 'default', textAlign: 'left', transition: 'background 0.1s' }}
+            onMouseEnter={e => { if (kpi.onClick) e.currentTarget.style.background = '#FAFAFA'; }}
+            onMouseLeave={e => e.currentTarget.style.background = '#fff'}
+          >
+            <p style={{ fontSize: '10px', fontWeight: '600', color: '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '7px' }}>{kpi.label}</p>
+            <p style={{ fontSize: '24px', fontWeight: '700', color: kpi.urgent ? '#EF4444' : '#1D1D1F', letterSpacing: '-0.03em', lineHeight: 1, marginBottom: '4px' }}>{kpi.value}</p>
+            <p style={{ fontSize: '11px', color: '#8E8E93' }}>{kpi.sub}</p>
+          </button>
+        ))}
+      </div>
 
-        {/* ── Left: Project Table ── */}
-        <div className="card p-0 overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-            <div className="flex items-center gap-2">
-              <h2 className="text-sm font-semibold text-gray-800">Projekte</h2>
-              {tableProjects.length > 0 && (
-                <span className="text-[11px] text-gray-400 bg-gray-100 rounded-full px-2 py-0.5 font-medium">
-                  {tableProjects.length}
-                </span>
-              )}
-            </div>
+      {/* ── Aktive Websites Grid ── */}
+      <div style={{ marginBottom: '24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <h2 style={{ fontSize: '15px', fontWeight: '700', color: '#1D1D1F', letterSpacing: '-0.02em', margin: 0 }}>
+              Aktive Websites
+            </h2>
+            <span style={{ fontSize: '11px', fontWeight: '600', color: '#8E8E93', background: '#F2F2F7', padding: '2px 8px', borderRadius: '99px' }}>
+              {activeWebsites.length}
+            </span>
+          </div>
+          <button onClick={() => navigate('/websites')}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontSize: '12px', color: '#0071E3', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '500' }}>
+            Alle <ChevronRight size={13} />
+          </button>
+        </div>
+
+        {activeWebsites.length === 0 ? (
+          <div style={{ ...card, textAlign: 'center', padding: '52px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+            <Globe size={32} color="#D1D1D6" />
+            <p style={{ fontSize: '14px', fontWeight: '500', color: '#8E8E93', margin: 0 }}>Noch keine aktiven Websites</p>
+            <button onClick={() => navigate('/projects/new')}
+              style={{ fontSize: '13px', color: '#0071E3', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '500' }}>
+              Erste Website erstellen →
+            </button>
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+            {activeWebsites.map(p => (
+              <WebsiteCard
+                key={p.id}
+                project={p}
+                onStatusChange={val => updateProject.mutate({ id: p.id, data: { status: val } })}
+                onClick={() => navigate(`/projects/${p.id}`)}
+              />
+            ))}
+            {/* New website card */}
             <button
-              onClick={() => navigate('/projects')}
-              className="text-[11px] text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-0.5"
+              onClick={() => navigate('/projects/new')}
+              style={{ borderRadius: '14px', border: '1.5px dashed #D1D1D6', background: 'transparent', cursor: 'pointer', padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px', minHeight: '120px', color: '#8E8E93', transition: 'border-color 0.12s, color 0.12s' }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = '#0071E3'; e.currentTarget.style.color = '#0071E3'; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = '#D1D1D6'; e.currentTarget.style.color = '#8E8E93'; }}
             >
-              Alle anzeigen <ChevronRight size={12} />
+              <Plus size={20} />
+              <span style={{ fontSize: '12px', fontWeight: '500' }}>Website erstellen</span>
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* ── Bottom 2-col: Finanzen + Follow-ups ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+
+        {/* Finanzen */}
+        <div style={card}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+            <h3 style={{ fontSize: '14px', fontWeight: '700', color: '#1D1D1F', display: 'flex', alignItems: 'center', gap: '7px', margin: 0 }}>
+              <TrendingUp size={15} color="#34C759" />
+              Finanzen
+            </h3>
+            <button onClick={() => navigate('/invoices')}
+              style={{ fontSize: '12px', color: '#0071E3', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '500', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+              Alle <ChevronRight size={12} />
             </button>
           </div>
 
-          {tableProjects.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <Folder size={28} className="text-gray-200 mb-2" />
-              <p className="text-sm text-gray-400 font-medium">Keine aktiven Projekte</p>
-              <button
-                onClick={() => navigate('/projects/new')}
-                className="mt-3 text-xs text-indigo-600 hover:underline font-medium"
-              >
-                Projekt erstellen
-              </button>
+          {/* Mini stats */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '16px' }}>
+            {[
+              { label: 'Offen',     value: stats?.unpaid_count  ?? 0, color: '#1D1D1F', bg: '#F5F5F7' },
+              { label: 'Überfällig',value: stats?.overdue_count ?? 0, color: '#EF4444', bg: 'rgba(239,68,68,0.07)' },
+              { label: 'Bezahlt',   value: stats?.paid_count    ?? 0, color: '#34C759', bg: 'rgba(52,199,89,0.07)' },
+            ].map(s => (
+              <div key={s.label} style={{ textAlign: 'center', padding: '10px 6px', borderRadius: '10px', background: s.bg }}>
+                <p style={{ fontSize: '20px', fontWeight: '700', color: s.color, letterSpacing: '-0.03em', lineHeight: 1, margin: 0 }}>{s.value}</p>
+                <p style={{ fontSize: '10px', color: '#8E8E93', marginTop: '3px' }}>{s.label}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Invoice list */}
+          {openInvoices.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '14px 0', fontSize: '12px', color: '#8E8E93' }}>Keine offenen Rechnungen</div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+              {openInvoices.map(inv => (
+                <div key={inv.id} onClick={() => navigate(`/invoices/${inv.id}`)}
+                  style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 10px', borderRadius: '8px', cursor: 'pointer', transition: 'background 0.1s' }}
+                  onMouseEnter={e => e.currentTarget.style.background = '#F5F5F7'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                >
+                  {inv.status === 'overdue'
+                    ? <AlertCircle size={13} color="#EF4444" style={{ flexShrink: 0 }} />
+                    : <Send size={13} color="#8E8E93" style={{ flexShrink: 0 }} />
+                  }
+                  <span style={{ flex: 1, fontSize: '12px', color: '#1D1D1F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {inv.client_name || inv.invoice_number || 'Rechnung'}
+                  </span>
+                  <span style={{ fontSize: '12px', fontWeight: '600', color: inv.status === 'overdue' ? '#EF4444' : '#1D1D1F', flexShrink: 0 }}>
+                    {formatCurrency(inv.total || inv.amount || 0)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Follow-ups & Erinnerungen */}
+        <div style={card}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+            <h3 style={{ fontSize: '14px', fontWeight: '700', color: '#1D1D1F', display: 'flex', alignItems: 'center', gap: '7px', margin: 0 }}>
+              <Bell size={15} color="#7C3AED" />
+              Follow-ups
+            </h3>
+            {workflowReminders.filter(r => !r.done).length > 0 && (
+              <span style={{ fontSize: '11px', color: '#8E8E93', background: '#F2F2F7', padding: '2px 8px', borderRadius: '99px', fontWeight: '600' }}>
+                {workflowReminders.filter(r => !r.done).length}
+              </span>
+            )}
+          </div>
+
+          {dueTodayReminders.length === 0 && upcomingReminders.length === 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '24px 0', gap: '8px' }}>
+              <CheckCircle2 size={24} color="#D1D1D6" />
+              <p style={{ fontSize: '12px', color: '#8E8E93', margin: 0 }}>Keine offenen Follow-ups</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs min-w-[560px]">
-                <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50/50">
-                    <th className="text-left px-4 py-2.5 font-semibold text-[10px] text-gray-400 uppercase tracking-wider">
-                      Projekt
-                    </th>
-                    <th className="text-left px-3 py-2.5 font-semibold text-[10px] text-gray-400 uppercase tracking-wider">
-                      Kunde
-                    </th>
-                    <th className="text-left px-3 py-2.5 font-semibold text-[10px] text-gray-400 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="text-left px-3 py-2.5 font-semibold text-[10px] text-gray-400 uppercase tracking-wider">
-                      Deadline
-                    </th>
-                    <th className="text-left px-3 py-2.5 font-semibold text-[10px] text-gray-400 uppercase tracking-wider">
-                      Nächster Schritt
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {tableProjects.map(project => {
-                    const step = nextStep(project);
-                    return (
-                      <tr
-                        key={project.id}
-                        onClick={() => navigate(`/projects/${project.id}`)}
-                        className="hover:bg-gray-50/70 cursor-pointer transition-colors group"
-                      >
-                        <td className="px-4 py-2.5">
-                          <span className="font-medium text-gray-800 group-hover:text-indigo-600 transition-colors line-clamp-1">
-                            {project.name}
-                          </span>
-                        </td>
-                        <td className="px-3 py-2.5">
-                          <span className="text-gray-500 line-clamp-1">
-                            {project.client_name || '—'}
-                          </span>
-                        </td>
-                        <td className="px-3 py-2.5" onClick={e => e.stopPropagation()}>
-                          <StatusSelector
-                            status={project.status}
-                            onChange={val =>
-                              updateProject.mutate({ id: project.id, data: { status: val } })
-                            }
-                          />
-                        </td>
-                        <td className="px-3 py-2.5" onClick={e => e.stopPropagation()}>
-                          <DeadlineCell
-                            value={project.deadline}
-                            onChange={val =>
-                              updateProject.mutate({ id: project.id, data: { deadline: val || null } })
-                            }
-                          />
-                        </td>
-                        <td className="px-3 py-2.5">
-                          <span className={`font-medium flex items-center gap-1.5 ${step.color}`}>
-                            {step.urgent && (
-                              <span className="w-1.5 h-1.5 rounded-full bg-current inline-block shrink-0 opacity-70" />
-                            )}
-                            {step.label}
-                          </span>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {dueTodayReminders.length > 0 && (
+                <>
+                  <p style={{ fontSize: '10px', fontWeight: '600', color: '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>Heute fällig</p>
+                  {dueTodayReminders.slice(0, 4).map(r => (
+                    <ReminderCard key={r.id} reminder={r}
+                      onDone={() => doneReminderMutation.mutate({ projectId: r.project_id, id: r.id })}
+                      onClick={() => navigate(`/projects/${r.project_id}?tab=workflow`)}
+                    />
+                  ))}
+                </>
+              )}
+              {upcomingReminders.length > 0 && (
+                <>
+                  <p style={{ fontSize: '10px', fontWeight: '600', color: '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.06em', margin: dueTodayReminders.length > 0 ? '4px 0 0' : 0 }}>Kommend</p>
+                  {upcomingReminders.slice(0, 3).map(r => (
+                    <ReminderCard key={r.id} reminder={r}
+                      onDone={() => doneReminderMutation.mutate({ projectId: r.project_id, id: r.id })}
+                      onClick={() => navigate(`/projects/${r.project_id}?tab=workflow`)}
+                    />
+                  ))}
+                </>
+              )}
             </div>
           )}
         </div>
 
-        {/* ── Right Sidebar ── */}
-        <div className="space-y-4">
-
-          {/* Onboarding */}
-          <div className="card">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-1.5">
-                <PlayCircle size={14} className="text-indigo-500" />
-                Onboarding
-              </h3>
-              <button
-                onClick={() => navigate('/onboarding')}
-                className="text-[11px] text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-0.5"
-              >
-                Alle <ChevronRight size={12} />
-              </button>
-            </div>
-
-            {activeFlows.length === 0 ? (
-              <div className="text-center py-4">
-                <CheckCircle2 size={22} className="text-gray-200 mx-auto mb-1.5" />
-                <p className="text-xs text-gray-400">Keine aktiven Flows</p>
-                <button
-                  onClick={() => navigate('/onboarding/new')}
-                  className="mt-2 text-[11px] text-indigo-600 hover:underline font-medium"
-                >
-                  Flow starten
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {activeFlows.map(flow => (
-                  <div
-                    key={flow.id}
-                    onClick={() => navigate(`/onboarding/${flow.id}`)}
-                    className="cursor-pointer hover:opacity-80 transition-opacity"
-                  >
-                    <OnboardingProgressBar flow={flow} templates={templates} />
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Reminders */}
-          {(dueTodayReminders.length > 0 || upcomingReminders.length > 0) && (
-            <div className="card">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-1.5">
-                  <Bell size={14} className="text-purple-500" />
-                  Erinnerungen
-                </h3>
-                <span className="text-[11px] text-gray-400">
-                  {workflowReminders.filter(r => !r.done).length} offen
-                </span>
-              </div>
-              <div className="space-y-2">
-                {[...dueTodayReminders, ...upcomingReminders].slice(0, 5).map(r => (
-                  <ReminderCard
-                    key={r.id}
-                    reminder={r}
-                    onDone={() => doneReminderMutation.mutate({ projectId: r.project_id, id: r.id })}
-                    onClick={() => navigate(`/projects/${r.project_id}?tab=workflow`)}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Finance mini */}
-          <div className="card">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-1.5">
-                <TrendingUp size={14} className="text-emerald-500" />
-                Finanzen
-              </h3>
-              <button
-                onClick={() => navigate('/invoices')}
-                className="text-[11px] text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-0.5"
-              >
-                Alle <ChevronRight size={12} />
-              </button>
-            </div>
-
-            {/* Mini stats row */}
-            <div className="grid grid-cols-3 gap-2 mb-4">
-              <div className="text-center p-2 rounded-lg bg-gray-50">
-                <p className="text-base font-bold text-gray-800">{stats?.unpaid_count ?? 0}</p>
-                <p className="text-[10px] text-gray-400 mt-0.5">Offen</p>
-              </div>
-              <div className="text-center p-2 rounded-lg bg-red-50">
-                <p className="text-base font-bold text-red-600">{stats?.overdue_count ?? 0}</p>
-                <p className="text-[10px] text-red-400 mt-0.5">Überfällig</p>
-              </div>
-              <div className="text-center p-2 rounded-lg bg-emerald-50">
-                <p className="text-base font-bold text-emerald-600">{stats?.paid_count ?? 0}</p>
-                <p className="text-[10px] text-emerald-500 mt-0.5">Bezahlt</p>
-              </div>
-            </div>
-
-            {/* Open invoices list */}
-            {openInvoices.length === 0 ? (
-              <div className="text-center py-3">
-                <p className="text-xs text-gray-400">Keine offenen Rechnungen</p>
-              </div>
-            ) : (
-              <div className="space-y-0.5">
-                {openInvoices.map(inv => (
-                  <div
-                    key={inv.id}
-                    onClick={() => navigate(`/invoices/${inv.id}`)}
-                    className="flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
-                  >
-                    <div className="flex items-center gap-2 min-w-0">
-                      {inv.status === 'overdue' ? (
-                        <AlertCircle size={12} className="text-red-500 shrink-0" />
-                      ) : (
-                        <Send size={12} className="text-gray-400 shrink-0" />
-                      )}
-                      <span className="text-xs text-gray-700 truncate">
-                        {inv.client_name || inv.invoice_number || inv.number || 'Rechnung'}
-                      </span>
-                    </div>
-                    <span className={`text-xs font-semibold shrink-0 ${
-                      inv.status === 'overdue' ? 'text-red-600' : 'text-gray-700'
-                    }`}>
-                      {formatCurrency(inv.total || inv.amount || 0)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-        </div>
       </div>
     </div>
   );
