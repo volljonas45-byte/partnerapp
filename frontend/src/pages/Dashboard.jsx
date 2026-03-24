@@ -349,10 +349,9 @@ export default function Dashboard() {
 
   return (
     <div style={{
-      padding: '32px 36px',
-      maxWidth: '1400px',
-      margin: '0 auto',
-      paddingBottom: '64px',
+      padding: '28px 24px 64px',
+      width: '100%',
+      boxSizing: 'border-box',
     }}>
 
       {/* ── Header ── */}
@@ -432,7 +431,7 @@ export default function Dashboard() {
       </div>
 
       {/* ── Mini KPI Strip ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '28px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '12px', marginBottom: '28px' }}>
         {[
           {
             label: 'Aktive Websites',
@@ -545,7 +544,7 @@ export default function Dashboard() {
             </button>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '14px' }}>
             {activeWebsites.map(p => (
               <WebsiteCard
                 key={p.id}
@@ -585,7 +584,7 @@ export default function Dashboard() {
       </div>
 
       {/* ── Bottom 3-col: Finanzen + Follow-ups + Time Tracking ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '14px' }}>
 
         {/* Finanzen */}
         <div style={card}>
