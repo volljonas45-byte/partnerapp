@@ -537,17 +537,31 @@ export default function Dashboard() {
               {activeWebsites.length}
             </span>
           </div>
-          <button onClick={() => navigate('/websites')}
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: '3px',
-              fontSize: '12px', color: '#0071E3', background: 'none', border: 'none',
-              cursor: 'pointer', fontWeight: '500', transition: 'opacity 0.15s',
-            }}
-            onMouseEnter={e => e.currentTarget.style.opacity = '0.7'}
-            onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-          >
-            Alle <ChevronRight size={13} />
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <button onClick={() => navigate('/onboarding/wizard')}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: '4px',
+                fontSize: '12px', color: '#0071E3', background: 'rgba(0,113,227,0.07)',
+                border: 'none', cursor: 'pointer', fontWeight: '600',
+                padding: '5px 11px', borderRadius: '8px', transition: 'background 0.15s',
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,113,227,0.13)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,113,227,0.07)'}
+            >
+              <Plus size={12} /> Neu
+            </button>
+            <button onClick={() => navigate('/websites')}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: '3px',
+                fontSize: '12px', color: '#0071E3', background: 'none', border: 'none',
+                cursor: 'pointer', fontWeight: '500', transition: 'opacity 0.15s',
+              }}
+              onMouseEnter={e => e.currentTarget.style.opacity = '0.7'}
+              onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+            >
+              Alle <ChevronRight size={13} />
+            </button>
+          </div>
         </div>
 
         {activeWebsites.length === 0 ? (
@@ -572,32 +586,6 @@ export default function Dashboard() {
                 onClick={() => navigate(`/projects/${p.id}`)}
               />
             ))}
-            {/* New website card */}
-            <button
-              onClick={() => navigate('/onboarding/wizard')}
-              style={{
-                borderRadius: '16px',
-                border: '1.5px dashed rgba(0,0,0,0.12)',
-                background: 'transparent', cursor: 'pointer', padding: '20px',
-                display: 'flex', flexDirection: 'column',
-                alignItems: 'center', justifyContent: 'center',
-                gap: '8px', minHeight: '130px', color: '#C0C0C8',
-                transition: 'border-color 0.2s, color 0.2s, background 0.2s',
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.borderColor = 'rgba(0,113,227,0.4)';
-                e.currentTarget.style.color = '#0071E3';
-                e.currentTarget.style.background = 'rgba(0,113,227,0.03)';
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.borderColor = 'rgba(0,0,0,0.12)';
-                e.currentTarget.style.color = '#C0C0C8';
-                e.currentTarget.style.background = 'transparent';
-              }}
-            >
-              <Plus size={20} />
-              <span style={{ fontSize: '12px', fontWeight: '500' }}>Website erstellen</span>
-            </button>
           </div>
         )}
       </div>
