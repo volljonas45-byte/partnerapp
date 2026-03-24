@@ -498,3 +498,21 @@ CREATE TABLE IF NOT EXISTS fahrtenbuch_entries (
   FOREIGN KEY (user_id)    REFERENCES users(id),
   FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL
 );
+
+-- ── CALENDAR ─────────────────────────────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS calendar_events (
+  id          SERIAL PRIMARY KEY,
+  user_id     INTEGER NOT NULL,
+  title       TEXT NOT NULL,
+  description TEXT DEFAULT '',
+  start_time  TIMESTAMP NOT NULL,
+  end_time    TIMESTAMP DEFAULT NULL,
+  all_day     BOOLEAN DEFAULT FALSE,
+  color       TEXT DEFAULT '#0071E3',
+  type        TEXT DEFAULT 'event',
+  project_id  INTEGER DEFAULT NULL,
+  created_at  TIMESTAMP DEFAULT NOW(),
+  FOREIGN KEY (user_id)    REFERENCES users(id),
+  FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL
+);
