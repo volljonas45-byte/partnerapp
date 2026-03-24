@@ -551,7 +551,10 @@ function AreaWidget({ area, onDeleteArea, onEditArea }) {
               </button>
             </div>
           ) : (
-            area.projects?.map((p, i) => (
+            [...(area.projects || [])].sort((a, b) => {
+              const BOTTOM = ['waiting_for_client', 'deferred', 'completed'];
+              return (BOTTOM.includes(a.status) ? 1 : 0) - (BOTTOM.includes(b.status) ? 1 : 0);
+            }).map((p, i) => (
               <ProjectCard
                 key={p.id}
                 project={p}

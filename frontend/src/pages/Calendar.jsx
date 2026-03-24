@@ -568,7 +568,7 @@ export default function Calendar() {
 
   const { data: timeEntries = [] } = useQuery({
     queryKey: ['time-entries-cal', rangeFrom, rangeTo],
-    queryFn: () => timeApi.list({ from: rangeFrom, to: rangeTo, scope: 'workspace' }),
+    queryFn: () => timeApi.list({ from: rangeFrom, to: rangeTo }),
   });
 
   const events = useMemo(() => buildEvents(calEvents, projects, timeEntries), [calEvents, projects, timeEntries]);

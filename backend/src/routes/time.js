@@ -264,21 +264,23 @@ router.post('/timer/stop', async (req, res) => {
 router.get('/summary', async (req, res) => {
   try {
     const userId = req.userId;
-    const now = new Date();
-    const todayStr = now.toISOString().slice(0, 10);
 
-    // Start of week (Monday)
-    const day = now.getDay() || 7;
-    const weekStart = new Date(now);
-    weekStart.setDate(now.getDate() - day + 1);
-    const weekStartStr = weekStart.toISOString().slice(0, 10);
+    // Use Europe/Berlin timezone for correct day/week boundaries
+    const berlinNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Berlin' }));
+    const pad = n => String(n).padStart(2, '0');
+    const todayStr = `${berlinNow.getFullYear()}-${pad(berlinNow.getMonth() + 1)}-${pad(berlinNow.getDate())}`;
+    const monthStr = `${berlinNow.getFullYear()}-${pad(berlinNow.getMonth() + 1)}`;
 
-    const monthStr = now.toISOString().slice(0, 7); // YYYY-MM
+    // Start of ISO week (Monday) in Berlin time
+    const dayOfWeek = berlinNow.getDay() || 7; // Mon=1 … Sun=7
+    const weekStart = new Date(berlinNow);
+    weekStart.setDate(berlinNow.getDate() - dayOfWeek + 1);
+    const weekStartStr = `${weekStart.getFullYear()}-${pad(weekStart.getMonth() + 1)}-${pad(weekStart.getDate())}`;
 
     const entries = await getAll(`
       SELECT te.duration, te.project_id, p.name AS project_name,
-             TO_CHAR(te.start_time, 'YYYY-MM-DD') AS entry_date,
-             TO_CHAR(te.start_time, 'YYYY-MM') AS entry_month
+             TO_CHAR(te.start_time AT TIME ZONE 'Europe/Berlin', 'YYYY-MM-DD') AS entry_date,
+             TO_CHAR(te.start_time AT TIME ZONE 'Europe/Berlin', 'YYYY-MM') AS entry_month
       FROM time_entries te
       LEFT JOIN projects p ON p.id = te.project_id
       WHERE te.user_id = ? AND te.duration IS NOT NULL

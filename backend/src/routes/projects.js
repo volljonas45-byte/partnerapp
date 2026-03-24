@@ -5,12 +5,13 @@ const authenticate = require('../middleware/auth');
 const router = express.Router();
 router.use(authenticate);
 
-const VALID_STATUSES      = ['planned', 'active', 'waiting', 'waiting_for_client', 'feedback', 'completed'];
+const VALID_STATUSES      = ['planned', 'active', 'waiting', 'waiting_for_client', 'feedback', 'completed', 'deferred'];
 const VALID_TASK_STATUSES = ['todo', 'doing', 'done'];
 
 const STATUS_LABELS = {
   planned: 'Geplant', active: 'Demo', waiting_for_client: 'Warten auf Kunde',
   feedback: 'Überarbeitung', waiting: 'Fertigstellung', completed: 'Abgeschlossen',
+  deferred: 'Verschoben',
 };
 
 async function logActivity(projectId, userId, type, message) {

@@ -25,8 +25,9 @@ const STATUS_CFG = {
   review:             { label: 'Review',           color: '#7C3AED', bg: 'rgba(124,58,237,0.08)', dot: '#8B5CF6' },
   waiting:            { label: 'Fertigstellung',   color: '#7C3AED', bg: 'rgba(124,58,237,0.08)', dot: '#8B5CF6' },
   completed:          { label: 'Abgeschlossen',    color: '#22C55E', bg: 'rgba(34,197,94,0.08)',  dot: '#22C55E' },
+  deferred:           { label: 'Verschoben',       color: '#94A3B8', bg: 'rgba(148,163,184,0.08)', dot: '#94A3B8' },
 };
-const STATUS_OPTIONS = ['planned','active','waiting_for_client','feedback','review','waiting','completed'];
+const STATUS_OPTIONS = ['planned','active','waiting_for_client','feedback','review','waiting','completed','deferred'];
 
 const HEALTH_CFG = {
   good:     { color: '#22C55E', bg: '#fff' },
@@ -276,7 +277,7 @@ export default function Dashboard() {
 
   // ── Derived ───────────────────────────────────────────────────────────────────
 
-  const INACTIVE_STATUSES = ['completed', 'waiting_for_client', 'waiting'];
+  const INACTIVE_STATUSES = ['completed', 'waiting_for_client', 'waiting', 'deferred'];
   const activeWebsites  = projects.filter(p => !INACTIVE_STATUSES.includes(p.status));
   const waitingCount    = projects.filter(p => p.status === 'waiting_for_client').length;
   const overdueCount    = projects.filter(p => p.status !== 'completed' && p.deadline && isPast(p.deadline)).length;
@@ -349,7 +350,7 @@ export default function Dashboard() {
 
   return (
     <div style={{
-      padding: '28px 24px 64px',
+      padding: '20px 16px 48px',
       width: '100%',
       boxSizing: 'border-box',
     }}>
