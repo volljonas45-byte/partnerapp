@@ -653,37 +653,98 @@ export default function ProjectDetail() {
         const pendingInvoices = invoices.filter(i => i.status !== 'paid');
         const pendingQuotes   = quotes.filter(q => q.status !== 'accepted' && q.status !== 'rejected');
 
+        // Client + Budget progress
+        const client        = clients.find(c => c.id === project.client_id);
+        const totalBudget   = Number(project.budget) || 0;
+        const totalInvoiced = invoices.reduce((sum, inv) => sum + Number(inv.total || 0), 0);
+        const invoicePct    = totalBudget > 0 ? Math.min(100, Math.round((totalInvoiced / totalBudget) * 100)) : 0;
+        const openTaskCount = tasks.filter(t => t.status !== 'done').length;
+
         const card = { background: '#fff', borderRadius: '16px', padding: '22px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' };
         const sectionTitle = { fontSize: '11px', fontWeight: '600', color: '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.05em' };
         const linkBtn = { fontSize: '12px', color: '#0071E3', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '500' };
 
         return (
           <div>
-            {/* ── KPI Row ── */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px', marginBottom: '18px' }}>
+            {/* ── Summary Bar ── */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '14px', padding: '11px 18px', background: '#fff', borderRadius: '14px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
+              {/* Health chip */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '3px 10px', borderRadius: '8px', flexShrink: 0,
+                background: health === 'good' ? 'rgba(52,199,89,0.1)' : health === 'warning' ? 'rgba(245,158,11,0.1)' : 'rgba(239,68,68,0.1)',
+                border: `1px solid ${health === 'good' ? 'rgba(52,199,89,0.22)' : health === 'warning' ? 'rgba(245,158,11,0.22)' : 'rgba(239,68,68,0.22)'}` }}>
+                <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: health === 'good' ? '#34C759' : health === 'warning' ? '#F59E0B' : '#EF4444' }} />
+                <span style={{ fontSize: '12px', fontWeight: '600', color: health === 'good' ? '#34C759' : health === 'warning' ? '#F59E0B' : '#EF4444' }}>{healthCfg.label}</span>
+              </div>
+              {/* Client */}
+              {client && (
+                <>
+                  <div style={{ width: '1px', height: '14px', background: '#E5E5EA', flexShrink: 0 }} />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Building2 size={12} color="#8E8E93" />
+                    <span style={{ fontSize: '13px', fontWeight: '500', color: '#3C3C43' }}>{client.company_name || client.name}</span>
+                  </div>
+                </>
+              )}
+              {/* Project type */}
+              {project.type && (
+                <>
+                  <div style={{ width: '1px', height: '14px', background: '#E5E5EA', flexShrink: 0 }} />
+                  <span style={{ fontSize: '12px', color: '#8E8E93' }}>{TYPE_LABELS[project.type] || project.type}</span>
+                </>
+              )}
+              <div style={{ flex: 1 }} />
+              {/* Open items */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                {openTaskCount > 0 && (
+                  <button onClick={() => setActiveTab('tasks')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: '12px', color: '#6E6E73' }}>
+                    <span style={{ fontWeight: '700', color: '#1D1D1F' }}>{openTaskCount}</span> Aufgaben
+                  </button>
+                )}
+                {openCh.length > 0 && (
+                  <button onClick={() => setActiveTab('changes')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: '12px', color: '#6E6E73' }}>
+                    <span style={{ fontWeight: '700', color: urgentCh.length > 0 ? '#EF4444' : '#1D1D1F' }}>{openCh.length}</span> Änderungen
+                    {urgentCh.length > 0 && <span style={{ fontSize: '10px', fontWeight: '700', background: 'rgba(239,68,68,0.1)', color: '#EF4444', padding: '1px 5px', borderRadius: '5px', marginLeft: '5px' }}>{urgentCh.length} dringend</span>}
+                  </button>
+                )}
+                {pendingInvoices.length > 0 && (
+                  <button onClick={() => setActiveTab('finance')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: '12px', color: '#6E6E73' }}>
+                    <span style={{ fontWeight: '700', color: '#F59E0B' }}>{pendingInvoices.length}</span> {pendingInvoices.length === 1 ? 'Rechnung' : 'Rechnungen'}
+                  </button>
+                )}
+                {openTaskCount === 0 && openCh.length === 0 && pendingInvoices.length === 0 && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <CheckCircle2 size={13} color="#34C759" />
+                    <span style={{ fontSize: '12px', color: '#34C759', fontWeight: '500' }}>Alles aktuell</span>
+                  </div>
+                )}
+              </div>
+            </div>
 
-              {/* Website */}
+            {/* ── KPI Row (4 cols) ── */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '14px', marginBottom: '14px' }}>
+
+              {/* Klient */}
               <div
-                style={{ ...card, cursor: project.live_url ? 'pointer' : 'default', transition: 'box-shadow 0.15s' }}
-                onClick={() => project.live_url && window.open(project.live_url, '_blank')}
-                onMouseEnter={e => { if (project.live_url) e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,113,227,0.12)'; }}
+                style={{ ...card, cursor: client ? 'pointer' : 'default', transition: 'box-shadow 0.15s' }}
+                onClick={() => client && navigate(`/clients/${client.id}`)}
+                onMouseEnter={e => { if (client) e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)'; }}
                 onMouseLeave={e => e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.04)'}
               >
-                <p style={{ ...sectionTitle, marginBottom: '12px' }}>Live-Website</p>
-                {project.live_url ? (
+                <p style={{ ...sectionTitle, marginBottom: '10px' }}>Klient</p>
+                {client ? (
                   <>
-                    <p style={{ fontSize: '15px', fontWeight: '700', color: '#0071E3', letterSpacing: '-0.02em', lineHeight: 1.3, marginBottom: '6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {project.live_url.replace(/^https?:\/\//, '')}
+                    <p style={{ fontSize: '15px', fontWeight: '700', color: '#1D1D1F', letterSpacing: '-0.02em', lineHeight: 1.2, marginBottom: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {client.company_name || client.name}
                     </p>
-                    <p style={{ fontSize: '12px', color: '#8E8E93', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <ExternalLink size={11} /> öffnen
+                    <p style={{ fontSize: '11px', color: '#8E8E93', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {client.email || TYPE_LABELS[project.type] || '—'}
                     </p>
                   </>
                 ) : (
                   <>
-                    <p style={{ fontSize: '28px', fontWeight: '700', color: '#C7C7CC', letterSpacing: '-0.04em', lineHeight: 1, marginBottom: '6px' }}>—</p>
-                    <button onClick={e => { e.stopPropagation(); setActiveTab('setup'); }} style={{ fontSize: '12px', color: '#0071E3', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-                      URL eintragen →
+                    <p style={{ fontSize: '15px', fontWeight: '700', color: '#C7C7CC', marginBottom: '4px' }}>—</p>
+                    <button onClick={e => { e.stopPropagation(); setActiveTab('overview'); }} style={{ fontSize: '11px', color: '#0071E3', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                      Klient zuweisen →
                     </button>
                   </>
                 )}
@@ -691,28 +752,67 @@ export default function ProjectDetail() {
 
               {/* Budget */}
               <div style={card}>
-                <p style={{ ...sectionTitle, marginBottom: '12px' }}>Budget</p>
-                <p style={{ fontSize: '32px', fontWeight: '700', letterSpacing: '-0.04em', lineHeight: 1, marginBottom: '6px', color: '#1D1D1F' }}>
+                <p style={{ ...sectionTitle, marginBottom: '10px' }}>Budget</p>
+                <p style={{ fontSize: '26px', fontWeight: '700', letterSpacing: '-0.04em', lineHeight: 1, marginBottom: totalBudget > 0 ? '9px' : '4px', color: '#1D1D1F' }}>
                   {project.budget ? `${Number(project.budget).toLocaleString('de-DE')} €` : '—'}
                 </p>
-                <p style={{ fontSize: '12px', color: '#8E8E93' }}>{BILLING_LABELS[project.billing_type] || 'Einmalig'}</p>
+                {totalBudget > 0 ? (
+                  <>
+                    <div style={{ height: '3px', background: '#F2F2F7', borderRadius: '2px', marginBottom: '5px' }}>
+                      <div style={{ height: '100%', borderRadius: '2px', width: `${invoicePct}%`, background: invoicePct >= 100 ? '#34C759' : '#0071E3', transition: 'width 0.4s ease' }} />
+                    </div>
+                    <p style={{ fontSize: '11px', color: '#8E8E93' }}>{formatCurrency(totalInvoiced)} fakturiert · {invoicePct}%</p>
+                  </>
+                ) : (
+                  <p style={{ fontSize: '11px', color: '#8E8E93' }}>{BILLING_LABELS[project.billing_type] || 'Einmalig'}</p>
+                )}
               </div>
 
               {/* Deadline */}
-              <div style={{ ...card, background: daysLeft !== null && daysLeft < 0 ? 'rgba(239,68,68,0.03)' : daysLeft !== null && daysLeft <= 7 ? 'rgba(245,158,11,0.03)' : '#fff', border: `1px solid ${daysLeft !== null && daysLeft < 0 ? 'rgba(239,68,68,0.2)' : daysLeft !== null && daysLeft <= 7 ? 'rgba(245,158,11,0.2)' : 'rgba(0,0,0,0.06)'}` }}>
-                <p style={{ ...sectionTitle, marginBottom: '12px' }}>Deadline</p>
+              <div style={{ ...card, background: daysLeft !== null && daysLeft < 0 ? 'rgba(239,68,68,0.03)' : daysLeft !== null && daysLeft <= 7 ? 'rgba(245,158,11,0.03)' : '#fff', border: `1px solid ${daysLeft !== null && daysLeft < 0 ? 'rgba(239,68,68,0.18)' : daysLeft !== null && daysLeft <= 7 ? 'rgba(245,158,11,0.18)' : 'rgba(0,0,0,0.06)'}` }}>
+                <p style={{ ...sectionTitle, marginBottom: '10px' }}>Deadline</p>
                 {daysLeft !== null ? (
                   <>
-                    <p style={{ fontSize: '32px', fontWeight: '700', letterSpacing: '-0.04em', lineHeight: 1, marginBottom: '6px', color: daysLeft < 0 ? '#EF4444' : daysLeft <= 7 ? '#F59E0B' : '#1D1D1F' }}>
+                    <p style={{ fontSize: '26px', fontWeight: '700', letterSpacing: '-0.04em', lineHeight: 1, marginBottom: '4px', color: daysLeft < 0 ? '#EF4444' : daysLeft <= 7 ? '#F59E0B' : '#1D1D1F' }}>
                       {daysLeft < 0 ? `+${Math.abs(daysLeft)}` : daysLeft}
-                      <span style={{ fontSize: '14px', fontWeight: '400', color: '#8E8E93', marginLeft: '4px' }}>Tage</span>
+                      <span style={{ fontSize: '13px', fontWeight: '400', color: '#8E8E93', marginLeft: '4px' }}>Tage</span>
                     </p>
-                    <p style={{ fontSize: '12px', color: '#8E8E93' }}>{daysLeft < 0 ? 'überschritten' : daysLeft === 0 ? 'heute fällig' : 'verbleibend'}</p>
+                    <p style={{ fontSize: '11px', color: '#8E8E93' }}>
+                      {new Date(project.deadline).toLocaleDateString('de-DE', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      {daysLeft < 0 && <span style={{ color: '#EF4444', fontWeight: '600' }}> · überfällig</span>}
+                    </p>
                   </>
                 ) : (
                   <>
-                    <p style={{ fontSize: '32px', fontWeight: '700', letterSpacing: '-0.04em', lineHeight: 1, marginBottom: '6px', color: '#C7C7CC' }}>—</p>
-                    <p style={{ fontSize: '12px', color: '#8E8E93' }}>kein Datum</p>
+                    <p style={{ fontSize: '26px', fontWeight: '700', letterSpacing: '-0.04em', lineHeight: 1, marginBottom: '4px', color: '#C7C7CC' }}>—</p>
+                    <p style={{ fontSize: '11px', color: '#8E8E93' }}>kein Datum</p>
+                  </>
+                )}
+              </div>
+
+              {/* Live-Website */}
+              <div
+                style={{ ...card, cursor: project.live_url ? 'pointer' : 'default', transition: 'box-shadow 0.15s' }}
+                onClick={() => project.live_url && window.open(project.live_url, '_blank')}
+                onMouseEnter={e => { if (project.live_url) e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,113,227,0.12)'; }}
+                onMouseLeave={e => e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.04)'}
+              >
+                <p style={{ ...sectionTitle, marginBottom: '10px' }}>Live-Website</p>
+                {project.live_url ? (
+                  <>
+                    <p style={{ fontSize: '14px', fontWeight: '700', color: '#0071E3', letterSpacing: '-0.01em', lineHeight: 1.3, marginBottom: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {project.live_url.replace(/^https?:\/\//, '')}
+                    </p>
+                    <p style={{ fontSize: '11px', color: '#8E8E93', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                      <ExternalLink size={10} /> öffnen
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p style={{ fontSize: '26px', fontWeight: '700', color: '#C7C7CC', letterSpacing: '-0.04em', lineHeight: 1, marginBottom: '4px' }}>—</p>
+                    <button onClick={e => { e.stopPropagation(); setActiveTab('setup'); }} style={{ fontSize: '11px', color: '#0071E3', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                      URL eintragen →
+                    </button>
                   </>
                 )}
               </div>
@@ -879,8 +979,62 @@ export default function ProjectDetail() {
               );
             })()}
 
-            {/* ── Row 3: Quick Links + Finanzen ── */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '14px' }}>
+            {/* ── Row 3: Aufgaben + Quick Links + Finanzen ── */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px' }}>
+
+              {/* Aufgaben */}
+              <div style={card}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                  <p style={sectionTitle}>Aufgaben</p>
+                  <button onClick={() => setActiveTab('tasks')} style={linkBtn}>Alle →</button>
+                </div>
+                {/* Quick-add */}
+                <form onSubmit={e => { e.preventDefault(); if (!newTask.trim()) return; createTaskMutation.mutate(newTask.trim()); }} style={{ marginBottom: '10px' }}>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <input
+                      value={newTask}
+                      onChange={e => setNewTask(e.target.value)}
+                      placeholder="Neue Aufgabe..."
+                      style={{ flex: 1, fontSize: '12px', padding: '7px 10px', borderRadius: '8px', border: '1px solid #E5E5EA', outline: 'none', background: '#FAFAFA', color: '#1D1D1F' }}
+                    />
+                    <button type="submit" disabled={!newTask.trim() || createTaskMutation.isPending}
+                      style={{ padding: '7px 11px', borderRadius: '8px', background: newTask.trim() ? '#0071E3' : '#E5E5EA', border: 'none', color: newTask.trim() ? '#fff' : '#8E8E93', cursor: newTask.trim() ? 'pointer' : 'default', display: 'flex', alignItems: 'center', transition: 'background 0.12s' }}>
+                      <Plus size={14} />
+                    </button>
+                  </div>
+                </form>
+                {topTasks.length === 0 ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '11px', background: 'rgba(52,199,89,0.06)', borderRadius: '10px', border: '1px solid rgba(52,199,89,0.15)' }}>
+                    <CheckCircle2 size={13} color="#34C759" />
+                    <p style={{ fontSize: '12px', color: '#34C759', fontWeight: '500' }}>Alle erledigt</p>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                    {topTasks.map(task => {
+                      const isDoing = task.status === 'doing';
+                      return (
+                        <div key={task.id}
+                          onClick={() => cycleTask(task)}
+                          style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', borderRadius: '8px', border: `1px solid ${isDoing ? 'rgba(0,113,227,0.18)' : '#F2F2F7'}`, background: isDoing ? 'rgba(0,113,227,0.03)' : '#FAFAFA', cursor: 'pointer', transition: 'background 0.12s' }}
+                          onMouseEnter={e => e.currentTarget.style.background = isDoing ? 'rgba(0,113,227,0.07)' : '#F2F2F7'}
+                          onMouseLeave={e => e.currentTarget.style.background = isDoing ? 'rgba(0,113,227,0.03)' : '#FAFAFA'}
+                        >
+                          <div style={{ width: '16px', height: '16px', borderRadius: '50%', flexShrink: 0, border: `2px solid ${isDoing ? '#0071E3' : '#D1D1D6'}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            {isDoing && <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#0071E3' }} />}
+                          </div>
+                          <span style={{ flex: 1, fontSize: '12px', color: '#1D1D1F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{task.title}</span>
+                          {isDoing && <span style={{ fontSize: '9px', fontWeight: '700', background: '#0071E3', color: '#fff', padding: '1px 5px', borderRadius: '4px', flexShrink: 0 }}>Aktiv</span>}
+                        </div>
+                      );
+                    })}
+                    {openTaskCount > 4 && (
+                      <button onClick={() => setActiveTab('tasks')} style={{ fontSize: '11px', color: '#8E8E93', background: 'none', border: 'none', cursor: 'pointer', padding: '3px 0', textAlign: 'left' }}>
+                        +{openTaskCount - 4} weitere
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
 
               {/* Quick Links */}
               <div style={card}>
