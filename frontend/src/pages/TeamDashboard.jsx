@@ -33,172 +33,289 @@ function isoDate(d) {
 // ── Calendar ──────────────────────────────────────────────────────────────────
 
 const WEEKDAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+const HOURS    = Array.from({ length: 17 }, (_, i) => i + 6); // 6–22
 
-function Calendar({ projects, timeEntries }) {
-  const [current, setCurrent] = useState(() => {
-    const d = new Date();
-    return new Date(d.getFullYear(), d.getMonth(), 1);
+function getWeekDays(date) {
+  const d = new Date(date), dow = (d.getDay() + 6) % 7;
+  const mon = new Date(d); mon.setDate(d.getDate() - dow);
+  return Array.from({ length: 7 }, (_, i) => { const day = new Date(mon); day.setDate(mon.getDate() + i); return day; });
+}
+function parseLocal(str) { if (!str) return null; return new Date(str.replace('T', ' ').replace('Z', '')); }
+
+function Calendar({ projects }) {
+  const [view, setView]       = useState('month');
+  const [current, setCurrent] = useState(new Date());
+  const [popup, setPopup]     = useState(null);
+
+  // Date range for data fetching
+  const { rangeFrom, rangeTo } = useMemo(() => {
+    if (view === 'month') {
+      const y = current.getFullYear(), m = current.getMonth();
+      return { rangeFrom: isoDate(new Date(y, m, 1)), rangeTo: isoDate(new Date(y, m + 1, 0)) };
+    }
+    if (view === 'week') {
+      const days = getWeekDays(current);
+      return { rangeFrom: isoDate(days[0]), rangeTo: isoDate(days[6]) };
+    }
+    return { rangeFrom: isoDate(current), rangeTo: isoDate(current) };
+  }, [view, current]);
+
+  const { data: timeEntries = [] } = useQuery({
+    queryKey: ['time-entries-workspace', rangeFrom, rangeTo],
+    queryFn: () => timeApi.list({ scope: 'workspace', from: rangeFrom, to: rangeTo }),
   });
-  const [popup, setPopup] = useState(null); // { date, events[] }
 
-  const year  = current.getFullYear();
-  const month = current.getMonth();
+  const navDate = (dir) => {
+    const d = new Date(current);
+    if (view === 'month') d.setMonth(d.getMonth() + dir);
+    else if (view === 'week') d.setDate(d.getDate() + dir * 7);
+    else d.setDate(d.getDate() + dir);
+    setCurrent(d);
+  };
 
-  // Build day grid
+  const periodLabel = useMemo(() => {
+    if (view === 'month') return current.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
+    if (view === 'week') {
+      const days = getWeekDays(current);
+      const s = days[0].toLocaleDateString('de-DE', { day: 'numeric', month: 'short' });
+      const e = days[6].toLocaleDateString('de-DE', { day: 'numeric', month: 'short' });
+      return `${s} – ${e}`;
+    }
+    return current.toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'long' });
+  }, [view, current]);
+
+  const today = isoDate(new Date());
+
+  // Month view helpers
+  const year = current.getFullYear(), month = current.getMonth();
   const firstDay = new Date(year, month, 1);
   const lastDay  = new Date(year, month + 1, 0);
-  // Monday = 0
   const startOffset = (firstDay.getDay() + 6) % 7;
-  const totalCells  = startOffset + lastDay.getDate();
-  const rows = Math.ceil(totalCells / 7);
+  const rows = Math.ceil((startOffset + lastDay.getDate()) / 7);
 
-  // Build event maps  { 'YYYY-MM-DD': [{ type, label, color }] }
   const eventMap = useMemo(() => {
     const map = {};
-    const add = (dateStr, event) => {
-      if (!map[dateStr]) map[dateStr] = [];
-      map[dateStr].push(event);
-    };
-
-    // Deadlines
+    const add = (dateStr, ev) => { if (!map[dateStr]) map[dateStr] = []; map[dateStr].push(ev); };
     for (const p of projects) {
-      if (p.deadline) {
-        const d = p.deadline.slice(0, 10);
-        add(d, { type: 'deadline', label: p.name, color: '#FF3B30' });
-      }
+      if (p.deadline) add(p.deadline.slice(0, 10), { type: 'deadline', label: p.name, color: '#FF3B30' });
     }
-
-    // Time entries
     for (const e of timeEntries) {
       if (e.start_time) {
-        const d = e.start_time.slice(0, 10);
         const h = e.duration ? Math.round(e.duration / 360) / 10 : null;
-        add(d, {
+        add(e.start_time.slice(0, 10), {
           type: 'time',
           label: `${e.user_name || 'Zeit'}: ${h ? h + 'h' : '–'} ${e.project_name ? `(${e.project_name})` : ''}`.trim(),
           color: e.user_color || '#0071E3',
         });
       }
     }
-
     return map;
   }, [projects, timeEntries]);
 
-  const today = isoDate(new Date());
+  // Week/Day events with Date objects
+  const timedEvents = useMemo(() => {
+    const all = [];
+    for (const p of projects) {
+      if (!p.deadline) continue;
+      all.push({ id: `dl-${p.id}`, title: `📅 ${p.name}`, _start: new Date(p.deadline + 'T00:00:00'), _end: null, _color: '#EF4444', all_day: true });
+    }
+    for (const e of timeEntries) {
+      if (!e.start_time) continue;
+      const start = parseLocal(e.start_time);
+      const end   = e.end_time ? parseLocal(e.end_time) : null;
+      const dur   = e.duration ? ` · ${Math.floor(e.duration / 3600)}h ${Math.floor((e.duration % 3600) / 60)}m` : '';
+      all.push({ id: `t-${e.id}`, title: `${e.user_name || 'Zeit'}${e.project_name ? ' · ' + e.project_name : ''}${dur}`, _start: start, _end: end, _color: e.user_color || '#0071E3', all_day: false });
+    }
+    return all;
+  }, [projects, timeEntries]);
 
-  const prevMonth = () => setCurrent(new Date(year, month - 1, 1));
-  const nextMonth = () => setCurrent(new Date(year, month + 1, 1));
-
-  const monthLabel = current.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
+  const HOUR_H = 52;
 
   return (
     <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px 12px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+      {/* ── Header ── */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px 12px', borderBottom: '1px solid rgba(0,0,0,0.06)', flexWrap: 'wrap', gap: 8 }}>
         <h3 style={{ fontSize: 14, fontWeight: 600, color: '#1D1D1F', margin: 0 }}>Kalender</h3>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <button onClick={prevMonth} style={{ padding: 4, border: 'none', background: 'none', cursor: 'pointer', borderRadius: 6, color: '#6E6E73', display: 'flex' }}
-            onMouseEnter={e => e.currentTarget.style.background = '#F5F5F7'}
-            onMouseLeave={e => e.currentTarget.style.background = 'none'}>
+          <div style={{ display: 'flex', background: 'rgba(0,0,0,0.05)', borderRadius: 8, padding: 3, gap: 2 }}>
+            {[['month','Monat'],['week','Woche'],['day','Tag']].map(([v, lbl]) => (
+              <button key={v} onClick={() => { setView(v); setPopup(null); }}
+                style={{ padding: '3px 10px', fontSize: 11, fontWeight: 600, border: 'none', cursor: 'pointer', borderRadius: 6, transition: 'all 0.15s', background: view === v ? '#fff' : 'transparent', color: view === v ? '#1D1D1F' : '#86868B', boxShadow: view === v ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
+                {lbl}
+              </button>
+            ))}
+          </div>
+          <button onClick={() => navDate(-1)} style={{ padding: 4, border: 'none', background: 'none', cursor: 'pointer', borderRadius: 6, color: '#6E6E73', display: 'flex' }}
+            onMouseEnter={e => e.currentTarget.style.background = '#F5F5F7'} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
             <ChevronLeft size={16} />
           </button>
-          <span style={{ fontSize: 13, fontWeight: 500, color: '#1D1D1F', minWidth: 110, textAlign: 'center' }}>{monthLabel}</span>
-          <button onClick={nextMonth} style={{ padding: 4, border: 'none', background: 'none', cursor: 'pointer', borderRadius: 6, color: '#6E6E73', display: 'flex' }}
-            onMouseEnter={e => e.currentTarget.style.background = '#F5F5F7'}
-            onMouseLeave={e => e.currentTarget.style.background = 'none'}>
+          <span style={{ fontSize: 13, fontWeight: 500, color: '#1D1D1F', minWidth: 130, textAlign: 'center' }}>{periodLabel}</span>
+          <button onClick={() => navDate(1)} style={{ padding: 4, border: 'none', background: 'none', cursor: 'pointer', borderRadius: 6, color: '#6E6E73', display: 'flex' }}
+            onMouseEnter={e => e.currentTarget.style.background = '#F5F5F7'} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
             <ChevronRight size={16} />
           </button>
         </div>
       </div>
 
-      {/* Weekday headers */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
-        {WEEKDAYS.map(d => (
-          <div key={d} style={{ padding: '7px 0', textAlign: 'center', fontSize: 11, fontWeight: 600, color: '#86868B', letterSpacing: '0.04em' }}>
-            {d}
-          </div>
-        ))}
-      </div>
-
-      {/* Days grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
-        {Array.from({ length: rows * 7 }).map((_, i) => {
-          const dayNum = i - startOffset + 1;
-          const isValid = dayNum >= 1 && dayNum <= lastDay.getDate();
-          if (!isValid) return <div key={i} style={{ minHeight: 64, borderRight: (i + 1) % 7 !== 0 ? '1px solid rgba(0,0,0,0.04)' : 'none', borderBottom: i < (rows - 1) * 7 ? '1px solid rgba(0,0,0,0.04)' : 'none' }} />;
-
-          const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
-          const events = eventMap[dateStr] || [];
-          const isToday = dateStr === today;
-          const deadlines = events.filter(e => e.type === 'deadline');
-          const timeEvts = events.filter(e => e.type === 'time');
-
-          return (
-            <div
-              key={i}
-              onClick={() => events.length > 0 && setPopup(popup?.date === dateStr ? null : { date: dateStr, events })}
-              style={{
-                minHeight: 64, padding: '6px 8px',
-                borderRight: (i + 1) % 7 !== 0 ? '1px solid rgba(0,0,0,0.04)' : 'none',
-                borderBottom: i < (rows - 1) * 7 ? '1px solid rgba(0,0,0,0.04)' : 'none',
-                cursor: events.length > 0 ? 'pointer' : 'default',
-                position: 'relative',
-                transition: 'background 0.1s',
-                background: popup?.date === dateStr ? 'rgba(0,113,227,0.05)' : 'transparent',
-              }}
-              onMouseEnter={e => { if (events.length > 0) e.currentTarget.style.background = 'rgba(0,0,0,0.02)'; }}
-              onMouseLeave={e => { if (popup?.date !== dateStr) e.currentTarget.style.background = 'transparent'; }}
-            >
-              {/* Day number */}
-              <div style={{
-                width: 24, height: 24, borderRadius: '50%',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 12, fontWeight: isToday ? 600 : 400,
-                color: isToday ? '#fff' : '#1D1D1F',
-                background: isToday ? '#0071E3' : 'transparent',
-                marginBottom: 4,
-              }}>
-                {dayNum}
+      {/* ── Month View ── */}
+      {view === 'month' && <>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+          {WEEKDAYS.map(d => (
+            <div key={d} style={{ padding: '7px 0', textAlign: 'center', fontSize: 11, fontWeight: 600, color: '#86868B', letterSpacing: '0.04em' }}>{d}</div>
+          ))}
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
+          {Array.from({ length: rows * 7 }).map((_, i) => {
+            const dayNum = i - startOffset + 1;
+            const isValid = dayNum >= 1 && dayNum <= lastDay.getDate();
+            if (!isValid) return <div key={i} style={{ minHeight: 60, borderRight: (i+1)%7!==0?'1px solid rgba(0,0,0,0.04)':'none', borderBottom: i<(rows-1)*7?'1px solid rgba(0,0,0,0.04)':'none' }} />;
+            const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(dayNum).padStart(2,'0')}`;
+            const events = eventMap[dateStr] || [];
+            const isToday_ = dateStr === today;
+            return (
+              <div key={i}
+                onClick={() => events.length > 0 && setPopup(popup?.date === dateStr ? null : { date: dateStr, events })}
+                style={{ minHeight: 60, padding: '6px 8px', borderRight: (i+1)%7!==0?'1px solid rgba(0,0,0,0.04)':'none', borderBottom: i<(rows-1)*7?'1px solid rgba(0,0,0,0.04)':'none', cursor: events.length>0?'pointer':'default', background: popup?.date===dateStr?'rgba(0,113,227,0.05)':'transparent', transition: 'background 0.1s' }}
+                onMouseEnter={e => { if (events.length>0) e.currentTarget.style.background='rgba(0,0,0,0.02)'; }}
+                onMouseLeave={e => { if (popup?.date!==dateStr) e.currentTarget.style.background='transparent'; }}
+              >
+                <div style={{ width:24, height:24, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, fontWeight:isToday_?600:400, color:isToday_?'#fff':'#1D1D1F', background:isToday_?'#0071E3':'transparent', marginBottom:3 }}>{dayNum}</div>
+                <div style={{ display:'flex', flexWrap:'wrap', gap:3 }}>
+                  {events.filter(e=>e.type==='deadline').slice(0,3).map((ev,j)=>(
+                    <div key={j} title={ev.label} style={{ width:6, height:6, borderRadius:'50%', background:'#FF3B30', flexShrink:0 }} />
+                  ))}
+                  {events.filter(e=>e.type==='time').slice(0,3).map((ev,j)=>(
+                    <div key={j} title={ev.label} style={{ width:6, height:6, borderRadius:'50%', background:ev.color||'#0071E3', flexShrink:0 }} />
+                  ))}
+                  {events.length > 6 && <span style={{ fontSize:9, color:'#86868B', lineHeight:'6px' }}>+{events.length-6}</span>}
+                </div>
               </div>
+            );
+          })}
+        </div>
+      </>}
 
-              {/* Event dots */}
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
-                {deadlines.slice(0, 3).map((ev, j) => (
-                  <div key={j} title={ev.label} style={{ width: 6, height: 6, borderRadius: '50%', background: '#FF3B30', flexShrink: 0 }} />
+      {/* ── Week View ── */}
+      {view === 'week' && (() => {
+        const days = getWeekDays(current);
+        return (
+          <div style={{ overflow: 'auto', maxHeight: 460 }}>
+            <div style={{ display:'grid', gridTemplateColumns:'44px repeat(7,1fr)', borderBottom:'1px solid rgba(0,0,0,0.06)', position:'sticky', top:0, background:'#fff', zIndex:1 }}>
+              <div />
+              {days.map((d, i) => {
+                const isTodayDay = isoDate(d) === today;
+                return (
+                  <div key={i} style={{ padding:'8px 4px', textAlign:'center', borderLeft:'1px solid rgba(0,0,0,0.05)' }}>
+                    <div style={{ fontSize:10, color:'#86868B', fontWeight:600, letterSpacing:'0.04em' }}>{WEEKDAYS[i]}</div>
+                    <div style={{ width:26, height:26, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', margin:'2px auto 0', fontSize:12, fontWeight:700, background:isTodayDay?'#0071E3':'transparent', color:isTodayDay?'#fff':'#1D1D1F' }}>{d.getDate()}</div>
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{ display:'grid', gridTemplateColumns:'44px repeat(7,1fr)' }}>
+              <div>
+                {HOURS.map(h => (
+                  <div key={h} style={{ height:`${HOUR_H}px`, padding:'0 6px', display:'flex', alignItems:'flex-start', paddingTop:4, justifyContent:'flex-end' }}>
+                    <span style={{ fontSize:10, color:'#A0A0AA', fontWeight:500 }}>{String(h).padStart(2,'0')}</span>
+                  </div>
                 ))}
-                {timeEvts.slice(0, 3).map((ev, j) => (
-                  <div key={j} title={ev.label} style={{ width: 6, height: 6, borderRadius: '50%', background: ev.color || '#0071E3', flexShrink: 0 }} />
+              </div>
+              {days.map((day, di) => {
+                const dayStr = isoDate(day);
+                const dayEvts = timedEvents.filter(e => !e.all_day && e._start && isoDate(e._start) === dayStr);
+                return (
+                  <div key={di} style={{ borderLeft:'1px solid rgba(0,0,0,0.05)', position:'relative' }}>
+                    {HOURS.map(h => <div key={h} style={{ height:`${HOUR_H}px`, borderBottom:'1px solid rgba(0,0,0,0.04)' }} />)}
+                    {dayEvts.map((ev, ei) => {
+                      const startH = ev._start.getHours() + ev._start.getMinutes()/60;
+                      const endH   = ev._end ? ev._end.getHours() + ev._end.getMinutes()/60 : startH + 1;
+                      const top    = (startH - HOURS[0]) * HOUR_H;
+                      const height = Math.max((endH - startH) * HOUR_H - 2, 16);
+                      if (startH < HOURS[0] || startH >= HOURS[HOURS.length-1]) return null;
+                      return (
+                        <div key={ei} title={ev.title} style={{ position:'absolute', left:2, right:2, top, height, background:ev._color+'22', borderLeft:`3px solid ${ev._color}`, borderRadius:4, padding:'2px 4px', overflow:'hidden', zIndex:2 }}>
+                          <p style={{ fontSize:9, fontWeight:600, color:ev._color, margin:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{ev.title}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* ── Day View ── */}
+      {view === 'day' && (() => {
+        const dayStr = isoDate(current);
+        const dayAllDay = timedEvents.filter(e => e.all_day && e._start && isoDate(e._start) === dayStr);
+        const dayTimed  = timedEvents.filter(e => !e.all_day && e._start && isoDate(e._start) === dayStr);
+        return (
+          <div style={{ overflow:'auto', maxHeight:460 }}>
+            {dayAllDay.length > 0 && (
+              <div style={{ padding:'8px 16px', borderBottom:'1px solid rgba(0,0,0,0.06)', display:'flex', gap:6, flexWrap:'wrap', background:'#FAFBFC' }}>
+                <span style={{ fontSize:11, color:'#A0A0AA', fontWeight:600, alignSelf:'center', marginRight:4 }}>Ganztägig</span>
+                {dayAllDay.map((ev,i) => (
+                  <div key={i} style={{ padding:'3px 10px', borderRadius:6, background:ev._color+'20', borderLeft:`2px solid ${ev._color}`, fontSize:11, fontWeight:500, color:ev._color }}>{ev.title}</div>
                 ))}
-                {events.length > 6 && (
-                  <span style={{ fontSize: 9, color: '#86868B', lineHeight: '6px' }}>+{events.length - 6}</span>
-                )}
+              </div>
+            )}
+            {dayTimed.length === 0 && dayAllDay.length === 0 && (
+              <div style={{ textAlign:'center', padding:'32px 0', color:'#A0A0AA', fontSize:13 }}>Keine Einträge für diesen Tag</div>
+            )}
+            <div style={{ display:'grid', gridTemplateColumns:'44px 1fr', position:'relative' }}>
+              <div>
+                {HOURS.map(h => (
+                  <div key={h} style={{ height:`${HOUR_H}px`, padding:'0 6px', display:'flex', alignItems:'flex-start', paddingTop:4, justifyContent:'flex-end' }}>
+                    <span style={{ fontSize:10, color:'#A0A0AA', fontWeight:500 }}>{String(h).padStart(2,'0')}:00</span>
+                  </div>
+                ))}
+              </div>
+              <div style={{ borderLeft:'1px solid rgba(0,0,0,0.06)', position:'relative' }}>
+                {HOURS.map(h => <div key={h} style={{ height:`${HOUR_H}px`, borderBottom:'1px solid rgba(0,0,0,0.04)' }} />)}
+                {dayTimed.map((ev, i) => {
+                  const startH = ev._start.getHours() + ev._start.getMinutes()/60;
+                  const endH   = ev._end ? ev._end.getHours() + ev._end.getMinutes()/60 : startH + 1;
+                  const top    = (startH - HOURS[0]) * HOUR_H;
+                  const height = Math.max((endH - startH) * HOUR_H - 4, 20);
+                  return (
+                    <div key={i} title={ev.title} style={{ position:'absolute', left:8, right:12, top, height, background:ev._color+'18', borderLeft:`4px solid ${ev._color}`, borderRadius:6, padding:'4px 8px', zIndex:2 }}>
+                      <p style={{ fontSize:11, fontWeight:600, color:ev._color, margin:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{ev.title}</p>
+                      <p style={{ fontSize:10, color:'#6B7280', margin:'1px 0 0' }}>
+                        {ev._start.getHours()}:{String(ev._start.getMinutes()).padStart(2,'0')}
+                        {ev._end ? ` – ${ev._end.getHours()}:${String(ev._end.getMinutes()).padStart(2,'0')}` : ''}
+                      </p>
+                    </div>
+                  );
+                })}
               </div>
             </div>
-          );
-        })}
+          </div>
+        );
+      })()}
+
+      {/* ── Legend ── */}
+      <div style={{ display:'flex', gap:16, padding:'10px 20px', borderTop:'1px solid rgba(0,0,0,0.06)' }}>
+        <div style={{ display:'flex', alignItems:'center', gap:5, fontSize:11, color:'#6E6E73' }}>
+          <div style={{ width:8, height:8, borderRadius:'50%', background:'#FF3B30' }} /> Deadline
+        </div>
+        <div style={{ display:'flex', alignItems:'center', gap:5, fontSize:11, color:'#6E6E73' }}>
+          <div style={{ width:8, height:8, borderRadius:'50%', background:'#0071E3' }} /> Zeiteintrag
+        </div>
       </div>
 
-      {/* Legend */}
-      <div style={{ display: 'flex', gap: 16, padding: '10px 20px', borderTop: '1px solid rgba(0,0,0,0.06)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#6E6E73' }}>
-          <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#FF3B30' }} /> Deadline
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#6E6E73' }}>
-          <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#0071E3' }} /> Zeiteintrag
-        </div>
-      </div>
-
-      {/* Day popup */}
-      {popup && (
-        <div style={{ padding: '12px 20px', borderTop: '1px solid rgba(0,113,227,0.15)', background: 'rgba(0,113,227,0.03)' }}>
-          <div style={{ fontSize: 12, fontWeight: 600, color: '#6E6E73', marginBottom: 8 }}>
-            {new Date(popup.date + 'T12:00:00').toLocaleDateString('de-DE', { weekday: 'long', day: '2-digit', month: 'long' })}
+      {/* Month view popup */}
+      {view === 'month' && popup && (
+        <div style={{ padding:'12px 20px', borderTop:'1px solid rgba(0,113,227,0.15)', background:'rgba(0,113,227,0.03)' }}>
+          <div style={{ fontSize:12, fontWeight:600, color:'#6E6E73', marginBottom:8 }}>
+            {new Date(popup.date + 'T12:00:00').toLocaleDateString('de-DE', { weekday:'long', day:'2-digit', month:'long' })}
           </div>
           {popup.events.map((ev, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5, fontSize: 13 }}>
-              <div style={{ width: 8, height: 8, borderRadius: '50%', background: ev.color, flexShrink: 0 }} />
-              <span style={{ color: '#1D1D1F' }}>{ev.label}</span>
-              <span style={{ fontSize: 11, color: '#86868B' }}>{ev.type === 'deadline' ? '— Deadline' : '— Zeiteintrag'}</span>
+            <div key={i} style={{ display:'flex', alignItems:'center', gap:8, marginBottom:5, fontSize:13 }}>
+              <div style={{ width:8, height:8, borderRadius:'50%', background:ev.color, flexShrink:0 }} />
+              <span style={{ color:'#1D1D1F' }}>{ev.label}</span>
+              <span style={{ fontSize:11, color:'#86868B' }}>{ev.type === 'deadline' ? '— Deadline' : '— Zeiteintrag'}</span>
             </div>
           ))}
         </div>
@@ -290,15 +407,6 @@ const STATUS_LABELS = {
 export default function TeamDashboard() {
   const navigate = useNavigate();
 
-  // Calendar month for time entry fetching
-  const [calMonth] = useState(() => {
-    const d = new Date();
-    return new Date(d.getFullYear(), d.getMonth(), 1);
-  });
-
-  const calFrom = isoDate(calMonth);
-  const calTo   = isoDate(new Date(calMonth.getFullYear(), calMonth.getMonth() + 1, 0));
-
   const { data: teamStats = [], isLoading: loadingStats } = useQuery({
     queryKey: ['team-stats'],
     queryFn: () => teamApi.stats(),
@@ -307,11 +415,6 @@ export default function TeamDashboard() {
   const { data: projects = [], isLoading: loadingProjects } = useQuery({
     queryKey: ['projects'],
     queryFn: () => projectsApi.list().then(r => r.data),
-  });
-
-  const { data: calEntries = [] } = useQuery({
-    queryKey: ['time-entries-workspace', calFrom, calTo],
-    queryFn: () => timeApi.list({ scope: 'workspace', from: calFrom, to: calTo }),
   });
 
   // ── Aggregated chart data ───────────────────────────────────────────────────
@@ -481,7 +584,7 @@ export default function TeamDashboard() {
 
       {/* ── Calendar + Sidebar ── */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 16, marginBottom: 28 }}>
-        <Calendar projects={projects} timeEntries={calEntries} />
+        <Calendar projects={projects} />
 
         {/* Upcoming deadlines */}
         <div className="card" style={{ padding: 0 }}>

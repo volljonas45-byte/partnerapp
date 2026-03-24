@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -11,6 +11,7 @@ import { projectsApi } from '../api/projects';
 import { invoicesApi } from '../api/invoices';
 import { workflowApi } from '../api/workflow';
 import { timeApi } from '../api/time';
+import { calendarApi } from '../api/calendar';
 import { formatCurrency, formatDate, isPast } from '../utils/formatters';
 import toast from 'react-hot-toast';
 import ReminderCard from '../components/workflow/ReminderCard';
@@ -60,6 +61,9 @@ function computeHealth(p) {
   if (d !== null && d <= 5) return 'warning';
   return 'good';
 }
+
+function parseLocal(str) { if (!str) return null; return new Date(str.replace('T', ' ').replace('Z', '')); }
+const DAY_HOURS = Array.from({ length: 15 }, (_, i) => i + 7); // 7–21
 
 // ── StatusDropdown ────────────────────────────────────────────────────────────
 
@@ -261,6 +265,16 @@ export default function Dashboard() {
     queryKey: ['time-timer-active'],
     queryFn: () => timeApi.timerActive(),
     refetchInterval: 30000,
+  });
+
+  const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const { data: todayCalEvents = [] } = useQuery({
+    queryKey: ['calendar-events-today', todayStr],
+    queryFn: () => calendarApi.list({ from: todayStr, to: todayStr }),
+  });
+  const { data: todayTimeEntries = [] } = useQuery({
+    queryKey: ['time-entries-today', todayStr],
+    queryFn: () => timeApi.list({ from: todayStr, to: todayStr }),
   });
 
   const updateProject = useMutation({
@@ -736,6 +750,102 @@ export default function Dashboard() {
         </div>
 
       </div>
+
+      {/* ── Heute: Tagesansicht Kalender ── */}
+      {(() => {
+        // Build today's events
+        const todayEvents = [];
+        for (const e of todayCalEvents) {
+          const start = parseLocal(e.start_time);
+          const end   = e.end_time ? parseLocal(e.end_time) : null;
+          if (start) todayEvents.push({ id: e.id, title: e.title, _start: start, _end: end, _color: e.color || '#0071E3', all_day: !!e.all_day });
+        }
+        for (const p of projects) {
+          if (p.deadline && p.deadline.slice(0, 10) === todayStr) {
+            todayEvents.push({ id: `dl-${p.id}`, title: `📅 ${p.name}`, _start: new Date(todayStr + 'T00:00:00'), _end: null, _color: '#EF4444', all_day: true });
+          }
+        }
+        for (const e of todayTimeEntries) {
+          if (!e.start_time) continue;
+          const start = parseLocal(e.start_time);
+          const end   = e.end_time ? parseLocal(e.end_time) : null;
+          const dur   = e.duration ? ` · ${Math.floor(e.duration / 3600)}h ${Math.floor((e.duration % 3600) / 60)}m` : '';
+          todayEvents.push({ id: `t-${e.id}`, title: `⏱${e.project_name ? ' ' + e.project_name : ''}${dur}`, _start: start, _end: end, _color: '#5AC8FA', all_day: false });
+        }
+        const allDayEvts = todayEvents.filter(e => e.all_day);
+        const timedEvts  = todayEvents.filter(e => !e.all_day && e._start);
+        const HOUR_H = 44;
+        const todayLabel = new Date().toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' });
+
+        return (
+          <div style={{ ...card, padding: 0, overflow: 'hidden' }}>
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px 12px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+              <h3 style={{ fontSize: '13px', fontWeight: '700', color: '#111827', display: 'flex', alignItems: 'center', gap: '7px', margin: 0 }}>
+                <div style={{ width: '26px', height: '26px', borderRadius: '8px', background: 'rgba(0,113,227,0.09)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Clock size={13} color="#0071E3" />
+                </div>
+                Heute – {todayLabel}
+              </h3>
+              <button onClick={() => navigate('/calendar')}
+                style={{ fontSize: '12px', color: '#0071E3', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '500', display: 'inline-flex', alignItems: 'center', gap: '3px' }}
+                onMouseEnter={e => e.currentTarget.style.opacity = '0.7'}
+                onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
+                Kalender <ChevronRight size={12} />
+              </button>
+            </div>
+
+            {/* All-day strip */}
+            {allDayEvts.length > 0 && (
+              <div style={{ padding: '8px 18px', borderBottom: '1px solid rgba(0,0,0,0.05)', display: 'flex', gap: 6, flexWrap: 'wrap', background: '#FAFBFC' }}>
+                <span style={{ fontSize: '11px', color: '#A0A0AA', fontWeight: 600, alignSelf: 'center', marginRight: 4 }}>Ganztägig</span>
+                {allDayEvts.map((ev, i) => (
+                  <div key={i} style={{ padding: '3px 10px', borderRadius: 6, background: ev._color + '20', borderLeft: `2px solid ${ev._color}`, fontSize: '11px', fontWeight: 500, color: ev._color }}>{ev.title}</div>
+                ))}
+              </div>
+            )}
+
+            {/* Hourly grid */}
+            <div style={{ overflow: 'auto', maxHeight: 340 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '44px 1fr', position: 'relative' }}>
+                <div>
+                  {DAY_HOURS.map(h => (
+                    <div key={h} style={{ height: `${HOUR_H}px`, padding: '0 8px', display: 'flex', alignItems: 'flex-start', paddingTop: 4, justifyContent: 'flex-end' }}>
+                      <span style={{ fontSize: '10px', color: '#A0A0AA', fontWeight: 500 }}>{String(h).padStart(2,'0')}:00</span>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ borderLeft: '1px solid rgba(0,0,0,0.06)', position: 'relative' }}>
+                  {DAY_HOURS.map(h => <div key={h} style={{ height: `${HOUR_H}px`, borderBottom: '1px solid rgba(0,0,0,0.04)' }} />)}
+                  {timedEvts.length === 0 && (
+                    <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#C7C7CC', fontSize: '12px' }}>
+                      Keine Termine heute
+                    </div>
+                  )}
+                  {timedEvts.map((ev, i) => {
+                    const startH = ev._start.getHours() + ev._start.getMinutes()/60;
+                    const endH   = ev._end ? ev._end.getHours() + ev._end.getMinutes()/60 : startH + 1;
+                    const top    = (startH - DAY_HOURS[0]) * HOUR_H;
+                    const height = Math.max((endH - startH) * HOUR_H - 4, 20);
+                    if (startH < DAY_HOURS[0] || startH >= DAY_HOURS[DAY_HOURS.length-1]) return null;
+                    return (
+                      <div key={i} title={ev.title}
+                        style={{ position: 'absolute', left: 8, right: 12, top, height, background: ev._color + '18', borderLeft: `4px solid ${ev._color}`, borderRadius: 7, padding: '5px 10px', zIndex: 2, cursor: 'default' }}>
+                        <p style={{ fontSize: '12px', fontWeight: 600, color: ev._color, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.title}</p>
+                        <p style={{ fontSize: '10px', color: '#6B7280', margin: '2px 0 0' }}>
+                          {ev._start.getHours()}:{String(ev._start.getMinutes()).padStart(2,'0')}
+                          {ev._end ? ` – ${ev._end.getHours()}:${String(ev._end.getMinutes()).padStart(2,'0')}` : ''}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
     </div>
   );
 }
