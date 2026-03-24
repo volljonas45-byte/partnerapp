@@ -277,7 +277,7 @@ router.get('/summary', async (req, res) => {
 
     const entries = await getAll(`
       SELECT te.duration, te.project_id, p.name AS project_name,
-             DATE(te.start_time) AS entry_date,
+             TO_CHAR(te.start_time, 'YYYY-MM-DD') AS entry_date,
              TO_CHAR(te.start_time, 'YYYY-MM') AS entry_month
       FROM time_entries te
       LEFT JOIN projects p ON p.id = te.project_id
