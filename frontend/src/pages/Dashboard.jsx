@@ -276,7 +276,8 @@ export default function Dashboard() {
 
   // ── Derived ───────────────────────────────────────────────────────────────────
 
-  const activeWebsites  = projects.filter(p => p.status !== 'completed');
+  const INACTIVE_STATUSES = ['completed', 'waiting_for_client', 'waiting'];
+  const activeWebsites  = projects.filter(p => !INACTIVE_STATUSES.includes(p.status));
   const waitingCount    = projects.filter(p => p.status === 'waiting_for_client').length;
   const overdueCount    = projects.filter(p => p.status !== 'completed' && p.deadline && isPast(p.deadline)).length;
   const openAmount      = (stats?.unpaid_revenue || 0) + (stats?.overdue_revenue || 0);

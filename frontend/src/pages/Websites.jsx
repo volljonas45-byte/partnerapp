@@ -42,7 +42,8 @@ const STATUSES = {
   completed:          { label: 'Abgeschlossen',     dot: 'bg-emerald-500', chip: 'bg-emerald-50 text-emerald-700'},
   waiting:            { label: 'Warten auf Kunde',  dot: 'bg-amber-400',   chip: 'bg-amber-50 text-amber-700'    },
 };
-const STATUS_ORDER = ['planned', 'active', 'waiting_for_client', 'completed'];
+const STATUS_ORDER = ['planned', 'active', 'feedback', 'review', 'completed', 'waiting_for_client', 'waiting'];
+const STATUS_SORT_WEIGHT = { waiting_for_client: 10, waiting: 11 };
 
 const TYPES = {
   website_code: { label: 'Code',    cls: 'bg-blue-100 text-blue-700'     },
@@ -364,7 +365,9 @@ export default function Websites() {
       if (filterType && p.type !== filterType) return false;
       if (filterHosting && p.hosting_provider !== filterHosting) return false;
       return true;
-    });
+    }).sort((a, b) =>
+      (STATUS_SORT_WEIGHT[a.status] || 0) - (STATUS_SORT_WEIGHT[b.status] || 0)
+    );
   }, [projects, search, filterStatus, filterType, filterHosting]);
 
   const byStatus = useMemo(() => {
