@@ -445,8 +445,12 @@ export default function Dashboard() {
         )}
       </div>
 
+      {/* ── Main 2-col layout: left content + right calendar sidebar ── */}
+      <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
       {/* ── Mini KPI Strip ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '12px', marginBottom: '28px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '12px' }}>
         {[
           {
             label: 'Aktive Websites',
@@ -520,7 +524,7 @@ export default function Dashboard() {
       </div>
 
       {/* ── Aktive Websites Grid ── */}
-      <div style={{ marginBottom: '28px' }}>
+      <div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
             <h2 style={{ fontSize: '15px', fontWeight: '700', color: '#111827', letterSpacing: '-0.025em', margin: 0 }}>
@@ -559,7 +563,7 @@ export default function Dashboard() {
             </button>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '14px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px' }}>
             {activeWebsites.map(p => (
               <WebsiteCard
                 key={p.id}
@@ -598,9 +602,8 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* ── Bottom: cards + Heute-Kalender Sidebar ── */}
-      <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
-      <div style={{ flex: 1, minWidth: 0, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '14px' }}>
+      {/* ── Bottom 3-col ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px' }}>
 
         {/* Finanzen */}
         <div style={card}>
@@ -751,9 +754,10 @@ export default function Dashboard() {
         </div>
 
       </div>
+      </div>
 
-        {/* Heute-Kalender Sidebar */}
-        <div style={{ width: '260px', flexShrink: 0 }}>
+      {/* Heute-Kalender Sidebar */}
+      <div style={{ width: '280px', flexShrink: 0, position: 'sticky', top: '20px' }}>
           {(() => {
             const todayEvents = [];
             for (const e of todayCalEvents) {
