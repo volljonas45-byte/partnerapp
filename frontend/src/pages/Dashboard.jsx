@@ -598,8 +598,9 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* ── Bottom 3-col: Finanzen + Follow-ups + Time Tracking ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '14px' }}>
+      {/* ── Bottom: cards + Heute-Kalender Sidebar ── */}
+      <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
+      <div style={{ flex: 1, minWidth: 0, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '14px' }}>
 
         {/* Finanzen */}
         <div style={card}>
@@ -751,100 +752,101 @@ export default function Dashboard() {
 
       </div>
 
-      {/* ── Heute: Tagesansicht Kalender ── */}
-      {(() => {
-        // Build today's events
-        const todayEvents = [];
-        for (const e of todayCalEvents) {
-          const start = parseLocal(e.start_time);
-          const end   = e.end_time ? parseLocal(e.end_time) : null;
-          if (start) todayEvents.push({ id: e.id, title: e.title, _start: start, _end: end, _color: e.color || '#0071E3', all_day: !!e.all_day });
-        }
-        for (const p of projects) {
-          if (p.deadline && p.deadline.slice(0, 10) === todayStr) {
-            todayEvents.push({ id: `dl-${p.id}`, title: `📅 ${p.name}`, _start: new Date(todayStr + 'T00:00:00'), _end: null, _color: '#EF4444', all_day: true });
-          }
-        }
-        for (const e of todayTimeEntries) {
-          if (!e.start_time) continue;
-          const start = parseLocal(e.start_time);
-          const end   = e.end_time ? parseLocal(e.end_time) : null;
-          const dur   = e.duration ? ` · ${Math.floor(e.duration / 3600)}h ${Math.floor((e.duration % 3600) / 60)}m` : '';
-          todayEvents.push({ id: `t-${e.id}`, title: `⏱${e.project_name ? ' ' + e.project_name : ''}${dur}`, _start: start, _end: end, _color: '#5AC8FA', all_day: false });
-        }
-        const allDayEvts = todayEvents.filter(e => e.all_day);
-        const timedEvts  = todayEvents.filter(e => !e.all_day && e._start);
-        const HOUR_H = 44;
-        const todayLabel = new Date().toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' });
+        {/* Heute-Kalender Sidebar */}
+        <div style={{ width: '260px', flexShrink: 0 }}>
+          {(() => {
+            const todayEvents = [];
+            for (const e of todayCalEvents) {
+              const start = parseLocal(e.start_time);
+              const end   = e.end_time ? parseLocal(e.end_time) : null;
+              if (start) todayEvents.push({ id: e.id, title: e.title, _start: start, _end: end, _color: e.color || '#0071E3', all_day: !!e.all_day });
+            }
+            for (const p of projects) {
+              if (p.deadline && p.deadline.slice(0, 10) === todayStr) {
+                todayEvents.push({ id: `dl-${p.id}`, title: `📅 ${p.name}`, _start: new Date(todayStr + 'T00:00:00'), _end: null, _color: '#EF4444', all_day: true });
+              }
+            }
+            for (const e of todayTimeEntries) {
+              if (!e.start_time) continue;
+              const start = parseLocal(e.start_time);
+              const end   = e.end_time ? parseLocal(e.end_time) : null;
+              const dur   = e.duration ? ` ${Math.floor(e.duration / 3600)}h ${Math.floor((e.duration % 3600) / 60)}m` : '';
+              todayEvents.push({ id: `t-${e.id}`, title: `⏱${e.project_name ? ' ' + e.project_name : ''}${dur}`, _start: start, _end: end, _color: '#5AC8FA', all_day: false });
+            }
+            const allDayEvts = todayEvents.filter(e => e.all_day);
+            const timedEvts  = todayEvents.filter(e => !e.all_day && e._start);
+            const HOUR_H = 36;
+            const dateShort = new Date().toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'short' });
 
-        return (
-          <div style={{ ...card, padding: 0, overflow: 'hidden' }}>
-            {/* Header */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px 12px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
-              <h3 style={{ fontSize: '13px', fontWeight: '700', color: '#111827', display: 'flex', alignItems: 'center', gap: '7px', margin: 0 }}>
-                <div style={{ width: '26px', height: '26px', borderRadius: '8px', background: 'rgba(0,113,227,0.09)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Clock size={13} color="#0071E3" />
+            return (
+              <div style={{ ...card, padding: 0, overflow: 'hidden' }}>
+                {/* Header */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px 10px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+                  <span style={{ fontSize: '12px', fontWeight: '700', color: '#111827', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Clock size={12} color="#0071E3" /> Heute · {dateShort}
+                  </span>
+                  <button onClick={() => navigate('/calendar')}
+                    style={{ fontSize: '11px', color: '#0071E3', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '500', display: 'inline-flex', alignItems: 'center', gap: '2px' }}
+                    onMouseEnter={e => e.currentTarget.style.opacity = '0.7'}
+                    onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
+                    Mehr <ChevronRight size={11} />
+                  </button>
                 </div>
-                Heute – {todayLabel}
-              </h3>
-              <button onClick={() => navigate('/calendar')}
-                style={{ fontSize: '12px', color: '#0071E3', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '500', display: 'inline-flex', alignItems: 'center', gap: '3px' }}
-                onMouseEnter={e => e.currentTarget.style.opacity = '0.7'}
-                onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
-                Kalender <ChevronRight size={12} />
-              </button>
-            </div>
 
-            {/* All-day strip */}
-            {allDayEvts.length > 0 && (
-              <div style={{ padding: '8px 18px', borderBottom: '1px solid rgba(0,0,0,0.05)', display: 'flex', gap: 6, flexWrap: 'wrap', background: '#FAFBFC' }}>
-                <span style={{ fontSize: '11px', color: '#A0A0AA', fontWeight: 600, alignSelf: 'center', marginRight: 4 }}>Ganztägig</span>
-                {allDayEvts.map((ev, i) => (
-                  <div key={i} style={{ padding: '3px 10px', borderRadius: 6, background: ev._color + '20', borderLeft: `2px solid ${ev._color}`, fontSize: '11px', fontWeight: 500, color: ev._color }}>{ev.title}</div>
-                ))}
-              </div>
-            )}
+                {/* All-day strip */}
+                {allDayEvts.length > 0 && (
+                  <div style={{ padding: '6px 12px', borderBottom: '1px solid rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', gap: 4, background: '#FAFBFC' }}>
+                    {allDayEvts.map((ev, i) => (
+                      <div key={i} style={{ padding: '2px 8px', borderRadius: 5, background: ev._color + '18', borderLeft: `2px solid ${ev._color}`, fontSize: '10px', fontWeight: 500, color: ev._color, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.title}</div>
+                    ))}
+                  </div>
+                )}
 
-            {/* Hourly grid */}
-            <div style={{ overflow: 'auto', maxHeight: 340 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '44px 1fr', position: 'relative' }}>
-                <div>
-                  {DAY_HOURS.map(h => (
-                    <div key={h} style={{ height: `${HOUR_H}px`, padding: '0 8px', display: 'flex', alignItems: 'flex-start', paddingTop: 4, justifyContent: 'flex-end' }}>
-                      <span style={{ fontSize: '10px', color: '#A0A0AA', fontWeight: 500 }}>{String(h).padStart(2,'0')}:00</span>
+                {/* Hourly grid */}
+                <div style={{ overflow: 'auto', maxHeight: 360 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '36px 1fr', position: 'relative' }}>
+                    <div>
+                      {DAY_HOURS.map(h => (
+                        <div key={h} style={{ height: `${HOUR_H}px`, padding: '0 6px', display: 'flex', alignItems: 'flex-start', paddingTop: 3, justifyContent: 'flex-end' }}>
+                          <span style={{ fontSize: '9px', color: '#C0C0C8', fontWeight: 500 }}>{String(h).padStart(2,'0')}</span>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-                <div style={{ borderLeft: '1px solid rgba(0,0,0,0.06)', position: 'relative' }}>
-                  {DAY_HOURS.map(h => <div key={h} style={{ height: `${HOUR_H}px`, borderBottom: '1px solid rgba(0,0,0,0.04)' }} />)}
-                  {timedEvts.length === 0 && (
-                    <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#C7C7CC', fontSize: '12px' }}>
-                      Keine Termine heute
+                    <div style={{ borderLeft: '1px solid rgba(0,0,0,0.05)', position: 'relative' }}>
+                      {DAY_HOURS.map(h => <div key={h} style={{ height: `${HOUR_H}px`, borderBottom: '1px solid rgba(0,0,0,0.03)' }} />)}
+                      {timedEvts.length === 0 && (
+                        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#D1D5DB', fontSize: '11px' }}>
+                          Keine Termine
+                        </div>
+                      )}
+                      {timedEvts.map((ev, i) => {
+                        const startH = ev._start.getHours() + ev._start.getMinutes()/60;
+                        const endH   = ev._end ? ev._end.getHours() + ev._end.getMinutes()/60 : startH + 1;
+                        const top    = (startH - DAY_HOURS[0]) * HOUR_H;
+                        const height = Math.max((endH - startH) * HOUR_H - 2, 18);
+                        if (startH < DAY_HOURS[0] || startH >= DAY_HOURS[DAY_HOURS.length-1]) return null;
+                        return (
+                          <div key={i} title={ev.title}
+                            style={{ position: 'absolute', left: 4, right: 6, top, height, background: ev._color + '18', borderLeft: `3px solid ${ev._color}`, borderRadius: 5, padding: '3px 6px', zIndex: 2 }}>
+                            <p style={{ fontSize: '10px', fontWeight: 600, color: ev._color, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.title}</p>
+                            {height > 28 && (
+                              <p style={{ fontSize: '9px', color: '#6B7280', margin: '1px 0 0' }}>
+                                {ev._start.getHours()}:{String(ev._start.getMinutes()).padStart(2,'0')}
+                                {ev._end ? `–${ev._end.getHours()}:${String(ev._end.getMinutes()).padStart(2,'0')}` : ''}
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
-                  )}
-                  {timedEvts.map((ev, i) => {
-                    const startH = ev._start.getHours() + ev._start.getMinutes()/60;
-                    const endH   = ev._end ? ev._end.getHours() + ev._end.getMinutes()/60 : startH + 1;
-                    const top    = (startH - DAY_HOURS[0]) * HOUR_H;
-                    const height = Math.max((endH - startH) * HOUR_H - 4, 20);
-                    if (startH < DAY_HOURS[0] || startH >= DAY_HOURS[DAY_HOURS.length-1]) return null;
-                    return (
-                      <div key={i} title={ev.title}
-                        style={{ position: 'absolute', left: 8, right: 12, top, height, background: ev._color + '18', borderLeft: `4px solid ${ev._color}`, borderRadius: 7, padding: '5px 10px', zIndex: 2, cursor: 'default' }}>
-                        <p style={{ fontSize: '12px', fontWeight: 600, color: ev._color, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.title}</p>
-                        <p style={{ fontSize: '10px', color: '#6B7280', margin: '2px 0 0' }}>
-                          {ev._start.getHours()}:{String(ev._start.getMinutes()).padStart(2,'0')}
-                          {ev._end ? ` – ${ev._end.getHours()}:${String(ev._end.getMinutes()).padStart(2,'0')}` : ''}
-                        </p>
-                      </div>
-                    );
-                  })}
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
-        );
-      })()}
+            );
+          })()}
+        </div>
+
+      </div>
 
     </div>
   );
