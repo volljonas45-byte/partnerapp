@@ -123,9 +123,9 @@ function WebsiteCard({ project, onStatusChange, onClick }) {
     <div
       onClick={onClick}
       style={{
-        background: hc.bg,
+        background: '#fff',
         borderRadius: '14px',
-        border: `1px solid ${hc.border}`,
+        border: '1px solid rgba(0,0,0,0.07)',
         borderLeft: `3px solid ${hc.color}`,
         padding: '16px 16px 14px',
         cursor: 'pointer',
@@ -509,11 +509,6 @@ export default function Dashboard() {
               <Bell size={15} color="#7C3AED" />
               Follow-ups
             </h3>
-            {workflowReminders.filter(r => !r.done).length > 0 && (
-              <span style={{ fontSize: '11px', color: '#8E8E93', background: '#F2F2F7', padding: '2px 8px', borderRadius: '99px', fontWeight: '600' }}>
-                {workflowReminders.filter(r => !r.done).length}
-              </span>
-            )}
           </div>
 
           {dueTodayReminders.length === 0 ? (
@@ -558,27 +553,33 @@ export default function Dashboard() {
           )}
 
           {/* Weekly stats */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '14px' }}>
-            <div style={{ padding: '12px', borderRadius: '10px', background: '#F5F5F7', textAlign: 'center' }}>
-              <p style={{ fontSize: '22px', fontWeight: '700', color: '#1D1D1F', letterSpacing: '-0.03em', lineHeight: 1, margin: 0 }}>
-                {timeSummary?.week_hours != null ? `${Math.floor(timeSummary.week_hours)}h` : '—'}
-              </p>
-              <p style={{ fontSize: '10px', color: '#8E8E93', marginTop: '3px' }}>Diese Woche</p>
-            </div>
-            <div style={{ padding: '12px', borderRadius: '10px', background: '#F5F5F7', textAlign: 'center' }}>
-              <p style={{ fontSize: '22px', fontWeight: '700', color: '#1D1D1F', letterSpacing: '-0.03em', lineHeight: 1, margin: 0 }}>
-                {timeSummary?.today_hours != null ? `${Math.floor(timeSummary.today_hours)}h` : '—'}
-              </p>
-              <p style={{ fontSize: '10px', color: '#8E8E93', marginTop: '3px' }}>Heute</p>
-            </div>
-          </div>
-
-          {timeSummary?.month_hours != null && (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderTop: '1px solid rgba(0,0,0,0.05)' }}>
-              <span style={{ fontSize: '12px', color: '#8E8E93' }}>Diesen Monat</span>
-              <span style={{ fontSize: '13px', fontWeight: '600', color: '#1D1D1F' }}>{Math.floor(timeSummary.month_hours)}h</span>
-            </div>
-          )}
+          {(() => {
+            const fmtH = sec => sec != null ? `${Math.floor(sec / 3600)}h ${Math.floor((sec % 3600) / 60)}m` : '—';
+            return (
+              <>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '14px' }}>
+                  <div style={{ padding: '12px', borderRadius: '10px', background: '#F5F5F7', textAlign: 'center' }}>
+                    <p style={{ fontSize: '18px', fontWeight: '700', color: '#1D1D1F', letterSpacing: '-0.02em', lineHeight: 1, margin: 0 }}>
+                      {fmtH(timeSummary?.week_sec)}
+                    </p>
+                    <p style={{ fontSize: '10px', color: '#8E8E93', marginTop: '3px' }}>Diese Woche</p>
+                  </div>
+                  <div style={{ padding: '12px', borderRadius: '10px', background: '#F5F5F7', textAlign: 'center' }}>
+                    <p style={{ fontSize: '18px', fontWeight: '700', color: '#1D1D1F', letterSpacing: '-0.02em', lineHeight: 1, margin: 0 }}>
+                      {fmtH(timeSummary?.today_sec)}
+                    </p>
+                    <p style={{ fontSize: '10px', color: '#8E8E93', marginTop: '3px' }}>Heute</p>
+                  </div>
+                </div>
+                {timeSummary?.month_sec != null && (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderTop: '1px solid rgba(0,0,0,0.05)' }}>
+                    <span style={{ fontSize: '12px', color: '#8E8E93' }}>Diesen Monat</span>
+                    <span style={{ fontSize: '13px', fontWeight: '600', color: '#1D1D1F' }}>{fmtH(timeSummary.month_sec)}</span>
+                  </div>
+                )}
+              </>
+            );
+          })()}
         </div>
 
       </div>
