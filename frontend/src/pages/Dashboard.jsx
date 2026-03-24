@@ -5,11 +5,12 @@ import {
   Globe, Plus, ChevronRight, CheckCircle2, Check,
   AlertTriangle, Euro, Bell, ExternalLink,
   ChevronDown, AlertCircle, Send, TrendingUp,
-  MessageSquare, Clock,
+  Clock, Timer,
 } from 'lucide-react';
 import { projectsApi } from '../api/projects';
 import { invoicesApi } from '../api/invoices';
 import { workflowApi } from '../api/workflow';
+import { timeApi } from '../api/time';
 import { formatCurrency, formatDate, isPast } from '../utils/formatters';
 import toast from 'react-hot-toast';
 import ReminderCard from '../components/workflow/ReminderCard';
@@ -210,6 +211,17 @@ export default function Dashboard() {
     queryFn: () => workflowApi.getDashboardReminders().then(r => r.data),
   });
 
+  const { data: timeSummary } = useQuery({
+    queryKey: ['time-summary'],
+    queryFn: () => timeApi.summary(),
+  });
+
+  const { data: activeTimer } = useQuery({
+    queryKey: ['time-timer-active'],
+    queryFn: () => timeApi.timerActive(),
+    refetchInterval: 30000,
+  });
+
   const updateProject = useMutation({
     mutationFn: ({ id, data }) => projectsApi.update(id, data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['projects'] }),
@@ -249,12 +261,6 @@ export default function Dashboard() {
 
   // Alert chips
   const alertItems = [
-    waitingCount > 0 && {
-      key: 'waiting', icon: MessageSquare, color: '#D97706',
-      bg: 'rgba(245,158,11,0.1)', border: 'rgba(245,158,11,0.3)',
-      label: `${waitingCount} warten auf Kunde`,
-      onClick: () => navigate('/websites'),
-    },
     overdueCount > 0 && {
       key: 'overdue', icon: AlertTriangle, color: '#EF4444',
       bg: 'rgba(239,68,68,0.08)', border: 'rgba(239,68,68,0.25)',
@@ -307,7 +313,7 @@ export default function Dashboard() {
         </div>
         <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
           <button
-            onClick={() => navigate('/projects/new')}
+            onClick={() => navigate('/onboarding/wizard')}
             style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 15px', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.1)', background: '#fff', color: '#1D1D1F', fontSize: '13px', fontWeight: '500', cursor: 'pointer', transition: 'background 0.12s' }}
             onMouseEnter={e => e.currentTarget.style.background = '#F5F5F7'}
             onMouseLeave={e => e.currentTarget.style.background = '#fff'}
@@ -371,18 +377,22 @@ export default function Dashboard() {
             urgent: dueTodayReminders.length > 0,
             onClick: null,
           },
-        ].map((kpi, i) => (
-          <button key={i}
-            onClick={kpi.onClick || undefined}
-            style={{ padding: '15px 20px', background: '#fff', border: 'none', cursor: kpi.onClick ? 'pointer' : 'default', textAlign: 'left', transition: 'background 0.1s' }}
-            onMouseEnter={e => { if (kpi.onClick) e.currentTarget.style.background = '#FAFAFA'; }}
-            onMouseLeave={e => e.currentTarget.style.background = '#fff'}
-          >
-            <p style={{ fontSize: '10px', fontWeight: '600', color: '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '7px' }}>{kpi.label}</p>
-            <p style={{ fontSize: '24px', fontWeight: '700', color: kpi.urgent ? '#EF4444' : '#1D1D1F', letterSpacing: '-0.03em', lineHeight: 1, marginBottom: '4px' }}>{kpi.value}</p>
-            <p style={{ fontSize: '11px', color: '#8E8E93' }}>{kpi.sub}</p>
-          </button>
-        ))}
+        ].map((kpi, i) => {
+          const isDark = i === 0;
+          const baseBg = isDark ? '#0F172A' : '#fff';
+          return (
+            <button key={i}
+              onClick={kpi.onClick || undefined}
+              style={{ padding: '15px 20px', background: baseBg, border: 'none', cursor: kpi.onClick ? 'pointer' : 'default', textAlign: 'left', transition: 'background 0.1s' }}
+              onMouseEnter={e => { if (kpi.onClick) e.currentTarget.style.background = isDark ? '#1E293B' : '#FAFAFA'; }}
+              onMouseLeave={e => e.currentTarget.style.background = baseBg}
+            >
+              <p style={{ fontSize: '10px', fontWeight: '600', color: isDark ? 'rgba(255,255,255,0.5)' : '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '7px' }}>{kpi.label}</p>
+              <p style={{ fontSize: '24px', fontWeight: '700', color: isDark ? '#fff' : (kpi.urgent ? '#EF4444' : '#1D1D1F'), letterSpacing: '-0.03em', lineHeight: 1, marginBottom: '4px' }}>{kpi.value}</p>
+              <p style={{ fontSize: '11px', color: isDark ? 'rgba(255,255,255,0.4)' : '#8E8E93' }}>{kpi.sub}</p>
+            </button>
+          );
+        })}
       </div>
 
       {/* ── Aktive Websites Grid ── */}
@@ -406,7 +416,7 @@ export default function Dashboard() {
           <div style={{ ...card, textAlign: 'center', padding: '52px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
             <Globe size={32} color="#D1D1D6" />
             <p style={{ fontSize: '14px', fontWeight: '500', color: '#8E8E93', margin: 0 }}>Noch keine aktiven Websites</p>
-            <button onClick={() => navigate('/projects/new')}
+            <button onClick={() => navigate('/onboarding/wizard')}
               style={{ fontSize: '13px', color: '#0071E3', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '500' }}>
               Erste Website erstellen →
             </button>
@@ -423,7 +433,7 @@ export default function Dashboard() {
             ))}
             {/* New website card */}
             <button
-              onClick={() => navigate('/projects/new')}
+              onClick={() => navigate('/onboarding/wizard')}
               style={{ borderRadius: '14px', border: '1.5px dashed #D1D1D6', background: 'transparent', cursor: 'pointer', padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px', minHeight: '120px', color: '#8E8E93', transition: 'border-color 0.12s, color 0.12s' }}
               onMouseEnter={e => { e.currentTarget.style.borderColor = '#0071E3'; e.currentTarget.style.color = '#0071E3'; }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = '#D1D1D6'; e.currentTarget.style.color = '#8E8E93'; }}
@@ -435,8 +445,8 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* ── Bottom 2-col: Finanzen + Follow-ups ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+      {/* ── Bottom 3-col: Finanzen + Follow-ups + Time Tracking ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px' }}>
 
         {/* Finanzen */}
         <div style={card}>
@@ -506,35 +516,67 @@ export default function Dashboard() {
             )}
           </div>
 
-          {dueTodayReminders.length === 0 && upcomingReminders.length === 0 ? (
+          {dueTodayReminders.length === 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '24px 0', gap: '8px' }}>
               <CheckCircle2 size={24} color="#D1D1D6" />
-              <p style={{ fontSize: '12px', color: '#8E8E93', margin: 0 }}>Keine offenen Follow-ups</p>
+              <p style={{ fontSize: '12px', color: '#8E8E93', margin: 0 }}>Keine Follow-ups heute</p>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {dueTodayReminders.length > 0 && (
-                <>
-                  <p style={{ fontSize: '10px', fontWeight: '600', color: '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>Heute fällig</p>
-                  {dueTodayReminders.slice(0, 4).map(r => (
-                    <ReminderCard key={r.id} reminder={r}
-                      onDone={() => doneReminderMutation.mutate({ projectId: r.project_id, id: r.id })}
-                      onClick={() => navigate(`/projects/${r.project_id}?tab=workflow`)}
-                    />
-                  ))}
-                </>
-              )}
-              {upcomingReminders.length > 0 && (
-                <>
-                  <p style={{ fontSize: '10px', fontWeight: '600', color: '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.06em', margin: dueTodayReminders.length > 0 ? '4px 0 0' : 0 }}>Kommend</p>
-                  {upcomingReminders.slice(0, 3).map(r => (
-                    <ReminderCard key={r.id} reminder={r}
-                      onDone={() => doneReminderMutation.mutate({ projectId: r.project_id, id: r.id })}
-                      onClick={() => navigate(`/projects/${r.project_id}?tab=workflow`)}
-                    />
-                  ))}
-                </>
-              )}
+              {dueTodayReminders.slice(0, 5).map(r => (
+                <ReminderCard key={r.id} reminder={r}
+                  onDone={() => doneReminderMutation.mutate({ projectId: r.project_id, id: r.id })}
+                  onClick={() => navigate(`/projects/${r.project_id}?tab=workflow`)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Time Tracking */}
+        <div style={card}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+            <h3 style={{ fontSize: '14px', fontWeight: '700', color: '#1D1D1F', display: 'flex', alignItems: 'center', gap: '7px', margin: 0 }}>
+              <Clock size={15} color="#0071E3" />
+              Time Tracking
+            </h3>
+            <button onClick={() => navigate('/time')}
+              style={{ fontSize: '12px', color: '#0071E3', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '500', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+              Alle <ChevronRight size={12} />
+            </button>
+          </div>
+
+          {/* Active timer indicator */}
+          {activeTimer?.id && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', borderRadius: '10px', background: 'rgba(52,199,89,0.08)', border: '1px solid rgba(52,199,89,0.2)', marginBottom: '14px' }}>
+              <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#34C759', flexShrink: 0, animation: 'pulse 1.5s ease-in-out infinite' }} />
+              <span style={{ fontSize: '12px', fontWeight: '600', color: '#22A84A', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {activeTimer.project_name || activeTimer.description || 'Läuft gerade'}
+              </span>
+              <Timer size={12} color="#22A84A" />
+            </div>
+          )}
+
+          {/* Weekly stats */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '14px' }}>
+            <div style={{ padding: '12px', borderRadius: '10px', background: '#F5F5F7', textAlign: 'center' }}>
+              <p style={{ fontSize: '22px', fontWeight: '700', color: '#1D1D1F', letterSpacing: '-0.03em', lineHeight: 1, margin: 0 }}>
+                {timeSummary?.week_hours != null ? `${Math.floor(timeSummary.week_hours)}h` : '—'}
+              </p>
+              <p style={{ fontSize: '10px', color: '#8E8E93', marginTop: '3px' }}>Diese Woche</p>
+            </div>
+            <div style={{ padding: '12px', borderRadius: '10px', background: '#F5F5F7', textAlign: 'center' }}>
+              <p style={{ fontSize: '22px', fontWeight: '700', color: '#1D1D1F', letterSpacing: '-0.03em', lineHeight: 1, margin: 0 }}>
+                {timeSummary?.today_hours != null ? `${Math.floor(timeSummary.today_hours)}h` : '—'}
+              </p>
+              <p style={{ fontSize: '10px', color: '#8E8E93', marginTop: '3px' }}>Heute</p>
+            </div>
+          </div>
+
+          {timeSummary?.month_hours != null && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderTop: '1px solid rgba(0,0,0,0.05)' }}>
+              <span style={{ fontSize: '12px', color: '#8E8E93' }}>Diesen Monat</span>
+              <span style={{ fontSize: '13px', fontWeight: '600', color: '#1D1D1F' }}>{Math.floor(timeSummary.month_hours)}h</span>
             </div>
           )}
         </div>
