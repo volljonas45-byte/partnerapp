@@ -243,8 +243,17 @@ export default function VecturoDashboard() {
   const reminders = remindersRaw || [];
 
   // ── Derived values ────────────────────────────────────────────
+  // Only truly "Aktiv" for the scroll row
   const activeProjects = useMemo(
-    () => projects.filter(p => !INACTIVE.has(p.status)),
+    () => projects.filter(p => p.status === 'active'),
+    [projects]
+  );
+
+  // Last 6 recently created/modified projects for the overview table
+  const recentProjects = useMemo(
+    () => [...projects]
+      .sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''))
+      .slice(0, 6),
     [projects]
   );
 
@@ -337,7 +346,11 @@ export default function VecturoDashboard() {
               <p className="text-[32px] font-bold text-white tracking-[-0.5px] leading-none">
                 {activeProjects.length}
               </p>
-              <p className="text-[13px] text-[#636366] mt-2">von {projects.length} gesamt</p>
+              <p className="text-[13px] text-[#636366] mt-2">
+                {projects.length - activeProjects.length > 0
+                  ? `+${projects.length - activeProjects.length} in Planung`
+                  : `von ${projects.length} gesamt`}
+              </p>
             </div>
 
             <div
@@ -451,7 +464,7 @@ export default function VecturoDashboard() {
             {/* Table */}
             <div className="bg-white rounded-[14px] border border-black/[0.06] shadow-[0_1px_3px_rgba(0,0,0,0.08)] overflow-hidden">
               <div className="flex items-center justify-between px-5 py-4 border-b border-black/[0.05]">
-                <h2 className="text-[15px] font-semibold text-[#1D1D1F] tracking-[-0.1px]">Websites Übersicht</h2>
+                <h2 className="text-[15px] font-semibold text-[#1D1D1F] tracking-[-0.1px]">Zuletzt aktiv</h2>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full">
@@ -465,7 +478,7 @@ export default function VecturoDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {projects.slice(0, 6).map((p, i) => {
+                    {recentProjects.map((p, i) => {
                       const st = STAT[p.status] || STAT.planned;
                       return (
                         <tr
@@ -485,7 +498,7 @@ export default function VecturoDashboard() {
                             </span>
                           </td>
                           <td className="px-5 py-3 text-[13px] text-[#6E6E73] whitespace-nowrap">
-                            {relDate(p.updated_at)}
+                            {relDate(p.created_at)}
                           </td>
                         </tr>
                       );
