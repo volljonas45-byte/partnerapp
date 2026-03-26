@@ -570,14 +570,8 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* ── 2-col: Main content + Calendar sidebar ── */}
-      <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
-
-        {/* ── Left: Main column ── */}
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '24px' }}>
-
-          {/* ── KPI Strip ── */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+      {/* ── KPI Strip — full width ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '24px' }}>
             {[
               {
                 label: 'Aktive Websites',
@@ -651,8 +645,8 @@ export default function Dashboard() {
             })}
           </div>
 
-          {/* ── Aktive Websites ── */}
-          <div>
+      {/* ── Aktive Websites — full width ── */}
+      <div style={{ marginBottom: '24px' }}>
             <SectionHeader title="Aktive Websites" count={activeWebsites.length}>
               <button
                 onClick={() => navigate('/onboarding/wizard')}
@@ -701,7 +695,7 @@ export default function Dashboard() {
                 </button>
               </div>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '12px' }}>
                 {activeWebsites.map(p => (
                   <WebsiteCard
                     key={p.id}
@@ -710,12 +704,31 @@ export default function Dashboard() {
                     onClick={() => navigate(`/projects/${p.id}`)}
                   />
                 ))}
+                {/* Add card — always last, fills the row naturally */}
+                <button
+                  onClick={() => navigate('/onboarding/wizard')}
+                  style={{
+                    ...cardStyle,
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                    gap: '8px', padding: '24px', cursor: 'pointer', minHeight: '100px',
+                    border: `1.5px dashed ${C.border}`,
+                    boxShadow: 'none',
+                    background: 'transparent',
+                    transition: 'border-color 0.15s, background 0.15s',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = C.brand; e.currentTarget.style.background = C.brandBg; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.background = 'transparent'; }}
+                >
+                  <Plus size={16} color={C.muted} strokeWidth={1.5} />
+                  <span style={{ fontSize: '12px', color: C.muted, fontWeight: '500' }}>Website erstellen</span>
+                </button>
               </div>
             )}
           </div>
 
-          {/* ── Bottom row: Finanzen | Follow-ups | Time Tracking ── */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+      {/* ── Bottom: 3 cards + Calendar sidebar ── */}
+      <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+        <div style={{ flex: 1, minWidth: 0, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
 
             {/* Finanzen */}
             <div style={{ ...cardStyle, padding: '20px' }}>
@@ -846,11 +859,10 @@ export default function Dashboard() {
               )}
             </div>
 
-          </div>
         </div>
 
-        {/* ── Right: Heute Kalender Sidebar ── */}
-        <div style={{ width: '272px', flexShrink: 0, position: 'sticky', top: '20px' }}>
+        {/* ── Heute Kalender Sidebar ── */}
+        <div style={{ width: '260px', flexShrink: 0, position: 'sticky', top: '20px' }}>
           <div style={{ ...cardStyle, padding: 0, overflow: 'hidden' }}>
 
             {/* Header */}
