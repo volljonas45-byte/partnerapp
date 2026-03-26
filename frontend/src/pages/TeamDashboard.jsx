@@ -359,7 +359,7 @@ function MemberCard({ member }) {
           <div style={{ fontSize: 11, color: '#86868B' }}>Aufgaben</div>
         </div>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 18, fontWeight: 600, color: '#1D1D1F' }}>{fmtHours(member.week_seconds)}</div>
+          <div style={{ fontSize: 15, fontWeight: 600, color: '#1D1D1F', whiteSpace: 'nowrap' }}>{fmtHours(member.week_seconds)}</div>
           <div style={{ fontSize: 11, color: '#86868B' }}>diese Woche</div>
         </div>
       </div>

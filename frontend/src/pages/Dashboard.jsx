@@ -16,29 +16,56 @@ import { formatCurrency, formatDate, isPast } from '../utils/formatters';
 import toast from 'react-hot-toast';
 import ReminderCard from '../components/workflow/ReminderCard';
 
-// ── Status config ─────────────────────────────────────────────────────────────
+// ── Design tokens ─────────────────────────────────────────────────────────────
+const C = {
+  bg:           '#F5F5F7',
+  card:         '#FFFFFF',
+  border:       '#E8E8ED',
+  borderLight:  '#F0F0F4',
+  text:         '#111111',
+  textSub:      '#6B6B7B',
+  muted:        '#A0A0AC',
+  brand:        '#0071E3',
+  brandBg:      'rgba(0,113,227,0.08)',
+  green:        '#16A34A',
+  greenBg:      'rgba(22,163,74,0.08)',
+  red:          '#DC2626',
+  redBg:        'rgba(220,38,38,0.07)',
+  amber:        '#D97706',
+  amberBg:      'rgba(217,119,6,0.08)',
+  purple:       '#7C3AED',
+  purpleBg:     'rgba(124,58,237,0.08)',
+};
 
+// Consistent card style — one radius, one shadow, one border
+const cardStyle = {
+  background: C.card,
+  borderRadius: '14px',
+  border: `1px solid ${C.border}`,
+  boxShadow: '0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.05)',
+};
+
+// ── Status config ─────────────────────────────────────────────────────────────
 const STATUS_CFG = {
   planned:            { label: 'Geplant',          color: '#6E6E73', bg: 'rgba(110,110,115,0.08)', dot: '#9CA3AF' },
-  active:             { label: 'Aktiv',            color: '#0071E3', bg: 'rgba(0,113,227,0.08)',   dot: '#3B82F6' },
-  waiting_for_client: { label: 'Warten auf Kunde', color: '#D97706', bg: 'rgba(245,158,11,0.08)', dot: '#F59E0B' },
-  feedback:           { label: 'Überarbeitung',    color: '#7C3AED', bg: 'rgba(124,58,237,0.08)', dot: '#8B5CF6' },
-  review:             { label: 'Review',           color: '#7C3AED', bg: 'rgba(124,58,237,0.08)', dot: '#8B5CF6' },
-  waiting:            { label: 'Fertigstellung',   color: '#7C3AED', bg: 'rgba(124,58,237,0.08)', dot: '#8B5CF6' },
-  completed:          { label: 'Abgeschlossen',    color: '#22C55E', bg: 'rgba(34,197,94,0.08)',  dot: '#22C55E' },
+  active:             { label: 'Aktiv',            color: C.brand,   bg: C.brandBg,               dot: '#3B82F6' },
+  waiting_for_client: { label: 'Warten auf Kunde', color: C.amber,   bg: C.amberBg,               dot: '#F59E0B' },
+  feedback:           { label: 'Überarbeitung',    color: C.purple,  bg: C.purpleBg,              dot: '#8B5CF6' },
+  review:             { label: 'Review',           color: C.purple,  bg: C.purpleBg,              dot: '#8B5CF6' },
+  waiting:            { label: 'Fertigstellung',   color: C.purple,  bg: C.purpleBg,              dot: '#8B5CF6' },
+  completed:          { label: 'Abgeschlossen',    color: C.green,   bg: C.greenBg,               dot: '#22C55E' },
   deferred:           { label: 'Verschoben',       color: '#94A3B8', bg: 'rgba(148,163,184,0.08)', dot: '#94A3B8' },
 };
 const STATUS_OPTIONS = ['planned','active','waiting_for_client','feedback','review','waiting','completed','deferred'];
 
 const HEALTH_CFG = {
-  good:     { color: '#22C55E', bg: '#fff' },
-  warning:  { color: '#F59E0B', bg: '#fff' },
-  critical: { color: '#EF4444', bg: '#fff' },
-  done:     { color: '#C7C7CC', bg: '#FAFAFA' },
+  good:     { color: C.green },
+  warning:  { color: C.amber },
+  critical: { color: C.red   },
+  done:     { color: C.muted },
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-
 function getGreeting() {
   const h = new Date().getHours();
   if (h < 12) return 'Guten Morgen';
@@ -66,7 +93,6 @@ function parseLocal(str) { if (!str) return null; return new Date(str.replace('T
 const DAY_HOURS = Array.from({ length: 15 }, (_, i) => i + 7); // 7–21
 
 // ── StatusDropdown ────────────────────────────────────────────────────────────
-
 function StatusDropdown({ status, onChange }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
@@ -84,24 +110,25 @@ function StatusDropdown({ status, onChange }) {
         onClick={e => { e.stopPropagation(); setOpen(o => !o); }}
         style={{
           display: 'inline-flex', alignItems: 'center', gap: '5px',
-          padding: '3px 9px', borderRadius: '7px',
+          padding: '4px 10px', borderRadius: '8px',
           background: cfg.bg, border: 'none', cursor: 'pointer',
-          fontSize: '11px', fontWeight: '600', color: cfg.color,
+          fontSize: '11px', fontWeight: '500', color: cfg.color,
           transition: 'opacity 0.15s',
+          letterSpacing: '0.01em',
         }}
       >
         <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: cfg.dot, flexShrink: 0 }} />
         {cfg.label}
-        <ChevronDown size={9} />
+        <ChevronDown size={9} style={{ opacity: 0.6 }} />
       </button>
       {open && (
         <>
           <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setOpen(false)} />
           <div style={{
-            position: 'absolute', left: 0, top: '100%', marginTop: '6px', zIndex: 50,
-            width: '200px', background: '#fff', borderRadius: '14px',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06)',
-            border: '1px solid rgba(0,0,0,0.05)', padding: '5px',
+            position: 'absolute', left: 0, top: 'calc(100% + 6px)', zIndex: 50,
+            width: '190px', background: C.card, borderRadius: '12px',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.06)',
+            border: `1px solid ${C.border}`, padding: '4px',
           }}>
             {STATUS_OPTIONS.map(key => {
               const c = STATUS_CFG[key];
@@ -111,17 +138,19 @@ function StatusDropdown({ status, onChange }) {
                   onClick={e => { e.stopPropagation(); onChange(key); setOpen(false); }}
                   style={{
                     width: '100%', display: 'flex', alignItems: 'center', gap: '8px',
-                    padding: '7px 10px', borderRadius: '9px',
+                    padding: '7px 10px', borderRadius: '8px',
                     background: isActive ? '#F5F5F7' : 'transparent',
                     border: 'none', cursor: 'pointer',
-                    fontSize: '12px', fontWeight: isActive ? '600' : '400',
-                    color: '#1D1D1F', textAlign: 'left',
+                    fontSize: '12px', fontWeight: isActive ? '500' : '400',
+                    color: C.text, textAlign: 'left',
                     transition: 'background 0.1s',
                   }}
+                  onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = '#F8F8FA'; }}
+                  onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
                 >
-                  <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: c.dot, flexShrink: 0 }} />
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: c.dot, flexShrink: 0 }} />
                   {c.label}
-                  {isActive && <Check size={11} style={{ marginLeft: 'auto', color: '#8E8E93' }} />}
+                  {isActive && <Check size={11} style={{ marginLeft: 'auto', color: C.muted }} />}
                 </button>
               );
             })}
@@ -133,7 +162,6 @@ function StatusDropdown({ status, onChange }) {
 }
 
 // ── WebsiteCard ───────────────────────────────────────────────────────────────
-
 function WebsiteCard({ project, onStatusChange, onClick }) {
   const h = computeHealth(project);
   const hc = HEALTH_CFG[h];
@@ -147,34 +175,43 @@ function WebsiteCard({ project, onStatusChange, onClick }) {
     <div
       onClick={onClick}
       style={{
-        background: hc.bg,
-        borderRadius: '16px',
-        borderLeft: `3px solid ${hc.color}`,
-        padding: '18px 18px 16px',
+        ...cardStyle,
+        padding: '16px 18px 14px',
         cursor: 'pointer',
-        transition: 'box-shadow 0.2s ease, transform 0.2s ease',
-        display: 'flex', flexDirection: 'column', gap: '12px',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.06)',
+        transition: 'box-shadow 0.2s cubic-bezier(0.16,1,0.3,1), transform 0.2s cubic-bezier(0.16,1,0.3,1)',
+        display: 'flex', flexDirection: 'column', gap: '10px',
       }}
       onMouseEnter={e => {
-        e.currentTarget.style.boxShadow = '0 4px 24px rgba(0,0,0,0.1), 0 1px 6px rgba(0,0,0,0.06)';
+        e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.09), 0 1px 4px rgba(0,0,0,0.05)';
         e.currentTarget.style.transform = 'translateY(-2px)';
       }}
       onMouseLeave={e => {
-        e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.06)';
-        e.currentTarget.style.transform = 'none';
+        e.currentTarget.style.boxShadow = cardStyle.boxShadow;
+        e.currentTarget.style.transform = 'translateY(0)';
       }}
     >
-      {/* Name + Live URL */}
+      {/* Header: health dot + name + live link */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px' }}>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '3px' }}>
-            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: hc.color, flexShrink: 0 }} />
-            <p style={{ fontSize: '13px', fontWeight: '700', color: '#1D1D1F', letterSpacing: '-0.02em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '2px' }}>
+            <span style={{
+              width: '7px', height: '7px', borderRadius: '50%',
+              background: hc.color, flexShrink: 0,
+              boxShadow: `0 0 0 2px ${hc.color}22`,
+            }} />
+            <p style={{
+              fontSize: '13px', fontWeight: '500', color: C.text,
+              letterSpacing: '-0.01em', overflow: 'hidden', textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap', margin: 0, lineHeight: 1.3,
+            }}>
               {project.name}
             </p>
           </div>
-          <p style={{ fontSize: '11px', color: '#A0A0AA', paddingLeft: '13px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0, fontWeight: '500' }}>
+          <p style={{
+            fontSize: '11px', color: C.muted, paddingLeft: '14px',
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            margin: 0, letterSpacing: '0.01em',
+          }}>
             {project.client_name || '—'}
           </p>
         </div>
@@ -183,15 +220,15 @@ function WebsiteCard({ project, onStatusChange, onClick }) {
             onClick={e => { e.stopPropagation(); window.open(project.live_url, '_blank'); }}
             title={project.live_url}
             style={{
-              padding: '5px 7px', borderRadius: '8px',
-              background: 'rgba(0,113,227,0.07)', border: 'none', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', flexShrink: 0, color: '#0071E3',
+              padding: '5px', borderRadius: '8px',
+              background: C.brandBg, border: 'none', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', flexShrink: 0,
               transition: 'background 0.15s',
             }}
             onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,113,227,0.14)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,113,227,0.07)'}
+            onMouseLeave={e => e.currentTarget.style.background = C.brandBg}
           >
-            <ExternalLink size={11} color="#0071E3" />
+            <ExternalLink size={11} color={C.brand} />
           </button>
         )}
       </div>
@@ -203,9 +240,10 @@ function WebsiteCard({ project, onStatusChange, onClick }) {
           <span style={{
             display: 'inline-flex', alignItems: 'center', gap: '3px',
             fontSize: '11px', fontWeight: '500',
-            color: isOverdue ? '#EF4444' : days !== null && days <= 5 ? '#F59E0B' : '#A0A0AA',
+            color: isOverdue ? C.red : days !== null && days <= 5 ? C.amber : C.muted,
+            letterSpacing: '0.01em',
           }}>
-            {isOverdue ? <AlertTriangle size={10} /> : <Clock size={10} />}
+            {isOverdue ? <AlertTriangle size={9} /> : <Clock size={9} />}
             {isOverdue ? `+${Math.abs(days)}d überfällig` : days === 0 ? 'heute' : `${days}d`}
           </span>
         )}
@@ -215,16 +253,15 @@ function WebsiteCard({ project, onStatusChange, onClick }) {
       {taskPct !== null && (
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
-            <span style={{ fontSize: '10px', color: '#A0A0AA', fontWeight: '500' }}>Aufgaben</span>
-            <span style={{ fontSize: '10px', color: '#A0A0AA', fontWeight: '600' }}>{doneTasks}/{tasks.length}</span>
+            <span style={{ fontSize: '10px', color: C.muted, fontWeight: '500', letterSpacing: '0.02em' }}>Aufgaben</span>
+            <span style={{ fontSize: '10px', color: C.muted, fontWeight: '500' }}>{doneTasks}/{tasks.length}</span>
           </div>
-          <div style={{ height: '3px', background: 'rgba(0,0,0,0.06)', borderRadius: '99px', overflow: 'hidden' }}>
+          <div style={{ height: '2px', background: C.borderLight, borderRadius: '99px', overflow: 'hidden' }}>
             <div style={{
               height: '100%', borderRadius: '99px',
-              background: taskPct === 100
-                ? 'linear-gradient(90deg, #22C55E, #16A34A)'
-                : 'linear-gradient(90deg, #3B82F6, #0071E3)',
-              width: `${taskPct}%`, transition: 'width 0.4s ease',
+              background: taskPct === 100 ? C.green : C.brand,
+              width: `${taskPct}%`,
+              transition: 'width 0.4s cubic-bezier(0.16,1,0.3,1)',
             }} />
           </div>
         </div>
@@ -233,8 +270,67 @@ function WebsiteCard({ project, onStatusChange, onClick }) {
   );
 }
 
-// ── Main Component ────────────────────────────────────────────────────────────
+// ── SectionHeader ─────────────────────────────────────────────────────────────
+function SectionHeader({ title, count, children }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <h2 style={{ fontSize: '13px', fontWeight: '500', color: C.text, letterSpacing: '-0.01em', margin: 0 }}>
+          {title}
+        </h2>
+        {count !== undefined && (
+          <span style={{
+            fontSize: '11px', fontWeight: '500', color: C.muted,
+            background: C.borderLight, padding: '1px 7px', borderRadius: '99px',
+          }}>
+            {count}
+          </span>
+        )}
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>{children}</div>
+    </div>
+  );
+}
 
+// ── Ghost link button ─────────────────────────────────────────────────────────
+function LinkBtn({ onClick, children }) {
+  return (
+    <button onClick={onClick}
+      style={{
+        display: 'inline-flex', alignItems: 'center', gap: '2px',
+        fontSize: '12px', color: C.brand, background: 'none', border: 'none',
+        cursor: 'pointer', fontWeight: '500', padding: '3px 0',
+        transition: 'opacity 0.15s',
+        letterSpacing: '0.01em',
+      }}
+      onMouseEnter={e => e.currentTarget.style.opacity = '0.65'}
+      onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+    >
+      {children}
+    </button>
+  );
+}
+
+// ── CardHeader ────────────────────────────────────────────────────────────────
+function CardHeader({ icon: Icon, iconColor, iconBg, title, action }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{
+          width: '28px', height: '28px', borderRadius: '8px',
+          background: iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          flexShrink: 0,
+        }}>
+          <Icon size={14} color={iconColor} />
+        </div>
+        <span style={{ fontSize: '13px', fontWeight: '500', color: C.text, letterSpacing: '-0.01em' }}>{title}</span>
+      </div>
+      {action}
+    </div>
+  );
+}
+
+// ── Main Component ────────────────────────────────────────────────────────────
 export default function Dashboard() {
   const navigate    = useNavigate();
   const queryClient = useQueryClient();
@@ -255,12 +351,10 @@ export default function Dashboard() {
     queryKey: ['workflow-reminders'],
     queryFn: () => workflowApi.getDashboardReminders().then(r => r.data),
   });
-
   const { data: timeSummary } = useQuery({
     queryKey: ['time-summary'],
     queryFn: () => timeApi.summary(),
   });
-
   const { data: activeTimer } = useQuery({
     queryKey: ['time-timer-active'],
     queryFn: () => timeApi.timerActive(),
@@ -290,7 +384,6 @@ export default function Dashboard() {
   });
 
   // ── Derived ───────────────────────────────────────────────────────────────────
-
   const INACTIVE_STATUSES = ['completed', 'waiting_for_client', 'waiting', 'deferred'];
   const activeWebsites  = projects.filter(p => !INACTIVE_STATUSES.includes(p.status));
   const waitingCount    = projects.filter(p => p.status === 'waiting_for_client').length;
@@ -318,528 +411,595 @@ export default function Dashboard() {
   // Alert chips
   const alertItems = [
     overdueCount > 0 && {
-      key: 'overdue', icon: AlertTriangle, color: '#EF4444',
-      bg: 'rgba(239,68,68,0.07)', border: 'rgba(239,68,68,0.18)',
+      key: 'overdue', icon: AlertTriangle, color: C.red,
+      bg: C.redBg, border: 'rgba(220,38,38,0.18)',
       label: `${overdueCount} Deadline${overdueCount > 1 ? 's' : ''} überschritten`,
       onClick: () => navigate('/websites'),
     },
     overdueInvCount > 0 && {
-      key: 'invoices', icon: Euro, color: '#EF4444',
-      bg: 'rgba(239,68,68,0.07)', border: 'rgba(239,68,68,0.18)',
+      key: 'invoices', icon: Euro, color: C.red,
+      bg: C.redBg, border: 'rgba(220,38,38,0.18)',
       label: `${overdueInvCount} Rechnung${overdueInvCount > 1 ? 'en' : ''} überfällig`,
       onClick: () => navigate('/invoices'),
     },
     dueTodayReminders.length > 0 && {
-      key: 'reminders', icon: Bell, color: '#7C3AED',
-      bg: 'rgba(124,58,237,0.07)', border: 'rgba(124,58,237,0.18)',
-      label: `${dueTodayReminders.length} Follow-up${dueTodayReminders.length > 1 ? 's' : ''} heute fällig`,
+      key: 'reminders', icon: Bell, color: C.purple,
+      bg: C.purpleBg, border: 'rgba(124,58,237,0.18)',
+      label: `${dueTodayReminders.length} Follow-up${dueTodayReminders.length > 1 ? 's' : ''} heute`,
       onClick: null,
     },
   ].filter(Boolean);
 
-  // ── Shared styles ─────────────────────────────────────────────────────────────
-
-  const card = {
-    background: 'linear-gradient(145deg, #ffffff 0%, #fafbfd 100%)',
-    borderRadius: '18px',
-    padding: '22px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 4px 20px rgba(0,0,0,0.07)',
-  };
-
-  const sectionLabel = {
-    fontSize: '11px', fontWeight: '600', color: '#A0A0AA',
-    textTransform: 'uppercase', letterSpacing: '0.07em', margin: 0,
-  };
-
   const greeting   = getGreeting();
   const todayLabel = new Date().toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' });
+
+  const fmtH = sec => sec != null ? `${Math.floor(sec / 3600)}h ${Math.floor((sec % 3600) / 60)}m` : '—';
+
+  // ── Calendar helpers ──────────────────────────────────────────────────────────
+  const calTodayEvents = useMemo(() => {
+    const evts = [];
+    for (const e of todayCalEvents) {
+      const start = parseLocal(e.start_time);
+      const end   = e.end_time ? parseLocal(e.end_time) : null;
+      if (start) evts.push({ id: e.id, title: e.title, _start: start, _end: end, _color: e.color || C.brand, all_day: !!e.all_day });
+    }
+    for (const p of projects) {
+      if (p.deadline && p.deadline.slice(0, 10) === todayStr) {
+        evts.push({ id: `dl-${p.id}`, title: `${p.name}`, _start: new Date(todayStr + 'T00:00:00'), _end: null, _color: C.red, all_day: true });
+      }
+    }
+    for (const e of todayTimeEntries) {
+      if (!e.start_time) continue;
+      const start = parseLocal(e.start_time);
+      const end   = e.end_time ? parseLocal(e.end_time) : null;
+      const dur   = e.duration ? ` ${Math.floor(e.duration / 3600)}h ${Math.floor((e.duration % 3600) / 60)}m` : '';
+      evts.push({ id: `t-${e.id}`, title: `${e.project_name || 'Zeit'}${dur}`, _start: start, _end: end, _color: '#5AC8FA', all_day: false });
+    }
+    return evts;
+  }, [todayCalEvents, projects, todayTimeEntries, todayStr]);
+
+  const allDayEvts = calTodayEvents.filter(e => e.all_day);
+  const timedEvts  = calTodayEvents.filter(e => !e.all_day && e._start);
+
+  // Current time offset in the day grid
+  const now = new Date();
+  const nowHour = now.getHours() + now.getMinutes() / 60;
+  const HOUR_H  = 44;
+  const CAL_START = DAY_HOURS[0];
 
   if (isLoading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '50vh' }}>
-        <div style={{ width: '22px', height: '22px', border: '2px solid #0071E3', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+        <div style={{
+          width: '18px', height: '18px',
+          border: `2px solid ${C.border}`,
+          borderTopColor: C.brand,
+          borderRadius: '50%',
+          animation: 'spin 0.7s linear infinite',
+        }} />
       </div>
     );
   }
 
   return (
-    <div style={{
-      padding: '20px 16px 48px',
-      width: '100%',
-      boxSizing: 'border-box',
-    }}>
+    <div style={{ padding: '28px 28px 56px', width: '100%', boxSizing: 'border-box' }}>
 
       {/* ── Header ── */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '22px' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '20px' }}>
         <div>
-          <h1 style={{ fontSize: '26px', fontWeight: '700', color: '#111827', letterSpacing: '-0.04em', margin: 0, lineHeight: 1.15 }}>
+          <h1 style={{
+            fontSize: '22px', fontWeight: '600', color: C.text,
+            letterSpacing: '-0.03em', margin: 0, lineHeight: 1.2,
+          }}>
             {greeting}
           </h1>
-          <p style={{ fontSize: '13px', color: '#A0A0AA', marginTop: '4px', fontWeight: '500' }}>{todayLabel}</p>
+          <p style={{ fontSize: '13px', color: C.muted, marginTop: '3px', fontWeight: '400', letterSpacing: '0.01em' }}>
+            {todayLabel}
+          </p>
         </div>
         <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
           <button
             onClick={() => navigate('/onboarding/wizard')}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: '6px',
-              padding: '9px 16px', borderRadius: '11px',
-              border: '1px solid rgba(0,0,0,0.09)',
-              background: '#fff', color: '#1D1D1F',
+              padding: '8px 16px', borderRadius: '10px',
+              border: `1px solid ${C.border}`,
+              background: C.card, color: C.text,
               fontSize: '13px', fontWeight: '500', cursor: 'pointer',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+              boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
               transition: 'background 0.15s, box-shadow 0.15s',
+              letterSpacing: '-0.01em',
             }}
-            onMouseEnter={e => { e.currentTarget.style.background = '#F5F5F7'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.06)'; }}
+            onMouseEnter={e => { e.currentTarget.style.background = '#F2F2F5'; e.currentTarget.style.boxShadow = '0 2px 6px rgba(0,0,0,0.08)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = C.card; e.currentTarget.style.boxShadow = '0 1px 2px rgba(0,0,0,0.04)'; }}
           >
-            <Plus size={14} /> Website
+            <Plus size={14} strokeWidth={2} /> Website
           </button>
           <button
             onClick={() => navigate('/invoices/new')}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: '6px',
-              padding: '9px 16px', borderRadius: '11px', border: 'none',
-              background: 'linear-gradient(135deg, #0071E3 0%, #0062C4 100%)',
-              color: '#fff', fontSize: '13px', fontWeight: '600', cursor: 'pointer',
-              boxShadow: '0 2px 8px rgba(0,113,227,0.3)',
-              transition: 'opacity 0.15s, box-shadow 0.15s',
+              padding: '8px 16px', borderRadius: '10px', border: 'none',
+              background: C.brand,
+              color: '#fff', fontSize: '13px', fontWeight: '500', cursor: 'pointer',
+              boxShadow: '0 1px 3px rgba(0,113,227,0.3)',
+              transition: 'filter 0.15s, box-shadow 0.15s',
+              letterSpacing: '-0.01em',
             }}
-            onMouseEnter={e => { e.currentTarget.style.opacity = '0.9'; e.currentTarget.style.boxShadow = '0 4px 14px rgba(0,113,227,0.4)'; }}
-            onMouseLeave={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,113,227,0.3)'; }}
+            onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.1)'; e.currentTarget.style.boxShadow = '0 3px 10px rgba(0,113,227,0.35)'; }}
+            onMouseLeave={e => { e.currentTarget.style.filter = 'brightness(1)'; e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,113,227,0.3)'; }}
           >
-            <Plus size={14} /> Rechnung
+            <Plus size={14} strokeWidth={2} /> Rechnung
           </button>
         </div>
       </div>
 
       {/* ── Alert Strip ── */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '20px', flexWrap: 'wrap' }}>
-        {alertItems.length === 0 ? (
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: '6px',
-            padding: '6px 14px', borderRadius: '99px',
-            background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.18)',
-          }}>
-            <CheckCircle2 size={12} color="#22C55E" />
-            <span style={{ fontSize: '12px', fontWeight: '600', color: '#22C55E' }}>Alles im Griff</span>
-          </div>
-        ) : (
-          alertItems.map(item => (
+      {alertItems.length > 0 ? (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '20px', flexWrap: 'wrap' }}>
+          {alertItems.map(item => (
             <button key={item.key}
               onClick={item.onClick || undefined}
               style={{
-                display: 'inline-flex', alignItems: 'center', gap: '6px',
-                padding: '6px 13px', borderRadius: '99px',
+                display: 'inline-flex', alignItems: 'center', gap: '5px',
+                padding: '5px 12px', borderRadius: '99px',
                 background: item.bg, border: `1px solid ${item.border}`,
                 cursor: item.onClick ? 'pointer' : 'default',
-                fontSize: '12px', fontWeight: '600', color: item.color,
-                transition: 'opacity 0.15s, transform 0.15s',
+                fontSize: '12px', fontWeight: '500', color: item.color,
+                transition: 'opacity 0.15s',
+                letterSpacing: '0.01em',
               }}
-              onMouseEnter={e => { if (item.onClick) { e.currentTarget.style.opacity = '0.8'; e.currentTarget.style.transform = 'scale(0.98)'; } }}
-              onMouseLeave={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'none'; }}
+              onMouseEnter={e => { if (item.onClick) e.currentTarget.style.opacity = '0.75'; }}
+              onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}
             >
               <item.icon size={11} />
               {item.label}
             </button>
-          ))
-        )}
-      </div>
-
-      {/* ── Main 2-col layout: left content + right calendar sidebar ── */}
-      <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
-      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '20px' }}>
-
-      {/* ── Mini KPI Strip ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '12px' }}>
-        {[
-          {
-            label: 'Aktive Websites',
-            value: activeWebsites.length,
-            sub: `${projects.length} gesamt`,
-            urgent: false,
-            dark: true,
-            onClick: () => navigate('/websites'),
-          },
-          {
-            label: 'Offener Umsatz',
-            value: formatCurrency(openAmount),
-            sub: `${(stats?.unpaid_count || 0) + (stats?.overdue_count || 0)} Rechnungen offen`,
-            urgent: overdueInvCount > 0,
-            dark: false,
-            onClick: () => navigate('/invoices'),
-          },
-          {
-            label: 'Follow-ups heute',
-            value: dueTodayReminders.length,
-            sub: dueTodayReminders.length > 0 ? 'Kunden nachfassen' : 'Keine fälligen',
-            urgent: dueTodayReminders.length > 0,
-            dark: false,
-            onClick: null,
-          },
-        ].map((kpi, i) => {
-          const baseBg = kpi.dark
-            ? 'linear-gradient(135deg, #0C1426 0%, #1A2E48 100%)'
-            : 'linear-gradient(145deg, #ffffff 0%, #fafbfd 100%)';
-          const baseShadow = kpi.dark
-            ? '0 4px 24px rgba(0,0,0,0.25), 0 1px 4px rgba(0,0,0,0.15)'
-            : '0 1px 3px rgba(0,0,0,0.04), 0 4px 20px rgba(0,0,0,0.07)';
-          const hoverBg = kpi.dark
-            ? 'linear-gradient(135deg, #152035 0%, #213555 100%)'
-            : 'linear-gradient(145deg, #f7f8fc 0%, #f0f2f7 100%)';
-          return (
-            <button key={i}
-              onClick={kpi.onClick || undefined}
-              style={{
-                padding: '20px 22px', background: baseBg,
-                borderRadius: '16px', border: 'none',
-                cursor: kpi.onClick ? 'pointer' : 'default',
-                textAlign: 'left',
-                boxShadow: baseShadow,
-                transition: 'box-shadow 0.2s ease, transform 0.2s ease',
-              }}
-              onMouseEnter={e => {
-                if (kpi.onClick) {
-                  e.currentTarget.style.transform = 'translateY(-1px)';
-                  e.currentTarget.style.boxShadow = kpi.dark
-                    ? '0 8px 32px rgba(0,0,0,0.3), 0 2px 8px rgba(0,0,0,0.2)'
-                    : '0 4px 24px rgba(0,0,0,0.1), 0 1px 6px rgba(0,0,0,0.06)';
-                }
-              }}
-              onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = baseShadow; }}
-            >
-              <p style={{
-                fontSize: '10px', fontWeight: '600',
-                color: kpi.dark ? 'rgba(255,255,255,0.45)' : '#A0A0AA',
-                textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '10px',
-              }}>{kpi.label}</p>
-              <p style={{
-                fontSize: '28px', fontWeight: '700',
-                color: kpi.dark ? '#fff' : (kpi.urgent ? '#EF4444' : '#111827'),
-                letterSpacing: '-0.04em', lineHeight: 1, marginBottom: '6px',
-              }}>{kpi.value}</p>
-              <p style={{ fontSize: '11px', color: kpi.dark ? 'rgba(255,255,255,0.35)' : '#A0A0AA', fontWeight: '500' }}>{kpi.sub}</p>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* ── Aktive Websites Grid ── */}
-      <div>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
-            <h2 style={{ fontSize: '15px', fontWeight: '700', color: '#111827', letterSpacing: '-0.025em', margin: 0 }}>
-              Aktive Websites
-            </h2>
-            <span style={{
-              fontSize: '11px', fontWeight: '600', color: '#A0A0AA',
-              background: 'rgba(0,0,0,0.05)', padding: '2px 9px', borderRadius: '99px',
-            }}>
-              {activeWebsites.length}
-            </span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <button onClick={() => navigate('/onboarding/wizard')}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: '4px',
-                fontSize: '12px', color: '#0071E3', background: 'rgba(0,113,227,0.07)',
-                border: 'none', cursor: 'pointer', fontWeight: '600',
-                padding: '5px 11px', borderRadius: '8px', transition: 'background 0.15s',
-              }}
-              onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,113,227,0.13)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,113,227,0.07)'}
-            >
-              <Plus size={12} /> Neu
-            </button>
-            <button onClick={() => navigate('/websites')}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: '3px',
-                fontSize: '12px', color: '#0071E3', background: 'none', border: 'none',
-                cursor: 'pointer', fontWeight: '500', transition: 'opacity 0.15s',
-              }}
-              onMouseEnter={e => e.currentTarget.style.opacity = '0.7'}
-              onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-            >
-              Alle <ChevronRight size={13} />
-            </button>
-          </div>
+          ))}
         </div>
-
-        {activeWebsites.length === 0 ? (
+      ) : (
+        <div style={{ marginBottom: '20px' }}>
           <div style={{
-            ...card, textAlign: 'center', padding: '56px',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px',
+            display: 'inline-flex', alignItems: 'center', gap: '6px',
+            padding: '5px 12px', borderRadius: '99px',
+            background: C.greenBg, border: '1px solid rgba(22,163,74,0.18)',
           }}>
-            <Globe size={32} color="#D1D1D6" />
-            <p style={{ fontSize: '14px', fontWeight: '500', color: '#A0A0AA', margin: 0 }}>Noch keine aktiven Websites</p>
-            <button onClick={() => navigate('/onboarding/wizard')}
-              style={{ fontSize: '13px', color: '#0071E3', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '500' }}>
-              Erste Website erstellen →
-            </button>
+            <CheckCircle2 size={12} color={C.green} />
+            <span style={{ fontSize: '12px', fontWeight: '500', color: C.green, letterSpacing: '0.01em' }}>Alles im Griff</span>
           </div>
-        ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px' }}>
-            {activeWebsites.map(p => (
-              <WebsiteCard
-                key={p.id}
-                project={p}
-                onStatusChange={val => updateProject.mutate({ id: p.id, data: { status: val } })}
-                onClick={() => navigate(`/projects/${p.id}`)}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      {/* ── Bottom 3-col ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px' }}>
+      {/* ── 2-col: Main content + Calendar sidebar ── */}
+      <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
 
-        {/* Finanzen */}
-        <div style={card}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px' }}>
-            <h3 style={{ fontSize: '13px', fontWeight: '700', color: '#111827', display: 'flex', alignItems: 'center', gap: '7px', margin: 0 }}>
-              <div style={{ width: '26px', height: '26px', borderRadius: '8px', background: 'rgba(34,197,94,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <TrendingUp size={13} color="#22C55E" />
-              </div>
-              Finanzen
-            </h3>
-            <button onClick={() => navigate('/invoices')}
-              style={{ fontSize: '12px', color: '#0071E3', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '500', display: 'inline-flex', alignItems: 'center', gap: '3px', transition: 'opacity 0.15s' }}
-              onMouseEnter={e => e.currentTarget.style.opacity = '0.7'}
-              onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-            >
-              Alle <ChevronRight size={12} />
-            </button>
-          </div>
+        {/* ── Left: Main column ── */}
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
-          {/* Mini stats */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '16px' }}>
+          {/* ── KPI Strip ── */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
             {[
-              { label: 'Offen',      value: stats?.unpaid_count  ?? 0, color: '#374151', bg: 'rgba(0,0,0,0.03)' },
-              { label: 'Überfällig', value: stats?.overdue_count ?? 0, color: '#EF4444', bg: 'rgba(239,68,68,0.06)' },
-              { label: 'Bezahlt',    value: stats?.paid_count    ?? 0, color: '#22C55E', bg: 'rgba(34,197,94,0.06)' },
-            ].map(s => (
-              <div key={s.label} style={{ textAlign: 'center', padding: '11px 6px', borderRadius: '11px', background: s.bg }}>
-                <p style={{ fontSize: '22px', fontWeight: '700', color: s.color, letterSpacing: '-0.04em', lineHeight: 1, margin: 0 }}>{s.value}</p>
-                <p style={{ fontSize: '10px', color: '#A0A0AA', marginTop: '4px', fontWeight: '500' }}>{s.label}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Invoice list */}
-          {openInvoices.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '16px 0', fontSize: '12px', color: '#A0A0AA' }}>Keine offenen Rechnungen</div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
-              {openInvoices.map(inv => (
-                <div key={inv.id} onClick={() => navigate(`/invoices/${inv.id}`)}
-                  style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 10px', borderRadius: '9px', cursor: 'pointer', transition: 'background 0.15s' }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.03)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+              {
+                label: 'Aktive Websites',
+                value: activeWebsites.length,
+                sub: `${projects.length} gesamt`,
+                accent: C.brand,
+                dark: true,
+                onClick: () => navigate('/websites'),
+              },
+              {
+                label: 'Offener Umsatz',
+                value: formatCurrency(openAmount),
+                sub: `${(stats?.unpaid_count || 0) + (stats?.overdue_count || 0)} Rechnungen offen`,
+                accent: overdueInvCount > 0 ? C.red : C.text,
+                dark: false,
+                onClick: () => navigate('/invoices'),
+              },
+              {
+                label: 'Follow-ups heute',
+                value: dueTodayReminders.length,
+                sub: dueTodayReminders.length > 0 ? 'Kunden nachfassen' : 'Keine fälligen',
+                accent: dueTodayReminders.length > 0 ? C.purple : C.text,
+                dark: false,
+                onClick: null,
+              },
+            ].map((kpi, i) => {
+              const base = kpi.dark
+                ? { background: '#0F1724', border: '1px solid rgba(255,255,255,0.06)', boxShadow: '0 2px 8px rgba(0,0,0,0.2)' }
+                : { ...cardStyle };
+              return (
+                <button key={i}
+                  onClick={kpi.onClick || undefined}
+                  style={{
+                    ...base,
+                    padding: '18px 20px', borderRadius: '14px',
+                    cursor: kpi.onClick ? 'pointer' : 'default',
+                    textAlign: 'left',
+                    transition: 'box-shadow 0.2s cubic-bezier(0.16,1,0.3,1), transform 0.2s cubic-bezier(0.16,1,0.3,1)',
+                  }}
+                  onMouseEnter={e => {
+                    if (kpi.onClick) {
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.boxShadow = kpi.dark
+                        ? '0 6px 20px rgba(0,0,0,0.35)'
+                        : '0 4px 16px rgba(0,0,0,0.09)';
+                    }
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = base.boxShadow;
+                  }}
                 >
-                  {inv.status === 'overdue'
-                    ? <AlertCircle size={13} color="#EF4444" style={{ flexShrink: 0 }} />
-                    : <Send size={13} color="#C0C0C8" style={{ flexShrink: 0 }} />
-                  }
-                  <span style={{ flex: 1, fontSize: '12px', color: '#374151', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: '500' }}>
-                    {inv.client_name || inv.invoice_number || 'Rechnung'}
-                  </span>
-                  <span style={{ fontSize: '12px', fontWeight: '600', color: inv.status === 'overdue' ? '#EF4444' : '#111827', flexShrink: 0 }}>
-                    {formatCurrency(inv.total || inv.amount || 0)}
-                  </span>
+                  <p style={{
+                    fontSize: '10px', fontWeight: '500', letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                    color: kpi.dark ? 'rgba(255,255,255,0.4)' : C.muted,
+                    marginBottom: '10px', margin: '0 0 10px',
+                  }}>{kpi.label}</p>
+                  <p style={{
+                    fontSize: '26px', fontWeight: '600',
+                    color: kpi.dark ? '#fff' : kpi.accent,
+                    letterSpacing: '-0.04em', lineHeight: 1, margin: '0 0 6px',
+                  }}>{kpi.value}</p>
+                  <p style={{
+                    fontSize: '11px', fontWeight: '400', letterSpacing: '0.01em',
+                    color: kpi.dark ? 'rgba(255,255,255,0.3)' : C.muted,
+                    margin: 0,
+                  }}>{kpi.sub}</p>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* ── Aktive Websites ── */}
+          <div>
+            <SectionHeader title="Aktive Websites" count={activeWebsites.length}>
+              <button
+                onClick={() => navigate('/onboarding/wizard')}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '3px',
+                  fontSize: '12px', color: C.brand, background: C.brandBg,
+                  border: 'none', cursor: 'pointer', fontWeight: '500',
+                  padding: '4px 10px', borderRadius: '7px',
+                  transition: 'background 0.15s',
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,113,227,0.13)'}
+                onMouseLeave={e => e.currentTarget.style.background = C.brandBg}
+              >
+                <Plus size={11} /> Neu
+              </button>
+              <LinkBtn onClick={() => navigate('/websites')}>
+                Alle <ChevronRight size={12} />
+              </LinkBtn>
+            </SectionHeader>
+
+            {activeWebsites.length === 0 ? (
+              <div style={{
+                ...cardStyle, textAlign: 'center', padding: '48px 32px',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px',
+              }}>
+                <div style={{
+                  width: '44px', height: '44px', borderRadius: '12px',
+                  background: C.borderLight,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <Globe size={22} color={C.muted} />
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Follow-ups & Erinnerungen */}
-        <div style={card}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px' }}>
-            <h3 style={{ fontSize: '13px', fontWeight: '700', color: '#111827', display: 'flex', alignItems: 'center', gap: '7px', margin: 0 }}>
-              <div style={{ width: '26px', height: '26px', borderRadius: '8px', background: 'rgba(124,58,237,0.09)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Bell size={13} color="#7C3AED" />
+                <p style={{ fontSize: '14px', fontWeight: '500', color: C.text, margin: 0 }}>Noch keine aktiven Websites</p>
+                <p style={{ fontSize: '12px', color: C.muted, margin: 0 }}>Erstelle dein erstes Projekt und behalte alles im Blick.</p>
+                <button onClick={() => navigate('/onboarding/wizard')}
+                  style={{
+                    marginTop: '4px', fontSize: '13px', color: C.brand,
+                    background: C.brandBg, border: 'none', cursor: 'pointer',
+                    fontWeight: '500', padding: '8px 16px', borderRadius: '9px',
+                    transition: 'background 0.15s',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,113,227,0.13)'}
+                  onMouseLeave={e => e.currentTarget.style.background = C.brandBg}
+                >
+                  Website erstellen
+                </button>
               </div>
-              Follow-ups
-            </h3>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+                {activeWebsites.map(p => (
+                  <WebsiteCard
+                    key={p.id}
+                    project={p}
+                    onStatusChange={val => updateProject.mutate({ id: p.id, data: { status: val } })}
+                    onClick={() => navigate(`/projects/${p.id}`)}
+                  />
+                ))}
+              </div>
+            )}
           </div>
 
-          {dueTodayReminders.length === 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '28px 0', gap: '10px' }}>
-              <CheckCircle2 size={26} color="#E5E5EA" />
-              <p style={{ fontSize: '12px', color: '#A0A0AA', margin: 0, fontWeight: '500' }}>Keine Follow-ups heute</p>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {dueTodayReminders.slice(0, 5).map(r => (
-                <ReminderCard key={r.id} reminder={r}
-                  onDone={() => doneReminderMutation.mutate({ projectId: r.project_id, id: r.id })}
-                  onClick={() => navigate(`/projects/${r.project_id}?tab=workflow`)}
-                />
-              ))}
-            </div>
-          )}
-        </div>
+          {/* ── Bottom row: Finanzen | Follow-ups | Time Tracking ── */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
 
-        {/* Time Tracking */}
-        <div style={card}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px' }}>
-            <h3 style={{ fontSize: '13px', fontWeight: '700', color: '#111827', display: 'flex', alignItems: 'center', gap: '7px', margin: 0 }}>
-              <div style={{ width: '26px', height: '26px', borderRadius: '8px', background: 'rgba(0,113,227,0.09)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Clock size={13} color="#0071E3" />
+            {/* Finanzen */}
+            <div style={{ ...cardStyle, padding: '20px' }}>
+              <CardHeader
+                icon={TrendingUp} iconColor={C.green} iconBg={C.greenBg}
+                title="Finanzen"
+                action={<LinkBtn onClick={() => navigate('/invoices')}>Alle <ChevronRight size={12} /></LinkBtn>}
+              />
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '14px' }}>
+                {[
+                  { label: 'Offen',      value: stats?.unpaid_count  ?? 0, color: C.text,  bg: C.borderLight },
+                  { label: 'Überfällig', value: stats?.overdue_count ?? 0, color: C.red,   bg: C.redBg },
+                  { label: 'Bezahlt',    value: stats?.paid_count    ?? 0, color: C.green, bg: C.greenBg },
+                ].map(s => (
+                  <div key={s.label} style={{
+                    textAlign: 'center', padding: '10px 6px', borderRadius: '10px',
+                    background: s.bg, border: `1px solid ${C.borderLight}`,
+                  }}>
+                    <p style={{ fontSize: '20px', fontWeight: '600', color: s.color, letterSpacing: '-0.04em', lineHeight: 1, margin: 0 }}>{s.value}</p>
+                    <p style={{ fontSize: '10px', color: C.muted, marginTop: '4px', fontWeight: '500', letterSpacing: '0.02em' }}>{s.label}</p>
+                  </div>
+                ))}
               </div>
-              Time Tracking
-            </h3>
-            <button onClick={() => navigate('/time')}
-              style={{ fontSize: '12px', color: '#0071E3', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '500', display: 'inline-flex', alignItems: 'center', gap: '3px', transition: 'opacity 0.15s' }}
-              onMouseEnter={e => e.currentTarget.style.opacity = '0.7'}
-              onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-            >
-              Alle <ChevronRight size={12} />
-            </button>
-          </div>
-
-          {/* Active timer indicator */}
-          {activeTimer?.id && (
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: '9px',
-              padding: '9px 13px', borderRadius: '11px',
-              background: 'rgba(34,197,94,0.07)', border: '1px solid rgba(34,197,94,0.15)',
-              marginBottom: '14px',
-            }}>
-              <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#22C55E', flexShrink: 0 }} />
-              <span style={{ fontSize: '12px', fontWeight: '600', color: '#16A34A', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {activeTimer.project_name || activeTimer.description || 'Läuft gerade'}
-              </span>
-              <Timer size={11} color="#16A34A" />
-            </div>
-          )}
-
-          {/* Weekly stats */}
-          {(() => {
-            const fmtH = sec => sec != null ? `${Math.floor(sec / 3600)}h ${Math.floor((sec % 3600) / 60)}m` : '—';
-            return (
-              <>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '14px' }}>
-                  {[
-                    { label: 'Diese Woche', val: fmtH(timeSummary?.week_sec) },
-                    { label: 'Heute',       val: fmtH(timeSummary?.today_sec) },
-                  ].map(s => (
-                    <div key={s.label} style={{ padding: '13px 12px', borderRadius: '11px', background: 'rgba(0,0,0,0.03)', textAlign: 'center' }}>
-                      <p style={{ fontSize: '17px', fontWeight: '700', color: '#111827', letterSpacing: '-0.03em', lineHeight: 1, margin: 0 }}>{s.val}</p>
-                      <p style={{ fontSize: '10px', color: '#A0A0AA', marginTop: '4px', fontWeight: '500' }}>{s.label}</p>
+              {openInvoices.length === 0 ? (
+                <p style={{ textAlign: 'center', padding: '12px 0', fontSize: '12px', color: C.muted }}>Keine offenen Rechnungen</p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
+                  {openInvoices.map(inv => (
+                    <div key={inv.id} onClick={() => navigate(`/invoices/${inv.id}`)}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '10px',
+                        padding: '7px 8px', borderRadius: '8px', cursor: 'pointer',
+                        transition: 'background 0.12s',
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.background = C.borderLight}
+                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                    >
+                      {inv.status === 'overdue'
+                        ? <AlertCircle size={12} color={C.red} style={{ flexShrink: 0 }} />
+                        : <Send size={12} color={C.muted} style={{ flexShrink: 0 }} />
+                      }
+                      <span style={{ flex: 1, fontSize: '12px', color: C.textSub, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: '400' }}>
+                        {inv.client_name || inv.invoice_number || 'Rechnung'}
+                      </span>
+                      <span style={{ fontSize: '12px', fontWeight: '500', color: inv.status === 'overdue' ? C.red : C.text, flexShrink: 0 }}>
+                        {formatCurrency(inv.total || inv.amount || 0)}
+                      </span>
                     </div>
                   ))}
                 </div>
-                {timeSummary?.month_sec != null && (
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 0', borderTop: '1px solid rgba(0,0,0,0.05)' }}>
-                    <span style={{ fontSize: '12px', color: '#A0A0AA', fontWeight: '500' }}>Diesen Monat</span>
-                    <span style={{ fontSize: '13px', fontWeight: '700', color: '#111827' }}>{fmtH(timeSummary.month_sec)}</span>
+              )}
+            </div>
+
+            {/* Follow-ups */}
+            <div style={{ ...cardStyle, padding: '20px' }}>
+              <CardHeader
+                icon={Bell} iconColor={C.purple} iconBg={C.purpleBg}
+                title="Follow-ups"
+              />
+              {dueTodayReminders.length === 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '24px 0', gap: '8px' }}>
+                  <CheckCircle2 size={24} color={C.border} />
+                  <p style={{ fontSize: '12px', color: C.muted, margin: 0, fontWeight: '400' }}>Keine Follow-ups heute</p>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  {dueTodayReminders.slice(0, 5).map(r => (
+                    <ReminderCard key={r.id} reminder={r}
+                      onDone={() => doneReminderMutation.mutate({ projectId: r.project_id, id: r.id })}
+                      onClick={() => navigate(`/projects/${r.project_id}?tab=workflow`)}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Time Tracking */}
+            <div style={{ ...cardStyle, padding: '20px' }}>
+              <CardHeader
+                icon={Clock} iconColor={C.brand} iconBg={C.brandBg}
+                title="Time Tracking"
+                action={<LinkBtn onClick={() => navigate('/time')}>Alle <ChevronRight size={12} /></LinkBtn>}
+              />
+
+              {activeTimer?.id && (
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: '8px',
+                  padding: '8px 12px', borderRadius: '9px',
+                  background: C.greenBg, border: `1px solid rgba(22,163,74,0.15)`,
+                  marginBottom: '12px',
+                }}>
+                  <span style={{
+                    width: '6px', height: '6px', borderRadius: '50%',
+                    background: C.green, flexShrink: 0,
+                    animation: 'pulse 1.5s ease-in-out infinite',
+                  }} />
+                  <span style={{ fontSize: '12px', fontWeight: '500', color: C.green, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {activeTimer.project_name || activeTimer.description || 'Läuft'}
+                  </span>
+                  <Timer size={11} color={C.green} />
+                </div>
+              )}
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '12px' }}>
+                {[
+                  { label: 'Diese Woche', val: fmtH(timeSummary?.week_sec) },
+                  { label: 'Heute',       val: fmtH(timeSummary?.today_sec) },
+                ].map(s => (
+                  <div key={s.label} style={{
+                    padding: '12px', borderRadius: '10px',
+                    background: C.borderLight, textAlign: 'center',
+                    border: `1px solid ${C.borderLight}`,
+                  }}>
+                    <p style={{ fontSize: '16px', fontWeight: '600', color: C.text, letterSpacing: '-0.03em', lineHeight: 1, margin: 0 }}>{s.val}</p>
+                    <p style={{ fontSize: '10px', color: C.muted, marginTop: '4px', fontWeight: '500', letterSpacing: '0.02em' }}>{s.label}</p>
                   </div>
-                )}
-              </>
-            );
-          })()}
+                ))}
+              </div>
+
+              {timeSummary?.month_sec != null && (
+                <div style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  padding: '9px 0 0', borderTop: `1px solid ${C.border}`,
+                }}>
+                  <span style={{ fontSize: '12px', color: C.muted, fontWeight: '400' }}>Diesen Monat</span>
+                  <span style={{ fontSize: '13px', fontWeight: '500', color: C.text }}>{fmtH(timeSummary.month_sec)}</span>
+                </div>
+              )}
+            </div>
+
+          </div>
         </div>
 
-      </div>
-      </div>
+        {/* ── Right: Heute Kalender Sidebar ── */}
+        <div style={{ width: '272px', flexShrink: 0, position: 'sticky', top: '20px' }}>
+          <div style={{ ...cardStyle, padding: 0, overflow: 'hidden' }}>
 
-      {/* Heute-Kalender Sidebar */}
-      <div style={{ width: '280px', flexShrink: 0, position: 'sticky', top: '20px' }}>
-          {(() => {
-            const todayEvents = [];
-            for (const e of todayCalEvents) {
-              const start = parseLocal(e.start_time);
-              const end   = e.end_time ? parseLocal(e.end_time) : null;
-              if (start) todayEvents.push({ id: e.id, title: e.title, _start: start, _end: end, _color: e.color || '#0071E3', all_day: !!e.all_day });
-            }
-            for (const p of projects) {
-              if (p.deadline && p.deadline.slice(0, 10) === todayStr) {
-                todayEvents.push({ id: `dl-${p.id}`, title: `📅 ${p.name}`, _start: new Date(todayStr + 'T00:00:00'), _end: null, _color: '#EF4444', all_day: true });
-              }
-            }
-            for (const e of todayTimeEntries) {
-              if (!e.start_time) continue;
-              const start = parseLocal(e.start_time);
-              const end   = e.end_time ? parseLocal(e.end_time) : null;
-              const dur   = e.duration ? ` ${Math.floor(e.duration / 3600)}h ${Math.floor((e.duration % 3600) / 60)}m` : '';
-              todayEvents.push({ id: `t-${e.id}`, title: `⏱${e.project_name ? ' ' + e.project_name : ''}${dur}`, _start: start, _end: end, _color: '#5AC8FA', all_day: false });
-            }
-            const allDayEvts = todayEvents.filter(e => e.all_day);
-            const timedEvts  = todayEvents.filter(e => !e.all_day && e._start);
-            const HOUR_H = 36;
-            const dateShort = new Date().toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'short' });
+            {/* Header */}
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '14px 16px 13px',
+              borderBottom: `1px solid ${C.border}`,
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+                <Clock size={13} color={C.brand} strokeWidth={2} />
+                <span style={{ fontSize: '13px', fontWeight: '500', color: C.text, letterSpacing: '-0.01em' }}>
+                  {new Date().toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'short' })}
+                </span>
+              </div>
+              <LinkBtn onClick={() => navigate('/calendar')}>
+                Kalender <ChevronRight size={11} />
+              </LinkBtn>
+            </div>
 
-            return (
-              <div style={{ ...card, padding: 0, overflow: 'hidden' }}>
-                {/* Header */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px 10px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
-                  <span style={{ fontSize: '12px', fontWeight: '700', color: '#111827', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <Clock size={12} color="#0071E3" /> Heute · {dateShort}
-                  </span>
-                  <button onClick={() => navigate('/calendar')}
-                    style={{ fontSize: '11px', color: '#0071E3', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '500', display: 'inline-flex', alignItems: 'center', gap: '2px' }}
-                    onMouseEnter={e => e.currentTarget.style.opacity = '0.7'}
-                    onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
-                    Mehr <ChevronRight size={11} />
-                  </button>
+            {/* All-day events */}
+            {allDayEvts.length > 0 && (
+              <div style={{
+                padding: '8px 12px',
+                borderBottom: `1px solid ${C.borderLight}`,
+                display: 'flex', flexDirection: 'column', gap: '3px',
+                background: '#FAFAFA',
+              }}>
+                {allDayEvts.map((ev, i) => (
+                  <div key={i} style={{
+                    display: 'flex', alignItems: 'center', gap: '6px',
+                    padding: '4px 8px', borderRadius: '6px',
+                    background: ev._color + '14',
+                    borderLeft: `2px solid ${ev._color}`,
+                  }}>
+                    <span style={{ fontSize: '11px', fontWeight: '500', color: ev._color, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {ev.title}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Time grid */}
+            <div style={{ overflow: 'auto', maxHeight: 380 }}>
+              <div style={{ position: 'relative', display: 'flex' }}>
+
+                {/* Hour labels column */}
+                <div style={{ width: '40px', flexShrink: 0 }}>
+                  {DAY_HOURS.map(h => (
+                    <div key={h} style={{
+                      height: `${HOUR_H}px`,
+                      display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end',
+                      paddingRight: '10px', paddingTop: '5px',
+                    }}>
+                      <span style={{
+                        fontSize: '11px', color: C.muted,
+                        fontWeight: '400', fontVariantNumeric: 'tabular-nums',
+                        letterSpacing: '0.01em',
+                      }}>
+                        {String(h).padStart(2, '0')}
+                      </span>
+                    </div>
+                  ))}
                 </div>
 
-                {/* All-day strip */}
-                {allDayEvts.length > 0 && (
-                  <div style={{ padding: '6px 12px', borderBottom: '1px solid rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', gap: 4, background: '#FAFBFC' }}>
-                    {allDayEvts.map((ev, i) => (
-                      <div key={i} style={{ padding: '2px 8px', borderRadius: 5, background: ev._color + '18', borderLeft: `2px solid ${ev._color}`, fontSize: '10px', fontWeight: 500, color: ev._color, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.title}</div>
-                    ))}
-                  </div>
-                )}
+                {/* Grid + events column */}
+                <div style={{ flex: 1, borderLeft: `1px solid ${C.border}`, position: 'relative' }}>
 
-                {/* Hourly grid */}
-                <div style={{ overflow: 'auto', maxHeight: 360 }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '36px 1fr', position: 'relative' }}>
-                    <div>
-                      {DAY_HOURS.map(h => (
-                        <div key={h} style={{ height: `${HOUR_H}px`, padding: '0 6px', display: 'flex', alignItems: 'flex-start', paddingTop: 3, justifyContent: 'flex-end' }}>
-                          <span style={{ fontSize: '9px', color: '#C0C0C8', fontWeight: 500 }}>{String(h).padStart(2,'0')}</span>
-                        </div>
-                      ))}
+                  {/* Hour dividers */}
+                  {DAY_HOURS.map((h, idx) => (
+                    <div key={h} style={{
+                      height: `${HOUR_H}px`,
+                      borderBottom: `1px solid ${idx % 2 === 0 ? C.borderLight : 'transparent'}`,
+                      background: h >= 9 && h < 18 ? 'transparent' : 'rgba(0,0,0,0.012)',
+                    }} />
+                  ))}
+
+                  {/* Current time line */}
+                  {nowHour >= CAL_START && nowHour < DAY_HOURS[DAY_HOURS.length - 1] && (
+                    <div style={{
+                      position: 'absolute',
+                      top: `${(nowHour - CAL_START) * HOUR_H}px`,
+                      left: 0, right: 0,
+                      height: '2px',
+                      background: C.red,
+                      zIndex: 5,
+                      display: 'flex', alignItems: 'center',
+                    }}>
+                      <div style={{
+                        width: '7px', height: '7px', borderRadius: '50%',
+                        background: C.red, marginLeft: '-3.5px', flexShrink: 0,
+                      }} />
                     </div>
-                    <div style={{ borderLeft: '1px solid rgba(0,0,0,0.05)', position: 'relative' }}>
-                      {DAY_HOURS.map(h => <div key={h} style={{ height: `${HOUR_H}px`, borderBottom: '1px solid rgba(0,0,0,0.03)' }} />)}
-                      {timedEvts.length === 0 && (
-                        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#D1D5DB', fontSize: '11px' }}>
-                          Keine Termine
-                        </div>
-                      )}
-                      {timedEvts.map((ev, i) => {
-                        const startH = ev._start.getHours() + ev._start.getMinutes()/60;
-                        const endH   = ev._end ? ev._end.getHours() + ev._end.getMinutes()/60 : startH + 1;
-                        const top    = (startH - DAY_HOURS[0]) * HOUR_H;
-                        const height = Math.max((endH - startH) * HOUR_H - 2, 18);
-                        if (startH < DAY_HOURS[0] || startH >= DAY_HOURS[DAY_HOURS.length-1]) return null;
-                        return (
-                          <div key={i} title={ev.title}
-                            style={{ position: 'absolute', left: 4, right: 6, top, height, background: ev._color + '18', borderLeft: `3px solid ${ev._color}`, borderRadius: 5, padding: '3px 6px', zIndex: 2 }}>
-                            <p style={{ fontSize: '10px', fontWeight: 600, color: ev._color, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.title}</p>
-                            {height > 28 && (
-                              <p style={{ fontSize: '9px', color: '#6B7280', margin: '1px 0 0' }}>
-                                {ev._start.getHours()}:{String(ev._start.getMinutes()).padStart(2,'0')}
-                                {ev._end ? `–${ev._end.getHours()}:${String(ev._end.getMinutes()).padStart(2,'0')}` : ''}
-                              </p>
-                            )}
-                          </div>
-                        );
-                      })}
+                  )}
+
+                  {/* No events placeholder */}
+                  {timedEvts.length === 0 && (
+                    <div style={{
+                      position: 'absolute', inset: 0,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <span style={{ fontSize: '12px', color: C.muted }}>Keine Termine</span>
                     </div>
-                  </div>
+                  )}
+
+                  {/* Timed events */}
+                  {timedEvts.map((ev, i) => {
+                    const startH = ev._start.getHours() + ev._start.getMinutes() / 60;
+                    const endH   = ev._end ? ev._end.getHours() + ev._end.getMinutes() / 60 : startH + 1;
+                    const top    = (startH - CAL_START) * HOUR_H;
+                    const height = Math.max((endH - startH) * HOUR_H - 3, 22);
+                    if (startH < CAL_START || startH >= DAY_HOURS[DAY_HOURS.length - 1]) return null;
+                    return (
+                      <div key={i}
+                        style={{
+                          position: 'absolute',
+                          left: '4px', right: '6px',
+                          top, height,
+                          background: ev._color + '18',
+                          borderLeft: `3px solid ${ev._color}`,
+                          borderRadius: '6px',
+                          padding: '4px 8px',
+                          zIndex: 4,
+                          overflow: 'hidden',
+                        }}
+                      >
+                        <p style={{
+                          fontSize: '11px', fontWeight: '500', color: ev._color,
+                          margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                          lineHeight: 1.3,
+                        }}>
+                          {ev.title}
+                        </p>
+                        {height > 30 && (
+                          <p style={{ fontSize: '10px', color: C.muted, margin: '2px 0 0', lineHeight: 1 }}>
+                            {ev._start.getHours()}:{String(ev._start.getMinutes()).padStart(2, '0')}
+                            {ev._end ? `–${ev._end.getHours()}:${String(ev._end.getMinutes()).padStart(2, '0')}` : ''}
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
-            );
-          })()}
+            </div>
+          </div>
         </div>
 
       </div>
-
     </div>
   );
 }
