@@ -445,4 +445,8 @@ migrate("ALTER TABLE clients ADD COLUMN website  TEXT DEFAULT ''");
 migrate("ALTER TABLE invoice_items ADD COLUMN billing_cycle TEXT DEFAULT 'once'");
 migrate("ALTER TABLE quote_items   ADD COLUMN billing_cycle TEXT DEFAULT 'once'");
 
+migrate("ALTER TABLE calendar_events ADD COLUMN meeting_link TEXT DEFAULT NULL");
+migrate("ALTER TABLE calendar_events ADD COLUMN attendees TEXT DEFAULT ''");
+migrate("ALTER TABLE calendar_events ADD COLUMN scope TEXT DEFAULT 'personal'");
+
 module.exports = db;

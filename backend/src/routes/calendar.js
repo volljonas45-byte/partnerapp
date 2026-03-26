@@ -35,15 +35,16 @@ router.get('/events', async (req, res) => {
 
 // ── POST /api/calendar/events ─────────────────────────────────────────────────
 router.post('/events', async (req, res) => {
-  const { title, description, start_time, end_time, all_day, color, type, project_id } = req.body;
+  const { title, description, start_time, end_time, all_day, color, type, project_id, meeting_link, attendees, scope } = req.body;
   if (!title || !start_time) return res.status(400).json({ error: 'title and start_time required' });
 
   try {
     const { lastInsertRowid } = await run(
-      `INSERT INTO calendar_events (user_id, title, description, start_time, end_time, all_day, color, type, project_id)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`,
+      `INSERT INTO calendar_events (user_id, title, description, start_time, end_time, all_day, color, type, project_id, meeting_link, attendees, scope)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING id`,
       [req.userId, title, description || '', start_time, end_time || null,
-       all_day || false, color || '#0071E3', type || 'event', project_id || null]
+       all_day || false, color || '#0071E3', type || 'event', project_id || null,
+       meeting_link || null, attendees || '', scope || 'personal']
     );
     const event = await getOne('SELECT * FROM calendar_events WHERE id = $1', [lastInsertRowid]);
     res.status(201).json(event);
@@ -55,16 +56,18 @@ router.post('/events', async (req, res) => {
 
 // ── PUT /api/calendar/events/:id ──────────────────────────────────────────────
 router.put('/events/:id', async (req, res) => {
-  const { title, description, start_time, end_time, all_day, color, type, project_id } = req.body;
+  const { title, description, start_time, end_time, all_day, color, type, project_id, meeting_link, attendees, scope } = req.body;
   try {
     await run(
       `UPDATE calendar_events
        SET title=$1, description=$2, start_time=$3, end_time=$4,
-           all_day=$5, color=$6, type=$7, project_id=$8
-       WHERE id=$9 AND user_id=$10`,
+           all_day=$5, color=$6, type=$7, project_id=$8,
+           meeting_link=$9, attendees=$10, scope=$11
+       WHERE id=$12 AND user_id=$13`,
       [title, description || '', start_time, end_time || null,
-       all_day || false, color || '#0071E3', type || 'event',
-       project_id || null, req.params.id, req.userId]
+       all_day || false, color || '#0071E3', type || 'event', project_id || null,
+       meeting_link || null, attendees || '', scope || 'personal',
+       req.params.id, req.userId]
     );
     const event = await getOne('SELECT * FROM calendar_events WHERE id = $1', [req.params.id]);
     res.json(event);

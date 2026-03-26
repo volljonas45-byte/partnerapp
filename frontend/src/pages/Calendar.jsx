@@ -3,7 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import {
   ChevronLeft, ChevronRight, Plus, X, Clock, Calendar as CalIcon,
-  Briefcase, AlignLeft, Palette, Check, Trash2,
+  Briefcase, AlignLeft, Check, Trash2, Video, Mail, Users, User,
+  MapPin, Tag,
 } from 'lucide-react';
 import { calendarApi } from '../api/calendar';
 import { projectsApi } from '../api/projects';
@@ -29,7 +30,12 @@ const TYPE_CFG = {
 
 // ── Date helpers ──────────────────────────────────────────────────────────────
 
-function toISO(d) { return d.toISOString().slice(0, 10); }
+function toISO(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
 
 function localDatetime(d) {
   const off = d.getTimezoneOffset();
@@ -122,19 +128,37 @@ function EventModal({ event, defaultDate, projects, onClose, onSave, onDelete })
   const initStart = defaultDate
     ? localDatetime(new Date(defaultDate.getFullYear(), defaultDate.getMonth(), defaultDate.getDate(), 9, 0))
     : event?._start ? localDatetime(event._start) : localDatetime(new Date());
-
   const initEnd = event?._end
     ? localDatetime(event._end)
     : localDatetime(new Date(new Date(initStart).getTime() + 60 * 60000));
 
-  const [title,     setTitle]     = useState(event?.title?.replace(/^[📅⏱]\s/, '') || '');
-  const [desc,      setDesc]      = useState(event?.description || '');
-  const [startVal,  setStartVal]  = useState(initStart);
-  const [endVal,    setEndVal]    = useState(initEnd);
-  const [allDay,    setAllDay]    = useState(event?.all_day || false);
-  const [color,     setColor]     = useState(event?._color || '#0071E3');
-  const [type,      setType]      = useState(event?.type || 'event');
-  const [projectId, setProjectId] = useState(event?.project_id || '');
+  const [title,       setTitle]       = useState(event?.title?.replace(/^[📅⏱]\s/, '') || '');
+  const [desc,        setDesc]        = useState(event?.description || '');
+  const [startVal,    setStartVal]    = useState(initStart);
+  const [endVal,      setEndVal]      = useState(initEnd);
+  const [allDay,      setAllDay]      = useState(event?.all_day || false);
+  const [color,       setColor]       = useState(event?._color || '#0071E3');
+  const [type,        setType]        = useState(event?.type || 'event');
+  const [projectId,   setProjectId]   = useState(event?.project_id || '');
+  const [meetingLink, setMeetingLink] = useState(event?.meeting_link || '');
+  const [attendees,   setAttendees]   = useState(event?.attendees || '');
+  const [scope,       setScope]       = useState(event?.scope || 'personal');
+  const [attendeeInput, setAttendeeInput] = useState('');
+
+  function addAttendee() {
+    const val = attendeeInput.trim();
+    if (!val) return;
+    const current = attendees ? attendees.split(',').map(s => s.trim()).filter(Boolean) : [];
+    if (!current.includes(val)) {
+      setAttendees([...current, val].join(', '));
+    }
+    setAttendeeInput('');
+  }
+
+  function removeAttendee(email) {
+    const current = attendees.split(',').map(s => s.trim()).filter(Boolean);
+    setAttendees(current.filter(e => e !== email).join(', '));
+  }
 
   function handleSubmit(e) {
     e.preventDefault();
@@ -144,54 +168,76 @@ function EventModal({ event, defaultDate, projects, onClose, onSave, onDelete })
       description: desc,
       start_time: allDay ? startVal.slice(0, 10) + 'T00:00:00' : startVal + ':00',
       end_time:   allDay ? startVal.slice(0, 10) + 'T23:59:00' : (endVal ? endVal + ':00' : null),
-      all_day:    allDay,
+      all_day: allDay,
       color,
       type,
       project_id: projectId || null,
+      meeting_link: meetingLink || null,
+      attendees: attendees || '',
+      scope,
     };
     onSave(isEdit ? { id: event.id, ...payload } : payload);
   }
 
-  return (
-    <div style={{
-      position: 'fixed', inset: 0, zIndex: 1000,
-      background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px',
-    }} onClick={onClose}>
-      <div style={{
-        background: '#fff', borderRadius: '20px', padding: '28px',
-        width: '100%', maxWidth: '460px',
-        boxShadow: '0 24px 64px rgba(0,0,0,0.18)',
-      }} onClick={e => e.stopPropagation()}>
+  const attendeeList = attendees ? attendees.split(',').map(s => s.trim()).filter(Boolean) : [];
 
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '22px' }}>
-          <h2 style={{ fontSize: '16px', fontWeight: '700', color: '#111827', margin: 0 }}>
-            {isEdit ? 'Termin bearbeiten' : 'Neuer Termin'}
-          </h2>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#A0A0AA', padding: '4px' }}>
-            <X size={18} />
+  const ROW = { display: 'flex', alignItems: 'flex-start', gap: '14px', padding: '10px 0', borderBottom: '1px solid rgba(0,0,0,0.05)' };
+  const ICON_COL = { width: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: '2px', flexShrink: 0 };
+  const INPUT = { width: '100%', border: 'none', outline: 'none', fontSize: '13px', color: '#1D1D1F', background: 'transparent', fontFamily: 'inherit' };
+
+  return (
+    <div
+      style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}
+      onClick={onClose}
+    >
+      <div
+        style={{ background: '#fff', borderRadius: '16px', width: '100%', maxWidth: '480px', boxShadow: '0 20px 60px rgba(0,0,0,0.2)', overflow: 'hidden' }}
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Color bar + header */}
+        <div style={{ height: '6px', background: color }} />
+        <div style={{ padding: '20px 24px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', gap: '6px' }}>
+            {/* Scope: personal / team */}
+            {[
+              { val: 'personal', icon: <User size={13} />, label: 'Ich' },
+              { val: 'team',     icon: <Users size={13} />, label: 'Team' },
+            ].map(({ val, icon, label }) => (
+              <button key={val} type="button" onClick={() => setScope(val)} style={{
+                display: 'flex', alignItems: 'center', gap: '5px',
+                padding: '4px 10px', borderRadius: '20px', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: '600',
+                background: scope === val ? color + '18' : 'rgba(0,0,0,0.05)',
+                color: scope === val ? color : '#6E6E73',
+                transition: 'all 0.15s',
+              }}>
+                {icon} {label}
+              </button>
+            ))}
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#A0A0AA', padding: '4px', borderRadius: '6px', display: 'flex' }}>
+            <X size={16} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        <form onSubmit={handleSubmit} style={{ padding: '12px 24px 20px' }}>
 
           {/* Title */}
           <input
             value={title} onChange={e => setTitle(e.target.value)}
-            placeholder="Titel"
-            style={{ padding: '10px 13px', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.12)', fontSize: '14px', fontWeight: '500', outline: 'none', width: '100%', boxSizing: 'border-box' }}
+            placeholder="Titel hinzufügen"
             autoFocus
+            style={{ width: '100%', border: 'none', borderBottom: '2px solid ' + color, outline: 'none', fontSize: '20px', fontWeight: '600', color: '#1D1D1F', padding: '8px 0 10px', marginBottom: '8px', fontFamily: 'inherit', boxSizing: 'border-box', background: 'transparent' }}
           />
 
-          {/* Type */}
-          <div style={{ display: 'flex', gap: '6px' }}>
+          {/* Type pills */}
+          <div style={{ display: 'flex', gap: '6px', marginBottom: '4px', flexWrap: 'wrap' }}>
             {Object.entries(TYPE_CFG).map(([key, cfg]) => (
               <button key={key} type="button" onClick={() => { setType(key); setColor(cfg.color); }}
                 style={{
-                  flex: 1, padding: '6px', borderRadius: '8px', fontSize: '11px', fontWeight: '600', border: 'none', cursor: 'pointer',
-                  background: type === key ? cfg.color : 'rgba(0,0,0,0.04)',
-                  color: type === key ? '#fff' : '#6B7280',
+                  padding: '4px 12px', borderRadius: '20px', border: `1.5px solid ${type === key ? cfg.color : 'transparent'}`,
+                  fontSize: '12px', fontWeight: '600', cursor: 'pointer',
+                  background: type === key ? cfg.color + '15' : 'rgba(0,0,0,0.04)',
+                  color: type === key ? cfg.color : '#6B7280',
                   transition: 'all 0.15s',
                 }}>
                 {cfg.label}
@@ -199,89 +245,129 @@ function EventModal({ event, defaultDate, projects, onClose, onSave, onDelete })
             ))}
           </div>
 
-          {/* All day toggle */}
-          <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', userSelect: 'none' }}>
-            <div style={{
-              width: '36px', height: '20px', borderRadius: '99px', transition: 'background 0.2s',
-              background: allDay ? '#0071E3' : 'rgba(0,0,0,0.12)', position: 'relative', flexShrink: 0,
-            }} onClick={() => setAllDay(a => !a)}>
-              <div style={{
-                position: 'absolute', top: '2px', left: allDay ? '18px' : '2px',
-                width: '16px', height: '16px', borderRadius: '50%', background: '#fff',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.2)', transition: 'left 0.2s',
-              }} />
-            </div>
-            <span style={{ fontSize: '13px', color: '#374151' }}>Ganztägig</span>
-          </label>
-
-          {/* Times */}
-          {!allDay && (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-              <div>
-                <label style={{ fontSize: '11px', color: '#A0A0AA', fontWeight: '600', display: 'block', marginBottom: '4px' }}>Von</label>
-                <input type="datetime-local" value={startVal} onChange={e => setStartVal(e.target.value)}
-                  style={{ padding: '8px 10px', borderRadius: '9px', border: '1px solid rgba(0,0,0,0.12)', fontSize: '12px', width: '100%', boxSizing: 'border-box', outline: 'none' }} />
+          {/* Date/Time row */}
+          <div style={ROW}>
+            <div style={ICON_COL}><Clock size={16} color="#86868B" strokeWidth={1.75} /></div>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#1D1D1F', cursor: 'pointer' }}>
+                  <div style={{ width: '16px', height: '16px', borderRadius: '4px', border: `2px solid ${allDay ? color : '#D1D1D6'}`, background: allDay ? color : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.15s' }}
+                    onClick={() => setAllDay(a => !a)}>
+                    {allDay && <Check size={10} color="#fff" strokeWidth={3} />}
+                  </div>
+                  Ganztägig
+                </label>
               </div>
-              <div>
-                <label style={{ fontSize: '11px', color: '#A0A0AA', fontWeight: '600', display: 'block', marginBottom: '4px' }}>Bis</label>
-                <input type="datetime-local" value={endVal} onChange={e => setEndVal(e.target.value)}
-                  style={{ padding: '8px 10px', borderRadius: '9px', border: '1px solid rgba(0,0,0,0.12)', fontSize: '12px', width: '100%', boxSizing: 'border-box', outline: 'none' }} />
-              </div>
+              {!allDay ? (
+                <div style={{ display: 'flex', gap: '8px', marginTop: '8px', alignItems: 'center' }}>
+                  <input type="datetime-local" value={startVal} onChange={e => setStartVal(e.target.value)}
+                    style={{ ...INPUT, padding: '5px 8px', borderRadius: '8px', background: 'rgba(0,0,0,0.04)', fontSize: '13px', flex: 1 }} />
+                  <span style={{ color: '#86868B', fontSize: '13px' }}>–</span>
+                  <input type="datetime-local" value={endVal} onChange={e => setEndVal(e.target.value)}
+                    style={{ ...INPUT, padding: '5px 8px', borderRadius: '8px', background: 'rgba(0,0,0,0.04)', fontSize: '13px', flex: 1 }} />
+                </div>
+              ) : (
+                <input type="date" value={startVal.slice(0, 10)} onChange={e => setStartVal(e.target.value + 'T00:00')}
+                  style={{ ...INPUT, marginTop: '8px', padding: '5px 8px', borderRadius: '8px', background: 'rgba(0,0,0,0.04)' }} />
+              )}
             </div>
-          )}
+          </div>
 
-          {allDay && (
-            <div>
-              <label style={{ fontSize: '11px', color: '#A0A0AA', fontWeight: '600', display: 'block', marginBottom: '4px' }}>Datum</label>
-              <input type="date" value={startVal.slice(0, 10)} onChange={e => setStartVal(e.target.value + 'T00:00')}
-                style={{ padding: '8px 10px', borderRadius: '9px', border: '1px solid rgba(0,0,0,0.12)', fontSize: '12px', width: '100%', boxSizing: 'border-box', outline: 'none' }} />
+          {/* Participants */}
+          <div style={ROW}>
+            <div style={ICON_COL}><Users size={16} color="#86868B" strokeWidth={1.75} /></div>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                <input
+                  value={attendeeInput}
+                  onChange={e => setAttendeeInput(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addAttendee(); } if (e.key === ',' || e.key === ' ') { e.preventDefault(); addAttendee(); } }}
+                  placeholder="Teilnehmer per E-Mail hinzufügen"
+                  style={{ ...INPUT, padding: '5px 8px', borderRadius: '8px', background: 'rgba(0,0,0,0.04)' }}
+                />
+                {attendeeInput.trim() && (
+                  <button type="button" onClick={addAttendee}
+                    style={{ padding: '4px 10px', borderRadius: '8px', background: color, border: 'none', cursor: 'pointer', color: '#fff', fontSize: '12px', fontWeight: '600', flexShrink: 0 }}>
+                    +
+                  </button>
+                )}
+              </div>
+              {attendeeList.length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginTop: '8px' }}>
+                  {attendeeList.map(email => (
+                    <div key={email} style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '3px 8px', borderRadius: '20px', background: 'rgba(0,0,0,0.06)', fontSize: '12px', color: '#374151' }}>
+                      <Mail size={10} color="#86868B" />
+                      {email}
+                      <button type="button" onClick={() => removeAttendee(email)}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#A0A0AA', padding: '0 0 0 2px', display: 'flex', lineHeight: 1 }}>
+                        <X size={10} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Meeting link — only for Meeting type */}
+          {type === 'meeting' && (
+            <div style={ROW}>
+              <div style={ICON_COL}><Video size={16} color="#86868B" strokeWidth={1.75} /></div>
+              <input
+                value={meetingLink} onChange={e => setMeetingLink(e.target.value)}
+                placeholder="Meeting-Link hinzufügen (Zoom, Meet, Teams…)"
+                style={{ ...INPUT, flex: 1, padding: '5px 8px', borderRadius: '8px', background: 'rgba(0,0,0,0.04)' }}
+              />
             </div>
           )}
 
           {/* Project */}
-          <div>
-            <label style={{ fontSize: '11px', color: '#A0A0AA', fontWeight: '600', display: 'block', marginBottom: '4px' }}>Projekt (optional)</label>
+          <div style={ROW}>
+            <div style={ICON_COL}><Briefcase size={16} color="#86868B" strokeWidth={1.75} /></div>
             <select value={projectId} onChange={e => setProjectId(e.target.value)}
-              style={{ padding: '8px 10px', borderRadius: '9px', border: '1px solid rgba(0,0,0,0.12)', fontSize: '12px', width: '100%', boxSizing: 'border-box', outline: 'none', background: '#fff', color: projectId ? '#111827' : '#A0A0AA' }}>
+              style={{ ...INPUT, flex: 1, padding: '5px 8px', borderRadius: '8px', background: 'rgba(0,0,0,0.04)', color: projectId ? '#1D1D1F' : '#A0A0AA' }}>
               <option value="">— Kein Projekt</option>
               {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
           </div>
 
           {/* Description */}
-          <textarea value={desc} onChange={e => setDesc(e.target.value)}
-            placeholder="Beschreibung (optional)"
-            rows={2}
-            style={{ padding: '9px 12px', borderRadius: '9px', border: '1px solid rgba(0,0,0,0.12)', fontSize: '13px', resize: 'none', outline: 'none', fontFamily: 'inherit', width: '100%', boxSizing: 'border-box' }}
-          />
+          <div style={ROW}>
+            <div style={ICON_COL}><AlignLeft size={16} color="#86868B" strokeWidth={1.75} /></div>
+            <textarea value={desc} onChange={e => setDesc(e.target.value)}
+              placeholder="Beschreibung hinzufügen"
+              rows={2}
+              style={{ ...INPUT, flex: 1, resize: 'none', padding: '5px 8px', borderRadius: '8px', background: 'rgba(0,0,0,0.04)', lineHeight: 1.5 }}
+            />
+          </div>
 
           {/* Color picker */}
-          <div>
-            <label style={{ fontSize: '11px', color: '#A0A0AA', fontWeight: '600', display: 'block', marginBottom: '6px' }}>Farbe</label>
-            <div style={{ display: 'flex', gap: '6px' }}>
-              {EVENT_COLORS.map(c => (
-                <button key={c} type="button" onClick={() => setColor(c)}
-                  style={{ width: '22px', height: '22px', borderRadius: '50%', background: c, border: color === c ? '2px solid #111827' : '2px solid transparent', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {color === c && <Check size={10} color="#fff" />}
-                </button>
-              ))}
-            </div>
+          <div style={{ display: 'flex', gap: '6px', marginTop: '12px', marginBottom: '16px' }}>
+            {EVENT_COLORS.map(c => (
+              <button key={c} type="button" onClick={() => setColor(c)}
+                style={{ width: '20px', height: '20px', borderRadius: '50%', background: c, border: color === c ? '2.5px solid #1D1D1F' : '2.5px solid transparent', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'transform 0.1s' }}
+                onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.2)'}
+                onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+              >
+                {color === c && <Check size={9} color="#fff" strokeWidth={3} />}
+              </button>
+            ))}
           </div>
 
           {/* Actions */}
-          <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+          <div style={{ display: 'flex', gap: '8px' }}>
             {isEdit && (
               <button type="button" onClick={() => onDelete(event.id)}
-                style={{ padding: '10px 14px', borderRadius: '10px', background: 'rgba(239,68,68,0.08)', border: 'none', cursor: 'pointer', color: '#EF4444', fontWeight: '600', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                style={{ padding: '9px 14px', borderRadius: '10px', background: 'rgba(239,68,68,0.08)', border: 'none', cursor: 'pointer', color: '#EF4444', fontWeight: '600', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '5px' }}>
                 <Trash2 size={13} /> Löschen
               </button>
             )}
             <button type="button" onClick={onClose}
-              style={{ flex: 1, padding: '10px', borderRadius: '10px', background: 'rgba(0,0,0,0.05)', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: '500', color: '#6B7280' }}>
+              style={{ flex: 1, padding: '9px', borderRadius: '10px', background: 'rgba(0,0,0,0.05)', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: '500', color: '#6B7280' }}>
               Abbrechen
             </button>
             <button type="submit"
-              style={{ flex: 2, padding: '10px', borderRadius: '10px', background: color, border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: '600', color: '#fff', boxShadow: `0 2px 8px ${color}55` }}>
+              style={{ flex: 2, padding: '9px', borderRadius: '10px', background: color, border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: '600', color: '#fff', boxShadow: `0 2px 8px ${color}55` }}>
               {isEdit ? 'Speichern' : 'Erstellen'}
             </button>
           </div>
@@ -445,6 +531,7 @@ function WeekView({ currentDate, events, onSlotClick, onEventClick }) {
                     >
                       <p style={{ fontSize: '10px', fontWeight: '600', color: ev._color, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {ev._start.getHours()}:{String(ev._start.getMinutes()).padStart(2,'0')} {ev.title}
+                        {ev.scope === 'team' ? ' 👥' : ''}
                       </p>
                     </div>
                   );
@@ -513,11 +600,18 @@ function DayView({ currentDate, events, onSlotClick, onEventClick }) {
                     background: ev._color + '18', borderLeft: `4px solid ${ev._color}`,
                     borderRadius: '6px', padding: '6px 10px', cursor: 'pointer', zIndex: 2,
                   }}>
-                  <p style={{ fontSize: '12px', fontWeight: '600', color: ev._color, margin: 0 }}>{ev.title}</p>
+                  <p style={{ fontSize: '12px', fontWeight: '600', color: ev._color, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.title}</p>
                   <p style={{ fontSize: '11px', color: '#6B7280', margin: '2px 0 0' }}>
                     {ev._start.getHours()}:{String(ev._start.getMinutes()).padStart(2,'0')}
                     {ev._end ? ` – ${ev._end.getHours()}:${String(ev._end.getMinutes()).padStart(2,'0')}` : ''}
+                    {ev.scope === 'team' ? ' · Team' : ''}
                   </p>
+                  {ev.meeting_link && (
+                    <a href={ev.meeting_link} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}
+                      style={{ fontSize: '10px', color: ev._color, textDecoration: 'none', fontWeight: '600', display: 'block', marginTop: '2px' }}>
+                      ▶ Link beitreten
+                    </a>
+                  )}
                 </div>
               );
             })}
@@ -709,6 +803,7 @@ export default function Calendar() {
       <div style={{ display: 'flex', gap: '16px', padding: '8px 24px', background: '#fff', borderBottom: '1px solid rgba(0,0,0,0.05)', flexShrink: 0 }}>
         {[
           { color: '#0071E3', label: 'Termin' },
+          { color: '#AF52DE', label: 'Meeting' },
           { color: '#EF4444', label: 'Deadline' },
           { color: '#5AC8FA', label: 'Zeiterfassung' },
         ].map(({ color, label }) => (
