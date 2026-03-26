@@ -259,12 +259,44 @@ function EventModal({ event, defaultDate, projects, onClose, onSave, onDelete })
                 </label>
               </div>
               {!allDay ? (
-                <div style={{ display: 'flex', gap: '8px', marginTop: '8px', alignItems: 'center' }}>
-                  <input type="datetime-local" value={startVal} onChange={e => setStartVal(e.target.value)}
-                    style={{ ...INPUT, padding: '5px 8px', borderRadius: '8px', background: 'rgba(0,0,0,0.04)', fontSize: '13px', flex: 1 }} />
+                <div style={{ display: 'flex', gap: '6px', marginTop: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                  {/* Single date – shared by start & end */}
+                  <input
+                    type="date"
+                    value={startVal.slice(0, 10)}
+                    onChange={e => {
+                      const d = e.target.value;
+                      setStartVal(d + 'T' + startVal.slice(11, 16));
+                      setEndVal(d + 'T' + endVal.slice(11, 16));
+                    }}
+                    style={{ ...INPUT, padding: '5px 8px', borderRadius: '8px', background: 'rgba(0,0,0,0.04)', fontSize: '13px', flex: '0 0 auto' }}
+                  />
+                  {/* Start time */}
+                  <input
+                    type="time"
+                    value={startVal.slice(11, 16)}
+                    onChange={e => {
+                      const t = e.target.value;
+                      const d = startVal.slice(0, 10);
+                      setStartVal(d + 'T' + t);
+                      // Auto-push end time forward if it's now ≤ start
+                      const [sh, sm] = t.split(':').map(Number);
+                      const [eh, em] = endVal.slice(11, 16).split(':').map(Number);
+                      if (eh * 60 + em <= sh * 60 + sm) {
+                        const total = (sh * 60 + sm + 60) % 1440;
+                        setEndVal(d + 'T' + String(Math.floor(total / 60)).padStart(2, '0') + ':' + String(total % 60).padStart(2, '0'));
+                      }
+                    }}
+                    style={{ ...INPUT, padding: '5px 8px', borderRadius: '8px', background: 'rgba(0,0,0,0.04)', fontSize: '13px', flex: '0 0 auto' }}
+                  />
                   <span style={{ color: '#86868B', fontSize: '13px' }}>–</span>
-                  <input type="datetime-local" value={endVal} onChange={e => setEndVal(e.target.value)}
-                    style={{ ...INPUT, padding: '5px 8px', borderRadius: '8px', background: 'rgba(0,0,0,0.04)', fontSize: '13px', flex: 1 }} />
+                  {/* End time only */}
+                  <input
+                    type="time"
+                    value={endVal.slice(11, 16)}
+                    onChange={e => setEndVal(startVal.slice(0, 10) + 'T' + e.target.value)}
+                    style={{ ...INPUT, padding: '5px 8px', borderRadius: '8px', background: 'rgba(0,0,0,0.04)', fontSize: '13px', flex: '0 0 auto' }}
+                  />
                 </div>
               ) : (
                 <input type="date" value={startVal.slice(0, 10)} onChange={e => setStartVal(e.target.value + 'T00:00')}
