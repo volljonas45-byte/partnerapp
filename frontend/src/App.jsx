@@ -47,6 +47,16 @@ function ProtectedRoute({ children }) {
   return <Layout>{children}</Layout>;
 }
 
+// Dashboard manages its own layout (sidebar included)
+function ProtectedRouteNoLayout({ children }) {
+  const { isAuthenticated, loading } = useAuth();
+
+  if (loading) return <LoadingSpinner className="h-screen" />;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+
+  return children;
+}
+
 function AppRoutes() {
   const { isAuthenticated, loading } = useAuth();
 
@@ -61,7 +71,7 @@ function AppRoutes() {
       />
 
       {/* Geschützt */}
-      <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+      <Route path="/" element={<ProtectedRouteNoLayout><Dashboard /></ProtectedRouteNoLayout>} />
 
       <Route path="/clients"         element={<ProtectedRoute><Clients /></ProtectedRoute>} />
       <Route path="/clients/new"     element={<ProtectedRoute><NewClient /></ProtectedRoute>} />

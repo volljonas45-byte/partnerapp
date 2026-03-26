@@ -1,660 +1,516 @@
-import { useState, useRef, useEffect, useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import {
-  Globe, Plus, ChevronRight, CheckCircle2, Check,
-  AlertTriangle, Euro, Bell, ExternalLink,
-  ChevronDown, AlertCircle, Send, TrendingUp,
-  Clock, Timer,
+  LayoutDashboard, Globe, Briefcase, CalendarDays, Clock, BarChart2,
+  ClipboardCheck, PackageCheck, Layers, FileText, ClipboardList,
+  Users, UserCog, Settings, LogOut, Zap, Plus, ChevronRight,
+  Globe2, Receipt, UserPlus, CalendarPlus, CheckCircle2,
 } from 'lucide-react';
-import { projectsApi } from '../api/projects';
-import { invoicesApi } from '../api/invoices';
-import { workflowApi } from '../api/workflow';
-import { timeApi } from '../api/time';
-import { calendarApi } from '../api/calendar';
-import { formatCurrency, formatDate, isPast } from '../utils/formatters';
-import toast from 'react-hot-toast';
-import ReminderCard from '../components/workflow/ReminderCard';
 
-// ── Design tokens ─────────────────────────────────────────────────────────────
-const C = {
-  card:        '#FFFFFF',
-  border:      '#E8E8ED',
-  borderLight: '#F2F2F5',
-  text:        '#111111',
-  textSub:     '#6B6B7B',
-  muted:       '#A0A0AC',
-  brand:       '#0071E3',
-  brandBg:     'rgba(0,113,227,0.08)',
-  green:       '#16A34A',
-  greenBg:     'rgba(22,163,74,0.08)',
-  red:         '#DC2626',
-  redBg:       'rgba(220,38,38,0.07)',
-  amber:       '#D97706',
-  amberBg:     'rgba(217,119,6,0.08)',
-  purple:      '#7C3AED',
-  purpleBg:    'rgba(124,58,237,0.08)',
+// ─── STATIC MOCK DATA ─────────────────────────────────────────────
+const D = {
+  activeWebsites: 5,
+  totalWebsites: 6,
+  openAmount: 0,
+  openCount: 0,
+  followUps: 0,
+  weekSec: 55800,      // 15h 30m
+  todaySec: 14400,     // 4h
+  weekGoalSec: 144000, // 40h
+  finance: { open: 0, overdue: 0, paid: 2850 },
+  websites: [
+    { id: 1, name: 'muster-baecker.de',      client: 'Muster Bäckerei',  status: 'active',  last: 'Heute'   },
+    { id: 2, name: 'autohaus-schmidt.de',     client: 'Autohaus Schmidt', status: 'active',  last: 'Gestern' },
+    { id: 3, name: 'praxis-mueller.de',       client: 'Dr. Müller',       status: 'planned', last: '3 Tage'  },
+    { id: 4, name: 'steuerberatung-bauer.de', client: 'Kanzlei Bauer',    status: 'active',  last: 'Heute'   },
+    { id: 5, name: 'yoga-studio-berlin.de',   client: 'Yoga Berlin',      status: 'active',  last: 'Heute'   },
+  ],
+  events: [
+    { time: '09:00', title: 'Kick-off Autohaus Schmidt', color: '#0071E3' },
+    { time: '14:00', title: 'Review Yoga Studio',        color: '#34C759' },
+    { time: '16:30', title: 'Abnahme Dr. Müller',        color: '#FF9F0A' },
+  ],
 };
 
-const card = {
-  background:   C.card,
-  borderRadius: '16px',
-  border:       `1px solid ${C.border}`,
-  boxShadow:    '0 1px 3px rgba(0,0,0,0.04), 0 6px 16px rgba(0,0,0,0.05)',
+// ─── HELPERS ──────────────────────────────────────────────────────
+const fmt = sec => {
+  const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60);
+  return h === 0 ? `${m}m` : m === 0 ? `${h}h` : `${h}h ${m}m`;
 };
 
-// ── Status config ─────────────────────────────────────────────────────────────
-const STATUS_CFG = {
-  planned:            { label: 'Geplant',          color: '#6E6E73', bg: 'rgba(110,110,115,0.08)', dot: '#9CA3AF' },
-  active:             { label: 'Aktiv',            color: C.brand,   bg: C.brandBg,               dot: '#3B82F6' },
-  waiting_for_client: { label: 'Warten auf Kunde', color: C.amber,   bg: C.amberBg,               dot: '#F59E0B' },
-  feedback:           { label: 'Überarbeitung',    color: C.purple,  bg: C.purpleBg,              dot: '#8B5CF6' },
-  review:             { label: 'Review',           color: C.purple,  bg: C.purpleBg,              dot: '#8B5CF6' },
-  waiting:            { label: 'Fertigstellung',   color: C.purple,  bg: C.purpleBg,              dot: '#8B5CF6' },
-  completed:          { label: 'Abgeschlossen',    color: C.green,   bg: C.greenBg,               dot: '#22C55E' },
-  deferred:           { label: 'Verschoben',       color: '#94A3B8', bg: 'rgba(148,163,184,0.08)', dot: '#94A3B8' },
-};
-const STATUS_OPTIONS = ['planned','active','waiting_for_client','feedback','review','waiting','completed','deferred'];
-
-const HEALTH_CFG = {
-  good:     { color: C.green },
-  warning:  { color: C.amber },
-  critical: { color: C.red   },
-  done:     { color: C.muted },
+const STAT = {
+  active:    { label: 'Aktiv',   tw: 'bg-[#E8F8EE] text-[#1A8F40]' },
+  planned:   { label: 'Geplant', tw: 'bg-[#E8F0FE] text-[#0057B8]' },
+  waiting:   { label: 'Wartend', tw: 'bg-[#FFF3E0] text-[#B35A00]' },
+  completed: { label: 'Fertig',  tw: 'bg-[#F2F2F7] text-[#636366]' },
 };
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-function getGreeting() {
-  const h = new Date().getHours();
-  if (h < 12) return 'Guten Morgen';
-  if (h < 18) return 'Guten Tag';
-  return 'Guten Abend';
-}
-function daysUntil(dateStr) {
-  if (!dateStr) return null;
-  const now = new Date(); now.setHours(0,0,0,0);
-  const then = new Date(dateStr); then.setHours(0,0,0,0);
-  return Math.round((then - now) / 86400000);
-}
-function computeHealth(p) {
-  if (p.status === 'completed') return 'done';
-  if (p.deadline && isPast(p.deadline)) return 'critical';
-  if (p.status === 'waiting_for_client') return 'warning';
-  const d = daysUntil(p.deadline);
-  if (d !== null && d <= 5) return 'warning';
-  return 'good';
-}
-function parseLocal(str) { if (!str) return null; return new Date(str.replace('T',' ').replace('Z','')); }
-const DAY_HOURS = Array.from({ length: 15 }, (_,i) => i + 7);
-
-// ── StatusDropdown ────────────────────────────────────────────────────────────
-function StatusDropdown({ status, onChange }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef(null);
-  const cfg = STATUS_CFG[status] || STATUS_CFG.planned;
-  useEffect(() => {
-    const h = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
-    document.addEventListener('mousedown', h);
-    return () => document.removeEventListener('mousedown', h);
-  }, []);
+// ─── DONUT CHART ──────────────────────────────────────────────────
+function Donut({ value, max, color = '#0071E3', size = 80, sw = 8 }) {
+  const r    = (size - sw) / 2;
+  const circ = 2 * Math.PI * r;
+  const pct  = Math.min(value / max, 1);
   return (
-    <div style={{ position: 'relative' }} ref={ref}>
-      <button onClick={e => { e.stopPropagation(); setOpen(o => !o); }}
-        style={{
-          display: 'inline-flex', alignItems: 'center', gap: '5px',
-          padding: '3px 9px', borderRadius: '8px',
-          background: cfg.bg, border: 'none', cursor: 'pointer',
-          fontSize: '11px', fontWeight: '500', color: cfg.color,
-        }}>
-        <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: cfg.dot }} />
-        {cfg.label}
-        <ChevronDown size={9} style={{ opacity: 0.5 }} />
-      </button>
-      {open && (
-        <>
-          <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setOpen(false)} />
-          <div style={{
-            position: 'absolute', left: 0, top: 'calc(100% + 5px)', zIndex: 50,
-            width: '185px', background: C.card, borderRadius: '12px',
-            boxShadow: '0 8px 24px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.06)',
-            border: `1px solid ${C.border}`, padding: '4px',
-          }}>
-            {STATUS_OPTIONS.map(key => {
-              const c = STATUS_CFG[key]; const isActive = status === key;
-              return (
-                <button key={key} onClick={e => { e.stopPropagation(); onChange(key); setOpen(false); }}
-                  style={{
-                    width: '100%', display: 'flex', alignItems: 'center', gap: '8px',
-                    padding: '7px 10px', borderRadius: '8px',
-                    background: isActive ? C.borderLight : 'transparent',
-                    border: 'none', cursor: 'pointer',
-                    fontSize: '12px', fontWeight: isActive ? '500' : '400',
-                    color: C.text, textAlign: 'left', transition: 'background 0.1s',
-                  }}
-                  onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = C.borderLight; }}
-                  onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
-                >
-                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: c.dot, flexShrink: 0 }} />
-                  {c.label}
-                  {isActive && <Check size={11} style={{ marginLeft: 'auto', color: C.muted }} />}
-                </button>
-              );
-            })}
-          </div>
-        </>
-      )}
-    </div>
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#F2F2F7" strokeWidth={sw} />
+      <circle
+        cx={size / 2} cy={size / 2} r={r}
+        fill="none" stroke={color} strokeWidth={sw} strokeLinecap="round"
+        strokeDasharray={`${circ * pct} ${circ * (1 - pct)}`}
+        transform={`rotate(-90 ${size / 2} ${size / 2})`}
+      />
+    </svg>
   );
 }
 
-// ── WebsiteCard ───────────────────────────────────────────────────────────────
-function WebsiteCard({ project, onStatusChange, onClick }) {
-  const h = computeHealth(project);
-  const hc = HEALTH_CFG[h];
-  const tasks = project.tasks || [];
-  const doneTasks = tasks.filter(t => t.status === 'done').length;
-  const taskPct = tasks.length > 0 ? Math.round((doneTasks / tasks.length) * 100) : null;
-  const days = daysUntil(project.deadline);
-  const isOverdue = project.deadline && isPast(project.deadline) && project.status !== 'completed';
-  return (
-    <div onClick={onClick} style={{
-      ...card, padding: '18px 20px 16px', cursor: 'pointer',
-      transition: 'box-shadow 0.2s cubic-bezier(0.16,1,0.3,1), transform 0.2s cubic-bezier(0.16,1,0.3,1)',
-      display: 'flex', flexDirection: 'column', gap: '12px',
-    }}
-      onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.10)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-      onMouseLeave={e => { e.currentTarget.style.boxShadow = card.boxShadow; e.currentTarget.style.transform = 'translateY(0)'; }}
-    >
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px' }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '3px' }}>
-            <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: hc.color, flexShrink: 0, boxShadow: `0 0 0 2px ${hc.color}22` }} />
-            <p style={{ fontSize: '13px', fontWeight: '500', color: C.text, letterSpacing: '-0.01em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0 }}>
-              {project.name}
-            </p>
-          </div>
-          <p style={{ fontSize: '11px', color: C.muted, paddingLeft: '14px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0 }}>
-            {project.client_name || '—'}
-          </p>
-        </div>
-        {project.live_url && (
-          <button onClick={e => { e.stopPropagation(); window.open(project.live_url, '_blank'); }}
-            style={{ padding: '5px', borderRadius: '8px', background: C.brandBg, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', flexShrink: 0, transition: 'background 0.15s' }}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,113,227,0.14)'}
-            onMouseLeave={e => e.currentTarget.style.background = C.brandBg}
-          >
-            <ExternalLink size={11} color={C.brand} />
-          </button>
-        )}
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }} onClick={e => e.stopPropagation()}>
-        <StatusDropdown status={project.status} onChange={onStatusChange} />
-        {project.deadline && (
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontSize: '11px', fontWeight: '500', color: isOverdue ? C.red : days !== null && days <= 5 ? C.amber : C.muted }}>
-            {isOverdue ? <AlertTriangle size={9}/> : <Clock size={9}/>}
-            {isOverdue ? `+${Math.abs(days)}d` : days === 0 ? 'heute' : `${days}d`}
-          </span>
-        )}
-      </div>
-      {taskPct !== null && (
-        <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
-            <span style={{ fontSize: '10px', color: C.muted, fontWeight: '500' }}>Aufgaben</span>
-            <span style={{ fontSize: '10px', color: C.muted }}>{doneTasks}/{tasks.length}</span>
-          </div>
-          <div style={{ height: '2px', background: C.borderLight, borderRadius: '99px', overflow: 'hidden' }}>
-            <div style={{ height: '100%', borderRadius: '99px', background: taskPct === 100 ? C.green : C.brand, width: `${taskPct}%`, transition: 'width 0.4s cubic-bezier(0.16,1,0.3,1)' }} />
-          </div>
-        </div>
-      )}
-    </div>
-  );
+// ─── SIDEBAR NAV ──────────────────────────────────────────────────
+const NAV_GROUPS = [
+  { label: null, items: [
+    { to: '/',               icon: LayoutDashboard, label: 'Dashboard'     },
+    { to: '/websites',       icon: Globe,           label: 'Websites'      },
+    { to: '/projects',       icon: Briefcase,       label: 'Projekte'      },
+    { to: '/calendar',       icon: CalendarDays,    label: 'Kalender'      },
+    { to: '/time-tracking',  icon: Clock,           label: 'Zeiterfassung' },
+    { to: '/team-dashboard', icon: BarChart2,       label: 'Team'          },
+  ]},
+  { label: 'Workflow', items: [
+    { to: '/intake',     icon: ClipboardCheck, label: 'Intake'     },
+    { to: '/delivery',   icon: PackageCheck,   label: 'Übergabe'   },
+    { to: '/onboarding', icon: Layers,         label: 'Onboarding' },
+  ]},
+  { label: 'Finanzen', items: [
+    { to: '/invoices', icon: FileText,      label: 'Rechnungen' },
+    { to: '/quotes',   icon: ClipboardList, label: 'Angebote'   },
+  ]},
+  { label: 'Verwaltung', items: [
+    { to: '/clients',  icon: Users,    label: 'Kunden'        },
+    { to: '/team',     icon: UserCog,  label: 'Team'          },
+    { to: '/settings', icon: Settings, label: 'Einstellungen' },
+  ]},
+];
+
+function avatarBg(s = '') {
+  const cs = ['#BF5AF2', '#0071E3', '#34C759', '#FF9500', '#FF3B30'];
+  let h = 0;
+  for (const c of s) h = c.charCodeAt(0) + ((h << 5) - h);
+  return cs[Math.abs(h) % cs.length];
 }
 
-// ── Small reusable components ─────────────────────────────────────────────────
-function Btn({ children, onClick, variant = 'ghost' }) {
-  const base = {
-    display: 'inline-flex', alignItems: 'center', gap: '5px',
-    fontSize: '12px', fontWeight: '500', cursor: 'pointer',
-    border: 'none', transition: 'opacity 0.15s, background 0.15s',
-    letterSpacing: '0.01em', whiteSpace: 'nowrap',
-  };
-  if (variant === 'ghost') return (
-    <button onClick={onClick} style={{ ...base, color: C.brand, background: 'none', padding: '3px 0' }}
-      onMouseEnter={e => e.currentTarget.style.opacity = '0.65'}
-      onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
-      {children}
-    </button>
-  );
-  if (variant === 'pill') return (
-    <button onClick={onClick} style={{ ...base, color: C.brand, background: C.brandBg, padding: '4px 10px', borderRadius: '8px' }}
-      onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,113,227,0.13)'}
-      onMouseLeave={e => e.currentTarget.style.background = C.brandBg}>
-      {children}
-    </button>
-  );
-}
-
-function SectionHead({ title, count, left, right }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        {left}
-        <h2 style={{ fontSize: '13px', fontWeight: '500', color: C.text, letterSpacing: '-0.01em', margin: 0 }}>{title}</h2>
-        {count !== undefined && (
-          <span style={{ fontSize: '11px', color: C.muted, background: C.borderLight, padding: '1px 7px', borderRadius: '99px', fontWeight: '500' }}>{count}</span>
-        )}
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>{right}</div>
-    </div>
-  );
-}
-
-function CardHead({ icon: Icon, iconColor, iconBg, title, action }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
-        <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          <Icon size={14} color={iconColor} />
-        </div>
-        <span style={{ fontSize: '13px', fontWeight: '500', color: C.text, letterSpacing: '-0.01em' }}>{title}</span>
-      </div>
-      {action}
-    </div>
-  );
-}
-
-// ── Main Component ────────────────────────────────────────────────────────────
-export default function Dashboard() {
-  const navigate    = useNavigate();
-  const queryClient = useQueryClient();
-
-  const { data: projects = [], isLoading } = useQuery({
-    queryKey: ['projects'],
-    queryFn: () => projectsApi.list().then(r => r.data),
-  });
-  const { data: stats } = useQuery({
-    queryKey: ['invoices', 'stats'],
-    queryFn: () => invoicesApi.stats().then(r => r.data),
-  });
-  const { data: invoices = [] } = useQuery({
-    queryKey: ['invoices'],
-    queryFn: () => invoicesApi.list().then(r => r.data),
-  });
-  const { data: workflowReminders = [] } = useQuery({
-    queryKey: ['workflow-reminders'],
-    queryFn: () => workflowApi.getDashboardReminders().then(r => r.data),
-  });
-  const { data: timeSummary } = useQuery({
-    queryKey: ['time-summary'],
-    queryFn: () => timeApi.summary(),
-  });
-  const { data: activeTimer } = useQuery({
-    queryKey: ['time-timer-active'],
-    queryFn: () => timeApi.timerActive(),
-    refetchInterval: 30000,
-  });
-  const todayStr = useMemo(() => new Date().toISOString().slice(0,10), []);
-  const { data: todayCalEvents = [] } = useQuery({
-    queryKey: ['calendar-events-today', todayStr],
-    queryFn: () => calendarApi.list({ from: todayStr, to: todayStr }),
-  });
-  const { data: todayTimeEntries = [] } = useQuery({
-    queryKey: ['time-entries-today', todayStr],
-    queryFn: () => timeApi.list({ from: todayStr, to: todayStr }),
-  });
-
-  const updateProject = useMutation({
-    mutationFn: ({ id, data }) => projectsApi.update(id, data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['projects'] }),
-    onError: () => toast.error('Fehler beim Speichern'),
-  });
-  const doneReminderMutation = useMutation({
-    mutationFn: ({ projectId, id }) => workflowApi.updateReminder(projectId, id, { done: true }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['workflow-reminders'] }),
-    onError: () => toast.error('Fehler'),
-  });
-
-  // ── Derived ───────────────────────────────────────────────────────────────────
-  const INACTIVE = ['completed','waiting_for_client','waiting','deferred'];
-  const activeWebsites  = projects.filter(p => !INACTIVE.includes(p.status));
-  const overdueCount    = projects.filter(p => p.status !== 'completed' && p.deadline && isPast(p.deadline)).length;
-  const openAmount      = (stats?.unpaid_revenue || 0) + (stats?.overdue_revenue || 0);
-  const overdueInvCount = stats?.overdue_count || 0;
-  const today0 = new Date(); today0.setHours(0,0,0,0);
-  const dueTodayReminders = workflowReminders.filter(r => {
-    if (r.done) return false;
-    const d = new Date(r.due_date); d.setHours(0,0,0,0);
-    return d <= today0;
-  });
-  const openInvoices = invoices.filter(i => ['sent','unpaid','overdue'].includes(i.status)).slice(0,5);
-  const fmtH = sec => sec != null ? `${Math.floor(sec/3600)}h ${Math.floor((sec%3600)/60)}m` : '—';
-
-  const alertItems = [
-    overdueCount > 0 && { key:'overdue', icon:AlertTriangle, color:C.red, bg:C.redBg, border:'rgba(220,38,38,0.18)', label:`${overdueCount} Deadline${overdueCount>1?'s':''} überschritten`, onClick:() => navigate('/websites') },
-    overdueInvCount > 0 && { key:'invoices', icon:Euro, color:C.red, bg:C.redBg, border:'rgba(220,38,38,0.18)', label:`${overdueInvCount} Rechnung${overdueInvCount>1?'en':''} überfällig`, onClick:() => navigate('/invoices') },
-    dueTodayReminders.length > 0 && { key:'reminders', icon:Bell, color:C.purple, bg:C.purpleBg, border:'rgba(124,58,237,0.18)', label:`${dueTodayReminders.length} Follow-up${dueTodayReminders.length>1?'s':''} heute`, onClick:null },
-  ].filter(Boolean);
-
-  // ── Calendar data ─────────────────────────────────────────────────────────────
-  const calTodayEvents = useMemo(() => {
-    const evts = [];
-    for (const e of todayCalEvents) {
-      const start = parseLocal(e.start_time); const end = e.end_time ? parseLocal(e.end_time) : null;
-      if (start) evts.push({ id:e.id, title:e.title, _start:start, _end:end, _color:e.color||C.brand, all_day:!!e.all_day });
-    }
-    for (const p of projects) {
-      if (p.deadline && p.deadline.slice(0,10) === todayStr)
-        evts.push({ id:`dl-${p.id}`, title:p.name, _start:new Date(todayStr+'T00:00:00'), _end:null, _color:C.red, all_day:true });
-    }
-    for (const e of todayTimeEntries) {
-      if (!e.start_time) continue;
-      const start = parseLocal(e.start_time); const end = e.end_time ? parseLocal(e.end_time) : null;
-      const dur = e.duration ? ` ${Math.floor(e.duration/3600)}h${Math.floor((e.duration%3600)/60)}m` : '';
-      evts.push({ id:`t-${e.id}`, title:`${e.project_name||'Zeit'}${dur}`, _start:start, _end:end, _color:'#5AC8FA', all_day:false });
-    }
-    return evts;
-  }, [todayCalEvents, projects, todayTimeEntries, todayStr]);
-
-  const allDayEvts = calTodayEvents.filter(e => e.all_day);
-  const timedEvts  = calTodayEvents.filter(e => !e.all_day && e._start);
-  const now = new Date();
-  const nowHour = now.getHours() + now.getMinutes()/60;
-  const HOUR_H = 40;
-  const CAL_START = DAY_HOURS[0];
-
-  const greeting   = getGreeting();
-  const todayLabel = new Date().toLocaleDateString('de-DE', { weekday:'long', day:'numeric', month:'long' });
-
-  if (isLoading) return (
-    <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'50vh' }}>
-      <div style={{ width:'18px', height:'18px', border:`2px solid ${C.border}`, borderTopColor:C.brand, borderRadius:'50%', animation:'spin 0.7s linear infinite' }} />
-    </div>
-  );
+// ─── SIDEBAR ──────────────────────────────────────────────────────
+function Sidebar() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const name     = user?.name || user?.email || '?';
+  const initials = name.trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  const bg       = user?.color || avatarBg(user?.email || '');
 
   return (
-    // maxWidth: prevents ultra-wide stretch; padding scales with viewport
-    <div style={{ width:'100%', maxWidth:'1440px', padding:'28px 28px 56px', boxSizing:'border-box' }}>
+    <aside className="w-[240px] shrink-0 flex flex-col h-screen bg-white/85 backdrop-blur-2xl border-r border-black/[0.06] z-10">
 
-      {/* ── Header ── */}
-      <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'16px', marginBottom:'20px', flexWrap:'wrap' }}>
-        <div>
-          <h1 style={{ fontSize:'22px', fontWeight:'600', color:C.text, letterSpacing:'-0.03em', margin:0, lineHeight:1.2 }}>
-            {greeting}
-          </h1>
-          <p style={{ fontSize:'13px', color:C.muted, marginTop:'3px', fontWeight:'400' }}>{todayLabel}</p>
-        </div>
-        <div style={{ display:'flex', gap:'8px', flexShrink:0 }}>
-          <button onClick={() => navigate('/onboarding/wizard')}
-            style={{ display:'inline-flex', alignItems:'center', gap:'6px', padding:'8px 16px', borderRadius:'10px', border:`1px solid ${C.border}`, background:C.card, color:C.text, fontSize:'13px', fontWeight:'500', cursor:'pointer', boxShadow:'0 1px 2px rgba(0,0,0,0.04)', transition:'background 0.15s' }}
-            onMouseEnter={e => e.currentTarget.style.background = '#F2F2F5'}
-            onMouseLeave={e => e.currentTarget.style.background = C.card}
-          >
-            <Plus size={14} strokeWidth={2} /> Website
-          </button>
-          <button onClick={() => navigate('/invoices/new')}
-            style={{ display:'inline-flex', alignItems:'center', gap:'6px', padding:'8px 16px', borderRadius:'10px', border:'none', background:C.brand, color:'#fff', fontSize:'13px', fontWeight:'500', cursor:'pointer', boxShadow:'0 1px 3px rgba(0,113,227,0.3)', transition:'filter 0.15s' }}
-            onMouseEnter={e => e.currentTarget.style.filter = 'brightness(1.1)'}
-            onMouseLeave={e => e.currentTarget.style.filter = 'brightness(1)'}
-          >
-            <Plus size={14} strokeWidth={2} /> Rechnung
-          </button>
+      {/* Logo */}
+      <div className="px-5 pt-5 pb-2 shrink-0">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-[9px] bg-[#0071E3] flex items-center justify-center shadow-[0_2px_8px_rgba(0,113,227,0.35)]">
+            <Zap size={14} color="#fff" strokeWidth={2.5} />
+          </div>
+          <span className="text-[15px] font-semibold text-[#1D1D1F] tracking-[-0.3px]">Vecturo</span>
         </div>
       </div>
 
-      {/* ── Alert Strip ── */}
-      <div style={{ marginBottom:'24px' }}>
-        {alertItems.length === 0 ? (
-          <div style={{ display:'inline-flex', alignItems:'center', gap:'6px', padding:'5px 12px', borderRadius:'99px', background:C.greenBg, border:'1px solid rgba(22,163,74,0.18)' }}>
-            <CheckCircle2 size={12} color={C.green} />
-            <span style={{ fontSize:'12px', fontWeight:'500', color:C.green }}>Alles im Griff</span>
-          </div>
-        ) : (
-          <div style={{ display:'flex', gap:'6px', flexWrap:'wrap' }}>
-            {alertItems.map(item => (
-              <button key={item.key} onClick={item.onClick||undefined}
-                style={{ display:'inline-flex', alignItems:'center', gap:'5px', padding:'5px 12px', borderRadius:'99px', background:item.bg, border:`1px solid ${item.border}`, cursor:item.onClick?'pointer':'default', fontSize:'12px', fontWeight:'500', color:item.color, transition:'opacity 0.15s' }}
-                onMouseEnter={e => { if (item.onClick) e.currentTarget.style.opacity='0.75'; }}
-                onMouseLeave={e => e.currentTarget.style.opacity='1'}
-              >
-                <item.icon size={11} /> {item.label}
-              </button>
-            ))}
-          </div>
-        )}
+      {/* CTA */}
+      <div className="px-4 py-3 shrink-0">
+        <button
+          onClick={() => navigate('/wizard')}
+          className="w-full flex items-center justify-center gap-1.5 py-[9px] px-4 text-[13px] font-medium text-white bg-[#0071E3] rounded-[10px] shadow-[0_1px_3px_rgba(0,113,227,0.3)] transition-all duration-150 hover:bg-[#0077ED] active:scale-[0.98]"
+        >
+          <Plus size={14} strokeWidth={2} />
+          Neues Projekt
+        </button>
       </div>
 
-      {/* ── KPI Strip ── responsive auto-fit ── */}
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(180px, 1fr))', gap:'12px', marginBottom:'28px' }}>
-        {[
-          { label:'Aktive Websites', value:activeWebsites.length, sub:`${projects.length} gesamt`, accent:null, dark:true, onClick:() => navigate('/websites') },
-          { label:'Offener Umsatz', value:formatCurrency(openAmount), sub:`${(stats?.unpaid_count||0)+(stats?.overdue_count||0)} Rechnungen offen`, accent:overdueInvCount>0?C.red:C.text, dark:false, onClick:() => navigate('/invoices') },
-          { label:'Follow-ups heute', value:dueTodayReminders.length, sub:dueTodayReminders.length>0?'Nachfassen':'Keine fälligen', accent:dueTodayReminders.length>0?C.purple:C.text, dark:false, onClick:null },
-        ].map((kpi,i) => {
-          const base = kpi.dark
-            ? { background:'#0F1724', border:'1px solid rgba(255,255,255,0.06)', boxShadow:'0 2px 8px rgba(0,0,0,0.2)', borderRadius:'16px' }
-            : { ...card };
-          return (
-            <button key={i} onClick={kpi.onClick||undefined}
-              style={{ ...base, padding:'20px 22px', cursor:kpi.onClick?'pointer':'default', textAlign:'left', transition:'box-shadow 0.2s, transform 0.2s' }}
-              onMouseEnter={e => { if(kpi.onClick){ e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow=kpi.dark?'0 6px 20px rgba(0,0,0,0.35)':'0 6px 20px rgba(0,0,0,0.09)'; }}}
-              onMouseLeave={e => { e.currentTarget.style.transform='translateY(0)'; e.currentTarget.style.boxShadow=base.boxShadow; }}
-            >
-              <p style={{ fontSize:'10px', fontWeight:'500', letterSpacing:'0.06em', textTransform:'uppercase', color:kpi.dark?'rgba(255,255,255,0.4)':C.muted, margin:'0 0 10px' }}>{kpi.label}</p>
-              <p style={{ fontSize:'28px', fontWeight:'600', color:kpi.dark?'#fff':kpi.accent, letterSpacing:'-0.04em', lineHeight:1, margin:'0 0 6px' }}>{kpi.value}</p>
-              <p style={{ fontSize:'11px', color:kpi.dark?'rgba(255,255,255,0.3)':C.muted, margin:0 }}>{kpi.sub}</p>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* ── Aktive Websites ── auto-fill responsive ── */}
-      <div style={{ marginBottom:'28px' }}>
-        <SectionHead
-          title="Aktive Websites"
-          count={activeWebsites.length}
-          right={<>
-            <Btn variant="pill" onClick={() => navigate('/onboarding/wizard')}><Plus size={11}/> Neu</Btn>
-            <Btn onClick={() => navigate('/websites')}>Alle <ChevronRight size={12}/></Btn>
-          </>}
-        />
-        {activeWebsites.length === 0 ? (
-          <div style={{ ...card, textAlign:'center', padding:'52px 32px', display:'flex', flexDirection:'column', alignItems:'center', gap:'10px' }}>
-            <div style={{ width:'48px', height:'48px', borderRadius:'14px', background:C.borderLight, display:'flex', alignItems:'center', justifyContent:'center' }}>
-              <Globe size={22} color={C.muted} />
-            </div>
-            <p style={{ fontSize:'14px', fontWeight:'500', color:C.text, margin:0 }}>Noch keine aktiven Websites</p>
-            <p style={{ fontSize:'12px', color:C.muted, margin:0 }}>Erstelle dein erstes Projekt.</p>
-            <Btn variant="pill" onClick={() => navigate('/onboarding/wizard')}>Website erstellen</Btn>
-          </div>
-        ) : (
-          // auto-fill: 1 col mobile → 2 col tablet → 3 col desktop → 4 col wide
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(240px, 1fr))', gap:'12px' }}>
-            {activeWebsites.map(p => (
-              <WebsiteCard key={p.id} project={p}
-                onStatusChange={val => updateProject.mutate({ id:p.id, data:{ status:val } })}
-                onClick={() => navigate(`/projects/${p.id}`)}
-              />
-            ))}
-            {/* Add card — always last */}
-            <button onClick={() => navigate('/onboarding/wizard')}
-              style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'8px', padding:'24px', cursor:'pointer', minHeight:'108px', borderRadius:'16px', border:`1.5px dashed ${C.border}`, boxShadow:'none', background:'transparent', transition:'border-color 0.15s, background 0.15s' }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor=C.brand; e.currentTarget.style.background=C.brandBg; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor=C.border; e.currentTarget.style.background='transparent'; }}
-            >
-              <Plus size={18} color={C.muted} strokeWidth={1.5} />
-              <span style={{ fontSize:'12px', color:C.muted, fontWeight:'500' }}>Website erstellen</span>
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* ── Bottom 4-col: Finanzen | Follow-ups | Zeit | Heute ── */}
-      {/* auto-fill: 1 col mobile → 2 col tablet → 4 col desktop */}
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(260px, 1fr))', gap:'12px', alignItems:'start' }}>
-
-        {/* Finanzen */}
-        <div style={{ ...card, padding:'20px' }}>
-          <CardHead icon={TrendingUp} iconColor={C.green} iconBg={C.greenBg} title="Finanzen"
-            action={<Btn onClick={() => navigate('/invoices')}>Alle <ChevronRight size={12}/></Btn>}
-          />
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:'8px', marginBottom:'14px' }}>
-            {[
-              { label:'Offen',      value:stats?.unpaid_count??0,  color:C.text,  bg:C.borderLight },
-              { label:'Überfällig', value:stats?.overdue_count??0, color:C.red,   bg:C.redBg },
-              { label:'Bezahlt',    value:stats?.paid_count??0,    color:C.green, bg:C.greenBg },
-            ].map(s => (
-              <div key={s.label} style={{ textAlign:'center', padding:'10px 6px', borderRadius:'10px', background:s.bg }}>
-                <p style={{ fontSize:'20px', fontWeight:'600', color:s.color, letterSpacing:'-0.04em', lineHeight:1, margin:0 }}>{s.value}</p>
-                <p style={{ fontSize:'10px', color:C.muted, marginTop:'4px', fontWeight:'500' }}>{s.label}</p>
-              </div>
-            ))}
-          </div>
-          {openInvoices.length === 0 ? (
-            <p style={{ textAlign:'center', padding:'12px 0', fontSize:'12px', color:C.muted, margin:0 }}>Keine offenen Rechnungen</p>
-          ) : (
-            <div style={{ display:'flex', flexDirection:'column', gap:'1px' }}>
-              {openInvoices.map(inv => (
-                <div key={inv.id} onClick={() => navigate(`/invoices/${inv.id}`)}
-                  style={{ display:'flex', alignItems:'center', gap:'10px', padding:'7px 8px', borderRadius:'8px', cursor:'pointer', transition:'background 0.12s' }}
-                  onMouseEnter={e => e.currentTarget.style.background=C.borderLight}
-                  onMouseLeave={e => e.currentTarget.style.background='transparent'}
-                >
-                  {inv.status==='overdue' ? <AlertCircle size={12} color={C.red} style={{ flexShrink:0 }}/> : <Send size={12} color={C.muted} style={{ flexShrink:0 }}/>}
-                  <span style={{ flex:1, fontSize:'12px', color:C.textSub, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{inv.client_name||inv.invoice_number||'Rechnung'}</span>
-                  <span style={{ fontSize:'12px', fontWeight:'500', color:inv.status==='overdue'?C.red:C.text, flexShrink:0 }}>{formatCurrency(inv.total||inv.amount||0)}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Follow-ups */}
-        <div style={{ ...card, padding:'20px' }}>
-          <CardHead icon={Bell} iconColor={C.purple} iconBg={C.purpleBg} title="Follow-ups" />
-          {dueTodayReminders.length === 0 ? (
-            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', padding:'32px 0', gap:'8px' }}>
-              <CheckCircle2 size={28} color={C.border} />
-              <p style={{ fontSize:'12px', color:C.muted, margin:0 }}>Keine Follow-ups heute</p>
-            </div>
-          ) : (
-            <div style={{ display:'flex', flexDirection:'column', gap:'6px' }}>
-              {dueTodayReminders.slice(0,5).map(r => (
-                <ReminderCard key={r.id} reminder={r}
-                  onDone={() => doneReminderMutation.mutate({ projectId:r.project_id, id:r.id })}
-                  onClick={() => navigate(`/projects/${r.project_id}?tab=workflow`)}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Time Tracking */}
-        <div style={{ ...card, padding:'20px' }}>
-          <CardHead icon={Clock} iconColor={C.brand} iconBg={C.brandBg} title="Time Tracking"
-            action={<Btn onClick={() => navigate('/time')}>Alle <ChevronRight size={12}/></Btn>}
-          />
-          {activeTimer?.id && (
-            <div style={{ display:'flex', alignItems:'center', gap:'8px', padding:'8px 12px', borderRadius:'9px', background:C.greenBg, border:`1px solid rgba(22,163,74,0.15)`, marginBottom:'12px' }}>
-              <span style={{ width:'6px', height:'6px', borderRadius:'50%', background:C.green, flexShrink:0 }} />
-              <span style={{ fontSize:'12px', fontWeight:'500', color:C.green, flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
-                {activeTimer.project_name||activeTimer.description||'Läuft'}
-              </span>
-              <Timer size={11} color={C.green} />
-            </div>
-          )}
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px', marginBottom:'12px' }}>
-            {[
-              { label:'Diese Woche', val:fmtH(timeSummary?.week_sec) },
-              { label:'Heute',       val:fmtH(timeSummary?.today_sec) },
-            ].map(s => (
-              <div key={s.label} style={{ padding:'12px', borderRadius:'10px', background:C.borderLight, textAlign:'center' }}>
-                <p style={{ fontSize:'16px', fontWeight:'600', color:C.text, letterSpacing:'-0.03em', lineHeight:1, margin:0, whiteSpace:'nowrap' }}>{s.val}</p>
-                <p style={{ fontSize:'10px', color:C.muted, marginTop:'4px', fontWeight:'500' }}>{s.label}</p>
-              </div>
-            ))}
-          </div>
-          {timeSummary?.month_sec != null && (
-            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'9px 0 0', borderTop:`1px solid ${C.border}` }}>
-              <span style={{ fontSize:'12px', color:C.muted }}>Diesen Monat</span>
-              <span style={{ fontSize:'13px', fontWeight:'500', color:C.text }}>{fmtH(timeSummary.month_sec)}</span>
-            </div>
-          )}
-        </div>
-
-        {/* Heute — Tageskalender als vollwertige Karte */}
-        <div style={{ ...card, padding:0, overflow:'hidden', display:'flex', flexDirection:'column' }}>
-          {/* Header */}
-          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 16px 13px', borderBottom:`1px solid ${C.border}`, flexShrink:0 }}>
-            <div style={{ display:'flex', alignItems:'center', gap:'7px' }}>
-              <Clock size={13} color={C.brand} strokeWidth={2} />
-              <span style={{ fontSize:'13px', fontWeight:'500', color:C.text, letterSpacing:'-0.01em' }}>
-                {now.toLocaleDateString('de-DE', { weekday:'short', day:'numeric', month:'short' })}
-              </span>
-            </div>
-            <Btn onClick={() => navigate('/calendar')}>Mehr <ChevronRight size={11}/></Btn>
-          </div>
-          {/* All-day events */}
-          {allDayEvts.length > 0 && (
-            <div style={{ padding:'7px 12px', borderBottom:`1px solid ${C.borderLight}`, display:'flex', flexDirection:'column', gap:'3px', background:'#FAFAFA', flexShrink:0 }}>
-              {allDayEvts.map((ev,i) => (
-                <div key={i} style={{ display:'flex', alignItems:'center', gap:'6px', padding:'3px 8px', borderRadius:'6px', background:ev._color+'14', borderLeft:`2px solid ${ev._color}` }}>
-                  <span style={{ fontSize:'11px', fontWeight:'500', color:ev._color, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{ev.title}</span>
-                </div>
-              ))}
-            </div>
-          )}
-          {/* Time grid */}
-          <div style={{ overflow:'auto', flex:1, minHeight:'220px' }}>
-            <div style={{ position:'relative', display:'flex' }}>
-              {/* Hour labels */}
-              <div style={{ width:'38px', flexShrink:0 }}>
-                {DAY_HOURS.map(h => (
-                  <div key={h} style={{ height:`${HOUR_H}px`, display:'flex', alignItems:'flex-start', justifyContent:'flex-end', paddingRight:'9px', paddingTop:'4px' }}>
-                    <span style={{ fontSize:'10px', color:C.muted, fontVariantNumeric:'tabular-nums' }}>{String(h).padStart(2,'0')}</span>
-                  </div>
-                ))}
-              </div>
-              {/* Grid + events */}
-              <div style={{ flex:1, borderLeft:`1px solid ${C.border}`, position:'relative' }}>
-                {DAY_HOURS.map((h,idx) => (
-                  <div key={h} style={{ height:`${HOUR_H}px`, borderBottom:`1px solid ${idx%2===0?C.borderLight:'transparent'}`, background:h>=9&&h<18?'transparent':'rgba(0,0,0,0.013)' }} />
-                ))}
-                {/* Current time line */}
-                {nowHour >= CAL_START && nowHour < DAY_HOURS[DAY_HOURS.length-1] && (
-                  <div style={{ position:'absolute', top:`${(nowHour-CAL_START)*HOUR_H}px`, left:0, right:0, height:'2px', background:C.red, zIndex:5, display:'flex', alignItems:'center' }}>
-                    <div style={{ width:'7px', height:'7px', borderRadius:'50%', background:C.red, marginLeft:'-3.5px', flexShrink:0 }} />
-                  </div>
-                )}
-                {timedEvts.length === 0 && (
-                  <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center' }}>
-                    <span style={{ fontSize:'11px', color:C.muted }}>Keine Termine</span>
-                  </div>
-                )}
-                {timedEvts.map((ev,i) => {
-                  const startH = ev._start.getHours() + ev._start.getMinutes()/60;
-                  const endH   = ev._end ? ev._end.getHours()+ev._end.getMinutes()/60 : startH+1;
-                  const top    = (startH - CAL_START)*HOUR_H;
-                  const height = Math.max((endH-startH)*HOUR_H - 3, 20);
-                  if (startH < CAL_START || startH >= DAY_HOURS[DAY_HOURS.length-1]) return null;
-                  return (
-                    <div key={i} style={{ position:'absolute', left:'4px', right:'5px', top, height, background:ev._color+'18', borderLeft:`3px solid ${ev._color}`, borderRadius:'5px', padding:'3px 7px', zIndex:4, overflow:'hidden' }}>
-                      <p style={{ fontSize:'11px', fontWeight:'500', color:ev._color, margin:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', lineHeight:1.3 }}>{ev.title}</p>
-                      {height > 28 && (
-                        <p style={{ fontSize:'9px', color:C.muted, margin:'1px 0 0' }}>
-                          {ev._start.getHours()}:{String(ev._start.getMinutes()).padStart(2,'0')}
-                          {ev._end ? `–${ev._end.getHours()}:${String(ev._end.getMinutes()).padStart(2,'0')}` : ''}
-                        </p>
+      {/* Nav */}
+      <nav className="flex-1 overflow-y-auto px-3 pb-2">
+        {NAV_GROUPS.map((g, gi) => (
+          <div key={gi}>
+            {g.label && (
+              <p className="px-3 pt-4 pb-1.5 text-[10.5px] font-semibold text-[#86868B] uppercase tracking-[0.08em] select-none">
+                {g.label}
+              </p>
+            )}
+            <div className="space-y-0.5">
+              {g.items.map(({ to, icon: Icon, label }) => (
+                <NavLink key={to} to={to} end={to === '/'} className="block no-underline">
+                  {({ isActive }) => (
+                    <div className={[
+                      'relative flex items-center gap-2.5 px-3 py-[7px] rounded-[10px]',
+                      'text-[13.5px] tracking-[-0.01em] cursor-pointer',
+                      'transition-all duration-[120ms]',
+                      isActive
+                        ? 'bg-[#E8F0FE] text-[#0071E3] font-medium'
+                        : 'text-[#424245] font-normal hover:bg-black/[0.04] hover:text-[#1D1D1F]',
+                    ].join(' ')}>
+                      {isActive && (
+                        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-[18px] bg-[#0071E3] rounded-r-full" />
                       )}
+                      <Icon size={15} color={isActive ? '#0071E3' : '#86868B'} strokeWidth={isActive ? 2 : 1.75} />
+                      <span>{label}</span>
                     </div>
-                  );
-                })}
+                  )}
+                </NavLink>
+              ))}
+            </div>
+          </div>
+        ))}
+      </nav>
+
+      {/* User footer */}
+      <div className="px-3 py-3 border-t border-black/[0.06] shrink-0">
+        <div className="flex items-center gap-2.5 px-2 py-2 rounded-[10px] mb-1">
+          <div className="relative shrink-0">
+            <div
+              className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white overflow-hidden"
+              style={{ background: bg }}
+            >
+              {user?.avatar_base64
+                ? <img src={user.avatar_base64} alt="" className="w-full h-full object-cover" />
+                : initials}
+            </div>
+            <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-[#34C759] rounded-full border-2 border-white block" />
+          </div>
+          <div className="min-w-0 flex-1">
+            {user?.name && (
+              <p className="text-[12px] font-medium text-[#1D1D1F] truncate leading-snug">{user.name}</p>
+            )}
+            <p className="text-[11px] text-[#6E6E73] truncate leading-snug">{user?.email}</p>
+          </div>
+        </div>
+        <button
+          onClick={logout}
+          className="w-full flex items-center gap-2 px-3 py-1.5 text-[12.5px] text-[#86868B] rounded-[8px] hover:bg-red-500/10 hover:text-[#FF3B30] transition-all duration-150 cursor-pointer"
+        >
+          <LogOut size={13} strokeWidth={1.75} />
+          Abmelden
+        </button>
+      </div>
+    </aside>
+  );
+}
+
+// ─── DASHBOARD ────────────────────────────────────────────────────
+export default function VecturoDashboard() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const hour     = new Date().getHours();
+  const greeting = hour < 12 ? 'Guten Morgen' : hour < 17 ? 'Guten Tag' : 'Guten Abend';
+  const first    = user?.name?.split(' ')[0] || 'Jonas';
+  const todayStr = new Date().toLocaleDateString('de-DE', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+  });
+
+  return (
+    <div
+      className="flex h-screen bg-[#F5F5F7] overflow-hidden"
+      style={{ fontFamily: "system-ui,-apple-system,'Segoe UI',sans-serif" }}
+    >
+      <Sidebar />
+
+      <main className="flex-1 overflow-y-auto">
+        <div className="max-w-[1280px] mx-auto px-8 py-8 pb-16">
+
+          {/* ── HEADER ─────────────────────────────────────────── */}
+          <header className="flex items-start justify-between mb-8 gap-4 flex-wrap">
+            <div>
+              <h1 className="text-[22px] font-semibold text-[#1D1D1F] tracking-[-0.3px] leading-none">
+                {greeting}, {first}
+              </h1>
+              <p className="text-[14px] text-[#6E6E73] mt-1.5">{todayStr}</p>
+              <div className="flex items-center gap-1.5 mt-2.5">
+                <span className="w-[7px] h-[7px] rounded-full bg-[#34C759] block" />
+                <span className="text-[12px] font-medium text-[#34C759] tracking-[0.1px]">Alles im Griff</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                onClick={() => navigate('/wizard')}
+                className="flex items-center gap-1.5 px-4 py-[9px] text-[13px] font-medium text-[#0071E3] bg-white border border-[#0071E3]/25 rounded-[10px] shadow-[0_1px_3px_rgba(0,0,0,0.06)] hover:bg-[#E8F0FE] transition-all duration-150 active:scale-[0.98]"
+              >
+                <Globe size={14} strokeWidth={1.75} />
+                Website erstellen
+              </button>
+              <button
+                onClick={() => navigate('/invoices/new')}
+                className="flex items-center gap-1.5 px-4 py-[9px] text-[13px] font-medium text-white bg-[#0071E3] rounded-[10px] shadow-[0_1px_3px_rgba(0,113,227,0.25)] hover:bg-[#0077ED] transition-all duration-150 active:scale-[0.98]"
+              >
+                <Receipt size={14} strokeWidth={1.75} />
+                Rechnung erstellen
+              </button>
+            </div>
+          </header>
+
+          {/* ── KPI ROW ────────────────────────────────────────── */}
+          <section className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+            <div className="bg-[#1D1D1F] rounded-[14px] p-5 shadow-[0_1px_3px_rgba(0,0,0,0.12)]">
+              <div className="flex items-center justify-between mb-4">
+                <Globe size={15} color="#636366" strokeWidth={1.75} />
+                <span className="text-[10.5px] font-semibold text-[#636366] uppercase tracking-[0.2px]">
+                  Aktive Websites
+                </span>
+              </div>
+              <p className="text-[32px] font-bold text-white tracking-[-0.5px] leading-none">{D.activeWebsites}</p>
+              <p className="text-[13px] text-[#636366] mt-2">von {D.totalWebsites} gesamt</p>
+            </div>
+
+            <div className="bg-white rounded-[14px] p-5 border border-black/[0.06] shadow-[0_1px_3px_rgba(0,0,0,0.08)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.10)] hover:-translate-y-px transition-all duration-150">
+              <div className="flex items-center justify-between mb-4">
+                <FileText size={15} color="#86868B" strokeWidth={1.75} />
+                <span className="text-[10.5px] font-semibold text-[#86868B] uppercase tracking-[0.2px]">
+                  Offener Umsatz
+                </span>
+              </div>
+              <p className="text-[32px] font-bold text-[#1D1D1F] tracking-[-0.5px] leading-none">
+                {D.openAmount.toLocaleString('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 2 })}
+              </p>
+              <p className="text-[13px] text-[#6E6E73] mt-2">
+                {D.openCount === 0
+                  ? 'Keine offenen Rechnungen'
+                  : `${D.openCount} Rechnung${D.openCount !== 1 ? 'en' : ''} offen`}
+              </p>
+            </div>
+
+            <div className="bg-white rounded-[14px] p-5 border border-black/[0.06] shadow-[0_1px_3px_rgba(0,0,0,0.08)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.10)] hover:-translate-y-px transition-all duration-150">
+              <div className="flex items-center justify-between mb-4">
+                <CheckCircle2 size={15} color="#86868B" strokeWidth={1.75} />
+                <span className="text-[10.5px] font-semibold text-[#86868B] uppercase tracking-[0.2px]">
+                  Follow-ups heute
+                </span>
+              </div>
+              <p className="text-[32px] font-bold text-[#1D1D1F] tracking-[-0.5px] leading-none">{D.followUps}</p>
+              <p className="text-[13px] text-[#6E6E73] mt-2">Keine fälligen</p>
+            </div>
+          </section>
+
+          {/* ── WEBSITES ───────────────────────────────────────── */}
+          <section className="mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <h2 className="text-[15px] font-semibold text-[#1D1D1F] tracking-[-0.1px]">Aktive Websites</h2>
+                <span className="px-2 py-0.5 text-[11px] font-semibold text-[#6E6E73] bg-[#F2F2F7] rounded-full">
+                  {D.activeWebsites}
+                </span>
+              </div>
+              <button
+                onClick={() => navigate('/websites')}
+                className="flex items-center gap-0.5 text-[13px] text-[#0071E3] font-medium hover:opacity-70 transition-opacity"
+              >
+                Alle <ChevronRight size={14} strokeWidth={2} />
+              </button>
+            </div>
+
+            <div
+              className="flex gap-3 overflow-x-auto pb-1"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
+              {D.websites.map(w => {
+                const st = STAT[w.status] || STAT.active;
+                return (
+                  <div
+                    key={w.id}
+                    onClick={() => navigate(`/websites/${w.id}`)}
+                    className="shrink-0 w-[208px] bg-white rounded-[14px] p-4 border border-black/[0.06] shadow-[0_1px_3px_rgba(0,0,0,0.08)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.10)] hover:-translate-y-px transition-all duration-150 cursor-pointer"
+                  >
+                    <div className="w-10 h-10 rounded-[11px] bg-[#F2F2F7] flex items-center justify-center mb-3">
+                      <Globe2 size={20} color="#86868B" strokeWidth={1.5} />
+                    </div>
+                    <p className="text-[13.5px] font-semibold text-[#1D1D1F] truncate leading-snug">{w.client}</p>
+                    <p className="text-[12px] text-[#6E6E73] truncate mt-0.5 mb-3">{w.name}</p>
+                    <span className={`inline-block px-2 py-0.5 text-[11px] font-semibold rounded-[6px] ${st.tw}`}>
+                      {st.label}
+                    </span>
+                  </div>
+                );
+              })}
+
+              <button
+                onClick={() => navigate('/wizard')}
+                className="shrink-0 w-[208px] border-2 border-dashed border-black/[0.12] rounded-[14px] p-4 flex flex-col items-center justify-center gap-2 hover:border-[#0071E3]/35 hover:bg-[#E8F0FE]/30 transition-all duration-150 cursor-pointer group"
+              >
+                <div className="w-10 h-10 rounded-[11px] bg-[#F2F2F7] group-hover:bg-[#E8F0FE] flex items-center justify-center transition-colors">
+                  <Plus size={20} color="#86868B" strokeWidth={1.75} />
+                </div>
+                <span className="text-[12.5px] font-medium text-[#6E6E73]">Website erstellen</span>
+              </button>
+            </div>
+          </section>
+
+          {/* ── MIDDLE: 60 / 40 ────────────────────────────────── */}
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-3 mb-3">
+
+            {/* Table */}
+            <div className="bg-white rounded-[14px] border border-black/[0.06] shadow-[0_1px_3px_rgba(0,0,0,0.08)] overflow-hidden">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-black/[0.05]">
+                <h2 className="text-[15px] font-semibold text-[#1D1D1F] tracking-[-0.1px]">Websites Übersicht</h2>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="border-b border-black/[0.05]">
+                    <tr>
+                      {['Name', 'Kunde', 'Status', 'Zuletzt'].map(h => (
+                        <th key={h} className="px-5 py-3 text-left text-[11px] font-semibold text-[#6E6E73] uppercase tracking-[0.2px] whitespace-nowrap">
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {D.websites.map((w, i) => {
+                      const st = STAT[w.status] || STAT.active;
+                      return (
+                        <tr
+                          key={w.id}
+                          onClick={() => navigate(`/websites/${w.id}`)}
+                          className={[
+                            'border-b border-black/[0.04] last:border-0 cursor-pointer',
+                            'hover:bg-[#F5F5F7] transition-colors duration-100',
+                            i % 2 === 1 ? 'bg-[#FAFAFA]' : 'bg-white',
+                          ].join(' ')}
+                        >
+                          <td className="px-5 py-3 text-[13px] font-medium text-[#1D1D1F] max-w-[200px] truncate">{w.name}</td>
+                          <td className="px-5 py-3 text-[13px] text-[#6E6E73] max-w-[160px] truncate">{w.client}</td>
+                          <td className="px-5 py-3 whitespace-nowrap">
+                            <span className={`inline-block px-2 py-0.5 text-[11px] font-semibold rounded-[6px] ${st.tw}`}>
+                              {st.label}
+                            </span>
+                          </td>
+                          <td className="px-5 py-3 text-[13px] text-[#6E6E73] whitespace-nowrap">{w.last}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Right: stacked cards */}
+            <div className="flex flex-col gap-3">
+              <div className="bg-white rounded-[14px] p-5 border border-black/[0.06] shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-[15px] font-semibold text-[#1D1D1F] tracking-[-0.1px]">Finanzen</h2>
+                  <button
+                    onClick={() => navigate('/invoices')}
+                    className="flex items-center gap-0.5 text-[12px] text-[#0071E3] font-medium hover:opacity-70 transition-opacity"
+                  >
+                    Alle <ChevronRight size={13} strokeWidth={2} />
+                  </button>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { label: 'Offen',      val: D.finance.open,    color: '#FF9F0A', bg: '#FFF8E8' },
+                    { label: 'Überfällig', val: D.finance.overdue, color: '#FF3B30', bg: '#FFE5E5' },
+                    { label: 'Bezahlt',    val: D.finance.paid,    color: '#34C759', bg: '#E8F8EE' },
+                  ].map(({ label, val, color, bg }) => (
+                    <div key={label} className="flex flex-col items-center py-3 px-2 rounded-[10px]" style={{ background: bg }}>
+                      <p className="text-[18px] font-bold leading-none" style={{ color }}>
+                        {val >= 1000 ? `${(val / 1000).toFixed(1)}k` : val}
+                      </p>
+                      <p className="text-[11px] font-medium text-[#6E6E73] mt-1 text-center leading-tight">{label}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-white rounded-[14px] p-5 border border-black/[0.06] shadow-[0_1px_3px_rgba(0,0,0,0.08)] flex-1 flex flex-col items-center justify-center text-center py-8">
+                <CheckCircle2 size={28} color="#D1D1D6" strokeWidth={1.25} />
+                <p className="text-[13.5px] font-medium text-[#1D1D1F] mt-3">Keine Follow-ups</p>
+                <p className="text-[12px] text-[#6E6E73] mt-1">Heute ist alles erledigt.</p>
               </div>
             </div>
           </div>
-        </div>
 
-      </div>
+          {/* ── BOTTOM ROW ─────────────────────────────────────── */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+
+            {/* Time Tracking */}
+            <div className="bg-white rounded-[14px] p-5 border border-black/[0.06] shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-[15px] font-semibold text-[#1D1D1F] tracking-[-0.1px]">Zeiterfassung</h2>
+                <button
+                  onClick={() => navigate('/time-tracking')}
+                  className="text-[12px] text-[#0071E3] font-medium hover:opacity-70 transition-opacity"
+                >
+                  Details
+                </button>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="relative shrink-0">
+                  <Donut value={D.weekSec} max={D.weekGoalSec} color="#0071E3" size={80} sw={8} />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Clock size={16} color="#86868B" strokeWidth={1.5} />
+                  </div>
+                </div>
+                <div>
+                  <p className="text-[22px] font-bold text-[#1D1D1F] tracking-[-0.4px] leading-none">{fmt(D.weekSec)}</p>
+                  <p className="text-[12px] text-[#6E6E73] mt-1">Diese Woche</p>
+                  <div className="flex items-center gap-1.5 mt-2">
+                    <span className="w-2 h-2 rounded-full bg-[#34C759] block shrink-0" />
+                    <span className="text-[12px] text-[#6E6E73]">{fmt(D.todaySec)} heute</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Kalender heute */}
+            <div className="bg-white rounded-[14px] p-5 border border-black/[0.06] shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-[15px] font-semibold text-[#1D1D1F] tracking-[-0.1px]">Heute</h2>
+                <button
+                  onClick={() => navigate('/calendar')}
+                  className="flex items-center gap-0.5 text-[12px] text-[#0071E3] font-medium hover:opacity-70 transition-opacity"
+                >
+                  Kalender <ChevronRight size={13} strokeWidth={2} />
+                </button>
+              </div>
+              <div className="space-y-1">
+                {D.events.map((ev, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-3 px-3 py-2 rounded-[10px] hover:bg-[#F5F5F7] transition-colors cursor-default"
+                  >
+                    <span className="w-[3px] h-9 rounded-full shrink-0" style={{ background: ev.color }} />
+                    <div>
+                      <p className="text-[13px] font-medium text-[#1D1D1F] leading-snug">{ev.title}</p>
+                      <p className="text-[11px] text-[#6E6E73]">{ev.time} Uhr</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Schnellaktionen */}
+            <div className="bg-white rounded-[14px] p-5 border border-black/[0.06] shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
+              <h2 className="text-[15px] font-semibold text-[#1D1D1F] tracking-[-0.1px] mb-4">Schnellaktionen</h2>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { icon: Globe,        label: 'Website',  cb: () => navigate('/wizard')       },
+                  { icon: Receipt,      label: 'Rechnung', cb: () => navigate('/invoices/new') },
+                  { icon: UserPlus,     label: 'Kunde',    cb: () => navigate('/clients/new')  },
+                  { icon: CalendarPlus, label: 'Termin',   cb: () => navigate('/calendar')     },
+                ].map(({ icon: Icon, label, cb }) => (
+                  <button
+                    key={label}
+                    onClick={cb}
+                    className="flex flex-col items-center justify-center gap-2 p-4 rounded-[12px] bg-[#F5F5F7] text-[#424245] hover:bg-[#E8F0FE] hover:text-[#0071E3] transition-all duration-150 active:scale-[0.97] cursor-pointer"
+                  >
+                    <Icon size={22} strokeWidth={1.5} />
+                    <span className="text-[12px] font-medium">{label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </main>
     </div>
   );
 }
