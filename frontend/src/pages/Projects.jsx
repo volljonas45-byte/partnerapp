@@ -37,10 +37,12 @@ const AREA_COLORS = [
 ];
 
 const STATUS_CONFIG = {
-  planned:   { label: 'Geplant',       color: '#6E6E73', bg: 'rgba(118,118,128,0.12)' },
-  active:    { label: 'Aktiv',         color: '#0071E3', bg: 'rgba(0,113,227,0.10)'   },
-  completed: { label: 'Abgeschlossen', color: '#248A3D', bg: 'rgba(52,199,89,0.12)'   },
-  on_hold:   { label: 'Pausiert',      color: '#C93400', bg: 'rgba(255,149,0,0.12)'   },
+  planned:            { label: 'Geplant',          color: '#6E6E73', bg: 'rgba(118,118,128,0.12)' },
+  active:             { label: 'Aktiv',            color: '#0071E3', bg: 'rgba(0,113,227,0.10)'   },
+  completed:          { label: 'Abgeschlossen',    color: '#248A3D', bg: 'rgba(52,199,89,0.12)'   },
+  on_hold:            { label: 'Pausiert',         color: '#C93400', bg: 'rgba(255,149,0,0.12)'   },
+  waiting_for_client: { label: 'Wartet auf Kunde', color: '#B35A00', bg: 'rgba(255,149,0,0.12)'   },
+  deferred:           { label: 'Verschoben',       color: '#64748B', bg: 'rgba(148,163,184,0.12)' },
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

@@ -25,6 +25,7 @@ const STAT = {
   feedback:           { label: 'Feedback',         tw: 'bg-orange-50 text-orange-700' },
   review:             { label: 'Review',           tw: 'bg-violet-50 text-violet-700' },
   completed:          { label: 'Fertig',           tw: 'bg-[#E8F8EE] text-[#1A8F40]' },
+  deferred:           { label: 'Verschoben',       tw: 'bg-[#F1F5F9] text-[#64748B]' },
 };
 
 // ─── HELPERS ──────────────────────────────────────────────────────
@@ -297,7 +298,7 @@ export default function VecturoDashboard() {
       <Sidebar />
 
       <main className="flex-1 overflow-y-auto">
-        <div className="max-w-[1280px] mx-auto px-8 py-8 pb-16">
+        <div className="max-w-[1280px] mx-auto px-5 py-5 pb-12">
 
           {/* ── HEADER ─────────────────────────────────────────── */}
           <header className="flex items-start justify-between mb-8 gap-4 flex-wrap">
