@@ -129,7 +129,15 @@ router.put('/:projectId', async (req, res) => {
       [JSON.stringify(newPhaseData), JSON.stringify(newDecisions), newPhase, pid]
     );
 
-    // Handle outcome decisions → update project status
+    // Auto-set project to active when workflow is being filled out,
+    // unless the outcome is "postponed" (verschoben) or project is already completed
+    const isPostponed = newDecisions.outcome === 'postponed';
+    const currentProject = await getOne('SELECT status FROM projects WHERE id = $1', [pid]);
+    if (!isPostponed && currentProject.status !== 'completed') {
+      await run('UPDATE projects SET status=$1 WHERE id=$2', ['active', pid]);
+    }
+
+    // Handle outcome decisions → override project status
     if (decisions?.outcome) {
       const statusMap = { won: 'active', lost: 'completed', postponed: 'waiting_for_client' };
       const newStatus = statusMap[decisions.outcome];
@@ -167,6 +175,12 @@ router.post('/:projectId/advance', async (req, res) => {
     if (nextPhase === 'abgeschlossen') {
       await run('UPDATE projects SET status=$1 WHERE id=$2', ['completed', pid]);
       await run('UPDATE project_workflow SET completed_at=NOW() WHERE project_id=$1', [pid]);
+    } else {
+      // Advancing through any other phase → project is active
+      const currentDecisions = JSON.parse(wf.decisions || '{}');
+      if (currentDecisions.outcome !== 'postponed') {
+        await run('UPDATE projects SET status=$1 WHERE id=$2', ['active', pid]);
+      }
     }
 
     // Log activity
