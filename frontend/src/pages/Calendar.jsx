@@ -120,6 +120,117 @@ function eventsForDay(events, day) {
   return events.filter(e => e._start && sameDay(e._start, day));
 }
 
+function fmtDateLabel(isoStr) {
+  if (!isoStr) return '';
+  const [y, m, d] = isoStr.split('-').map(Number);
+  return `${d}. ${MONTHS[m - 1].slice(0, 3)} ${y}`;
+}
+
+// ── Mini Calendar Popup ───────────────────────────────────────────────────────
+
+function MiniCalPicker({ value, onChange, onClose, accentColor }) {
+  const [view, setView] = useState(() => {
+    const d = value ? new Date(value + 'T12:00:00') : new Date();
+    return { y: d.getFullYear(), m: d.getMonth() };
+  });
+  const todayStr = toISO(new Date());
+  const cells    = getMonthGrid(view.y, view.m);
+
+  return (
+    <div
+      style={{ position: 'absolute', zIndex: 300, top: 'calc(100% + 6px)', left: 0, background: '#fff', borderRadius: '14px', boxShadow: '0 10px 36px rgba(0,0,0,0.18)', padding: '14px', width: '236px' }}
+      onMouseDown={e => e.stopPropagation()}
+    >
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+        <button type="button"
+          onClick={() => setView(v => { const d = new Date(v.y, v.m - 1, 1); return { y: d.getFullYear(), m: d.getMonth() }; })}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6E6E73', padding: '4px', borderRadius: '6px', display: 'flex' }}>
+          <ChevronLeft size={15} />
+        </button>
+        <span style={{ fontSize: '13px', fontWeight: '600', color: '#1D1D1F' }}>{MONTHS[view.m]} {view.y}</span>
+        <button type="button"
+          onClick={() => setView(v => { const d = new Date(v.y, v.m + 1, 1); return { y: d.getFullYear(), m: d.getMonth() }; })}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6E6E73', padding: '4px', borderRadius: '6px', display: 'flex' }}>
+          <ChevronRight size={15} />
+        </button>
+      </div>
+      {/* Weekday labels */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', marginBottom: '2px' }}>
+        {WEEKDAYS.map(w => (
+          <div key={w} style={{ textAlign: 'center', fontSize: '10px', fontWeight: '600', color: '#86868B', padding: '2px 0' }}>{w}</div>
+        ))}
+      </div>
+      {/* Day grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '1px' }}>
+        {cells.map((day, i) => {
+          if (!day) return <div key={i} />;
+          const str = toISO(day);
+          const isSel   = str === value;
+          const isToday = str === todayStr;
+          return (
+            <button type="button" key={i}
+              onClick={() => { onChange(str); onClose(); }}
+              style={{
+                width: '30px', height: '30px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                borderRadius: '50%', border: 'none', cursor: 'pointer', fontSize: '12px',
+                fontWeight: isSel || isToday ? '600' : '400',
+                background: isSel ? accentColor : 'transparent',
+                color: isSel ? '#fff' : isToday ? accentColor : '#1D1D1F',
+                outline: isToday && !isSel ? `2px solid ${accentColor}` : 'none',
+                outlineOffset: '-2px',
+              }}
+              onMouseEnter={e => { if (!isSel) e.currentTarget.style.background = 'rgba(0,0,0,0.06)'; }}
+              onMouseLeave={e => { if (!isSel) e.currentTarget.style.background = 'transparent'; }}
+            >
+              {day.getDate()}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ── Time Dropdown ─────────────────────────────────────────────────────────────
+
+function TimeDropdown({ value, onChange, onClose, accentColor }) {
+  const listRef = useRef(null);
+  const slots = [];
+  for (let h = 0; h < 24; h++)
+    for (let m = 0; m < 60; m += 30)
+      slots.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
+
+  useEffect(() => {
+    if (listRef.current) {
+      const sel = listRef.current.querySelector('[data-sel="true"]');
+      if (sel) sel.scrollIntoView({ block: 'center' });
+    }
+  }, []);
+
+  return (
+    <div
+      ref={listRef}
+      style={{ position: 'absolute', zIndex: 300, top: 'calc(100% + 6px)', left: 0, background: '#fff', borderRadius: '10px', boxShadow: '0 10px 36px rgba(0,0,0,0.18)', maxHeight: '200px', overflowY: 'auto', minWidth: '88px' }}
+      onMouseDown={e => e.stopPropagation()}
+    >
+      {slots.map(t => {
+        const isSel = t === value;
+        return (
+          <button type="button" key={t} data-sel={isSel}
+            onClick={() => { onChange(t); onClose(); }}
+            style={{ display: 'block', width: '100%', padding: '7px 14px', textAlign: 'left', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: isSel ? '600' : '400', background: isSel ? accentColor + '18' : 'transparent', color: isSel ? accentColor : '#1D1D1F', whiteSpace: 'nowrap' }}
+            onMouseEnter={e => { if (!isSel) e.currentTarget.style.background = 'rgba(0,0,0,0.04)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = isSel ? accentColor + '18' : 'transparent'; }}
+          >
+            {t}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 // ── Event Modal ───────────────────────────────────────────────────────────────
 
 function EventModal({ event, defaultDate, projects, onClose, onSave, onDelete }) {
@@ -144,6 +255,19 @@ function EventModal({ event, defaultDate, projects, onClose, onSave, onDelete })
   const [attendees,   setAttendees]   = useState(event?.attendees || '');
   const [scope,       setScope]       = useState(event?.scope || 'personal');
   const [attendeeInput, setAttendeeInput] = useState('');
+  const [openPicker,    setOpenPicker]    = useState(null); // 'date' | 'startTime' | 'endTime'
+  const dateRowRef = useRef(null);
+
+  // Close any open picker on outside click
+  useEffect(() => {
+    function handleDown(e) {
+      if (dateRowRef.current && !dateRowRef.current.contains(e.target)) {
+        setOpenPicker(null);
+      }
+    }
+    document.addEventListener('mousedown', handleDown);
+    return () => document.removeEventListener('mousedown', handleDown);
+  }, []);
 
   function addAttendee() {
     const val = attendeeInput.trim();
@@ -259,44 +383,74 @@ function EventModal({ event, defaultDate, projects, onClose, onSave, onDelete })
                 </label>
               </div>
               {!allDay ? (
-                <div style={{ display: 'flex', gap: '6px', marginTop: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-                  {/* Single date – shared by start & end */}
-                  <input
-                    type="date"
-                    value={startVal.slice(0, 10)}
-                    onChange={e => {
-                      const d = e.target.value;
-                      setStartVal(d + 'T' + startVal.slice(11, 16));
-                      setEndVal(d + 'T' + endVal.slice(11, 16));
-                    }}
-                    style={{ ...INPUT, padding: '5px 8px', borderRadius: '8px', background: 'rgba(0,0,0,0.04)', fontSize: '13px', flex: '0 0 auto' }}
-                  />
-                  {/* Start time */}
-                  <input
-                    type="time"
-                    value={startVal.slice(11, 16)}
-                    onChange={e => {
-                      const t = e.target.value;
-                      const d = startVal.slice(0, 10);
-                      setStartVal(d + 'T' + t);
-                      // Auto-push end time forward if it's now ≤ start
-                      const [sh, sm] = t.split(':').map(Number);
-                      const [eh, em] = endVal.slice(11, 16).split(':').map(Number);
-                      if (eh * 60 + em <= sh * 60 + sm) {
-                        const total = (sh * 60 + sm + 60) % 1440;
-                        setEndVal(d + 'T' + String(Math.floor(total / 60)).padStart(2, '0') + ':' + String(total % 60).padStart(2, '0'));
-                      }
-                    }}
-                    style={{ ...INPUT, padding: '5px 8px', borderRadius: '8px', background: 'rgba(0,0,0,0.04)', fontSize: '13px', flex: '0 0 auto' }}
-                  />
+                <div ref={dateRowRef} style={{ display: 'flex', gap: '5px', marginTop: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+
+                  {/* ── Date chip ── */}
+                  <div style={{ position: 'relative' }}>
+                    <button type="button"
+                      onClick={() => setOpenPicker(p => p === 'date' ? null : 'date')}
+                      style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '6px 10px', borderRadius: '8px', border: `1.5px solid ${openPicker === 'date' ? color : 'transparent'}`, background: openPicker === 'date' ? color + '12' : 'rgba(0,0,0,0.05)', fontSize: '13px', fontWeight: '500', color: '#1D1D1F', cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
+                      <CalIcon size={13} color={color} />
+                      {fmtDateLabel(startVal.slice(0, 10))}
+                    </button>
+                    {openPicker === 'date' && (
+                      <MiniCalPicker
+                        value={startVal.slice(0, 10)}
+                        accentColor={color}
+                        onChange={d => {
+                          setStartVal(d + 'T' + startVal.slice(11, 16));
+                          setEndVal(d + 'T' + endVal.slice(11, 16));
+                        }}
+                        onClose={() => setOpenPicker(null)}
+                      />
+                    )}
+                  </div>
+
+                  {/* ── Start time chip ── */}
+                  <div style={{ position: 'relative' }}>
+                    <button type="button"
+                      onClick={() => setOpenPicker(p => p === 'startTime' ? null : 'startTime')}
+                      style={{ padding: '6px 10px', borderRadius: '8px', border: `1.5px solid ${openPicker === 'startTime' ? color : 'transparent'}`, background: openPicker === 'startTime' ? color + '12' : 'rgba(0,0,0,0.05)', fontSize: '13px', fontWeight: '500', color: '#1D1D1F', cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
+                      {startVal.slice(11, 16)}
+                    </button>
+                    {openPicker === 'startTime' && (
+                      <TimeDropdown
+                        value={startVal.slice(11, 16)}
+                        accentColor={color}
+                        onChange={t => {
+                          const d = startVal.slice(0, 10);
+                          setStartVal(d + 'T' + t);
+                          const [sh, sm] = t.split(':').map(Number);
+                          const [eh, em] = endVal.slice(11, 16).split(':').map(Number);
+                          if (eh * 60 + em <= sh * 60 + sm) {
+                            const tot = (sh * 60 + sm + 60) % 1440;
+                            setEndVal(d + 'T' + String(Math.floor(tot / 60)).padStart(2, '0') + ':' + String(tot % 60).padStart(2, '0'));
+                          }
+                        }}
+                        onClose={() => setOpenPicker(null)}
+                      />
+                    )}
+                  </div>
+
                   <span style={{ color: '#86868B', fontSize: '13px' }}>–</span>
-                  {/* End time only */}
-                  <input
-                    type="time"
-                    value={endVal.slice(11, 16)}
-                    onChange={e => setEndVal(startVal.slice(0, 10) + 'T' + e.target.value)}
-                    style={{ ...INPUT, padding: '5px 8px', borderRadius: '8px', background: 'rgba(0,0,0,0.04)', fontSize: '13px', flex: '0 0 auto' }}
-                  />
+
+                  {/* ── End time chip ── */}
+                  <div style={{ position: 'relative' }}>
+                    <button type="button"
+                      onClick={() => setOpenPicker(p => p === 'endTime' ? null : 'endTime')}
+                      style={{ padding: '6px 10px', borderRadius: '8px', border: `1.5px solid ${openPicker === 'endTime' ? color : 'transparent'}`, background: openPicker === 'endTime' ? color + '12' : 'rgba(0,0,0,0.05)', fontSize: '13px', fontWeight: '500', color: '#1D1D1F', cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
+                      {endVal.slice(11, 16)}
+                    </button>
+                    {openPicker === 'endTime' && (
+                      <TimeDropdown
+                        value={endVal.slice(11, 16)}
+                        accentColor={color}
+                        onChange={t => setEndVal(startVal.slice(0, 10) + 'T' + t)}
+                        onClose={() => setOpenPicker(null)}
+                      />
+                    )}
+                  </div>
+
                 </div>
               ) : (
                 <input type="date" value={startVal.slice(0, 10)} onChange={e => setStartVal(e.target.value + 'T00:00')}
