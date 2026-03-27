@@ -13,8 +13,9 @@ import toast from 'react-hot-toast';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const WEEKDAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
-const MONTHS   = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+const WEEKDAYS      = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+const WEEKDAYS_LONG = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+const MONTHS        = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
 const HOURS    = Array.from({ length: 17 }, (_, i) => i + 6); // 6–22
 
 const EVENT_COLORS = [
@@ -123,7 +124,8 @@ function eventsForDay(events, day) {
 function fmtDateLabel(isoStr) {
   if (!isoStr) return '';
   const [y, m, d] = isoStr.split('-').map(Number);
-  return `${d}. ${MONTHS[m - 1].slice(0, 3)} ${y}`;
+  const dow = new Date(y, m - 1, d).getDay();
+  return `${WEEKDAYS_LONG[dow]}, ${d}. ${MONTHS[m - 1]}`;
 }
 
 // ── Mini Calendar Popup ───────────────────────────────────────────────────────
@@ -198,7 +200,7 @@ function TimeDropdown({ value, onChange, onClose, accentColor }) {
   const listRef = useRef(null);
   const slots = [];
   for (let h = 0; h < 24; h++)
-    for (let m = 0; m < 60; m += 30)
+    for (let m = 0; m < 60; m += 15)
       slots.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
 
   useEffect(() => {
@@ -424,7 +426,8 @@ function EventModal({ event, defaultDate, projects, onClose, onSave, onDelete })
                           const [eh, em] = endVal.slice(11, 16).split(':').map(Number);
                           if (eh * 60 + em <= sh * 60 + sm) {
                             const tot = (sh * 60 + sm + 60) % 1440;
-                            setEndVal(d + 'T' + String(Math.floor(tot / 60)).padStart(2, '0') + ':' + String(tot % 60).padStart(2, '0'));
+                            const rnd = Math.ceil(tot / 15) * 15 % 1440;
+                            setEndVal(d + 'T' + String(Math.floor(rnd / 60)).padStart(2, '0') + ':' + String(rnd % 60).padStart(2, '0'));
                           }
                         }}
                         onClose={() => setOpenPicker(null)}
