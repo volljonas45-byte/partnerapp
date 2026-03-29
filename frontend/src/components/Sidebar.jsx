@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Users, FileText, ClipboardList, Settings, LogOut,
   Zap, Briefcase, Layers, Sparkles, ClipboardCheck, PackageCheck, Globe,
-  UserCog, Clock, BarChart2, CalendarDays,
+  UserCog, Clock, BarChart2, CalendarDays, Plus,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
@@ -19,28 +19,26 @@ export default function Sidebar() {
   const { logout, user, isAdmin, isPM } = useAuth();
   const navigate = useNavigate();
 
-  // Build nav groups based on role
   const NAV_GROUPS = [
     {
       label: null,
       items: [
-        { to: '/',         icon: LayoutDashboard, label: 'Dashboard' },
-        { to: '/websites',       icon: Globe,     label: 'Websites'      },
-        { to: '/projects',       icon: Briefcase, label: 'Projekte'      },
-        { to: '/calendar',         icon: CalendarDays, label: 'Kalender'     },
-        { to: '/time-tracking',    icon: Clock,     label: 'Zeiterfassung'   },
-        { to: '/team-dashboard',  icon: BarChart2, label: 'Team Dashboard'  },
+        { to: '/',              icon: LayoutDashboard, label: 'Dashboard'     },
+        { to: '/websites',      icon: Globe,           label: 'Websites'      },
+        { to: '/projects',      icon: Briefcase,       label: 'Projekte'      },
+        { to: '/calendar',      icon: CalendarDays,    label: 'Kalender'      },
+        { to: '/time-tracking', icon: Clock,           label: 'Zeiterfassung' },
+        { to: '/team-dashboard',icon: BarChart2,       label: 'Team'          },
       ],
     },
     {
       label: 'Workflow',
       items: [
-        { to: '/intake',    icon: ClipboardCheck, label: 'Intake'    },
-        { to: '/delivery',  icon: PackageCheck,   label: 'Übergabe'  },
-        { to: '/onboarding',icon: Layers,         label: 'Onboarding'},
+        { to: '/intake',     icon: ClipboardCheck, label: 'Intake'     },
+        { to: '/delivery',   icon: PackageCheck,   label: 'Übergabe'   },
+        { to: '/onboarding', icon: Layers,         label: 'Onboarding' },
       ],
     },
-    // Finanzen: nur für Admin und PM sichtbar
     ...(isAdmin || isPM ? [{
       label: 'Finanzen',
       items: [
@@ -51,8 +49,8 @@ export default function Sidebar() {
     {
       label: 'Verwaltung',
       items: [
-        { to: '/clients', icon: Users,    label: 'Kunden' },
-        { to: '/team',    icon: UserCog,  label: 'Team'   },
+        { to: '/clients', icon: Users,   label: 'Kunden'        },
+        { to: '/team',    icon: UserCog, label: 'Team'          },
         ...(isAdmin ? [{ to: '/settings', icon: Settings, label: 'Einstellungen' }] : []),
       ],
     },
@@ -69,210 +67,94 @@ export default function Sidebar() {
   const bgColor  = user?.color || avatarColor(user?.email || '');
 
   return (
-    <aside style={{
-      width: '220px',
-      flexShrink: 0,
-      display: 'flex',
-      flexDirection: 'column',
-      height: '100vh',
-      background: 'rgba(255,255,255,0.85)',
-      backdropFilter: 'blur(20px)',
-      WebkitBackdropFilter: 'blur(20px)',
-      borderRight: '1px solid rgba(0,0,0,0.07)',
-    }}>
+    <aside className="w-[240px] shrink-0 flex flex-col h-screen bg-white/85 backdrop-blur-2xl border-r border-black/[0.06] z-10">
 
       {/* Logo */}
-      <div style={{ padding: '18px 16px 10px', flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{
-            width: '30px', height: '30px',
-            background: 'linear-gradient(145deg, #0A84FF, #0071E3)',
-            borderRadius: '8px',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 2px 8px rgba(0,113,227,0.35)',
-          }}>
+      <div className="px-5 pt-5 pb-2 shrink-0">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-[9px] bg-[#0071E3] flex items-center justify-center shadow-[0_2px_8px_rgba(0,113,227,0.35)]">
             <Zap size={14} color="#fff" strokeWidth={2.5} />
           </div>
-          <span style={{
-            fontSize: '15px', fontWeight: '700',
-            color: '#1D1D1F', letterSpacing: '-0.02em',
-          }}>Vecturo</span>
+          <span className="text-[15px] font-semibold text-[#1D1D1F] tracking-[-0.3px]">Vecturo</span>
         </div>
       </div>
 
       {/* New project CTA */}
-      <div style={{ padding: '4px 12px 12px', flexShrink: 0 }}>
+      <div className="px-4 py-3 shrink-0">
         <button
           onClick={() => navigate('/wizard')}
-          style={{
-            width: '100%',
-            display: 'flex', alignItems: 'center', gap: '7px',
-            padding: '9px 14px',
-            fontSize: '13px', fontWeight: '500',
-            background: '#0071E3',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '980px',
-            cursor: 'pointer',
-            transition: 'background 0.15s ease, transform 0.1s ease',
-            letterSpacing: '-0.01em',
-          }}
-          onMouseEnter={e => e.currentTarget.style.background = '#0077ED'}
-          onMouseLeave={e => e.currentTarget.style.background = '#0071E3'}
-          onMouseDown={e => e.currentTarget.style.transform = 'scale(0.97)'}
-          onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
+          className="w-full flex items-center justify-center gap-1.5 py-[9px] px-4 text-[13px] font-medium text-white bg-[#0071E3] rounded-[10px] shadow-[0_1px_3px_rgba(0,113,227,0.3)] transition-all duration-150 hover:bg-[#0077ED] active:scale-[0.98]"
         >
-          <Sparkles size={13} />
+          <Plus size={14} strokeWidth={2} />
           Neues Projekt
         </button>
       </div>
 
       {/* Navigation */}
-      <nav style={{ flex: 1, overflowY: 'auto', padding: '0 8px' }}>
+      <nav className="flex-1 overflow-y-auto px-3 pb-2">
         {NAV_GROUPS.map((group, gi) => (
-          <div key={gi} style={{ marginBottom: '4px' }}>
+          <div key={gi}>
             {group.label && (
-              <p style={{
-                padding: '8px 10px 3px',
-                fontSize: '11px', fontWeight: '600',
-                color: '#86868B',
-                textTransform: 'uppercase',
-                letterSpacing: '0.06em',
-                userSelect: 'none',
-              }}>
+              <p className="px-3 pt-4 pb-1.5 text-[10.5px] font-semibold text-[#86868B] uppercase tracking-[0.08em] select-none">
                 {group.label}
               </p>
             )}
-            {group.items.map(({ to, icon: Icon, label }) => (
-              <NavLink
-                key={to}
-                to={to}
-                end={to === '/'}
-                style={{ textDecoration: 'none', display: 'block' }}
-              >
-                {({ isActive }) => (
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '9px',
-                    padding: '7px 10px',
-                    borderRadius: '10px',
-                    fontSize: '14px',
-                    fontWeight: isActive ? '500' : '400',
-                    color: isActive ? '#0071E3' : '#424245',
-                    background: isActive ? 'rgba(0,113,227,0.08)' : 'transparent',
-                    transition: 'background 0.12s ease, color 0.12s ease',
-                    cursor: 'pointer',
-                    letterSpacing: '-0.01em',
-                    position: 'relative',
-                  }}
-                    onMouseEnter={e => {
-                      if (!isActive) {
-                        e.currentTarget.style.background = 'rgba(0,0,0,0.04)';
-                        e.currentTarget.style.color = '#1D1D1F';
-                      }
-                    }}
-                    onMouseLeave={e => {
-                      if (!isActive) {
-                        e.currentTarget.style.background = 'transparent';
-                        e.currentTarget.style.color = '#424245';
-                      }
-                    }}
-                  >
-                    <Icon
-                      size={15}
-                      color={isActive ? '#0071E3' : '#86868B'}
-                      strokeWidth={isActive ? 2 : 1.75}
-                    />
-                    <span style={{ flex: 1 }}>{label}</span>
-                    {to === '/intake' && unread?.count > 0 && (
-                      <span style={{
-                        minWidth: '18px', height: '18px',
-                        padding: '0 5px',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        borderRadius: '99px',
-                        background: '#FF3B30',
-                        color: '#fff',
-                        fontSize: '10px', fontWeight: '700',
-                        lineHeight: 1,
-                      }}>
-                        {unread.count > 99 ? '99+' : unread.count}
-                      </span>
-                    )}
-                  </div>
-                )}
-              </NavLink>
-            ))}
+            <div className="space-y-0.5">
+              {group.items.map(({ to, icon: Icon, label }) => (
+                <NavLink key={to} to={to} end={to === '/'} className="block no-underline">
+                  {({ isActive }) => (
+                    <div className={[
+                      'relative flex items-center gap-2.5 px-3 py-[7px] rounded-[10px]',
+                      'text-[13.5px] tracking-[-0.01em] cursor-pointer transition-all duration-[120ms]',
+                      isActive
+                        ? 'bg-[#E8F0FE] text-[#0071E3] font-medium'
+                        : 'text-[#424245] font-normal hover:bg-black/[0.04] hover:text-[#1D1D1F]',
+                    ].join(' ')}>
+                      {isActive && (
+                        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-[18px] bg-[#0071E3] rounded-r-full" />
+                      )}
+                      <Icon size={15} color={isActive ? '#0071E3' : '#86868B'} strokeWidth={isActive ? 2 : 1.75} />
+                      <span className="flex-1">{label}</span>
+                      {to === '/intake' && unread?.count > 0 && (
+                        <span className="min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full bg-[#FF3B30] text-white text-[10px] font-bold leading-none">
+                          {unread.count > 99 ? '99+' : unread.count}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </NavLink>
+              ))}
+            </div>
           </div>
         ))}
       </nav>
 
       {/* User */}
-      <div style={{
-        padding: '10px 12px',
-        borderTop: '1px solid rgba(0,0,0,0.06)',
-        flexShrink: 0,
-      }}>
-        {/* Avatar + email */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: '9px',
-          padding: '6px 8px',
-          borderRadius: '10px',
-          marginBottom: '2px',
-        }}>
-          <div style={{
-            width: '28px', height: '28px',
-            borderRadius: '50%',
-            background: bgColor,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '11px', fontWeight: '700',
-            color: '#fff',
-            flexShrink: 0,
-            overflow: 'hidden',
-          }}>
-            {user?.avatar_base64
-              ? <img src={user.avatar_base64} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              : initials}
+      <div className="px-3 py-3 border-t border-black/[0.06] shrink-0">
+        <div className="flex items-center gap-2.5 px-2 py-2 rounded-[10px] mb-1">
+          <div className="relative shrink-0">
+            <div
+              className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white overflow-hidden"
+              style={{ background: bgColor }}
+            >
+              {user?.avatar_base64
+                ? <img src={user.avatar_base64} alt="" className="w-full h-full object-cover" />
+                : initials}
+            </div>
+            <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-[#34C759] rounded-full border-2 border-white block" />
           </div>
-          <div style={{ flex: 1, overflow: 'hidden' }}>
+          <div className="min-w-0 flex-1">
             {user?.name && (
-              <p style={{ fontSize: '12px', fontWeight: '500', color: '#1D1D1F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.2 }}>
-                {user.name}
-              </p>
+              <p className="text-[12px] font-medium text-[#1D1D1F] truncate leading-snug">{user.name}</p>
             )}
-            <p style={{ fontSize: '11px', color: '#6E6E73', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.3 }}>
-              {user?.email}
-            </p>
+            <p className="text-[11px] text-[#6E6E73] truncate leading-snug">{user?.email}</p>
           </div>
         </div>
-
-        {/* Logout */}
         <button
           onClick={logout}
-          style={{
-            display: 'flex', alignItems: 'center', gap: '8px',
-            width: '100%',
-            padding: '7px 10px',
-            fontSize: '13px', fontWeight: '400',
-            color: '#86868B',
-            background: 'transparent',
-            border: 'none',
-            borderRadius: '10px',
-            cursor: 'pointer',
-            transition: 'background 0.12s ease, color 0.12s ease',
-            textAlign: 'left',
-            letterSpacing: '-0.01em',
-          }}
-          onMouseEnter={e => {
-            e.currentTarget.style.background = 'rgba(255,59,48,0.08)';
-            e.currentTarget.style.color = '#FF3B30';
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.background = 'transparent';
-            e.currentTarget.style.color = '#86868B';
-          }}
+          className="w-full flex items-center gap-2 px-3 py-1.5 text-[12.5px] text-[#86868B] rounded-[8px] hover:bg-red-500/10 hover:text-[#FF3B30] transition-all duration-150 cursor-pointer"
         >
-          <LogOut size={13} />
+          <LogOut size={13} strokeWidth={1.75} />
           Abmelden
         </button>
       </div>
