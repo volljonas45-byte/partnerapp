@@ -12,6 +12,7 @@ import {
   ClipboardCheck, PackageCheck, Layers, FileText, ClipboardList,
   Users, UserCog, Settings, LogOut, Zap, Plus, ChevronRight,
   Globe2, Receipt, UserPlus, CalendarPlus, CheckCircle2, AlertCircle,
+  CalendarRange,
 } from 'lucide-react';
 
 // ─── CONSTANTS ────────────────────────────────────────────────────
@@ -84,6 +85,7 @@ const NAV_GROUPS = [
     { to: '/projects',       icon: Briefcase,       label: 'Projekte'      },
     { to: '/calendar',       icon: CalendarDays,    label: 'Kalender'      },
     { to: '/time-tracking',  icon: Clock,           label: 'Zeiterfassung' },
+    { to: '/timeline',       icon: CalendarRange,   label: 'Timeline'      },
     { to: '/team-dashboard', icon: BarChart2,       label: 'Team'          },
   ]},
   { label: 'Workflow', items: [
