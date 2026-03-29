@@ -16,7 +16,7 @@ import toast from 'react-hot-toast';
 const WEEKDAYS      = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
 const WEEKDAYS_LONG = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
 const MONTHS        = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
-const HOURS    = Array.from({ length: 17 }, (_, i) => i + 6); // 6–22
+const HOURS    = Array.from({ length: 24 }, (_, i) => i); // 0–23
 
 const EVENT_COLORS = [
   '#0071E3','#34C759','#FF9500','#FF3B30','#AF52DE','#5AC8FA','#FF2D55','#5856D6',
