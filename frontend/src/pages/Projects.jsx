@@ -13,6 +13,7 @@ import toast from 'react-hot-toast';
 import { areasApi } from '../api/areas';
 import { projectsApi } from '../api/projects';
 import { useConfirm } from '../hooks/useConfirm';
+import ProjectTimerButton from '../components/ProjectTimerButton';
 
 // ── Icon registry ─────────────────────────────────────────────────────────────
 
@@ -362,6 +363,9 @@ function ProjectCard({ project, area, onDelete }) {
             }}>{initials}</div>
           );
         })() : null}
+
+        {/* Timer */}
+        <ProjectTimerButton projectId={project.id} projectName={project.name} />
 
         {/* OPEN BUTTON - big and obvious */}
         <button

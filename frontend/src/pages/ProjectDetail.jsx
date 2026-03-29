@@ -22,6 +22,7 @@ import StatusBadge from '../components/StatusBadge';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useConfirm } from '../hooks/useConfirm';
 import WorkflowPanel from '../components/workflow/WorkflowPanel';
+import ProjectTimerButton from '../components/ProjectTimerButton';
 
 // ── Health + Next Step ────────────────────────────────────────────────────────
 
@@ -573,6 +574,7 @@ export default function ProjectDetail() {
         )}
         <div style={{ flex: 1 }} />
         <HeaderStatusDropdown status={project.status} onSelect={(s) => updateMutation.mutate({ status: s })} />
+        <ProjectTimerButton projectId={project.id} projectName={project.name} />
         <button
           onClick={() => setActiveTab('overview')}
           style={{
