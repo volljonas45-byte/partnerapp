@@ -322,7 +322,7 @@ router.get('/:id/tasks', async (req, res) => {
       FROM tasks t
       LEFT JOIN users u ON u.id = t.assignee_id
       WHERE t.project_id = ?
-      ORDER BY t.created_at ASC
+      ORDER BY t.section ASC, t.position ASC, t.created_at ASC
     `, [req.params.id]);
     res.json(tasks);
   } catch (err) {
@@ -336,12 +336,13 @@ router.post('/:id/tasks', async (req, res) => {
     const project = await getOne('SELECT id FROM projects WHERE id = ? AND user_id = ?', [req.params.id, req.workspaceUserId]);
     if (!project) return res.status(404).json({ error: 'Projekt nicht gefunden' });
 
-    const { title, assignee_id } = req.body;
+    const { title, assignee_id, priority, due_date, section, description } = req.body;
     if (!title) return res.status(400).json({ error: 'title ist erforderlich' });
 
     const r = await run(
-      'INSERT INTO tasks (project_id, user_id, title, status, assignee_id) VALUES (?, ?, ?, ?, ?) RETURNING id',
-      [req.params.id, req.userId, title, 'todo', assignee_id ?? null]
+      'INSERT INTO tasks (project_id, user_id, title, status, assignee_id, priority, due_date, section, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id',
+      [req.params.id, req.userId, title, 'todo', assignee_id ?? null,
+       priority || 'none', due_date || null, section || 'Allgemein', description || '']
     );
 
     const task = await getOne(`
@@ -364,13 +365,17 @@ router.patch('/:id/tasks/:taskId', async (req, res) => {
     );
     if (!task) return res.status(404).json({ error: 'Aufgabe nicht gefunden' });
 
-    const { status, title, assignee_id } = req.body;
+    const { status, title, assignee_id, priority, due_date, section, description } = req.body;
     if (status && !VALID_TASK_STATUSES.includes(status))
       return res.status(400).json({ error: 'Ungültiger Status' });
 
-    if (status)                        await run('UPDATE tasks SET status=?      WHERE id=?', [status,       req.params.taskId]);
-    if (title)                         await run('UPDATE tasks SET title=?       WHERE id=?', [title,        req.params.taskId]);
+    if (status !== undefined)          await run('UPDATE tasks SET status=?      WHERE id=?', [status,             req.params.taskId]);
+    if (title !== undefined)           await run('UPDATE tasks SET title=?       WHERE id=?', [title,              req.params.taskId]);
     if (assignee_id !== undefined)     await run('UPDATE tasks SET assignee_id=? WHERE id=?', [assignee_id ?? null, req.params.taskId]);
+    if (priority !== undefined)        await run('UPDATE tasks SET priority=?    WHERE id=?', [priority,           req.params.taskId]);
+    if (due_date !== undefined)        await run('UPDATE tasks SET due_date=?    WHERE id=?', [due_date ?? null,   req.params.taskId]);
+    if (section !== undefined)         await run('UPDATE tasks SET section=?     WHERE id=?', [section,            req.params.taskId]);
+    if (description !== undefined)     await run('UPDATE tasks SET description=? WHERE id=?', [description,        req.params.taskId]);
 
     const updated = await getOne(`
       SELECT t.*, u.name as assignee_name, u.color as assignee_color, u.email as assignee_email
