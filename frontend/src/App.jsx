@@ -39,6 +39,8 @@ import TeamDashboard            from './pages/TeamDashboard';
 import CalendarPage             from './pages/Calendar';
 import Timeline                from './pages/Timeline';
 import WorkOverview            from './pages/WorkOverview';
+import SalesEngine             from './pages/SalesEngine';
+import SalesLeadDetail         from './pages/SalesLeadDetail';
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated, loading } = useAuth();
@@ -100,6 +102,8 @@ function AppRoutes() {
       <Route path="/calendar"        element={<ProtectedRoute><CalendarPage /></ProtectedRoute>} />
       <Route path="/timeline"       element={<ProtectedRoute><Timeline /></ProtectedRoute>} />
       <Route path="/work"           element={<ProtectedRoute><WorkOverview /></ProtectedRoute>} />
+      <Route path="/sales"          element={<ProtectedRoute><SalesEngine /></ProtectedRoute>} />
+      <Route path="/sales/leads/:id" element={<ProtectedRoute><SalesLeadDetail /></ProtectedRoute>} />
       <Route path="/wizard"   element={<ProtectedRoute><Wizard /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
       <Route path="/team"           element={<ProtectedRoute><Team /></ProtectedRoute>} />

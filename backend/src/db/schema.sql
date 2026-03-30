@@ -516,3 +516,45 @@ CREATE TABLE IF NOT EXISTS calendar_events (
   FOREIGN KEY (user_id)    REFERENCES users(id),
   FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL
 );
+
+-- ── SALES ENGINE ─────────────────────────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS sales_leads (
+  id                  SERIAL PRIMARY KEY,
+  user_id             INTEGER NOT NULL,
+  client_id           INTEGER NOT NULL UNIQUE,
+  status              TEXT NOT NULL DEFAULT 'neu',
+  priority            INTEGER DEFAULT 0,
+  notes               TEXT DEFAULT '',
+  next_followup_date  TEXT DEFAULT NULL,
+  next_followup_note  TEXT DEFAULT '',
+  deal_value          REAL DEFAULT NULL,
+  won_at              TIMESTAMP DEFAULT NULL,
+  lost_at             TIMESTAMP DEFAULT NULL,
+  created_at          TIMESTAMP DEFAULT NOW(),
+  updated_at          TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS sales_calls (
+  id               SERIAL PRIMARY KEY,
+  user_id          INTEGER NOT NULL,
+  client_id        INTEGER NOT NULL,
+  lead_id          INTEGER DEFAULT NULL,
+  started_at       TIMESTAMP NOT NULL DEFAULT NOW(),
+  duration_sec     INTEGER DEFAULT NULL,
+  outcome          TEXT DEFAULT 'reached',
+  notes            TEXT DEFAULT '',
+  created_followup BOOLEAN DEFAULT FALSE,
+  created_at       TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS sales_targets (
+  id              SERIAL PRIMARY KEY,
+  user_id         INTEGER NOT NULL UNIQUE,
+  daily_calls     INTEGER DEFAULT 30,
+  daily_connects  INTEGER DEFAULT 10,
+  daily_closings  INTEGER DEFAULT 2,
+  weekly_calls    INTEGER DEFAULT 150,
+  weekly_closings INTEGER DEFAULT 8,
+  updated_at      TIMESTAMP DEFAULT NOW()
+);

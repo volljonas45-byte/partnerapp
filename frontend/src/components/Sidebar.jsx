@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Users, FileText, ClipboardList, Settings, LogOut,
   Zap, Layers, ClipboardCheck, PackageCheck,
-  UserCog, Clock, BarChart2, CalendarDays, Plus, CalendarRange, FolderKanban,
+  UserCog, Clock, BarChart2, CalendarDays, Plus, CalendarRange, FolderKanban, Flame,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
@@ -29,6 +29,12 @@ export default function Sidebar() {
         { to: '/time-tracking', icon: Clock,           label: 'Zeiterfassung' },
         { to: '/timeline',      icon: CalendarRange,   label: 'Timeline'      },
         { to: '/team-dashboard',icon: BarChart2,       label: 'Team'          },
+      ],
+    },
+    {
+      label: 'Vertrieb',
+      items: [
+        { to: '/sales', icon: Flame, label: 'Sales Engine' },
       ],
     },
     {

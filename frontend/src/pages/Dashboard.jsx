@@ -12,7 +12,7 @@ import {
   ClipboardCheck, PackageCheck, Layers, FileText, ClipboardList,
   Users, UserCog, Settings, LogOut, Zap, Plus, ChevronRight,
   Globe2, Receipt, UserPlus, CalendarPlus, CheckCircle2, AlertCircle,
-  CalendarRange,
+  CalendarRange, Flame,
 } from 'lucide-react';
 
 // ─── CONSTANTS ────────────────────────────────────────────────────
@@ -86,6 +86,9 @@ const NAV_GROUPS = [
     { to: '/time-tracking',  icon: Clock,           label: 'Zeiterfassung' },
     { to: '/timeline',       icon: CalendarRange,   label: 'Timeline'      },
     { to: '/team-dashboard', icon: BarChart2,       label: 'Team'          },
+  ]},
+  { label: 'Vertrieb', items: [
+    { to: '/sales', icon: Flame, label: 'Sales Engine' },
   ]},
   { label: 'Workflow', items: [
     { to: '/intake',     icon: ClipboardCheck, label: 'Intake'     },
@@ -669,6 +672,7 @@ export default function VecturoDashboard() {
                   { icon: Receipt,      label: 'Rechnung', cb: () => navigate('/invoices/new') },
                   { icon: UserPlus,     label: 'Kunde',    cb: () => navigate('/clients/new')  },
                   { icon: CalendarPlus, label: 'Termin',   cb: () => navigate('/calendar')     },
+                  { icon: Flame,        label: 'Sales',    cb: () => navigate('/sales')        },
                 ].map(({ icon: Icon, label, cb }) => (
                   <button
                     key={label}
