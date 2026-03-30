@@ -38,6 +38,7 @@ import TimeTracking             from './pages/TimeTracking';
 import TeamDashboard            from './pages/TeamDashboard';
 import CalendarPage             from './pages/Calendar';
 import Timeline                from './pages/Timeline';
+import WorkOverview            from './pages/WorkOverview';
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated, loading } = useAuth();
@@ -98,6 +99,7 @@ function AppRoutes() {
       <Route path="/team-dashboard" element={<ProtectedRoute><TeamDashboard /></ProtectedRoute>} />
       <Route path="/calendar"        element={<ProtectedRoute><CalendarPage /></ProtectedRoute>} />
       <Route path="/timeline"       element={<ProtectedRoute><Timeline /></ProtectedRoute>} />
+      <Route path="/work"           element={<ProtectedRoute><WorkOverview /></ProtectedRoute>} />
       <Route path="/wizard"   element={<ProtectedRoute><Wizard /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
       <Route path="/team"           element={<ProtectedRoute><Team /></ProtectedRoute>} />
