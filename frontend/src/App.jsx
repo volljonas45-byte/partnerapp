@@ -88,11 +88,11 @@ function AppRoutes() {
       <Route path="/quotes/:id"      element={<ProtectedRoute><QuoteDetail /></ProtectedRoute>} />
       <Route path="/quotes/:id/edit" element={<ProtectedRoute><EditQuote /></ProtectedRoute>} />
 
-      <Route path="/projects"     element={<ProtectedRoute><Projects /></ProtectedRoute>} />
+      <Route path="/projects"     element={<Navigate to="/work" replace />} />
       <Route path="/projects/new" element={<ProtectedRoute><NewProject /></ProtectedRoute>} />
       <Route path="/projects/:id" element={<ProtectedRoute><ProjectDetailGeneral /></ProtectedRoute>} />
 
-      <Route path="/websites"     element={<ProtectedRoute><Websites /></ProtectedRoute>} />
+      <Route path="/websites"     element={<Navigate to="/work" replace />} />
       <Route path="/websites/:id" element={<ProtectedRoute><ProjectDetail /></ProtectedRoute>} />
 
       <Route path="/time-tracking"  element={<ProtectedRoute><TimeTracking /></ProtectedRoute>} />
