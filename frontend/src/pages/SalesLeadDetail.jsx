@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowLeft, Phone, Mail, Globe, Building2, CalendarDays,
-  Flag, Euro, ChevronDown,
+  Flag, Euro, ChevronDown, MapPin, UserCheck, ExternalLink,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { salesApi } from '../api/sales';
@@ -54,26 +54,28 @@ export default function SalesLeadDetail() {
   const navigate = useNavigate();
   const qc = useQueryClient();
 
-  const [activeCall, setActiveCall] = useState(null);
-  const [showFollowup, setShowFollowup] = useState(false);
+  const [activeCall, setActiveCall]       = useState(null);
+  const [showFollowup, setShowFollowup]   = useState(false);
   const [showStatusMenu, setShowStatusMenu] = useState(false);
-  const [notes, setNotes] = useState('');
-  const [notesLoaded, setNotesLoaded] = useState(false);
+  const [notes, setNotes]                 = useState('');
+  const [notesLoaded, setNotesLoaded]     = useState(false);
 
-  // Fetch lead
+  // Fetch lead by ID
   const { data: lead, isLoading } = useQuery({
     queryKey: ['sales-lead', id],
-    queryFn: () => salesApi.listLeads().then(leads => leads.find(l => l.id === Number(id)) || null),
+    queryFn: () => salesApi.getLead(id),
   });
 
-  // Fetch calls for this client
+  // Fetch calls for this lead (by lead_id, or client_id if available)
   const { data: calls = [] } = useQuery({
-    queryKey: ['sales-calls', lead?.client_id],
-    queryFn: () => salesApi.listCalls({ client_id: lead.client_id }),
-    enabled: !!lead?.client_id,
+    queryKey: ['sales-calls-lead', id, lead?.client_id],
+    queryFn: () => {
+      if (lead?.client_id) return salesApi.listCalls({ client_id: lead.client_id });
+      return salesApi.listCalls({ lead_id: id });
+    },
+    enabled: !!lead,
   });
 
-  // Sync notes from lead
   useEffect(() => {
     if (lead && !notesLoaded) {
       setNotes(lead.notes || '');
@@ -81,7 +83,6 @@ export default function SalesLeadDetail() {
     }
   }, [lead, notesLoaded]);
 
-  // Redirect if not found
   useEffect(() => {
     if (!isLoading && !lead) {
       toast.error('Lead nicht gefunden');
@@ -92,21 +93,41 @@ export default function SalesLeadDetail() {
   // Mutations
   const updateLeadMut = useMutation({
     mutationFn: (data) => salesApi.updateLead(Number(id), data),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['sales-lead', id] }); qc.invalidateQueries({ queryKey: ['sales-leads'] }); qc.invalidateQueries({ queryKey: ['sales-stats'] }); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['sales-lead', id] });
+      qc.invalidateQueries({ queryKey: ['sales-leads'] });
+      qc.invalidateQueries({ queryKey: ['sales-stats'] });
+    },
   });
 
-  const logCallMut = useMutation({ mutationFn: salesApi.logCall });
+  const convertMut = useMutation({
+    mutationFn: () => salesApi.convertToClient(Number(id)),
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: ['sales-lead', id] });
+      qc.invalidateQueries({ queryKey: ['sales-leads'] });
+      qc.invalidateQueries({ queryKey: ['clients'] });
+      toast.success('Lead zu Kunde konvertiert!');
+    },
+    onError: (err) => toast.error(err.response?.data?.error || 'Fehler bei Konvertierung'),
+  });
 
+  const logCallMut    = useMutation({ mutationFn: salesApi.logCall });
   const updateCallMut = useMutation({
     mutationFn: ({ id: cid, data }) => salesApi.updateCall(cid, data),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['sales-calls'] }); qc.invalidateQueries({ queryKey: ['sales-stats'] }); qc.invalidateQueries({ queryKey: ['sales-leads'] }); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['sales-calls-lead'] });
+      qc.invalidateQueries({ queryKey: ['sales-stats'] });
+      qc.invalidateQueries({ queryKey: ['sales-leads'] });
+    },
   });
 
-  // Click-to-Call
   async function handleCall() {
     if (!lead?.phone) return toast.error('Keine Telefonnummer');
     try {
-      const call = await logCallMut.mutateAsync({ client_id: lead.client_id });
+      const payload = lead.client_id
+        ? { client_id: lead.client_id, lead_id: Number(id) }
+        : { lead_id: Number(id) };
+      const call = await logCallMut.mutateAsync(payload);
       window.open('tel:' + lead.phone, '_self');
       setActiveCall({ callId: call.id, clientName: lead.company_name, phone: lead.phone });
     } catch { toast.error('Fehler beim Starten'); }
@@ -141,6 +162,8 @@ export default function SalesLeadDetail() {
   }
 
   const fColor = followupColor(lead.next_followup_date);
+  const isConverted = !!lead.client_id;
+  const canConvert = !isConverted;
 
   return (
     <div style={{ padding: '24px 28px', maxWidth: 1200, margin: '0 auto' }} className="animate-fade-in">
@@ -163,22 +186,59 @@ export default function SalesLeadDetail() {
           <h1 style={{ fontSize: 24, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-0.5px', margin: 0 }}>
             {lead.company_name}
           </h1>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 6, fontSize: 13, color: '#86868B' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 6, fontSize: 13, color: '#86868B', flexWrap: 'wrap' }}>
             {lead.contact_person && <span>{lead.contact_person}</span>}
-            {lead.phone && <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Phone size={12} />{lead.phone}</span>}
-            {lead.email && <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Mail size={12} />{lead.email}</span>}
+            {lead.city   && <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}><MapPin size={12} />{lead.city}</span>}
+            {lead.phone  && <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Phone size={12} />{lead.phone}</span>}
+            {lead.email  && <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Mail size={12} />{lead.email}</span>}
+            {lead.domain && (
+              <a href={`https://${lead.domain}`} target="_blank" rel="noopener noreferrer"
+                style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#0071E3', textDecoration: 'none' }}>
+                <Globe size={12} />{lead.domain} <ExternalLink size={10} />
+              </a>
+            )}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
             <LeadStatusBadge status={lead.status} />
             {lead.industry && (
               <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11.5, color: '#86868B' }}>
                 <Building2 size={11} /> {lead.industry}
               </span>
             )}
+            {lead.website_status && (
+              <span style={{ fontSize: 11.5, padding: '2px 8px', borderRadius: 99, background: 'rgba(255,149,0,0.1)', color: '#B35A00', fontWeight: 500 }}>
+                {lead.website_status}
+              </span>
+            )}
+            {isConverted && (
+              <span style={{ fontSize: 11.5, padding: '2px 8px', borderRadius: 99, background: 'rgba(52,199,89,0.1)', color: '#1A8F40', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
+                <UserCheck size={11} /> Kunde
+              </span>
+            )}
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+          {/* Convert to Client */}
+          {canConvert && (
+            <button
+              onClick={() => {
+                if (window.confirm(`"${lead.company_name}" als Kunden anlegen und in die Kundenpipeline aufnehmen?`)) {
+                  convertMut.mutate();
+                }
+              }}
+              disabled={convertMut.isPending}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 5, padding: '8px 14px', borderRadius: 10,
+                fontSize: 13, fontWeight: 600, background: 'rgba(52,199,89,0.1)', color: '#1A8F40',
+                border: '1px solid rgba(52,199,89,0.25)', cursor: 'pointer', opacity: convertMut.isPending ? 0.7 : 1,
+              }}
+            >
+              <UserCheck size={14} />
+              {convertMut.isPending ? 'Konvertieren...' : 'Zu Kunde machen'}
+            </button>
+          )}
+
           {/* Status dropdown */}
           <div style={{ position: 'relative' }}>
             <button
@@ -194,22 +254,25 @@ export default function SalesLeadDetail() {
             {showStatusMenu && (
               <div style={{
                 position: 'absolute', right: 0, top: '100%', marginTop: 4, background: '#fff',
-                borderRadius: 12, padding: 6, minWidth: 160, boxShadow: '0 8px 30px rgba(0,0,0,0.15)',
+                borderRadius: 12, padding: 6, minWidth: 170, boxShadow: '0 8px 30px rgba(0,0,0,0.15)',
                 border: '1px solid rgba(0,0,0,0.08)', zIndex: 20,
               }}>
-                {Object.entries(LEAD_STATUSES).map(([k, v]) => (
-                  <button
-                    key={k}
-                    onClick={() => handleStatusChange(k)}
-                    style={{
-                      display: 'block', width: '100%', padding: '8px 12px', fontSize: 13, fontWeight: 500,
-                      color: lead.status === k ? v.color : '#1D1D1F', background: lead.status === k ? v.bg : 'none',
-                      border: 'none', borderRadius: 8, cursor: 'pointer', textAlign: 'left',
-                    }}
-                  >
-                    {v.label}
-                  </button>
-                ))}
+                {Object.entries(LEAD_STATUSES)
+                  .filter(([k]) => k !== 'abgeschlossen') // deduplicate
+                  .map(([k, v]) => (
+                    <button
+                      key={k}
+                      onClick={() => handleStatusChange(k)}
+                      style={{
+                        display: 'block', width: '100%', padding: '8px 12px', fontSize: 13, fontWeight: 500,
+                        color: lead.status === k ? v.color : '#1D1D1F',
+                        background: lead.status === k ? v.bg : 'none',
+                        border: 'none', borderRadius: 8, cursor: 'pointer', textAlign: 'left',
+                      }}
+                    >
+                      {v.label}
+                    </button>
+                  ))}
               </div>
             )}
           </div>
@@ -220,9 +283,10 @@ export default function SalesLeadDetail() {
             disabled={!lead.phone}
             style={{
               display: 'flex', alignItems: 'center', gap: 6, padding: '8px 18px', borderRadius: 10,
-              fontSize: 14, fontWeight: 600, background: lead.phone ? '#34C759' : '#E5E5EA',
-              color: lead.phone ? '#fff' : '#AEAEB2', border: 'none',
-              cursor: lead.phone ? 'pointer' : 'not-allowed',
+              fontSize: 14, fontWeight: 600,
+              background: lead.phone ? '#34C759' : '#E5E5EA',
+              color: lead.phone ? '#fff' : '#AEAEB2',
+              border: 'none', cursor: lead.phone ? 'pointer' : 'not-allowed',
             }}
           >
             <Phone size={15} />
@@ -234,7 +298,7 @@ export default function SalesLeadDetail() {
       {/* Two-column */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: 18, alignItems: 'start' }}>
 
-        {/* LEFT — Info */}
+        {/* LEFT */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
           {/* Follow-up Card */}
@@ -243,10 +307,7 @@ export default function SalesLeadDetail() {
               <span style={{ fontSize: 15, fontWeight: 600, color: '#1D1D1F', letterSpacing: '-0.2px' }}>Follow-up</span>
               <button
                 onClick={() => setShowFollowup(true)}
-                style={{
-                  padding: '5px 12px', borderRadius: 8, fontSize: 12, fontWeight: 600,
-                  background: 'rgba(0,113,227,0.1)', color: '#0071E3', border: 'none', cursor: 'pointer',
-                }}
+                style={{ padding: '5px 12px', borderRadius: 8, fontSize: 12, fontWeight: 600, background: 'rgba(0,113,227,0.1)', color: '#0071E3', border: 'none', cursor: 'pointer' }}
               >
                 {lead.next_followup_date ? 'Ändern' : 'Planen'}
               </button>
@@ -270,14 +331,11 @@ export default function SalesLeadDetail() {
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
               <div>
-                <label style={{ fontSize: 11.5, fontWeight: 600, color: '#86868B', display: 'block', marginBottom: 4 }}>Priorität</label>
+                <label style={labelStyle}>Priorität</label>
                 <select
-                  value={lead.priority || 0}
+                  value={lead.priority ?? 0}
                   onChange={e => updateLeadMut.mutate({ priority: Number(e.target.value) })}
-                  style={{
-                    width: '100%', padding: '8px 10px', borderRadius: 8, fontSize: 13,
-                    border: '1.5px solid #E5E5EA', outline: 'none', background: '#fff', cursor: 'pointer',
-                  }}
+                  style={selectStyle}
                 >
                   <option value={0}>Normal</option>
                   <option value={1}>Hoch</option>
@@ -285,7 +343,7 @@ export default function SalesLeadDetail() {
                 </select>
               </div>
               <div>
-                <label style={{ fontSize: 11.5, fontWeight: 600, color: '#86868B', display: 'block', marginBottom: 4 }}>Deal-Wert</label>
+                <label style={labelStyle}>Deal-Wert</label>
                 <div style={{ position: 'relative' }}>
                   <Euro size={13} color="#86868B" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)' }} />
                   <input
@@ -293,13 +351,52 @@ export default function SalesLeadDetail() {
                     defaultValue={lead.deal_value || ''}
                     onBlur={e => { const v = parseFloat(e.target.value) || null; if (v !== lead.deal_value) updateLeadMut.mutate({ deal_value: v }); }}
                     placeholder="0"
-                    style={{
-                      width: '100%', padding: '8px 10px 8px 30px', borderRadius: 8, fontSize: 13,
-                      border: '1.5px solid #E5E5EA', outline: 'none', boxSizing: 'border-box',
-                    }}
+                    style={{ ...selectStyle, paddingLeft: 30 }}
                   />
                 </div>
               </div>
+
+              {/* Editable fields for standalone leads */}
+              {!isConverted && (
+                <>
+                  <div>
+                    <label style={labelStyle}>Telefon</label>
+                    <input
+                      defaultValue={lead.phone || ''}
+                      onBlur={e => { if (e.target.value !== (lead.phone || '')) updateLeadMut.mutate({ phone: e.target.value }); }}
+                      placeholder="0711 123456"
+                      style={selectStyle}
+                    />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>E-Mail</label>
+                    <input
+                      defaultValue={lead.email || ''}
+                      onBlur={e => { if (e.target.value !== (lead.email || '')) updateLeadMut.mutate({ email: e.target.value }); }}
+                      placeholder="info@firma.de"
+                      style={selectStyle}
+                    />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Stadt</label>
+                    <input
+                      defaultValue={lead.city || ''}
+                      onBlur={e => { if (e.target.value !== (lead.city || '')) updateLeadMut.mutate({ city: e.target.value }); }}
+                      placeholder="Stuttgart"
+                      style={selectStyle}
+                    />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Domain</label>
+                    <input
+                      defaultValue={lead.domain || ''}
+                      onBlur={e => { if (e.target.value !== (lead.domain || '')) updateLeadMut.mutate({ domain: e.target.value }); }}
+                      placeholder="firma.de"
+                      style={selectStyle}
+                    />
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
@@ -312,11 +409,7 @@ export default function SalesLeadDetail() {
               onBlur={handleNotesBlur}
               placeholder="Notizen zum Lead..."
               rows={4}
-              style={{
-                width: '100%', padding: '10px 12px', borderRadius: 10, fontSize: 13.5,
-                border: '1.5px solid #E5E5EA', outline: 'none', resize: 'vertical',
-                fontFamily: 'inherit', boxSizing: 'border-box',
-              }}
+              style={{ width: '100%', padding: '10px 12px', borderRadius: 10, fontSize: 13.5, border: '1.5px solid #E5E5EA', outline: 'none', resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box' }}
             />
           </div>
         </div>
@@ -343,9 +436,7 @@ export default function SalesLeadDetail() {
                       <span style={{ fontSize: 13, fontWeight: 600, color: '#1D1D1F' }}>{fmtDateTime(c.started_at)}</span>
                       <span style={{ padding: '2px 7px', borderRadius: 99, fontSize: 10.5, fontWeight: 600, background: o.bg, color: o.color }}>{o.label}</span>
                     </div>
-                    <div style={{ display: 'flex', gap: 12, fontSize: 12, color: '#86868B' }}>
-                      <span>Dauer: {fmtDuration(c.duration_sec)}</span>
-                    </div>
+                    <div style={{ fontSize: 12, color: '#86868B' }}>Dauer: {fmtDuration(c.duration_sec)}</div>
                     {c.notes && <div style={{ fontSize: 12.5, color: '#636366', marginTop: 4, lineHeight: 1.4 }}>{c.notes}</div>}
                   </div>
                 );
@@ -361,3 +452,6 @@ export default function SalesLeadDetail() {
     </div>
   );
 }
+
+const labelStyle  = { fontSize: 11.5, fontWeight: 600, color: '#86868B', display: 'block', marginBottom: 4 };
+const selectStyle = { width: '100%', padding: '8px 10px', borderRadius: 8, fontSize: 13, border: '1.5px solid #E5E5EA', outline: 'none', background: '#fff', cursor: 'pointer', boxSizing: 'border-box' };
