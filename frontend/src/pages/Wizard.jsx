@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { teamApi } from '../api/team';
 import {
@@ -687,9 +687,13 @@ function TogglePair({ options, value, onChange }) {
 // ── Main Wizard ─────────────────────────────────────────────────────────────────
 
 export default function Wizard() {
-  const navigate = useNavigate();
+  const navigate  = useNavigate();
+  const location  = useLocation();
+
+  // Pre-fill from Sales Engine lead (passed via navigate state)
+  const prefill   = location.state?.prefill || {};
   const [step,    setStep]    = useState(0);
-  const [data,    setData]    = useState(INITIAL);
+  const [data,    setData]    = useState({ ...INITIAL, ...prefill });
   const [loading, setLoading] = useState(false);
 
   const { data: teamMembers = [] } = useQuery({

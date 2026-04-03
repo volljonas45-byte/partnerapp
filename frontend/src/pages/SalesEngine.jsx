@@ -5,7 +5,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGri
 import {
   Phone, Search, Flame, Settings, AlertCircle, CheckCircle2, Plus, Clock,
   PhoneCall, FileSpreadsheet, Building2, Mail, Globe, MapPin, ExternalLink,
-  ChevronDown, CalendarDays, Euro, UserCheck, ArrowRight, MousePointerClick,
+  ChevronDown, CalendarDays, Euro, UserCheck, ArrowRight, MousePointerClick, Sparkles,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { salesApi } from '../api/sales';
@@ -662,6 +662,39 @@ export default function SalesEngine() {
                       <UserCheck size={12} /> Kunde
                     </span>
                   )}
+
+                  {/* Neues Projekt aus Lead erstellen */}
+                  <button
+                    onClick={() => {
+                      const hasWebsite = selectedLead.website_status
+                        ? selectedLead.website_status !== 'Keine Website'
+                        : null;
+                      navigate('/wizard', {
+                        state: {
+                          prefill: {
+                            company_name:   selectedLead.company_name  || '',
+                            contact_person: selectedLead.contact_person || '',
+                            email:          selectedLead.email          || '',
+                            phone:          selectedLead.phone          || '',
+                            industry:       selectedLead.industry       || '',
+                            has_website:    hasWebsite,
+                            website_url:    selectedLead.domain
+                              ? (selectedLead.domain.startsWith('http') ? selectedLead.domain : `https://${selectedLead.domain}`)
+                              : '',
+                            domain_url:     selectedLead.domain || '',
+                          },
+                        },
+                      });
+                    }}
+                    title="Neues Projekt für diesen Lead erstellen"
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 5, padding: '6px 11px', borderRadius: 8,
+                      fontSize: 11.5, fontWeight: 600, background: 'rgba(124,58,237,0.1)', color: '#7C3AED',
+                      border: '1px solid rgba(124,58,237,0.2)', cursor: 'pointer',
+                    }}
+                  >
+                    <Sparkles size={12} /> Projekt
+                  </button>
 
                   {/* Full detail page link */}
                   <button
