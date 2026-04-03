@@ -689,6 +689,8 @@ function TogglePair({ options, value, onChange }) {
 export default function Wizard() {
   const navigate  = useNavigate();
   const location  = useLocation();
+  // useMobile inline — avoids extra import
+  const isMobile  = typeof window !== 'undefined' && window.innerWidth < 768;
 
   // Pre-fill from Sales Engine lead (passed via navigate state)
   const prefill   = location.state?.prefill || {};
@@ -1197,7 +1199,10 @@ export default function Wizard() {
       <div style={{
         background: '#fff',
         borderTop: '1px solid #F2F2F7',
-        padding: '16px 32px',
+        paddingTop: 16,
+        paddingLeft: isMobile ? 20 : 32,
+        paddingRight: isMobile ? 20 : 32,
+        paddingBottom: isMobile ? 'calc(env(safe-area-inset-bottom) + 86px)' : 16,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',

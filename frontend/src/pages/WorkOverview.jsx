@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useMobile } from '../hooks/useMobile';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -411,6 +412,7 @@ const TABS = [
 ];
 
 export default function WorkOverview() {
+  const isMobile  = useMobile();
   const navigate  = useNavigate();
   const qc        = useQueryClient();
 
@@ -568,14 +570,27 @@ export default function WorkOverview() {
         </div>
       </div>
 
-      <div style={{ padding: '20px 28px', maxWidth: 1400, margin: '0 auto' }}>
+      <div style={{ padding: isMobile ? '16px 14px' : '20px 28px', maxWidth: 1400, margin: '0 auto' }}>
 
         {/* ── KPI row ── */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 22 }}>
-          <KpiCard icon={Globe}         label="Websites aktiv"  value={activeWeb}          color="#0071E3" />
-          <KpiCard icon={Briefcase}     label="Projekte aktiv"  value={activePrj}          color="#7C3AED" />
-          <KpiCard icon={CheckCircle2}  label="Gesamt aktiv"    value={activeWeb + activePrj} color="#34C759" sub={`von ${allProjects.length} gesamt`} />
-          <KpiCard icon={AlertCircle}   label="Überfällig"      value={overdueAll}         color="#FF3B30" sub={overdueAll > 0 ? 'Deadline überschritten' : 'Alles im Plan'} />
+        <div style={isMobile ? {
+          display: 'flex', overflowX: 'auto', gap: 10, marginBottom: 18,
+          paddingBottom: 4, WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none',
+        } : {
+          display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 22,
+        }}>
+          <div style={isMobile ? { minWidth: 150, flexShrink: 0 } : {}}>
+            <KpiCard icon={Globe}         label="Websites aktiv"  value={activeWeb}          color="#0071E3" />
+          </div>
+          <div style={isMobile ? { minWidth: 150, flexShrink: 0 } : {}}>
+            <KpiCard icon={Briefcase}     label="Projekte aktiv"  value={activePrj}          color="#7C3AED" />
+          </div>
+          <div style={isMobile ? { minWidth: 150, flexShrink: 0 } : {}}>
+            <KpiCard icon={CheckCircle2}  label="Gesamt aktiv"    value={activeWeb + activePrj} color="#34C759" sub={`von ${allProjects.length} gesamt`} />
+          </div>
+          <div style={isMobile ? { minWidth: 150, flexShrink: 0 } : {}}>
+            <KpiCard icon={AlertCircle}   label="Überfällig"      value={overdueAll}         color="#FF3B30" sub={overdueAll > 0 ? 'Deadline überschritten' : 'Alles im Plan'} />
+          </div>
         </div>
 
         {/* ── Filter bar ── */}

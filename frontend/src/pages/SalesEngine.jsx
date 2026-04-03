@@ -597,7 +597,7 @@ export default function SalesEngine() {
             />
             {/* Sheet */}
             <div style={{
-              position: 'fixed', bottom: 64, left: 0, right: 0,
+              position: 'fixed', bottom: 'calc(72px + env(safe-area-inset-bottom))', left: 0, right: 0,
               height: '80vh', background: '#fff',
               borderRadius: '20px 20px 0 0',
               boxShadow: '0 -8px 40px rgba(0,0,0,0.18)',
