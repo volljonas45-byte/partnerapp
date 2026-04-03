@@ -165,9 +165,9 @@ function LeadRow({ lead, isSelected, onClick, onCall }) {
             }}>{ws.short}</span>
           )}
 
-          {lead.city && (
+          {(lead.city || lead.contact_person) && (
             <span style={{ fontSize: 10.5, color: '#AEAEB2', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {lead.city}
+              {[lead.contact_person, lead.city].filter(Boolean).join(' · ')}
             </span>
           )}
         </div>
@@ -855,6 +855,18 @@ export default function SalesEngine() {
                           style={{ width: '100%', padding: '7px 8px 7px 24px', borderRadius: 8, fontSize: 12.5, border: '1.5px solid #E5E5EA', outline: 'none', boxSizing: 'border-box' }}
                         />
                       </div>
+                    </div>
+
+                    {/* Kontaktperson — immer editierbar */}
+                    <div>
+                      <label style={{ fontSize: 11, fontWeight: 600, color: '#AEAEB2', display: 'block', marginBottom: 4 }}>Kontaktperson</label>
+                      <input
+                        key={`cp-${selectedLeadId}`}
+                        defaultValue={selectedLead.contact_person || ''}
+                        onBlur={e => { if (e.target.value !== (selectedLead.contact_person || '')) updateLeadMut.mutate({ id: selectedLeadId, data: { contact_person: e.target.value } }); }}
+                        placeholder="Max Mustermann"
+                        style={{ width: '100%', padding: '7px 8px', borderRadius: 8, fontSize: 12.5, border: '1.5px solid #E5E5EA', outline: 'none', boxSizing: 'border-box' }}
+                      />
                     </div>
 
                     {/* Phone (editable for non-converted) */}
