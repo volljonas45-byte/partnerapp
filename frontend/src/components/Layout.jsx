@@ -24,7 +24,7 @@ export default function Layout({ children }) {
         overflowY: isMobile ? 'auto' : 'auto',
         minWidth: 0,
         // Platz für Bottom Nav auf Mobil
-        paddingBottom: isMobile ? 64 : 0,
+        paddingBottom: isMobile ? 'calc(62px + env(safe-area-inset-bottom) + 20px)' : 0,
       }}>
         {children}
       </main>
