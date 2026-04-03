@@ -1,5 +1,8 @@
-import { useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
+import { useMobile } from '../hooks/useMobile';
+import BottomNav from '../components/BottomNav';
+import MobileDrawer from '../components/MobileDrawer';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { projectsApi } from '../api/projects';
@@ -210,6 +213,8 @@ function Sidebar() {
 export default function VecturoDashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useMobile();
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const todayISO = new Date().toISOString().slice(0, 10);
   const hour     = new Date().getHours();
@@ -296,12 +301,12 @@ export default function VecturoDashboard() {
   // ── Render ────────────────────────────────────────────────────
   return (
     <div
-      className="flex h-screen bg-[#F5F5F7] overflow-hidden"
+      className={isMobile ? "flex flex-col bg-[#F5F5F7] min-h-screen" : "flex h-screen bg-[#F5F5F7] overflow-hidden"}
       style={{ fontFamily: "system-ui,-apple-system,'Segoe UI',sans-serif" }}
     >
-      <Sidebar />
+      {!isMobile && <Sidebar />}
 
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto" style={{ paddingBottom: isMobile ? 64 : 0 }}>
         <div className="max-w-[1280px] mx-auto px-5 py-5 pb-12">
 
           {/* ── HEADER ─────────────────────────────────────────── */}
@@ -689,6 +694,13 @@ export default function VecturoDashboard() {
           </div>
         </div>
       </main>
+
+      {isMobile && (
+        <>
+          <BottomNav onMoreClick={() => setDrawerOpen(true)} />
+          {drawerOpen && <MobileDrawer onClose={() => setDrawerOpen(false)} />}
+        </>
+      )}
     </div>
   );
 }

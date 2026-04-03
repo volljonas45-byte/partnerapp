@@ -1,13 +1,14 @@
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { Plus, FileText, Search, Trash2, Download, Eye, AlertTriangle } from 'lucide-react';
+import { Plus, FileText, Search, Trash2, Download, Eye, AlertTriangle, ChevronRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { invoicesApi } from '../api/invoices';
 import { formatCurrency, formatDate, isPast } from '../utils/formatters';
 import StatusBadge from '../components/StatusBadge';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useConfirm } from '../hooks/useConfirm';
+import { useMobile } from '../hooks/useMobile';
 
 const STATUS_FILTERS = [
   { key: 'all',       label: 'Alle'       },
@@ -21,6 +22,7 @@ const STATUS_FILTERS = [
 export default function Invoices() {
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const isMobile = useMobile();
 
   const [search, setSearch]       = useState('');
   const [statusFilter, setStatus] = useState('all');
@@ -70,7 +72,7 @@ export default function Invoices() {
   const openCount    = invoices.filter(i => ['sent', 'unpaid'].includes(i.status)).length;
 
   if (isLoading) return (
-    <div className="p-8">
+    <div className={isMobile ? "p-4" : "p-8"}>
       <div className="page-header">
         <div>
           <div className="skeleton h-7 w-36 mb-2" />
@@ -99,6 +101,125 @@ export default function Invoices() {
     </div>
   );
 
+  // ── Mobile layout ─────────────────────────────────────────────
+  if (isMobile) {
+    return (
+      <div style={{ background: '#F5F5F7', minHeight: '100vh' }}>
+        {/* Header */}
+        <div style={{ padding: '20px 16px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <h1 style={{ fontSize: 22, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-0.4px', margin: 0 }}>Rechnungen</h1>
+            <p style={{ fontSize: 13, color: '#86868B', margin: '2px 0 0' }}>
+              {invoices.length} gesamt{overdueCount > 0 && <span style={{ color: '#FF3B30', marginLeft: 6 }}>· {overdueCount} überfällig</span>}
+            </p>
+          </div>
+          <button
+            onClick={() => navigate('/invoices/new')}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 14px', borderRadius: 12, background: '#0071E3', color: '#fff', border: 'none', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
+          >
+            <Plus size={15} strokeWidth={2.5} />
+            Neu
+          </button>
+        </div>
+
+        {/* Search */}
+        <div style={{ padding: '0 16px 10px', position: 'relative' }}>
+          <Search size={14} style={{ position: 'absolute', left: 28, top: '50%', transform: 'translateY(-50%)', color: '#86868B', pointerEvents: 'none' }} />
+          <input
+            style={{ width: '100%', padding: '10px 12px 10px 36px', borderRadius: 12, border: '1px solid rgba(0,0,0,0.1)', background: '#fff', fontSize: 15, outline: 'none', boxSizing: 'border-box' }}
+            placeholder="Suchen…"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+        </div>
+
+        {/* Status filter scroll */}
+        <div style={{ display: 'flex', gap: 8, padding: '0 16px 14px', overflowX: 'auto', scrollbarWidth: 'none' }}>
+          {STATUS_FILTERS.map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => setStatus(key)}
+              style={{
+                flexShrink: 0, padding: '7px 14px', borderRadius: 99, border: 'none', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                background: statusFilter === key ? '#1D1D1F' : '#fff',
+                color: statusFilter === key ? '#fff' : '#636366',
+              }}
+            >
+              {label}
+              {key === 'overdue' && overdueCount > 0 && (
+                <span style={{ marginLeft: 5, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 16, height: 16, borderRadius: '50%', background: '#FF3B30', color: '#fff', fontSize: 9, fontWeight: 700 }}>
+                  {overdueCount}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Card list */}
+        <div style={{ padding: '0 16px' }}>
+          {filtered.length === 0 ? (
+            <div style={{ background: '#fff', borderRadius: 16, padding: '40px 20px', textAlign: 'center' }}>
+              <FileText size={32} color="#D1D1D6" strokeWidth={1.25} style={{ margin: '0 auto 12px' }} />
+              <p style={{ fontSize: 15, fontWeight: 600, color: '#1D1D1F', margin: '0 0 4px' }}>
+                {search || statusFilter !== 'all' ? 'Keine Rechnungen gefunden' : 'Noch keine Rechnungen'}
+              </p>
+              <p style={{ fontSize: 13, color: '#86868B', margin: 0 }}>
+                {search ? `Keine Treffer für „${search}"` : 'Erstelle jetzt deine erste Rechnung.'}
+              </p>
+              {!search && statusFilter === 'all' && (
+                <button onClick={() => navigate('/invoices/new')} style={{ marginTop: 16, padding: '10px 20px', borderRadius: 12, background: '#0071E3', color: '#fff', border: 'none', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
+                  Rechnung erstellen
+                </button>
+              )}
+            </div>
+          ) : (
+            <div style={{ background: '#fff', borderRadius: 16, overflow: 'hidden', border: '1px solid rgba(0,0,0,0.06)' }}>
+              {filtered.map((inv, idx) => {
+                const isOverdue = inv.status === 'overdue' || (inv.due_date && isPast(inv.due_date) && inv.status !== 'paid' && inv.status !== 'cancelled');
+                return (
+                  <div
+                    key={inv.id}
+                    onClick={() => navigate(`/invoices/${inv.id}`)}
+                    style={{
+                      display: 'flex', alignItems: 'center', padding: '14px 16px', cursor: 'pointer',
+                      borderBottom: idx < filtered.length - 1 ? '1px solid rgba(0,0,0,0.05)' : 'none',
+                    }}
+                  >
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                        <span style={{ fontSize: 15, fontWeight: 600, color: '#1D1D1F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {inv.client_name}
+                        </span>
+                        <StatusBadge status={inv.status} />
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{ fontSize: 12, color: '#86868B', fontFamily: 'monospace' }}>{inv.invoice_number}</span>
+                        {inv.due_date && (
+                          <span style={{ fontSize: 12, color: isOverdue ? '#FF3B30' : '#86868B', display: 'flex', alignItems: 'center', gap: 3 }}>
+                            {isOverdue && <AlertTriangle size={10} />}
+                            Fällig {formatDate(inv.due_date)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                      <span style={{ fontSize: 16, fontWeight: 700, color: isOverdue ? '#FF3B30' : '#1D1D1F' }}>
+                        {formatCurrency(inv.total)}
+                      </span>
+                      <ChevronRight size={16} color="#C7C7CC" />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+        {ConfirmDialogNode}
+      </div>
+    );
+  }
+
+  // ── Desktop layout ─────────────────────────────────────────────
   return (
     <div className="p-8 animate-fade-in">
 

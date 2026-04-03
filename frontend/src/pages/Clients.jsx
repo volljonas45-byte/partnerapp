@@ -1,12 +1,13 @@
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Pencil, Trash2, Building2, Search, ArrowRight } from 'lucide-react';
+import { Plus, Pencil, Trash2, Building2, Search, ArrowRight, ChevronRight, Phone, Mail } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { clientsApi } from '../api/clients';
 import Modal from '../components/Modal';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useConfirm } from '../hooks/useConfirm';
+import { useMobile } from '../hooks/useMobile';
 
 const EMPTY_FORM = {
   company_name: '', contact_person: '', address: '',
@@ -78,6 +79,7 @@ function ClientForm({ values, onChange }) {
 export default function Clients() {
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const isMobile = useMobile();
 
   const [search, setSearch]   = useState('');
   const [modal, setModal]     = useState(null);
@@ -148,7 +150,7 @@ export default function Clients() {
   }), [clients, search]);
 
   if (isLoading) return (
-    <div className="p-8">
+    <div className={isMobile ? "p-4" : "p-8"}>
       <div className="page-header">
         <div>
           <div className="skeleton h-7 w-32 mb-2" />
@@ -175,6 +177,124 @@ export default function Clients() {
     </div>
   );
 
+  // ── Mobile layout ─────────────────────────────────────────────
+  if (isMobile) {
+    return (
+      <div style={{ background: '#F5F5F7', minHeight: '100vh' }}>
+        {/* Header */}
+        <div style={{ padding: '20px 16px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <h1 style={{ fontSize: 22, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-0.4px', margin: 0 }}>Kunden</h1>
+            <p style={{ fontSize: 13, color: '#86868B', margin: '2px 0 0' }}>
+              {clients.length} {clients.length === 1 ? 'Kunde' : 'Kunden'}
+            </p>
+          </div>
+          <button
+            onClick={() => navigate('/clients/new')}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 14px', borderRadius: 12, background: '#0071E3', color: '#fff', border: 'none', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
+          >
+            <Plus size={15} strokeWidth={2.5} />
+            Neu
+          </button>
+        </div>
+
+        {/* Search */}
+        <div style={{ padding: '0 16px 14px', position: 'relative' }}>
+          <Search size={14} style={{ position: 'absolute', left: 28, top: '50%', transform: 'translateY(-50%)', color: '#86868B', pointerEvents: 'none' }} />
+          <input
+            style={{ width: '100%', padding: '10px 12px 10px 36px', borderRadius: 12, border: '1px solid rgba(0,0,0,0.1)', background: '#fff', fontSize: 15, outline: 'none', boxSizing: 'border-box' }}
+            placeholder="Suchen…"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+        </div>
+
+        {/* Card list */}
+        <div style={{ padding: '0 16px' }}>
+          {filtered.length === 0 ? (
+            <div style={{ background: '#fff', borderRadius: 16, padding: '40px 20px', textAlign: 'center' }}>
+              <Building2 size={32} color="#D1D1D6" strokeWidth={1.25} style={{ margin: '0 auto 12px' }} />
+              <p style={{ fontSize: 15, fontWeight: 600, color: '#1D1D1F', margin: '0 0 4px' }}>
+                {search ? 'Keine Kunden gefunden' : 'Noch keine Kunden'}
+              </p>
+              <p style={{ fontSize: 13, color: '#86868B', margin: 0 }}>
+                {search ? `Keine Treffer für „${search}"` : 'Lege jetzt deinen ersten Kunden an.'}
+              </p>
+              {!search && (
+                <button onClick={() => navigate('/clients/new')} style={{ marginTop: 16, padding: '10px 20px', borderRadius: 12, background: '#0071E3', color: '#fff', border: 'none', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
+                  Kunde anlegen
+                </button>
+              )}
+            </div>
+          ) : (
+            <div style={{ background: '#fff', borderRadius: 16, overflow: 'hidden', border: '1px solid rgba(0,0,0,0.06)' }}>
+              {filtered.map((c, idx) => (
+                <div
+                  key={c.id}
+                  onClick={() => navigate(`/clients/${c.id}`)}
+                  style={{
+                    display: 'flex', alignItems: 'center', padding: '14px 16px', cursor: 'pointer',
+                    borderBottom: idx < filtered.length - 1 ? '1px solid rgba(0,0,0,0.05)' : 'none',
+                  }}
+                >
+                  <ClientAvatar name={c.company_name} />
+                  <div style={{ flex: 1, minWidth: 0, marginLeft: 12 }}>
+                    <p style={{ fontSize: 15, fontWeight: 600, color: '#1D1D1F', margin: '0 0 3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {c.company_name}
+                    </p>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 10px' }}>
+                      {c.contact_person && (
+                        <span style={{ fontSize: 12, color: '#86868B' }}>{c.contact_person}</span>
+                      )}
+                      {c.city && (
+                        <span style={{ fontSize: 12, color: '#86868B' }}>{c.city}</span>
+                      )}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, marginLeft: 8 }}>
+                    {c.phone && (
+                      <a
+                        href={`tel:${c.phone}`}
+                        onClick={e => e.stopPropagation()}
+                        style={{ width: 34, height: 34, borderRadius: 10, background: '#F2F2F7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+                      >
+                        <Phone size={15} color="#636366" />
+                      </a>
+                    )}
+                    <ChevronRight size={16} color="#C7C7CC" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {ConfirmDialogNode}
+
+        {/* Modal */}
+        <Modal
+          open={!!modal}
+          onClose={closeModal}
+          title={modal === 'add' ? 'Kunden anlegen' : 'Kunden bearbeiten'}
+          maxWidth="max-w-xl"
+        >
+          <ClientForm values={form} onChange={handleFieldChange} />
+          <div className="flex justify-end gap-2 mt-6">
+            <button onClick={closeModal} className="btn-secondary">Abbrechen</button>
+            <button
+              onClick={handleSubmit}
+              disabled={createMutation.isPending || updateMutation.isPending}
+              className="btn-primary"
+            >
+              {modal === 'add' ? 'Kunden anlegen' : 'Änderungen speichern'}
+            </button>
+          </div>
+        </Modal>
+      </div>
+    );
+  }
+
+  // ── Desktop layout ─────────────────────────────────────────────
   return (
     <div className="p-8 animate-fade-in">
 
