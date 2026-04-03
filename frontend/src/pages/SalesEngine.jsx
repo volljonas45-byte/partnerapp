@@ -127,11 +127,13 @@ function LeadRow({ lead, isSelected, onClick, onCall }) {
   const fu = followupInfo(lead.next_followup_date);
   const ws = WEBSITE_STATUS_CFG[lead.website_status];
   const pc = PRIORITY_CFG[lead.priority ?? 0];
+  const s  = LEAD_STATUSES[lead.status] || LEAD_STATUSES.neu;
+
   return (
     <div
       onClick={onClick}
       style={{
-        display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px',
+        display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px',
         borderBottom: '1px solid rgba(0,0,0,0.04)', cursor: 'pointer',
         background: isSelected ? 'rgba(0,113,227,0.06)' : 'transparent',
         borderLeft: isSelected ? '3px solid #0071E3' : '3px solid transparent',
@@ -141,55 +143,45 @@ function LeadRow({ lead, isSelected, onClick, onCall }) {
       onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = 'transparent'; }}
     >
       {/* Priority dot */}
-      <div style={{
-        width: 7, height: 7, borderRadius: '50%', flexShrink: 0,
-        background: pc.dot,
-      }} />
+      <div style={{ width: 7, height: 7, borderRadius: '50%', flexShrink: 0, background: pc.dot, marginTop: 1 }} />
 
-      {/* Main info */}
+      {/* Text block — nimmt den ganzen verfügbaren Platz */}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{
-          fontSize: 13, fontWeight: 600, color: '#1D1D1F',
-          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-          letterSpacing: '-0.1px',
-        }}>
+        {/* Zeile 1: Firmenname — volle Breite */}
+        <div style={{ fontSize: 13, fontWeight: 600, color: '#1D1D1F', letterSpacing: '-0.1px', marginBottom: 3 }}>
           {lead.company_name}
         </div>
-        <div style={{ fontSize: 11, color: '#86868B', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 1 }}>
-          {[lead.city, lead.contact_person].filter(Boolean).join(' · ')}
+        {/* Zeile 2: Badges + Stadt */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'nowrap' }}>
+          <span style={{
+            padding: '1px 6px', borderRadius: 99, fontSize: 10, fontWeight: 600,
+            background: s.bg, color: s.color, whiteSpace: 'nowrap', flexShrink: 0,
+          }}>{s.label}</span>
+
+          {ws && (
+            <span title={lead.website_status} style={{
+              padding: '1px 6px', borderRadius: 99, fontSize: 10, fontWeight: 600,
+              background: ws.bg, color: ws.color, whiteSpace: 'nowrap', flexShrink: 0,
+            }}>{ws.short}</span>
+          )}
+
+          {lead.city && (
+            <span style={{ fontSize: 10.5, color: '#AEAEB2', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {lead.city}
+            </span>
+          )}
         </div>
       </div>
 
-      {/* Status badge */}
-      {(() => {
-        const s = LEAD_STATUSES[lead.status] || LEAD_STATUSES.neu;
-        return (
-          <span style={{
-            padding: '2px 7px', borderRadius: 99, fontSize: 10.5, fontWeight: 600,
-            background: s.bg, color: s.color, whiteSpace: 'nowrap', flexShrink: 0,
-          }}>{s.label}</span>
-        );
-      })()}
-
-      {/* Website status — kleiner farbiger Dot statt Text-Badge */}
-      {ws && (
-        <span title={lead.website_status} style={{
-          width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
-          background: ws.color, display: 'inline-block',
-        }} />
-      )}
-
-      {/* Follow-up date */}
-      {fu ? (
-        <span style={{
-          fontSize: 10.5, fontWeight: 600, color: fu.color, whiteSpace: 'nowrap', flexShrink: 0,
-        }}>{fu.label}</span>
-      ) : null}
-
-      {/* Call count */}
-      <span style={{ fontSize: 10.5, color: '#AEAEB2', whiteSpace: 'nowrap', flexShrink: 0, minWidth: 22, textAlign: 'right' }}>
-        {lead.total_calls ? `${lead.total_calls}x` : '—'}
-      </span>
+      {/* Rechts: Follow-up + Anzahl + Anruf-Button */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3, flexShrink: 0 }}>
+        {fu ? (
+          <span style={{ fontSize: 10, fontWeight: 700, color: fu.color, whiteSpace: 'nowrap' }}>{fu.label}</span>
+        ) : <span style={{ fontSize: 10, color: '#E5E5EA' }}>—</span>}
+        <span style={{ fontSize: 10, color: '#AEAEB2' }}>
+          {lead.total_calls ? `${lead.total_calls}x angerufen` : 'noch kein Anruf'}
+        </span>
+      </div>
 
       {/* Call button */}
       <button
