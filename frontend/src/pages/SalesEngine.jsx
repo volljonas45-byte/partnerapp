@@ -5,7 +5,8 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGri
 import {
   Phone, Search, Flame, Settings, AlertCircle, CheckCircle2, Plus, Clock,
   PhoneCall, FileSpreadsheet, Building2, Mail, Globe, MapPin, ExternalLink,
-  ChevronDown, CalendarDays, Euro, UserCheck, ArrowRight, MousePointerClick, Sparkles,
+  ChevronDown, CalendarDays, Euro, UserCheck, ArrowRight, MousePointerClick,
+  Sparkles, X, ChevronRight,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { salesApi } from '../api/sales';
@@ -15,6 +16,7 @@ import FollowupScheduler from '../components/sales/FollowupScheduler';
 import SalesTargetModal from '../components/sales/SalesTargetModal';
 import ExcelImportModal from '../components/sales/ExcelImportModal';
 import CreateLeadModal from '../components/sales/CreateLeadModal';
+import { useMobile } from '../hooks/useMobile';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -419,8 +421,351 @@ export default function SalesEngine() {
   const isConverted = !!selectedLead?.client_id;
   const fwInfo  = followupInfo(selectedLead?.next_followup_date);
   const selWS   = WEBSITE_STATUS_CFG[selectedLead?.website_status];
+  const isMobile = useMobile();
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  // ── Mobile Render ─────────────────────────────────────────────────────────
+
+  if (isMobile) {
+    const s = selectedLead ? (LEAD_STATUSES[selectedLead.status] || LEAD_STATUSES.neu) : null;
+
+    return (
+      <div style={{ minHeight: '100%', background: '#F5F5F7', display: 'flex', flexDirection: 'column' }}>
+
+        {/* Mobile Header */}
+        <div style={{ background: '#fff', borderBottom: '1px solid rgba(0,0,0,0.06)', position: 'sticky', top: 0, zIndex: 20 }}>
+          <div style={{ padding: '14px 16px 0' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <div>
+                <h1 style={{ fontSize: 20, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-0.5px', margin: 0, display: 'flex', alignItems: 'center', gap: 7 }}>
+                  <Flame size={18} color="#FF9500" /> Sales Engine
+                </h1>
+                <p style={{ fontSize: 11.5, color: '#86868B', margin: '2px 0 0' }}>
+                  {t.calls_total || 0} Anrufe · {stats?.followups_due || 0} Follow-ups
+                </p>
+              </div>
+              <div style={{ display: 'flex', gap: 6 }}>
+                <button onClick={() => setShowExcelImport(true)} style={{ padding: '7px 10px', borderRadius: 9, fontSize: 12, fontWeight: 600, background: 'rgba(52,199,89,0.1)', color: '#1A8F40', border: 'none', cursor: 'pointer' }}>
+                  <FileSpreadsheet size={14} />
+                </button>
+                <button onClick={() => setShowAddLead(true)} style={{ width: 34, height: 34, borderRadius: 9, fontSize: 12, fontWeight: 600, background: '#0071E3', color: '#fff', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Plus size={16} />
+                </button>
+              </div>
+            </div>
+
+            {/* KPI Strip – horizontaler Scroll */}
+            <div style={{ overflowX: 'auto', margin: '0 -16px', scrollbarWidth: 'none' }}>
+              <div style={{ display: 'flex', gap: 8, padding: '0 16px 12px', width: 'max-content' }}>
+                {[
+                  { icon: PhoneCall, label: 'Anrufe', value: t.calls_total || 0, color: '#0071E3', target: targets.daily_calls },
+                  { icon: Phone,     label: 'Gespräche', value: t.calls_reached || 0, color: '#34C759', sub: `${t.connect_rate || 0}%` },
+                  { icon: CheckCircle2, label: 'Abschlüsse', value: t.closings || 0, color: '#7C3AED', target: targets.daily_closings },
+                  { icon: Clock,     label: 'Fällig', value: stats?.followups_due || 0, color: '#FF9500' },
+                ].map(({ icon: Icon, label, value, color, target: tgt, sub }) => {
+                  const pct = tgt ? Math.min(100, Math.round((value / tgt) * 100)) : null;
+                  return (
+                    <div key={label} style={{ background: '#F5F5F7', borderRadius: 12, padding: '10px 14px', minWidth: 110, flexShrink: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                        <Icon size={13} color={color} />
+                        <span style={{ fontSize: 11, color: '#86868B', fontWeight: 500 }}>{label}</span>
+                        {sub && <span style={{ fontSize: 10, color: '#AEAEB2', marginLeft: 'auto' }}>{sub}</span>}
+                      </div>
+                      <div style={{ fontSize: 22, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-0.5px' }}>{value}</div>
+                      {pct !== null && (
+                        <div style={{ marginTop: 4 }}>
+                          <div style={{ height: 3, background: 'rgba(0,0,0,0.08)', borderRadius: 99, overflow: 'hidden' }}>
+                            <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: 99 }} />
+                          </div>
+                          <div style={{ fontSize: 9, color, fontWeight: 600, marginTop: 2 }}>{value}/{tgt} · {pct}%</div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Motivation Banner */}
+            {mot && (mot.type === 'urgent' || mot.type === 'warning') && (
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', borderRadius: 10, marginBottom: 10,
+                background: mot.type === 'urgent' ? 'rgba(255,59,48,0.08)' : 'rgba(255,149,0,0.08)',
+                border: `1px solid ${mot.type === 'urgent' ? 'rgba(255,59,48,0.2)' : 'rgba(255,149,0,0.2)'}`,
+              }}>
+                <Flame size={13} color={mot.type === 'urgent' ? '#FF3B30' : '#FF9500'} />
+                <span style={{ fontSize: 12.5, fontWeight: 600, color: mot.type === 'urgent' ? '#FF3B30' : '#B35A00' }}>{mot.message}</span>
+              </div>
+            )}
+
+            {/* Tabs */}
+            <div style={{ display: 'flex', overflowX: 'auto', gap: 0, scrollbarWidth: 'none', margin: '0 -16px', padding: '0 16px' }}>
+              {TABS.map(tb => (
+                <button key={tb.key} onClick={() => setTab(tb.key)} style={{
+                  padding: '8px 12px', fontSize: 12.5, fontWeight: tab === tb.key ? 600 : 500,
+                  color: tab === tb.key ? '#1D1D1F' : '#86868B', background: 'none', border: 'none',
+                  borderBottom: tab === tb.key ? '2px solid #0071E3' : '2px solid transparent',
+                  cursor: 'pointer', whiteSpace: 'nowrap',
+                }}>
+                  {tb.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Search */}
+        <div style={{ padding: '10px 16px', background: '#fff', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
+          <div style={{ position: 'relative' }}>
+            <Search size={14} color="#AEAEB2" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+            <input
+              value={search} onChange={e => setSearch(e.target.value)}
+              placeholder="Suchen..."
+              style={{ width: '100%', padding: '9px 10px 9px 32px', borderRadius: 10, fontSize: 14, border: '1.5px solid #E5E5EA', outline: 'none', boxSizing: 'border-box', background: '#FAFAFA' }}
+            />
+          </div>
+        </div>
+
+        {/* Lead Count */}
+        <div style={{ padding: '6px 16px', fontSize: 11, color: '#AEAEB2' }}>
+          {leadsLoading ? 'Laden...' : `${leads.length} Lead${leads.length !== 1 ? 's' : ''}`}
+        </div>
+
+        {/* Lead List */}
+        <div style={{ flex: 1 }}>
+          {!leadsLoading && leads.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '60px 24px' }}>
+              <div style={{ fontSize: 36, marginBottom: 10 }}>📭</div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: '#1D1D1F' }}>Keine Leads</div>
+              <div style={{ fontSize: 13, color: '#86868B', marginTop: 4 }}>
+                {tab === 'due' ? 'Keine Follow-ups heute fällig' : 'Leads anlegen oder per Excel importieren'}
+              </div>
+            </div>
+          ) : (
+            leads.map(lead => {
+              const ls = LEAD_STATUSES[lead.status] || LEAD_STATUSES.neu;
+              const fu = followupInfo(lead.next_followup_date);
+              const ws = WEBSITE_STATUS_CFG[lead.website_status];
+              const pc = PRIORITY_CFG[lead.priority ?? 0];
+              return (
+                <div
+                  key={lead.id}
+                  onClick={() => setSelectedLeadId(lead.id)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 12,
+                    padding: '13px 16px', background: '#fff',
+                    borderBottom: '1px solid rgba(0,0,0,0.05)', cursor: 'pointer',
+                  }}
+                >
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: pc.dot, flexShrink: 0 }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: '#1D1D1F', marginBottom: 4 }}>{lead.company_name}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
+                      <span style={{ padding: '2px 7px', borderRadius: 99, fontSize: 10.5, fontWeight: 600, background: ls.bg, color: ls.color }}>{ls.label}</span>
+                      {ws && <span style={{ padding: '2px 6px', borderRadius: 6, fontSize: 10, fontWeight: 600, background: ws.bg, color: ws.color }}>{ws.short}</span>}
+                      {lead.city && <span style={{ fontSize: 11, color: '#AEAEB2' }}>{lead.city}</span>}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
+                    {fu && <span style={{ fontSize: 10.5, fontWeight: 700, color: fu.color }}>{fu.label}</span>}
+                    <button
+                      onClick={e => { e.stopPropagation(); handleCall(lead); }}
+                      disabled={!lead.phone}
+                      style={{
+                        width: 36, height: 36, borderRadius: 10, border: 'none', flexShrink: 0,
+                        background: lead.phone ? 'rgba(52,199,89,0.12)' : 'rgba(0,0,0,0.05)',
+                        color: lead.phone ? '#34C759' : '#C7C7CC',
+                        cursor: lead.phone ? 'pointer' : 'not-allowed',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}
+                    >
+                      <Phone size={15} />
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* ── Mobile Bottom Sheet: Lead Detail ── */}
+        {selectedLeadId && selectedLead && (
+          <>
+            {/* Backdrop */}
+            <div
+              onClick={() => setSelectedLeadId(null)}
+              style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex: 80, backdropFilter: 'blur(2px)' }}
+            />
+            {/* Sheet */}
+            <div style={{
+              position: 'fixed', bottom: 64, left: 0, right: 0,
+              height: '80vh', background: '#fff',
+              borderRadius: '20px 20px 0 0',
+              boxShadow: '0 -8px 40px rgba(0,0,0,0.18)',
+              zIndex: 90, display: 'flex', flexDirection: 'column', overflow: 'hidden',
+            }}>
+              {/* Sheet Handle + Header */}
+              <div style={{ padding: '10px 16px 12px', borderBottom: '1px solid rgba(0,0,0,0.06)', flexShrink: 0 }}>
+                <div style={{ width: 36, height: 4, borderRadius: 99, background: 'rgba(0,0,0,0.12)', margin: '0 auto 12px' }} />
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 17, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-0.4px', marginBottom: 6 }}>
+                      {selectedLead.company_name}
+                    </div>
+                    {/* Status + Priority */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                      {s && <span style={{ padding: '3px 9px', borderRadius: 99, fontSize: 11.5, fontWeight: 600, background: s.bg, color: s.color }}>{s.label}</span>}
+                      {selWS && <span style={{ padding: '3px 8px', borderRadius: 8, fontSize: 11, fontWeight: 600, background: selWS.bg, color: selWS.color }}>{selectedLead.website_status}</span>}
+                      {selectedLead.city && <span style={{ fontSize: 12, color: '#86868B', display: 'flex', alignItems: 'center', gap: 3 }}><MapPin size={11} />{selectedLead.city}</span>}
+                    </div>
+                  </div>
+                  <button onClick={() => setSelectedLeadId(null)} style={{ width: 30, height: 30, borderRadius: 99, border: 'none', background: 'rgba(0,0,0,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
+                    <X size={15} color="#636366" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Scrollable content */}
+              <div style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
+
+                {/* Contact chips */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 18 }}>
+                  {selectedLead.contact_person && (
+                    <div style={{ fontSize: 13.5, color: '#636366', fontWeight: 500 }}>{selectedLead.contact_person}</div>
+                  )}
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    {selectedLead.phone && (
+                      <a href={`tel:${selectedLead.phone}`} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, background: 'rgba(52,199,89,0.1)', color: '#1A8F40', textDecoration: 'none', fontSize: 13.5, fontWeight: 600 }}>
+                        <Phone size={14} /> {selectedLead.phone}
+                      </a>
+                    )}
+                    {selectedLead.email && (
+                      <a href={`mailto:${selectedLead.email}`} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, background: 'rgba(0,113,227,0.08)', color: '#0071E3', textDecoration: 'none', fontSize: 13, fontWeight: 600 }}>
+                        <Mail size={14} /> E-Mail
+                      </a>
+                    )}
+                    {selectedLead.domain && (
+                      <a href={`https://${selectedLead.domain}`} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, background: 'rgba(0,0,0,0.05)', color: '#636366', textDecoration: 'none', fontSize: 13, fontWeight: 600 }}>
+                        <Globe size={14} /> Website
+                      </a>
+                    )}
+                  </div>
+                </div>
+
+                {/* Status Change */}
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#86868B', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>Status ändern</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {Object.entries(LEAD_STATUSES).filter(([k]) => k !== 'abgeschlossen').map(([k, v]) => (
+                      <button key={k} onClick={() => handleStatusChange(k)} style={{
+                        padding: '6px 12px', borderRadius: 99, fontSize: 12, fontWeight: 600,
+                        background: selectedLead.status === k ? v.color : v.bg,
+                        color: selectedLead.status === k ? '#fff' : v.color,
+                        border: 'none', cursor: 'pointer',
+                      }}>{v.label}</button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Follow-up */}
+                <div style={{ background: '#F5F5F7', borderRadius: 12, padding: '12px 14px', marginBottom: 12 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: '#86868B', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Follow-up</span>
+                    <button onClick={() => setFollowupFor({ leadId: selectedLeadId })} style={{ padding: '4px 10px', borderRadius: 7, fontSize: 12, fontWeight: 600, background: 'rgba(0,113,227,0.1)', color: '#0071E3', border: 'none', cursor: 'pointer' }}>
+                      {selectedLead.next_followup_date ? 'Ändern' : 'Planen'}
+                    </button>
+                  </div>
+                  {selectedLead.next_followup_date ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <CalendarDays size={15} color={fwInfo?.color || '#86868B'} />
+                      <span style={{ fontSize: 14, fontWeight: 600, color: fwInfo?.color || '#1D1D1F' }}>
+                        {fmtDate(selectedLead.next_followup_date, { day: '2-digit', month: 'long', year: 'numeric' })}
+                      </span>
+                      {fwInfo && <span style={{ fontSize: 11, fontWeight: 600, padding: '1px 6px', borderRadius: 99, background: fwInfo.color + '18', color: fwInfo.color }}>{fwInfo.label}</span>}
+                    </div>
+                  ) : (
+                    <div style={{ fontSize: 13, color: '#AEAEB2' }}>Kein Follow-up geplant</div>
+                  )}
+                  {selectedLead.next_followup_note && <div style={{ fontSize: 12, color: '#86868B', marginTop: 4 }}>{selectedLead.next_followup_note}</div>}
+                </div>
+
+                {/* Notizen */}
+                <div style={{ marginBottom: 12 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#86868B', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>Notizen</div>
+                  <textarea
+                    value={notes} onChange={e => setNotes(e.target.value)} onBlur={handleNotesBlur}
+                    placeholder="Notizen zum Lead..."
+                    rows={3}
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: 10, fontSize: 14, border: '1.5px solid #E5E5EA', outline: 'none', resize: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }}
+                  />
+                </div>
+
+                {/* Anrufe */}
+                {leadCalls.length > 0 && (
+                  <div style={{ marginBottom: 12 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#86868B', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>Anrufe ({leadCalls.length})</div>
+                    <div style={{ background: '#F5F5F7', borderRadius: 12, overflow: 'hidden' }}>
+                      {leadCalls.slice(0, 5).map((c, idx) => {
+                        const o = OUTCOME_CFG[c.outcome] || OUTCOME_CFG.reached;
+                        return (
+                          <div key={c.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderBottom: idx < Math.min(leadCalls.length, 5) - 1 ? '1px solid rgba(0,0,0,0.05)' : 'none' }}>
+                            <div>
+                              <div style={{ fontSize: 12.5, fontWeight: 600, color: '#1D1D1F' }}>{fmtDateTime(c.started_at)}</div>
+                              {c.notes && <div style={{ fontSize: 11.5, color: '#86868B', marginTop: 2 }}>{c.notes}</div>}
+                            </div>
+                            <span style={{ padding: '3px 8px', borderRadius: 99, fontSize: 10.5, fontWeight: 600, background: o.bg, color: o.color }}>{o.label}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Vollansicht */}
+                <button
+                  onClick={() => { setSelectedLeadId(null); navigate(`/sales/leads/${selectedLeadId}`); }}
+                  style={{ width: '100%', padding: '12px', borderRadius: 12, background: 'rgba(0,0,0,0.05)', color: '#636366', border: 'none', cursor: 'pointer', fontSize: 13.5, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                >
+                  Vollansicht öffnen <ChevronRight size={15} />
+                </button>
+              </div>
+
+              {/* Sheet Footer — sticky Actions */}
+              <div style={{
+                padding: '12px 16px', borderTop: '1px solid rgba(0,0,0,0.06)', background: '#fff',
+                display: 'flex', gap: 10, flexShrink: 0,
+              }}>
+                <button
+                  onClick={() => {
+                    const hasWebsite = selectedLead.website_status ? selectedLead.website_status !== 'Keine Website' : null;
+                    navigate('/wizard', { state: { prefill: { company_name: selectedLead.company_name || '', contact_person: selectedLead.contact_person || '', email: selectedLead.email || '', phone: selectedLead.phone || '', industry: selectedLead.industry || '', has_website: hasWebsite, website_url: selectedLead.domain ? (selectedLead.domain.startsWith('http') ? selectedLead.domain : `https://${selectedLead.domain}`) : '', domain_url: selectedLead.domain || '' } } });
+                  }}
+                  style={{ flex: 1, padding: '13px', borderRadius: 12, background: 'rgba(124,58,237,0.1)', color: '#7C3AED', border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}
+                >
+                  <Sparkles size={15} /> Projekt
+                </button>
+                <button
+                  onClick={() => handleCall(selectedLead)}
+                  disabled={!selectedLead.phone}
+                  style={{ flex: 2, padding: '13px', borderRadius: 12, background: selectedLead.phone ? '#34C759' : '#E5E5EA', color: selectedLead.phone ? '#fff' : '#AEAEB2', border: 'none', cursor: selectedLead.phone ? 'pointer' : 'not-allowed', fontSize: 15, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                >
+                  <Phone size={16} /> Anrufen
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Overlays */}
+        {activeCall && <CallInProgressSheet callId={activeCall.callId} clientName={activeCall.clientName} phone={activeCall.phone} onEnd={handleCallEnd} onClose={() => setActiveCall(null)} />}
+        {followupFor && <FollowupScheduler leadId={followupFor.leadId} currentDate={selectedLead?.next_followup_date} onSave={handleFollowupSave} onClose={() => setFollowupFor(null)} />}
+        {showAddLead && <CreateLeadModal onClose={() => setShowAddLead(false)} onCreate={data => createLeadMut.mutate(data)} isCreating={createLeadMut.isPending} />}
+        {showExcelImport && <ExcelImportModal onClose={() => setShowExcelImport(false)} onImport={handleImport} isImporting={importLeadsMut.isPending} />}
+        {showTargets && stats?.targets && <SalesTargetModal targets={stats.targets} onSave={data => updateTargetsMut.mutate(data)} onClose={() => setShowTargets(false)} isPending={updateTargetsMut.isPending} />}
+      </div>
+    );
+  }
+
+  // ── Desktop Render ────────────────────────────────────────────────────────
 
   return (
     <div style={{
