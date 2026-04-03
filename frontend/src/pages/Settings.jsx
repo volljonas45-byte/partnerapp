@@ -536,8 +536,8 @@ export default function Settings() {
   const year = new Date().getFullYear();
 
   return (
-    <div style={{ height: '100%', overflowY: 'auto', background: '#F5F5F7' }}>
-      <div style={{ maxWidth: '860px', margin: '0 auto', padding: '32px 32px 64px' }}>
+    <div style={{ height: '100%', overflowY: 'auto', overflowX: 'hidden', background: '#F5F5F7' }}>
+      <div style={{ maxWidth: '860px', margin: '0 auto', padding: 'clamp(16px, 4vw, 32px)', paddingBottom: 64, boxSizing: 'border-box' }}>
 
         {/* Header */}
         <div style={{ marginBottom: '28px' }}>
@@ -546,7 +546,7 @@ export default function Settings() {
         </div>
 
         {/* Tabs */}
-        <div style={{ display: 'flex', gap: '4px', background: 'rgba(0,0,0,0.06)', borderRadius: '12px', padding: '4px', marginBottom: '24px', width: 'fit-content' }}>
+        <div style={{ display: 'flex', gap: '4px', background: 'rgba(0,0,0,0.06)', borderRadius: '12px', padding: '4px', marginBottom: '24px', width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}>
           {TABS.map(tab => {
             const Icon = tab.icon;
             const active = activeTab === tab.id;

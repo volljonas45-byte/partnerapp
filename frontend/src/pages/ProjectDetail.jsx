@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useMobile } from '../hooks/useMobile';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -248,6 +249,7 @@ export default function ProjectDetail() {
   const { id }   = useParams();
   const navigate = useNavigate();
   const qc       = useQueryClient();
+  const isMobile = useMobile();
   const { confirm, ConfirmDialogNode } = useConfirm();
 
   const [activeTab,         setActiveTab]         = useState('dashboard');
@@ -542,13 +544,15 @@ export default function ProjectDetail() {
   const openChanges = changes.filter(c => c.status !== 'erledigt').length;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#F5F5F7', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: isMobile ? 'auto' : '100vh', minHeight: '100vh', background: '#F5F5F7', overflow: isMobile ? 'visible' : 'hidden', maxWidth: '100vw' }}>
 
       {/* ── HEADER ───────────────────────────────────────────────────────────── */}
       <div style={{
-        display: 'flex', alignItems: 'center', gap: '12px',
-        padding: '0 28px', height: '60px', flexShrink: 0,
+        display: 'flex', alignItems: 'center', gap: '8px',
+        padding: isMobile ? '0 14px' : '0 28px',
+        height: isMobile ? 52 : 60, flexShrink: 0,
         background: '#fff', borderBottom: '1px solid rgba(0,0,0,0.08)',
+        overflowX: 'auto', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch',
       }}>
         <button
           onClick={() => navigate('/websites')}
@@ -594,7 +598,8 @@ export default function ProjectDetail() {
       <div style={{
         display: 'flex', gap: 0, background: '#fff',
         borderBottom: '1px solid rgba(0,0,0,0.08)',
-        padding: '0 28px', flexShrink: 0, overflowX: 'auto',
+        padding: isMobile ? '0 14px' : '0 28px',
+        flexShrink: 0, overflowX: 'auto', scrollbarWidth: 'none',
       }}>
         {TABS.map(tab => (
           <button
@@ -629,7 +634,7 @@ export default function ProjectDetail() {
       </div>
 
       {/* ── CONTENT ──────────────────────────────────────────────────────────── */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '28px 32px' }}>
+      <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: isMobile ? '16px 14px' : '28px 32px' }}>
 
       {/* ── DASHBOARD ────────────────────────────────────────────────────────── */}
       {activeTab === 'dashboard' && (() => {

@@ -13,7 +13,9 @@ export default function Layout({ children }) {
       display: 'flex',
       height: '100vh',
       overflow: isMobile ? 'auto' : 'hidden',
+      overflowX: 'hidden',
       background: '#F5F5F7',
+      maxWidth: '100vw',
     }}>
       {/* Sidebar — nur Desktop */}
       {!isMobile && <Sidebar />}
@@ -21,9 +23,10 @@ export default function Layout({ children }) {
       {/* Hauptinhalt */}
       <main style={{
         flex: 1,
-        overflowY: isMobile ? 'auto' : 'auto',
+        overflowY: 'auto',
+        overflowX: 'hidden',
         minWidth: 0,
-        // Platz für Bottom Nav auf Mobil
+        maxWidth: '100%',
         paddingBottom: isMobile ? 'calc(62px + env(safe-area-inset-bottom) + 20px)' : 0,
       }}>
         {children}

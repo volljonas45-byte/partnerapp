@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useMobile } from '../hooks/useMobile';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Download, CheckCircle, ArrowLeft, Trash2, Clock,
@@ -32,6 +33,7 @@ export default function InvoiceDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const isMobile = useMobile();
 
   const { confirm, ConfirmDialogNode } = useConfirm();
 
@@ -252,9 +254,9 @@ export default function InvoiceDetail() {
   const invoiceTypeLabel = INVOICE_TYPE_LABELS[invoice.invoice_type] || 'Rechnung';
 
   return (
-    <div className="p-8 max-w-4xl">
+    <div className={isMobile ? "p-4 max-w-4xl" : "p-8 max-w-4xl"}>
       {/* Header */}
-      <div className="flex items-start justify-between mb-8">
+      <div className={isMobile ? "flex flex-col gap-4 mb-6" : "flex items-start justify-between mb-8"}>
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate('/invoices')}
@@ -286,7 +288,7 @@ export default function InvoiceDetail() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap justify-end">
+        <div className={isMobile ? "flex items-center gap-2 flex-wrap" : "flex items-center gap-2 flex-wrap justify-end"}>
           {isDraft && (
             <button onClick={handleMarkSent} disabled={statusMutation.isPending} className="btn-secondary">
               <FileText size={15} /> Als gesendet markieren
@@ -343,7 +345,7 @@ export default function InvoiceDetail() {
       )}
 
       {/* Info grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className={isMobile ? "grid grid-cols-2 gap-3 mb-5" : "grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6"}>
         {[
           { label: 'Rechnungsdatum',  value: formatDate(invoice.issue_date) },
           { label: 'Fälligkeitsdatum', value: formatDate(invoice.due_date) },
@@ -394,7 +396,7 @@ export default function InvoiceDetail() {
       )}
 
       {/* Rechnungssteller / Empfänger */}
-      <div className="grid grid-cols-2 gap-6 mb-6">
+      <div className={isMobile ? "grid grid-cols-1 gap-4 mb-6" : "grid grid-cols-2 gap-6 mb-6"}>
         <div className="card">
           <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">Rechnungsempfänger</p>
           <div className="space-y-0.5 text-sm text-gray-700">
