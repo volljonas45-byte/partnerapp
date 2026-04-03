@@ -171,26 +171,23 @@ function LeadRow({ lead, isSelected, onClick, onCall }) {
         );
       })()}
 
-      {/* Website status */}
+      {/* Website status — kleiner farbiger Dot statt Text-Badge */}
       {ws && (
-        <span style={{
-          padding: '2px 6px', borderRadius: 6, fontSize: 10, fontWeight: 600,
-          background: ws.bg, color: ws.color, whiteSpace: 'nowrap', flexShrink: 0,
-        }}>{ws.short}</span>
+        <span title={lead.website_status} style={{
+          width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
+          background: ws.color, display: 'inline-block',
+        }} />
       )}
 
       {/* Follow-up date */}
       {fu ? (
         <span style={{
           fontSize: 10.5, fontWeight: 600, color: fu.color, whiteSpace: 'nowrap', flexShrink: 0,
-          minWidth: 52, textAlign: 'right',
         }}>{fu.label}</span>
-      ) : (
-        <span style={{ minWidth: 52 }} />
-      )}
+      ) : null}
 
-      {/* Last call + count */}
-      <span style={{ fontSize: 10.5, color: '#AEAEB2', whiteSpace: 'nowrap', flexShrink: 0, minWidth: 38, textAlign: 'right' }}>
+      {/* Call count */}
+      <span style={{ fontSize: 10.5, color: '#AEAEB2', whiteSpace: 'nowrap', flexShrink: 0, minWidth: 22, textAlign: 'right' }}>
         {lead.total_calls ? `${lead.total_calls}x` : '—'}
       </span>
 
