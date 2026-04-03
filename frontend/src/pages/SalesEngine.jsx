@@ -1,15 +1,15 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import {
-  Phone, Search, Flame, Settings, AlertCircle, CheckCircle2,
-  Plus, Clock, PhoneCall, FileSpreadsheet, UserPlus, Building2,
+  Phone, Search, Flame, Settings, AlertCircle, CheckCircle2, Plus, Clock,
+  PhoneCall, FileSpreadsheet, Building2, Mail, Globe, MapPin, ExternalLink,
+  ChevronDown, CalendarDays, Euro, UserCheck, ArrowRight, MousePointerClick,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { salesApi } from '../api/sales';
-import { clientsApi } from '../api/clients';
-import LeadStatusBadge from '../components/sales/LeadStatusBadge';
+import { LEAD_STATUSES } from '../components/sales/LeadStatusBadge';
 import CallInProgressSheet from '../components/sales/CallInProgressSheet';
 import FollowupScheduler from '../components/sales/FollowupScheduler';
 import SalesTargetModal from '../components/sales/SalesTargetModal';
@@ -21,12 +21,39 @@ import CreateLeadModal from '../components/sales/CreateLeadModal';
 function relTime(iso) {
   if (!iso) return '—';
   const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
-  if (diff < 1) return 'Gerade eben';
+  if (diff < 1) return 'Jetzt';
   if (diff < 60) return `vor ${diff}m`;
   const h = Math.floor(diff / 60);
   if (h < 24) return `vor ${h}h`;
-  const d = Math.floor(h / 24);
-  return `vor ${d}d`;
+  return `vor ${Math.floor(h / 24)}T`;
+}
+
+function fmtDate(iso, opts = { day: '2-digit', month: 'short' }) {
+  if (!iso) return null;
+  return new Date(iso).toLocaleDateString('de-DE', opts);
+}
+
+function fmtDateTime(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString('de-DE', { day: '2-digit', month: 'short' }) +
+    ', ' + d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) + ' Uhr';
+}
+
+function fmtDuration(sec) {
+  if (!sec) return null;
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return m > 0 ? `${m}m ${s}s` : `${s}s`;
+}
+
+function followupInfo(dateStr) {
+  if (!dateStr) return null;
+  const diff = Math.round((new Date(dateStr) - Date.now()) / 86400000);
+  if (diff < 0) return { color: '#FF3B30', label: `${Math.abs(diff)}T überfällig`, urgent: true };
+  if (diff === 0) return { color: '#FF9500', label: 'Heute', urgent: true };
+  if (diff <= 2) return { color: '#FF9500', label: `in ${diff}T`, urgent: false };
+  return { color: '#34C759', label: `in ${diff}T`, urgent: false };
 }
 
 const OUTCOME_CFG = {
@@ -36,50 +63,169 @@ const OUTCOME_CFG = {
   callback:    { label: 'Rückruf',        color: '#0071E3', bg: 'rgba(0,113,227,0.1)' },
 };
 
-const PRIORITY_DOTS = { 2: '#FF3B30', 1: '#FF9500', 0: '#C7C7CC' };
+const WEBSITE_STATUS_CFG = {
+  'Keine Website':              { color: '#FF3B30', bg: 'rgba(255,59,48,0.08)',   short: 'Keine Website' },
+  'Website Fehler':             { color: '#FF3B30', bg: 'rgba(255,59,48,0.08)',   short: 'Fehler' },
+  'Alte Website + nicht Resp.': { color: '#FF9500', bg: 'rgba(255,149,0,0.08)',   short: 'Nicht Resp.' },
+  'Veraltete Website':          { color: '#FF9500', bg: 'rgba(255,149,0,0.08)',   short: 'Veraltet' },
+  'Website/ Branchenbuch':      { color: '#B8860B', bg: 'rgba(255,214,10,0.1)',   short: 'Branchenbuch' },
+};
+
+const PRIORITY_CFG = {
+  0: { color: '#C7C7CC', label: 'Normal', dot: '#C7C7CC' },
+  1: { color: '#FF9500', label: 'Hoch',   dot: '#FF9500' },
+  2: { color: '#FF3B30', label: 'Dringend', dot: '#FF3B30' },
+};
 
 const TABS = [
-  { key: 'due',           label: 'Fällig heute' },
-  { key: 'all',           label: 'Alle' },
-  { key: 'anrufen',       label: 'Anrufen' },
-  { key: 'follow_up',     label: 'Follow Up' },
-  { key: 'interessiert',  label: 'Interessiert' },
-  { key: 'demo',          label: 'Demo' },
+  { key: 'due',          label: 'Fällig heute' },
+  { key: 'all',          label: 'Alle' },
+  { key: 'anrufen',      label: 'Anrufen' },
+  { key: 'follow_up',    label: 'Follow Up' },
+  { key: 'interessiert', label: 'Interessiert' },
+  { key: 'demo',         label: 'Demo' },
 ];
 
-// ── KPI Card ─────────────────────────────────────────────────────────────────
+// ── Sub-components ────────────────────────────────────────────────────────────
 
 function KpiCard({ icon: Icon, label, value, sub, color, target }) {
   const pct = target ? Math.min(100, Math.round((value / target) * 100)) : null;
   return (
     <div style={{
-      background: '#fff', borderRadius: 14, padding: '18px 20px',
-      border: '1px solid rgba(0,0,0,0.06)', display: 'flex', flexDirection: 'column', gap: 8,
+      background: '#fff', borderRadius: 12, padding: '12px 14px',
+      border: '1px solid rgba(0,0,0,0.06)', display: 'flex', flexDirection: 'column', gap: 6,
     }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         <div style={{
-          width: 38, height: 38, borderRadius: 10, flexShrink: 0,
+          width: 32, height: 32, borderRadius: 9, flexShrink: 0,
           background: `${color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
-          <Icon size={17} color={color} />
+          <Icon size={15} color={color} />
         </div>
         <div>
-          <div style={{ fontSize: 24, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-0.5px', lineHeight: 1 }}>{value}</div>
-          <div style={{ fontSize: 12, fontWeight: 500, color: '#86868B', marginTop: 3 }}>{label}</div>
+          <div style={{ fontSize: 22, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-0.5px', lineHeight: 1 }}>{value}</div>
+          <div style={{ fontSize: 11, fontWeight: 500, color: '#86868B', marginTop: 2 }}>{label}</div>
         </div>
+        {sub && <div style={{ fontSize: 11, color: '#AEAEB2', marginLeft: 'auto', textAlign: 'right' }}>{sub}</div>}
       </div>
-      {sub && <div style={{ fontSize: 11.5, color: '#AEAEB2' }}>{sub}</div>}
       {pct !== null && (
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
-            <span style={{ fontSize: 10.5, color: '#86868B' }}>{value}/{target}</span>
-            <span style={{ fontSize: 10.5, fontWeight: 600, color }}>{pct}%</span>
+            <span style={{ fontSize: 10, color: '#86868B' }}>{value}/{target}</span>
+            <span style={{ fontSize: 10, fontWeight: 600, color }}>{pct}%</span>
           </div>
-          <div style={{ height: 4, background: '#F2F2F7', borderRadius: 99, overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: 99, transition: 'width 0.3s' }} />
+          <div style={{ height: 3, background: '#F2F2F7', borderRadius: 99, overflow: 'hidden' }}>
+            <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: 99, transition: 'width 0.4s' }} />
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function LeadRow({ lead, isSelected, onClick, onCall }) {
+  const fu = followupInfo(lead.next_followup_date);
+  const ws = WEBSITE_STATUS_CFG[lead.website_status];
+  const pc = PRIORITY_CFG[lead.priority ?? 0];
+  return (
+    <div
+      onClick={onClick}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px',
+        borderBottom: '1px solid rgba(0,0,0,0.04)', cursor: 'pointer',
+        background: isSelected ? 'rgba(0,113,227,0.06)' : 'transparent',
+        borderLeft: isSelected ? '3px solid #0071E3' : '3px solid transparent',
+        transition: 'background 0.1s',
+      }}
+      onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = '#F9F9FB'; }}
+      onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = 'transparent'; }}
+    >
+      {/* Priority dot */}
+      <div style={{
+        width: 7, height: 7, borderRadius: '50%', flexShrink: 0,
+        background: pc.dot,
+      }} />
+
+      {/* Main info */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{
+          fontSize: 13, fontWeight: 600, color: '#1D1D1F',
+          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+          letterSpacing: '-0.1px',
+        }}>
+          {lead.company_name}
+        </div>
+        <div style={{ fontSize: 11, color: '#86868B', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 1 }}>
+          {[lead.city, lead.contact_person].filter(Boolean).join(' · ')}
+        </div>
+      </div>
+
+      {/* Status badge */}
+      {(() => {
+        const s = LEAD_STATUSES[lead.status] || LEAD_STATUSES.neu;
+        return (
+          <span style={{
+            padding: '2px 7px', borderRadius: 99, fontSize: 10.5, fontWeight: 600,
+            background: s.bg, color: s.color, whiteSpace: 'nowrap', flexShrink: 0,
+          }}>{s.label}</span>
+        );
+      })()}
+
+      {/* Website status */}
+      {ws && (
+        <span style={{
+          padding: '2px 6px', borderRadius: 6, fontSize: 10, fontWeight: 600,
+          background: ws.bg, color: ws.color, whiteSpace: 'nowrap', flexShrink: 0,
+        }}>{ws.short}</span>
+      )}
+
+      {/* Follow-up date */}
+      {fu ? (
+        <span style={{
+          fontSize: 10.5, fontWeight: 600, color: fu.color, whiteSpace: 'nowrap', flexShrink: 0,
+          minWidth: 52, textAlign: 'right',
+        }}>{fu.label}</span>
+      ) : (
+        <span style={{ minWidth: 52 }} />
+      )}
+
+      {/* Last call + count */}
+      <span style={{ fontSize: 10.5, color: '#AEAEB2', whiteSpace: 'nowrap', flexShrink: 0, minWidth: 38, textAlign: 'right' }}>
+        {lead.total_calls ? `${lead.total_calls}x` : '—'}
+      </span>
+
+      {/* Call button */}
+      <button
+        onClick={e => { e.stopPropagation(); onCall(lead); }}
+        disabled={!lead.phone}
+        title={lead.phone || 'Keine Nummer'}
+        style={{
+          width: 30, height: 30, borderRadius: 8, border: 'none', flexShrink: 0,
+          background: lead.phone ? 'rgba(52,199,89,0.12)' : 'rgba(0,0,0,0.04)',
+          color: lead.phone ? '#34C759' : '#C7C7CC',
+          cursor: lead.phone ? 'pointer' : 'not-allowed',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          transition: 'background 0.15s',
+        }}
+        onMouseEnter={e => { if (lead.phone) e.currentTarget.style.background = 'rgba(52,199,89,0.24)'; }}
+        onMouseLeave={e => { if (lead.phone) e.currentTarget.style.background = 'rgba(52,199,89,0.12)'; }}
+      >
+        <Phone size={13} />
+      </button>
+    </div>
+  );
+}
+
+function EmptyDetail() {
+  return (
+    <div style={{
+      background: '#fff', borderRadius: 14, border: '1px solid rgba(0,0,0,0.06)',
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      height: '100%', gap: 12, color: '#AEAEB2',
+    }}>
+      <MousePointerClick size={36} strokeWidth={1.5} />
+      <div style={{ fontSize: 14, fontWeight: 600, color: '#86868B' }}>Lead auswählen</div>
+      <div style={{ fontSize: 12.5, color: '#AEAEB2' }}>Klicke einen Lead in der Liste an</div>
     </div>
   );
 }
@@ -90,18 +236,38 @@ export default function SalesEngine() {
   const navigate = useNavigate();
   const qc = useQueryClient();
 
-  const [tab, setTab]               = useState('due');
-  const [search, setSearch]         = useState('');
-  const [showAddLead, setShowAddLead]     = useState(false);
+  // UI state
+  const [tab, setTab]                       = useState('due');
+  const [search, setSearch]                 = useState('');
+  const [selectedLeadId, setSelectedLeadId] = useState(null);
+  const [showAddLead, setShowAddLead]       = useState(false);
   const [showExcelImport, setShowExcelImport] = useState(false);
-  const [showTargets, setShowTargets]     = useState(false);
-  const [activeCall, setActiveCall]       = useState(null);
-  const [followupFor, setFollowupFor]     = useState(null);
+  const [showTargets, setShowTargets]       = useState(false);
+  const [activeCall, setActiveCall]         = useState(null);
+  const [followupFor, setFollowupFor]       = useState(null);
+  const [showStatusMenu, setShowStatusMenu] = useState(false);
 
-  // Data
-  const { data: stats } = useQuery({ queryKey: ['sales-stats'], queryFn: salesApi.stats, refetchInterval: 30000 });
-  const { data: chartData } = useQuery({ queryKey: ['sales-chart'], queryFn: () => salesApi.chart(14) });
-  const { data: recentCalls = [] } = useQuery({ queryKey: ['sales-calls-recent'], queryFn: () => salesApi.listCalls({ limit: 5 }) });
+  // Detail-panel local state
+  const [notes, setNotes]         = useState('');
+  const prevLeadIdRef             = useRef(null);
+
+  // ── Queries ──────────────────────────────────────────────────────────────
+
+  const { data: stats } = useQuery({
+    queryKey: ['sales-stats'],
+    queryFn: salesApi.stats,
+    refetchInterval: 30000,
+  });
+
+  const { data: chartData } = useQuery({
+    queryKey: ['sales-chart'],
+    queryFn: () => salesApi.chart(14),
+  });
+
+  const { data: recentCalls = [] } = useQuery({
+    queryKey: ['sales-calls-recent'],
+    queryFn: () => salesApi.listCalls({ limit: 8 }),
+  });
 
   const leadsParams = useMemo(() => {
     const p = {};
@@ -116,7 +282,31 @@ export default function SalesEngine() {
     queryFn: () => salesApi.listLeads(leadsParams),
   });
 
-  // Mutations
+  const { data: selectedLead } = useQuery({
+    queryKey: ['sales-lead', selectedLeadId],
+    queryFn: () => salesApi.getLead(selectedLeadId),
+    enabled: !!selectedLeadId,
+  });
+
+  const { data: leadCalls = [] } = useQuery({
+    queryKey: ['sales-calls-lead', selectedLeadId, selectedLead?.client_id],
+    queryFn: () => selectedLead?.client_id
+      ? salesApi.listCalls({ client_id: selectedLead.client_id })
+      : salesApi.listCalls({ lead_id: selectedLeadId }),
+    enabled: !!selectedLead,
+  });
+
+  // Sync notes when lead changes
+  useEffect(() => {
+    if (selectedLead && selectedLead.id !== prevLeadIdRef.current) {
+      setNotes(selectedLead.notes || '');
+      prevLeadIdRef.current = selectedLead.id;
+      setShowStatusMenu(false);
+    }
+  }, [selectedLead]);
+
+  // ── Mutations ─────────────────────────────────────────────────────────────
+
   const createLeadMut = useMutation({
     mutationFn: (data) => salesApi.createLead(data),
     onSuccess: () => {
@@ -130,12 +320,31 @@ export default function SalesEngine() {
 
   const importLeadsMut = useMutation({
     mutationFn: (leads) => salesApi.importLeads(leads),
-    onSuccess: (res) => {
+    onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['sales-leads'] });
       qc.invalidateQueries({ queryKey: ['sales-stats'] });
-      return res;
     },
     onError: (err) => toast.error(err.response?.data?.error || 'Import fehlgeschlagen'),
+  });
+
+  const updateLeadMut = useMutation({
+    mutationFn: ({ id, data }) => salesApi.updateLead(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['sales-lead', String(selectedLeadId)] });
+      qc.invalidateQueries({ queryKey: ['sales-leads'] });
+      qc.invalidateQueries({ queryKey: ['sales-stats'] });
+    },
+  });
+
+  const convertMut = useMutation({
+    mutationFn: (id) => salesApi.convertToClient(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['sales-lead', String(selectedLeadId)] });
+      qc.invalidateQueries({ queryKey: ['sales-leads'] });
+      qc.invalidateQueries({ queryKey: ['clients'] });
+      toast.success('Zu Kunde konvertiert!');
+    },
+    onError: (err) => toast.error(err.response?.data?.error || 'Fehler'),
   });
 
   const logCallMut = useMutation({ mutationFn: salesApi.logCall });
@@ -146,23 +355,21 @@ export default function SalesEngine() {
       qc.invalidateQueries({ queryKey: ['sales-stats'] });
       qc.invalidateQueries({ queryKey: ['sales-leads'] });
       qc.invalidateQueries({ queryKey: ['sales-calls-recent'] });
-    },
-  });
-
-  const updateLeadMut = useMutation({
-    mutationFn: ({ id, data }) => salesApi.updateLead(id, data),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['sales-leads'] });
-      qc.invalidateQueries({ queryKey: ['sales-stats'] });
+      qc.invalidateQueries({ queryKey: ['sales-calls-lead'] });
     },
   });
 
   const updateTargetsMut = useMutation({
     mutationFn: salesApi.updateTargets,
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['sales-stats'] }); toast.success('Ziele aktualisiert'); setShowTargets(false); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['sales-stats'] });
+      toast.success('Ziele aktualisiert');
+      setShowTargets(false);
+    },
   });
 
-  // Click-to-Call
+  // ── Handlers ──────────────────────────────────────────────────────────────
+
   async function handleCall(lead) {
     try {
       const payload = lead.client_id
@@ -174,8 +381,8 @@ export default function SalesEngine() {
     } catch { toast.error('Fehler beim Starten des Anrufs'); }
   }
 
-  function handleCallEnd(callId, outcome, notes, duration) {
-    updateCallMut.mutate({ id: callId, data: { outcome, notes, duration_sec: duration } });
+  function handleCallEnd(callId, outcome, callNotes, duration) {
+    updateCallMut.mutate({ id: callId, data: { outcome, notes: callNotes, duration_sec: duration } });
     const lead = activeCall;
     setActiveCall(null);
     if (outcome === 'reached' || outcome === 'callback') {
@@ -189,11 +396,25 @@ export default function SalesEngine() {
     toast.success('Follow-up geplant');
   }
 
-  async function handleImport(leads) {
-    const res = await importLeadsMut.mutateAsync(leads);
+  async function handleImport(importedLeads) {
+    const res = await importLeadsMut.mutateAsync(importedLeads);
     toast.success(`${res.imported} Leads importiert`);
     return res;
   }
+
+  function handleNotesBlur() {
+    if (selectedLead && notes !== (selectedLead.notes || '')) {
+      updateLeadMut.mutate({ id: selectedLeadId, data: { notes } });
+    }
+  }
+
+  function handleStatusChange(status) {
+    updateLeadMut.mutate({ id: selectedLeadId, data: { status } });
+    setShowStatusMenu(false);
+    toast.success('Status aktualisiert');
+  }
+
+  // ── Derived data ──────────────────────────────────────────────────────────
 
   const chartDays = useMemo(() => {
     if (!chartData?.days) return [];
@@ -206,228 +427,649 @@ export default function SalesEngine() {
   const t       = stats?.today   || {};
   const targets = stats?.targets || {};
   const mot     = stats?.motivation;
+  const isConverted = !!selectedLead?.client_id;
+  const fwInfo  = followupInfo(selectedLead?.next_followup_date);
+  const selWS   = WEBSITE_STATUS_CFG[selectedLead?.website_status];
+
+  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div style={{ padding: '24px 28px', maxWidth: 1400, margin: '0 auto' }} className="animate-fade-in">
+    <div style={{
+      display: 'flex', flexDirection: 'column',
+      height: '100%', padding: '16px 22px',
+      boxSizing: 'border-box', gap: 12, overflow: 'hidden',
+    }}>
 
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 18 }}>
-        <div>
-          <h1 style={{ fontSize: 24, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-0.5px', margin: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
-            <Flame size={22} color="#FF9500" />
-            Sales Engine
+      {/* ── Top bar ── */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexShrink: 0 }}>
+        {/* Title */}
+        <div style={{ flexShrink: 0 }}>
+          <h1 style={{
+            fontSize: 20, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-0.5px',
+            margin: 0, display: 'flex', alignItems: 'center', gap: 8,
+          }}>
+            <Flame size={18} color="#FF9500" /> Sales Engine
           </h1>
-          <p style={{ fontSize: 13, color: '#86868B', margin: '4px 0 0' }}>
-            {t.calls_total || 0} Anrufe heute · {t.calls_reached || 0} Gespräche · {stats?.followups_due || 0} Follow-ups offen
-            {stats?.demos_active > 0 && <span style={{ color: '#34C759', fontWeight: 600 }}> · {stats.demos_active} Demos aktiv</span>}
+          <p style={{ fontSize: 11.5, color: '#86868B', margin: '2px 0 0' }}>
+            {t.calls_total || 0} Anrufe · {t.calls_reached || 0} Gespräche · {stats?.followups_due || 0} Follow-ups
+            {stats?.demos_active > 0 && <span style={{ color: '#34C759', fontWeight: 600 }}> · {stats.demos_active} Demos</span>}
           </p>
         </div>
-        <button
-          onClick={() => setShowTargets(true)}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10,
-            fontSize: 13, fontWeight: 600, background: 'rgba(0,0,0,0.04)', color: '#636366',
-            border: 'none', cursor: 'pointer', transition: 'background 0.15s',
-          }}
-          onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.08)'}
-          onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0.04)'}
-        >
-          <Settings size={14} />
-          Ziele
-        </button>
+
+        {/* KPI cards row */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(160px, 220px))', gap: 10, flex: 1 }}>
+          <KpiCard icon={PhoneCall}    label="Anrufe heute"      value={t.calls_total || 0}   color="#0071E3" target={targets.daily_calls} />
+          <KpiCard icon={Phone}        label="Gespräche"          value={t.calls_reached || 0} color="#34C759" sub={`${t.connect_rate || 0}%`} target={targets.daily_connects} />
+          <KpiCard icon={CheckCircle2} label="Abschlüsse"         value={t.closings || 0}      color="#7C3AED" target={targets.daily_closings} />
+          <KpiCard icon={Clock}        label="Follow-ups fällig"  value={stats?.followups_due || 0} color="#FF9500" />
+        </div>
+
+        {/* Action buttons */}
+        <div style={{ display: 'flex', gap: 6, flexShrink: 0, alignItems: 'center' }}>
+          <button
+            onClick={() => setShowExcelImport(true)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 5, padding: '7px 12px', borderRadius: 9,
+              fontSize: 12, fontWeight: 600, background: 'rgba(52,199,89,0.1)', color: '#1A8F40',
+              border: '1px solid rgba(52,199,89,0.2)', cursor: 'pointer',
+            }}
+          >
+            <FileSpreadsheet size={13} /> Excel
+          </button>
+          <button
+            onClick={() => setShowAddLead(true)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 5, padding: '7px 12px', borderRadius: 9,
+              fontSize: 12, fontWeight: 600, background: '#0071E3', color: '#fff',
+              border: 'none', cursor: 'pointer',
+            }}
+          >
+            <Plus size={13} /> Lead
+          </button>
+          <button
+            onClick={() => setShowTargets(true)}
+            title="Ziele einstellen"
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: 34, height: 34, borderRadius: 9,
+              background: 'rgba(0,0,0,0.05)', color: '#636366',
+              border: 'none', cursor: 'pointer',
+            }}
+          >
+            <Settings size={15} />
+          </button>
+        </div>
       </div>
 
-      {/* Motivation Banner */}
+      {/* ── Motivation banner ── */}
       {mot && (mot.type === 'warning' || mot.type === 'urgent') && (
         <div style={{
-          display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', borderRadius: 12, marginBottom: 16,
+          flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10,
+          padding: '10px 14px', borderRadius: 10,
           background: mot.type === 'urgent' ? 'rgba(255,59,48,0.08)' : 'rgba(255,149,0,0.08)',
-          border: `1px solid ${mot.type === 'urgent' ? 'rgba(255,59,48,0.15)' : 'rgba(255,149,0,0.15)'}`,
+          border: `1px solid ${mot.type === 'urgent' ? 'rgba(255,59,48,0.2)' : 'rgba(255,149,0,0.2)'}`,
         }}>
-          {mot.type === 'urgent' ? <Flame size={16} color="#FF3B30" /> : <AlertCircle size={16} color="#FF9500" />}
-          <span style={{ fontSize: 13.5, fontWeight: 600, color: mot.type === 'urgent' ? '#FF3B30' : '#B35A00' }}>{mot.message}</span>
+          {mot.type === 'urgent' ? <Flame size={14} color="#FF3B30" /> : <AlertCircle size={14} color="#FF9500" />}
+          <span style={{ fontSize: 13, fontWeight: 600, color: mot.type === 'urgent' ? '#FF3B30' : '#B35A00' }}>
+            {mot.message}
+          </span>
         </div>
       )}
       {mot && (mot.type === 'success' || mot.type === 'excellent') && (
         <div style={{
-          display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', borderRadius: 12, marginBottom: 16,
-          background: 'rgba(52,199,89,0.08)', border: '1px solid rgba(52,199,89,0.15)',
+          flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10,
+          padding: '10px 14px', borderRadius: 10,
+          background: 'rgba(52,199,89,0.08)', border: '1px solid rgba(52,199,89,0.2)',
         }}>
-          <CheckCircle2 size={16} color="#34C759" />
-          <span style={{ fontSize: 13.5, fontWeight: 600, color: '#1A8F40' }}>{mot.message}</span>
+          <CheckCircle2 size={14} color="#34C759" />
+          <span style={{ fontSize: 13, fontWeight: 600, color: '#1A8F40' }}>{mot.message}</span>
         </div>
       )}
 
-      {/* KPI Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 22 }}>
-        <KpiCard icon={PhoneCall}    label="Anrufe heute"    value={t.calls_total || 0}  color="#0071E3" target={targets.daily_calls} />
-        <KpiCard icon={Phone}        label="Gespräche"       value={t.calls_reached || 0} color="#34C759" sub={`${t.connect_rate || 0}% Gesprächsquote`} target={targets.daily_connects} />
-        <KpiCard icon={CheckCircle2} label="Abschlüsse"      value={t.closings || 0}     color="#7C3AED" target={targets.daily_closings} />
-        <KpiCard icon={Clock}        label="Follow-ups fällig" value={stats?.followups_due || 0} color="#FF9500" />
-      </div>
+      {/* ── 3-Panel Grid ── */}
+      <div style={{
+        flex: 1, minHeight: 0,
+        display: 'grid', gridTemplateColumns: '380px 1fr 300px', gap: 14,
+      }}>
 
-      {/* Main Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: 18, alignItems: 'start' }}>
-
-        {/* LEFT — Lead List */}
-        <div style={{ background: '#fff', borderRadius: 14, border: '1px solid rgba(0,0,0,0.06)', overflow: 'hidden' }}>
-          <div style={{ padding: '14px 18px 0', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-              {/* Tabs */}
-              <div style={{ display: 'flex', gap: 0, overflowX: 'auto' }}>
-                {TABS.map(t => (
-                  <button
-                    key={t.key} onClick={() => setTab(t.key)}
-                    style={{
-                      padding: '8px 12px', fontSize: 12.5, fontWeight: tab === t.key ? 600 : 500,
-                      color: tab === t.key ? '#1D1D1F' : '#86868B', background: 'none', border: 'none',
-                      borderBottom: tab === t.key ? '2px solid #0071E3' : '2px solid transparent',
-                      cursor: 'pointer', transition: 'color 0.15s', whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {t.label}
-                  </button>
-                ))}
-              </div>
-              {/* Action buttons */}
-              <div style={{ display: 'flex', gap: 6, flexShrink: 0, marginLeft: 8 }}>
+        {/* ════ LEFT: Lead List ════ */}
+        <div style={{
+          background: '#fff', borderRadius: 14, border: '1px solid rgba(0,0,0,0.06)',
+          display: 'flex', flexDirection: 'column', overflow: 'hidden',
+        }}>
+          {/* List header */}
+          <div style={{ padding: '12px 14px 0', borderBottom: '1px solid rgba(0,0,0,0.06)', flexShrink: 0 }}>
+            {/* Tabs */}
+            <div style={{ display: 'flex', gap: 0, overflowX: 'auto', marginBottom: 10 }}>
+              {TABS.map(t => (
                 <button
-                  onClick={() => setShowExcelImport(true)}
-                  title="Excel-Datei importieren"
+                  key={t.key} onClick={() => setTab(t.key)}
                   style={{
-                    display: 'flex', alignItems: 'center', gap: 5, padding: '6px 11px', borderRadius: 8,
-                    fontSize: 12, fontWeight: 600, background: 'rgba(52,199,89,0.1)', color: '#34C759',
-                    border: 'none', cursor: 'pointer',
+                    padding: '6px 10px', fontSize: 12, fontWeight: tab === t.key ? 600 : 500,
+                    color: tab === t.key ? '#1D1D1F' : '#86868B', background: 'none', border: 'none',
+                    borderBottom: tab === t.key ? '2px solid #0071E3' : '2px solid transparent',
+                    cursor: 'pointer', transition: 'color 0.15s', whiteSpace: 'nowrap',
                   }}
                 >
-                  <FileSpreadsheet size={13} /> Excel
+                  {t.label}
                 </button>
-                <button
-                  onClick={() => setShowAddLead(true)}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 5, padding: '6px 11px', borderRadius: 8,
-                    fontSize: 12, fontWeight: 600, background: 'rgba(0,113,227,0.1)', color: '#0071E3',
-                    border: 'none', cursor: 'pointer',
-                  }}
-                >
-                  <Plus size={13} /> Lead
-                </button>
-              </div>
+              ))}
             </div>
-            <div style={{ position: 'relative', marginBottom: 12 }}>
-              <Search size={14} color="#AEAEB2" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)' }} />
+            {/* Search */}
+            <div style={{ position: 'relative', marginBottom: 10 }}>
+              <Search size={13} color="#AEAEB2" style={{ position: 'absolute', left: 9, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
               <input
-                value={search} onChange={e => setSearch(e.target.value)} placeholder="Suchen..."
-                style={{ width: '100%', padding: '8px 10px 8px 32px', borderRadius: 8, fontSize: 13, border: '1.5px solid #E5E5EA', outline: 'none', boxSizing: 'border-box' }}
+                value={search} onChange={e => setSearch(e.target.value)}
+                placeholder="Suchen..."
+                style={{
+                  width: '100%', padding: '7px 9px 7px 28px', borderRadius: 8,
+                  fontSize: 12.5, border: '1.5px solid #E5E5EA', outline: 'none',
+                  boxSizing: 'border-box', background: '#FAFAFA',
+                }}
               />
             </div>
           </div>
 
-          <div style={{ maxHeight: 520, overflowY: 'auto' }}>
-            {leadsLoading ? (
-              <div style={{ padding: '40px 0', textAlign: 'center', color: '#86868B', fontSize: 13 }}>Laden...</div>
-            ) : leads.length === 0 ? (
+          {/* Lead count */}
+          <div style={{ padding: '6px 14px', fontSize: 11, color: '#AEAEB2', flexShrink: 0, borderBottom: '1px solid rgba(0,0,0,0.03)' }}>
+            {leadsLoading ? 'Laden...' : `${leads.length} Lead${leads.length !== 1 ? 's' : ''}`}
+          </div>
+
+          {/* List */}
+          <div style={{ flex: 1, overflowY: 'auto' }}>
+            {!leadsLoading && leads.length === 0 ? (
               <div style={{ padding: '40px 0', textAlign: 'center' }}>
-                <div style={{ fontSize: 28, marginBottom: 8 }}>📭</div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: '#1D1D1F' }}>Keine Leads</div>
-                <div style={{ fontSize: 12.5, color: '#86868B', marginTop: 3 }}>
-                  {tab === 'due' ? 'Keine Follow-ups heute fällig' : 'Leads manuell anlegen oder per Excel importieren'}
+                <div style={{ fontSize: 26, marginBottom: 6 }}>📭</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#1D1D1F' }}>Keine Leads</div>
+                <div style={{ fontSize: 12, color: '#86868B', marginTop: 2 }}>
+                  {tab === 'due' ? 'Keine Follow-ups heute fällig' : 'Leads anlegen oder per Excel importieren'}
                 </div>
               </div>
             ) : (
               leads.map(lead => (
-                <div
+                <LeadRow
                   key={lead.id}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 12, padding: '12px 18px',
-                    borderBottom: '1px solid rgba(0,0,0,0.04)', cursor: 'pointer', transition: 'background 0.1s',
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.background = '#F9F9FB'}
-                  onMouseLeave={e => e.currentTarget.style.background = ''}
-                  onClick={() => navigate(`/sales/leads/${lead.id}`)}
-                >
-                  <div style={{ width: 8, height: 8, borderRadius: 99, flexShrink: 0, background: PRIORITY_DOTS[lead.priority] || '#C7C7CC' }} />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: '#1D1D1F', letterSpacing: '-0.2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {lead.company_name}
-                    </div>
-                    <div style={{ fontSize: 12, color: '#86868B', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {[lead.contact_person, lead.city, lead.phone].filter(Boolean).join(' · ')}
-                    </div>
-                  </div>
-                  <LeadStatusBadge status={lead.status} />
-                  {lead.website_status && (
-                    <span style={{ fontSize: 10.5, color: '#86868B', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 3 }}>
-                      <Building2 size={10} />{lead.website_status.replace('Alte Website + nicht Resp.', 'Nicht Resp.')}
-                    </span>
-                  )}
-                  <span style={{ fontSize: 11.5, color: '#AEAEB2', whiteSpace: 'nowrap', minWidth: 50, textAlign: 'right' }}>{relTime(lead.last_call_at)}</span>
-                  <span style={{ fontSize: 11, color: '#AEAEB2', minWidth: 24, textAlign: 'right' }}>{lead.total_calls || 0}x</span>
-                  <button
-                    onClick={e => { e.stopPropagation(); handleCall(lead); }}
-                    disabled={!lead.phone}
-                    style={{
-                      width: 34, height: 34, borderRadius: 10, border: 'none',
-                      background: lead.phone ? 'rgba(52,199,89,0.12)' : 'rgba(0,0,0,0.04)',
-                      color: lead.phone ? '#34C759' : '#C7C7CC',
-                      cursor: lead.phone ? 'pointer' : 'not-allowed',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                    }}
-                    onMouseEnter={e => { if (lead.phone) e.currentTarget.style.background = 'rgba(52,199,89,0.22)'; }}
-                    onMouseLeave={e => { if (lead.phone) e.currentTarget.style.background = 'rgba(52,199,89,0.12)'; }}
-                  >
-                    <Phone size={15} />
-                  </button>
-                </div>
+                  lead={lead}
+                  isSelected={lead.id === selectedLeadId}
+                  onClick={() => setSelectedLeadId(lead.id === selectedLeadId ? null : lead.id)}
+                  onCall={handleCall}
+                />
               ))
             )}
           </div>
         </div>
 
-        {/* RIGHT — Charts + Recent */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <div style={{ background: '#fff', borderRadius: 14, padding: '18px 18px 8px', border: '1px solid rgba(0,0,0,0.06)' }}>
-            <div style={{ fontSize: 14, fontWeight: 600, color: '#1D1D1F', marginBottom: 14, letterSpacing: '-0.2px' }}>Anrufe / Tag</div>
-            <ResponsiveContainer width="100%" height={180}>
-              <BarChart data={chartDays} barSize={14}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.06)" />
-                <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#AEAEB2' }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 10, fill: '#AEAEB2' }} axisLine={false} tickLine={false} width={24} allowDecimals={false} />
-                <Tooltip contentStyle={{ borderRadius: 10, border: '1px solid rgba(0,0,0,0.08)', fontSize: 12, boxShadow: '0 4px 16px rgba(0,0,0,0.1)' }} labelStyle={{ fontWeight: 600, color: '#1D1D1F' }} />
-                <Bar dataKey="reached"     name="Erreicht"         stackId="a" fill="#34C759" radius={[0, 0, 0, 0]} />
-                <Bar dataKey="not_reached" name="Nicht erreicht"   stackId="a" fill="#E5E5EA" radius={[4, 4, 0, 0]} />
+        {/* ════ MIDDLE: Lead Detail ════ */}
+        {!selectedLead ? <EmptyDetail /> : (
+          <div style={{
+            background: '#fff', borderRadius: 14, border: '1px solid rgba(0,0,0,0.06)',
+            display: 'flex', flexDirection: 'column', overflow: 'hidden',
+          }}>
+            {/* Detail header */}
+            <div style={{
+              padding: '16px 20px 14px', borderBottom: '1px solid rgba(0,0,0,0.06)', flexShrink: 0,
+            }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 10 }}>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-0.4px', marginBottom: 4 }}>
+                    {selectedLead.company_name}
+                  </div>
+                  {/* Contact chips */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                    {selectedLead.contact_person && (
+                      <span style={{ fontSize: 12, color: '#636366', display: 'flex', alignItems: 'center', gap: 4 }}>
+                        {selectedLead.contact_person}
+                      </span>
+                    )}
+                    {selectedLead.city && (
+                      <span style={{ fontSize: 12, color: '#86868B', display: 'flex', alignItems: 'center', gap: 3 }}>
+                        <MapPin size={11} />{selectedLead.city}
+                      </span>
+                    )}
+                    {selectedLead.phone && (
+                      <a href={`tel:${selectedLead.phone}`} style={{ fontSize: 12, color: '#0071E3', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 3 }}>
+                        <Phone size={11} />{selectedLead.phone}
+                      </a>
+                    )}
+                    {selectedLead.email && (
+                      <a href={`mailto:${selectedLead.email}`} style={{ fontSize: 12, color: '#0071E3', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 3 }}>
+                        <Mail size={11} />{selectedLead.email}
+                      </a>
+                    )}
+                    {selectedLead.domain && (
+                      <a href={`https://${selectedLead.domain}`} target="_blank" rel="noopener noreferrer"
+                        style={{ fontSize: 12, color: '#0071E3', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 3 }}>
+                        <Globe size={11} />{selectedLead.domain} <ExternalLink size={10} />
+                      </a>
+                    )}
+                  </div>
+                </div>
+                {/* Actions */}
+                <div style={{ display: 'flex', gap: 6, flexShrink: 0, alignItems: 'center' }}>
+                  {/* Convert button */}
+                  {!isConverted && (
+                    <button
+                      onClick={() => {
+                        if (window.confirm(`"${selectedLead.company_name}" als Kunden anlegen?`)) {
+                          convertMut.mutate(selectedLeadId);
+                        }
+                      }}
+                      disabled={convertMut.isPending}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 4, padding: '6px 10px', borderRadius: 8,
+                        fontSize: 11.5, fontWeight: 600, background: 'rgba(52,199,89,0.1)', color: '#1A8F40',
+                        border: '1px solid rgba(52,199,89,0.25)', cursor: 'pointer',
+                      }}
+                    >
+                      <UserCheck size={12} /> Zu Kunde
+                    </button>
+                  )}
+                  {isConverted && (
+                    <span style={{
+                      padding: '5px 10px', borderRadius: 8, fontSize: 11.5, fontWeight: 600,
+                      background: 'rgba(52,199,89,0.1)', color: '#1A8F40',
+                      display: 'flex', alignItems: 'center', gap: 4,
+                    }}>
+                      <UserCheck size={12} /> Kunde
+                    </span>
+                  )}
+
+                  {/* Full detail page link */}
+                  <button
+                    onClick={() => navigate(`/sales/leads/${selectedLeadId}`)}
+                    title="Vollansicht öffnen"
+                    style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      width: 30, height: 30, borderRadius: 8, border: '1px solid rgba(0,0,0,0.1)',
+                      background: 'transparent', color: '#86868B', cursor: 'pointer',
+                    }}
+                  >
+                    <ArrowRight size={14} />
+                  </button>
+
+                  {/* Call button */}
+                  <button
+                    onClick={() => handleCall(selectedLead)}
+                    disabled={!selectedLead.phone}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 9,
+                      fontSize: 13, fontWeight: 600,
+                      background: selectedLead.phone ? '#34C759' : '#E5E5EA',
+                      color: selectedLead.phone ? '#fff' : '#AEAEB2',
+                      border: 'none', cursor: selectedLead.phone ? 'pointer' : 'not-allowed',
+                    }}
+                  >
+                    <Phone size={13} /> Anrufen
+                  </button>
+                </div>
+              </div>
+
+              {/* Status / Priority / Website status row */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                {/* Status dropdown */}
+                <div style={{ position: 'relative' }}>
+                  <button
+                    onClick={() => setShowStatusMenu(v => !v)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 99,
+                      fontSize: 11.5, fontWeight: 600, cursor: 'pointer', border: 'none',
+                      background: (LEAD_STATUSES[selectedLead.status] || LEAD_STATUSES.neu).bg,
+                      color: (LEAD_STATUSES[selectedLead.status] || LEAD_STATUSES.neu).color,
+                    }}
+                  >
+                    {(LEAD_STATUSES[selectedLead.status] || LEAD_STATUSES.neu).label}
+                    <ChevronDown size={11} />
+                  </button>
+                  {showStatusMenu && (
+                    <div style={{
+                      position: 'absolute', left: 0, top: '100%', marginTop: 4, background: '#fff',
+                      borderRadius: 12, padding: 5, minWidth: 160, zIndex: 50,
+                      boxShadow: '0 8px 32px rgba(0,0,0,0.14)', border: '1px solid rgba(0,0,0,0.08)',
+                    }}>
+                      {Object.entries(LEAD_STATUSES)
+                        .filter(([k]) => k !== 'abgeschlossen')
+                        .map(([k, v]) => (
+                          <button key={k} onClick={() => handleStatusChange(k)} style={{
+                            display: 'block', width: '100%', padding: '7px 10px', fontSize: 12.5, fontWeight: 500,
+                            color: selectedLead.status === k ? v.color : '#1D1D1F',
+                            background: selectedLead.status === k ? v.bg : 'none',
+                            border: 'none', borderRadius: 7, cursor: 'pointer', textAlign: 'left',
+                          }}>
+                            {v.label}
+                          </button>
+                        ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Priority */}
+                <select
+                  value={selectedLead.priority ?? 0}
+                  onChange={e => updateLeadMut.mutate({ id: selectedLeadId, data: { priority: Number(e.target.value) } })}
+                  style={{
+                    padding: '4px 8px', borderRadius: 8, fontSize: 11.5, fontWeight: 600,
+                    border: '1.5px solid #E5E5EA', outline: 'none', cursor: 'pointer',
+                    color: PRIORITY_CFG[selectedLead.priority ?? 0].color,
+                    background: '#fff',
+                  }}
+                >
+                  <option value={0}>Normal</option>
+                  <option value={1}>Hoch</option>
+                  <option value={2}>Dringend</option>
+                </select>
+
+                {/* Website status */}
+                {selWS && (
+                  <span style={{
+                    padding: '4px 10px', borderRadius: 8, fontSize: 11.5, fontWeight: 600,
+                    background: selWS.bg, color: selWS.color,
+                  }}>
+                    {selectedLead.website_status}
+                  </span>
+                )}
+
+                {/* Industry */}
+                {selectedLead.industry && (
+                  <span style={{ fontSize: 11.5, color: '#86868B', display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <Building2 size={11} /> {selectedLead.industry}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Detail body — 2 columns */}
+            <div style={{ flex: 1, minHeight: 0, display: 'grid', gridTemplateColumns: '1fr 280px', overflow: 'hidden' }}>
+
+              {/* LEFT: Notes + Follow-up + Deal */}
+              <div style={{ overflowY: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 14, borderRight: '1px solid rgba(0,0,0,0.06)' }}>
+
+                {/* Follow-up */}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: '#86868B', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      Follow-up
+                    </span>
+                    <button
+                      onClick={() => setFollowupFor({ leadId: selectedLeadId })}
+                      style={{
+                        padding: '3px 9px', borderRadius: 7, fontSize: 11.5, fontWeight: 600,
+                        background: 'rgba(0,113,227,0.1)', color: '#0071E3', border: 'none', cursor: 'pointer',
+                      }}
+                    >
+                      {selectedLead.next_followup_date ? 'Ändern' : 'Planen'}
+                    </button>
+                  </div>
+                  {selectedLead.next_followup_date ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <CalendarDays size={15} color={fwInfo?.color || '#86868B'} />
+                      <div>
+                        <span style={{ fontSize: 13.5, fontWeight: 600, color: fwInfo?.color || '#1D1D1F' }}>
+                          {fmtDate(selectedLead.next_followup_date, { day: '2-digit', month: 'long', year: 'numeric' })}
+                        </span>
+                        {fwInfo && (
+                          <span style={{
+                            marginLeft: 8, fontSize: 11, fontWeight: 600, padding: '1px 6px', borderRadius: 99,
+                            background: fwInfo.color + '18', color: fwInfo.color,
+                          }}>{fwInfo.label}</span>
+                        )}
+                        {selectedLead.next_followup_note && (
+                          <div style={{ fontSize: 12, color: '#86868B', marginTop: 3 }}>{selectedLead.next_followup_note}</div>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ fontSize: 12.5, color: '#AEAEB2' }}>Kein Follow-up geplant</div>
+                  )}
+                </div>
+
+                {/* Notes */}
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: '#86868B', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>
+                    Notizen
+                  </div>
+                  <textarea
+                    value={notes}
+                    onChange={e => setNotes(e.target.value)}
+                    onBlur={handleNotesBlur}
+                    placeholder="Notizen zum Lead..."
+                    style={{
+                      width: '100%', minHeight: 140, padding: '10px 12px', borderRadius: 10,
+                      fontSize: 13, border: '1.5px solid #E5E5EA', outline: 'none',
+                      resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box',
+                      lineHeight: 1.5, color: '#1D1D1F',
+                    }}
+                    onFocus={e => { e.target.style.borderColor = '#0071E3'; }}
+                    onBlurCapture={e => { e.target.style.borderColor = '#E5E5EA'; }}
+                  />
+                </div>
+
+                {/* Details grid */}
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: '#86868B', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>
+                    Details
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                    {/* Deal value */}
+                    <div>
+                      <label style={{ fontSize: 11, fontWeight: 600, color: '#AEAEB2', display: 'block', marginBottom: 4 }}>Deal-Wert</label>
+                      <div style={{ position: 'relative' }}>
+                        <Euro size={12} color="#86868B" style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+                        <input
+                          type="number" min={0} step={100}
+                          defaultValue={selectedLead.deal_value || ''}
+                          key={`dv-${selectedLeadId}`}
+                          onBlur={e => {
+                            const v = parseFloat(e.target.value) || null;
+                            if (v !== selectedLead.deal_value) updateLeadMut.mutate({ id: selectedLeadId, data: { deal_value: v } });
+                          }}
+                          placeholder="0"
+                          style={{ width: '100%', padding: '7px 8px 7px 24px', borderRadius: 8, fontSize: 12.5, border: '1.5px solid #E5E5EA', outline: 'none', boxSizing: 'border-box' }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Phone (editable for non-converted) */}
+                    {!isConverted && (
+                      <div>
+                        <label style={{ fontSize: 11, fontWeight: 600, color: '#AEAEB2', display: 'block', marginBottom: 4 }}>Telefon</label>
+                        <input
+                          key={`ph-${selectedLeadId}`}
+                          defaultValue={selectedLead.phone || ''}
+                          onBlur={e => { if (e.target.value !== (selectedLead.phone || '')) updateLeadMut.mutate({ id: selectedLeadId, data: { phone: e.target.value } }); }}
+                          placeholder="0711 123456"
+                          style={{ width: '100%', padding: '7px 8px', borderRadius: 8, fontSize: 12.5, border: '1.5px solid #E5E5EA', outline: 'none', boxSizing: 'border-box' }}
+                        />
+                      </div>
+                    )}
+
+                    {!isConverted && (
+                      <div>
+                        <label style={{ fontSize: 11, fontWeight: 600, color: '#AEAEB2', display: 'block', marginBottom: 4 }}>E-Mail</label>
+                        <input
+                          key={`em-${selectedLeadId}`}
+                          defaultValue={selectedLead.email || ''}
+                          onBlur={e => { if (e.target.value !== (selectedLead.email || '')) updateLeadMut.mutate({ id: selectedLeadId, data: { email: e.target.value } }); }}
+                          placeholder="info@firma.de"
+                          style={{ width: '100%', padding: '7px 8px', borderRadius: 8, fontSize: 12.5, border: '1.5px solid #E5E5EA', outline: 'none', boxSizing: 'border-box' }}
+                        />
+                      </div>
+                    )}
+
+                    {!isConverted && (
+                      <div>
+                        <label style={{ fontSize: 11, fontWeight: 600, color: '#AEAEB2', display: 'block', marginBottom: 4 }}>Domain</label>
+                        <input
+                          key={`dm-${selectedLeadId}`}
+                          defaultValue={selectedLead.domain || ''}
+                          onBlur={e => { if (e.target.value !== (selectedLead.domain || '')) updateLeadMut.mutate({ id: selectedLeadId, data: { domain: e.target.value } }); }}
+                          placeholder="firma.de"
+                          style={{ width: '100%', padding: '7px 8px', borderRadius: 8, fontSize: 12.5, border: '1.5px solid #E5E5EA', outline: 'none', boxSizing: 'border-box' }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* RIGHT: Call history */}
+              <div style={{ overflowY: 'auto', padding: '16px 16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: '#86868B', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Anrufe</span>
+                  <span style={{
+                    fontSize: 11, fontWeight: 600, color: '#86868B',
+                    background: '#F2F2F7', padding: '2px 7px', borderRadius: 99,
+                  }}>{leadCalls.length}</span>
+                </div>
+
+                {leadCalls.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '28px 0', color: '#AEAEB2' }}>
+                    <Phone size={22} strokeWidth={1.5} style={{ marginBottom: 8 }} />
+                    <div style={{ fontSize: 12.5 }}>Noch keine Anrufe</div>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                    {leadCalls.map(c => {
+                      const o = OUTCOME_CFG[c.outcome] || OUTCOME_CFG.reached;
+                      return (
+                        <div key={c.id} style={{ padding: '10px 0', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 3 }}>
+                            <span style={{ fontSize: 11.5, fontWeight: 600, color: '#1D1D1F' }}>
+                              {fmtDateTime(c.started_at)}
+                            </span>
+                            <span style={{
+                              padding: '2px 6px', borderRadius: 99, fontSize: 10, fontWeight: 600,
+                              background: o.bg, color: o.color,
+                            }}>{o.label}</span>
+                          </div>
+                          {c.duration_sec && (
+                            <div style={{ fontSize: 11, color: '#AEAEB2' }}>{fmtDuration(c.duration_sec)}</div>
+                          )}
+                          {c.notes && (
+                            <div style={{ fontSize: 11.5, color: '#636366', marginTop: 4, lineHeight: 1.4 }}>{c.notes}</div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ════ RIGHT: Stats ════ */}
+        <div style={{
+          display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto',
+        }}>
+          {/* Chart */}
+          <div style={{
+            background: '#fff', borderRadius: 14, padding: '14px 16px 8px',
+            border: '1px solid rgba(0,0,0,0.06)', flexShrink: 0,
+          }}>
+            <div style={{ fontSize: 12.5, fontWeight: 700, color: '#1D1D1F', marginBottom: 12, letterSpacing: '-0.1px' }}>
+              Anrufe / Tag
+            </div>
+            <ResponsiveContainer width="100%" height={140}>
+              <BarChart data={chartDays} barSize={12}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
+                <XAxis dataKey="label" tick={{ fontSize: 9, fill: '#AEAEB2' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 9, fill: '#AEAEB2' }} axisLine={false} tickLine={false} width={20} allowDecimals={false} />
+                <Tooltip
+                  contentStyle={{ borderRadius: 10, border: '1px solid rgba(0,0,0,0.08)', fontSize: 11.5, boxShadow: '0 4px 16px rgba(0,0,0,0.1)' }}
+                  labelStyle={{ fontWeight: 600, color: '#1D1D1F' }}
+                />
+                <Bar dataKey="reached"     name="Erreicht"       stackId="a" fill="#34C759" radius={[0,0,0,0]} />
+                <Bar dataKey="not_reached" name="Nicht erreicht" stackId="a" fill="#E5E5EA" radius={[3,3,0,0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
 
-          <div style={{ background: '#fff', borderRadius: 14, padding: 18, border: '1px solid rgba(0,0,0,0.06)' }}>
-            <div style={{ fontSize: 14, fontWeight: 600, color: '#1D1D1F', marginBottom: 12, letterSpacing: '-0.2px' }}>Letzte Anrufe</div>
+          {/* Recent calls */}
+          <div style={{
+            background: '#fff', borderRadius: 14, padding: 16,
+            border: '1px solid rgba(0,0,0,0.06)', flex: 1,
+          }}>
+            <div style={{ fontSize: 12.5, fontWeight: 700, color: '#1D1D1F', marginBottom: 12, letterSpacing: '-0.1px' }}>
+              Letzte Anrufe
+            </div>
             {recentCalls.length === 0 ? (
-              <div style={{ fontSize: 13, color: '#AEAEB2', textAlign: 'center', padding: '16px 0' }}>Noch keine Anrufe</div>
+              <div style={{ fontSize: 12.5, color: '#AEAEB2', textAlign: 'center', padding: '20px 0' }}>
+                Noch keine Anrufe heute
+              </div>
             ) : (
-              recentCalls.map(c => {
-                const o = OUTCOME_CFG[c.outcome] || OUTCOME_CFG.reached;
-                return (
-                  <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: '#1D1D1F', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.company_name}</div>
-                      <div style={{ fontSize: 11, color: '#AEAEB2' }}>{relTime(c.started_at)}</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                {recentCalls.map(c => {
+                  const o = OUTCOME_CFG[c.outcome] || OUTCOME_CFG.reached;
+                  return (
+                    <div
+                      key={c.id}
+                      onClick={() => c.lead_id && setSelectedLeadId(c.lead_id)}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0',
+                        borderBottom: '1px solid rgba(0,0,0,0.04)',
+                        cursor: c.lead_id ? 'pointer' : 'default',
+                      }}
+                    >
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{
+                          fontSize: 12.5, fontWeight: 600, color: '#1D1D1F',
+                          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                        }}>{c.company_name}</div>
+                        <div style={{ fontSize: 10.5, color: '#AEAEB2' }}>{relTime(c.started_at)}</div>
+                      </div>
+                      <span style={{
+                        padding: '2px 6px', borderRadius: 99, fontSize: 10, fontWeight: 600,
+                        background: o.bg, color: o.color, flexShrink: 0,
+                      }}>{o.label}</span>
                     </div>
-                    <span style={{ padding: '2px 7px', borderRadius: 99, fontSize: 10.5, fontWeight: 600, background: o.bg, color: o.color }}>{o.label}</span>
-                  </div>
-                );
-              })
+                  );
+                })}
+              </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* Overlays */}
-      {activeCall && <CallInProgressSheet callId={activeCall.callId} clientName={activeCall.clientName} phone={activeCall.phone} onEnd={handleCallEnd} onClose={() => setActiveCall(null)} />}
-      {followupFor && <FollowupScheduler leadId={followupFor.leadId} onSave={handleFollowupSave} onClose={() => setFollowupFor(null)} />}
-      {showAddLead && <CreateLeadModal onClose={() => setShowAddLead(false)} onCreate={data => createLeadMut.mutate(data)} isCreating={createLeadMut.isPending} />}
-      {showExcelImport && <ExcelImportModal onClose={() => setShowExcelImport(false)} onImport={handleImport} isImporting={importLeadsMut.isPending} />}
-      {showTargets && stats?.targets && <SalesTargetModal targets={stats.targets} onSave={data => updateTargetsMut.mutate(data)} onClose={() => setShowTargets(false)} isPending={updateTargetsMut.isPending} />}
+      {/* ── Overlays ── */}
+      {activeCall && (
+        <CallInProgressSheet
+          callId={activeCall.callId}
+          clientName={activeCall.clientName}
+          phone={activeCall.phone}
+          onEnd={handleCallEnd}
+          onClose={() => setActiveCall(null)}
+        />
+      )}
+      {followupFor && (
+        <FollowupScheduler
+          leadId={followupFor.leadId}
+          currentDate={selectedLead?.next_followup_date}
+          onSave={handleFollowupSave}
+          onClose={() => setFollowupFor(null)}
+        />
+      )}
+      {showAddLead && (
+        <CreateLeadModal
+          onClose={() => setShowAddLead(false)}
+          onCreate={data => createLeadMut.mutate(data)}
+          isCreating={createLeadMut.isPending}
+        />
+      )}
+      {showExcelImport && (
+        <ExcelImportModal
+          onClose={() => setShowExcelImport(false)}
+          onImport={handleImport}
+          isImporting={importLeadsMut.isPending}
+        />
+      )}
+      {showTargets && stats?.targets && (
+        <SalesTargetModal
+          targets={stats.targets}
+          onSave={data => updateTargetsMut.mutate(data)}
+          onClose={() => setShowTargets(false)}
+          isPending={updateTargetsMut.isPending}
+        />
+      )}
     </div>
   );
 }
