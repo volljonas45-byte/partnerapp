@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useMobile } from '../hooks/useMobile';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Trash2, ArrowLeft, Save, Pencil } from 'lucide-react';
@@ -21,6 +22,7 @@ const INVOICE_TYPES = [
 export default function NewInvoice() {
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const isMobile = useMobile();
   const [searchParams] = useSearchParams();
 
   // 'form' | 'preview'
@@ -327,79 +329,84 @@ export default function NewInvoice() {
         <div className="card space-y-4">
           <h2 className="text-sm font-semibold text-gray-700">Positionen</h2>
 
-          <div className="grid grid-cols-12 gap-2 text-xs font-medium text-gray-400 uppercase tracking-wide pb-1 border-b border-gray-100">
-            <div className="col-span-4">Leistung</div>
-            <div className="col-span-2">Menge</div>
-            <div className="col-span-2">Einzelpreis</div>
-            <div className="col-span-2">MwSt. %</div>
-            <div className="col-span-2" />
-          </div>
+          {/* ── Positionen Desktop ── */}
+          {!isMobile && (
+            <>
+              <div className="grid grid-cols-12 gap-2 text-xs font-medium text-gray-400 uppercase tracking-wide pb-1 border-b border-gray-100">
+                <div className="col-span-4">Leistung</div>
+                <div className="col-span-2">Menge</div>
+                <div className="col-span-2">Einzelpreis</div>
+                <div className="col-span-2">MwSt. %</div>
+                <div className="col-span-2" />
+              </div>
+              {items.map((item, idx) => (
+                <div key={idx} className="grid grid-cols-12 gap-2 items-start">
+                  <div className="col-span-4 space-y-1">
+                    <input className="input" placeholder="Leistungsbezeichnung *" value={item.title} onChange={e => updateItem(idx, 'title', e.target.value)} required />
+                    <input className="input text-xs text-gray-500" placeholder="Beschreibung (optional)" value={item.description} onChange={e => updateItem(idx, 'description', e.target.value)} />
+                  </div>
+                  <div className="col-span-2 pt-0.5">
+                    <input type="text" inputMode="numeric" className="input" placeholder="1" value={item.quantity === 0 ? '' : item.quantity} onChange={e => updateItem(idx, 'quantity', e.target.value)} />
+                  </div>
+                  <div className="col-span-2 pt-0.5">
+                    <div style={{ position: 'relative' }}>
+                      <input type="text" inputMode="decimal" className="input" placeholder="0,00" style={{ paddingRight: '24px' }} value={item.unit_price === 0 ? '' : item.unit_price} onChange={e => updateItem(idx, 'unit_price', e.target.value)} />
+                      <span style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', fontSize: '12px', color: '#8E8E93', pointerEvents: 'none' }}>€</span>
+                    </div>
+                  </div>
+                  <div className="col-span-2 pt-0.5">
+                    <select className="input" value={item.tax_rate} onChange={e => updateItem(idx, 'tax_rate', e.target.value)} disabled={reverseCharge}>
+                      {VAT_RATES.map(r => <option key={r} value={r}>{r} %</option>)}
+                    </select>
+                  </div>
+                  <div className="col-span-2 flex items-start gap-1 pt-1">
+                    <select className="input" value={item.billing_cycle || 'once'} onChange={e => updateItem(idx, 'billing_cycle', e.target.value)}>
+                      <option value="once">Einmalig</option>
+                      <option value="yearly">Jährlich</option>
+                      <option value="monthly">Monatlich</option>
+                    </select>
+                    {items.length > 1 && <button type="button" onClick={() => removeItem(idx)} className="p-1.5 text-gray-300 hover:text-red-500 transition-colors"><Trash2 size={14} /></button>}
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
 
-          {items.map((item, idx) => (
-            <div key={idx} className="grid grid-cols-12 gap-2 items-start">
-              <div className="col-span-4 space-y-1">
-                <input
-                  className="input"
-                  placeholder="Leistungsbezeichnung *"
-                  value={item.title}
-                  onChange={e => updateItem(idx, 'title', e.target.value)}
-                  required
-                />
-                <input
-                  className="input text-xs text-gray-500"
-                  placeholder="Beschreibung (optional)"
-                  value={item.description}
-                  onChange={e => updateItem(idx, 'description', e.target.value)}
-                />
+          {/* ── Positionen Mobile — gestackte Cards ── */}
+          {isMobile && items.map((item, idx) => (
+            <div key={idx} style={{ border: '1px solid rgba(0,0,0,0.08)', borderRadius: 12, padding: '12px', background: '#FAFAFA', display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: 11, fontWeight: 600, color: '#86868B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Position {idx + 1}</span>
+                {items.length > 1 && <button type="button" onClick={() => removeItem(idx)} style={{ padding: 4, color: '#FF3B30', background: 'none', border: 'none', cursor: 'pointer' }}><Trash2 size={15} /></button>}
               </div>
-              <div className="col-span-2 pt-0.5">
-                <input
-                  type="text" inputMode="numeric" className="input" placeholder="1"
-                  value={item.quantity === 0 ? '' : item.quantity}
-                  onChange={e => updateItem(idx, 'quantity', e.target.value)}
-                />
-              </div>
-              <div className="col-span-2 pt-0.5">
-                <div style={{ position: 'relative' }}>
-                  <input
-                    type="text" inputMode="decimal" className="input" placeholder="0,00"
-                    style={{ paddingRight: '24px' }}
-                    value={item.unit_price === 0 ? '' : item.unit_price}
-                    onChange={e => updateItem(idx, 'unit_price', e.target.value)}
-                  />
-                  <span style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', fontSize: '12px', color: '#8E8E93', pointerEvents: 'none' }}>€</span>
+              <input className="input" placeholder="Leistungsbezeichnung *" value={item.title} onChange={e => updateItem(idx, 'title', e.target.value)} required />
+              <input className="input text-xs" placeholder="Beschreibung (optional)" value={item.description} onChange={e => updateItem(idx, 'description', e.target.value)} />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                <div>
+                  <label style={{ fontSize: 11, color: '#86868B', fontWeight: 500, display: 'block', marginBottom: 3 }}>Menge</label>
+                  <input type="text" inputMode="numeric" className="input" placeholder="1" value={item.quantity === 0 ? '' : item.quantity} onChange={e => updateItem(idx, 'quantity', e.target.value)} />
+                </div>
+                <div>
+                  <label style={{ fontSize: 11, color: '#86868B', fontWeight: 500, display: 'block', marginBottom: 3 }}>Einzelpreis (€)</label>
+                  <input type="text" inputMode="decimal" className="input" placeholder="0,00" value={item.unit_price === 0 ? '' : item.unit_price} onChange={e => updateItem(idx, 'unit_price', e.target.value)} />
+                </div>
+                <div>
+                  <label style={{ fontSize: 11, color: '#86868B', fontWeight: 500, display: 'block', marginBottom: 3 }}>MwSt.</label>
+                  <select className="input" value={item.tax_rate} onChange={e => updateItem(idx, 'tax_rate', e.target.value)} disabled={reverseCharge}>
+                    {VAT_RATES.map(r => <option key={r} value={r}>{r} %</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label style={{ fontSize: 11, color: '#86868B', fontWeight: 500, display: 'block', marginBottom: 3 }}>Abrechnung</label>
+                  <select className="input" value={item.billing_cycle || 'once'} onChange={e => updateItem(idx, 'billing_cycle', e.target.value)}>
+                    <option value="once">Einmalig</option>
+                    <option value="yearly">Jährlich</option>
+                    <option value="monthly">Monatlich</option>
+                  </select>
                 </div>
               </div>
-              <div className="col-span-2 pt-0.5">
-                <select
-                  className="input"
-                  value={item.tax_rate}
-                  onChange={e => updateItem(idx, 'tax_rate', e.target.value)}
-                  disabled={reverseCharge}
-                >
-                  {VAT_RATES.map(r => (
-                    <option key={r} value={r}>{r} %</option>
-                  ))}
-                </select>
-              </div>
-              <div className="col-span-2 flex items-start gap-1 pt-1">
-                <select
-                  className="input"
-                  value={item.billing_cycle || 'once'}
-                  onChange={e => updateItem(idx, 'billing_cycle', e.target.value)}
-                >
-                  <option value="once">Einmalig</option>
-                  <option value="yearly">Jährlich</option>
-                  <option value="monthly">Monatlich</option>
-                </select>
-                {items.length > 1 && (
-                  <button
-                    type="button" onClick={() => removeItem(idx)}
-                    className="p-1.5 text-gray-300 hover:text-red-500 transition-colors"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                )}
+              <div style={{ textAlign: 'right', fontSize: 13, fontWeight: 600, color: '#1D1D1F' }}>
+                {((item.quantity || 0) * (item.unit_price || 0)).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
               </div>
             </div>
           ))}
@@ -454,7 +461,7 @@ export default function NewInvoice() {
         </div>
 
         {/* ── Summen + Hinweise ── */}
-        <div className="grid grid-cols-2 gap-6">
+        <div className={isMobile ? "flex flex-col gap-4" : "grid grid-cols-2 gap-6"}>
           <div className="card">
             <label className="label">Hinweise</label>
             <textarea

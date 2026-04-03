@@ -11,15 +11,11 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
-    overflow-x: hidden;
-    max-width: 100%;
   }
 
   body {
     background-color: #F5F5F7;
     color: #1D1D1F;
-    overflow-x: hidden;
-    max-width: 100%;
     font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text',
       'Helvetica Neue', Arial, sans-serif;
     font-size: 15px;
