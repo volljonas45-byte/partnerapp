@@ -1,17 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <!-- Dark background -->
-  <rect width="512" height="512" rx="112" fill="#1a2332"/>
+  <!-- Black background -->
+  <rect width="512" height="512" rx="112" fill="#000000"/>
 
-  <!-- Three red crescent arcs (JR Agency logo) -->
+  <!-- Three red crescent arcs (JR Agency logo) — größer + zentriert -->
   <!-- Top crescent -->
-  <path d="M 170 155 A 115 115 0 0 1 342 155 A 80 80 0 0 0 170 155 Z"
-        fill="none" stroke="#E8401C" stroke-width="14" stroke-linecap="round"/>
+  <path d="M 120 170 A 150 150 0 0 1 392 170 A 105 105 0 0 0 120 170 Z"
+        fill="none" stroke="#E8401C" stroke-width="18" stroke-linecap="round"/>
 
   <!-- Middle crescent -->
-  <path d="M 140 230 A 140 100 0 0 1 372 230 A 105 70 0 0 0 140 230 Z"
-        fill="none" stroke="#E8401C" stroke-width="14" stroke-linecap="round"/>
+  <path d="M 90 270 A 175 125 0 0 1 422 270 A 130 90 0 0 0 90 270 Z"
+        fill="none" stroke="#E8401C" stroke-width="18" stroke-linecap="round"/>
 
   <!-- Bottom crescent (largest) -->
-  <path d="M 118 315 A 160 110 0 0 1 394 315 A 125 80 0 0 0 118 315 Z"
-        fill="none" stroke="#E8401C" stroke-width="14" stroke-linecap="round"/>
+  <path d="M 68 370 A 195 135 0 0 1 444 370 A 150 100 0 0 0 68 370 Z"
+        fill="none" stroke="#E8401C" stroke-width="18" stroke-linecap="round"/>
 </svg>
