@@ -91,7 +91,7 @@ export default function FollowupScheduler({ leadId, currentDate, onSave, onClose
               type="date"
               value={date}
               onChange={e => setDate(e.target.value)}
-              style={{ width: '100%', padding: '10px 12px', border: 'none', outline: 'none', fontSize: 14, boxSizing: 'border-box', display: 'block', background: '#fff' }}
+              style={{ width: '100%', padding: '10px 12px', border: 'none', outline: 'none', fontSize: 14, boxSizing: 'border-box', display: 'block', background: '#fff', textAlign: 'center' }}
             />
           </div>
         </div>
