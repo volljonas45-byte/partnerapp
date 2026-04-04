@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Upload, X, Save, Plus, Trash2, Pencil, Check, Building2, FileText, Layers, Mail, Users, UserCircle, KeyRound } from 'lucide-react';
+import { Upload, X, Save, Plus, Trash2, Pencil, Check, Building2, FileText, Layers, Mail, Users, UserCircle, KeyRound, Sun, Moon, SunMoon } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 import toast from 'react-hot-toast';
 import { settingsApi } from '../api/settings';
 import { serviceTemplatesApi } from '../api/serviceTemplates';
@@ -38,12 +39,13 @@ const AVATAR_COLORS = [
 ];
 
 const TABS = [
-  { id: 'personal',  label: 'Persönlich',            icon: UserCircle },
-  { id: 'company',   label: 'Unternehmen',            icon: Building2  },
-  { id: 'documents', label: 'Rechnungen & Angebote',  icon: FileText   },
-  { id: 'email',     label: 'E-Mail',                 icon: Mail       },
-  { id: 'templates', label: 'Leistungsvorlagen',      icon: Layers     },
-  { id: 'team',      label: 'Team',                   icon: Users      },
+  { id: 'personal',    label: 'Persönlich',            icon: UserCircle },
+  { id: 'company',     label: 'Unternehmen',            icon: Building2  },
+  { id: 'documents',   label: 'Rechnungen & Angebote',  icon: FileText   },
+  { id: 'email',       label: 'E-Mail',                 icon: Mail       },
+  { id: 'templates',   label: 'Leistungsvorlagen',      icon: Layers     },
+  { id: 'team',        label: 'Team',                   icon: Users      },
+  { id: 'darstellung', label: 'Darstellung',            icon: SunMoon    },
 ];
 
 // ── ServiceTemplates ───────────────────────────────────────────────────────────
@@ -452,6 +454,7 @@ export default function Settings() {
   const qc      = useQueryClient();
   const fileRef = useRef();
   const [activeTab, setActiveTab] = useState('personal');
+  const { theme, setTheme, c, isDark } = useTheme();
 
   const { data: settings, isLoading } = useQuery({
     queryKey: ['settings'],
@@ -536,25 +539,25 @@ export default function Settings() {
   const year = new Date().getFullYear();
 
   return (
-    <div style={{ height: '100%', overflowY: 'auto', overflowX: 'hidden', background: '#F5F5F7' }}>
+    <div style={{ height: '100%', overflowY: 'auto', overflowX: 'hidden', background: c.bg }}>
       <div style={{ maxWidth: '860px', margin: '0 auto', padding: 'clamp(16px, 4vw, 32px)', paddingBottom: 64, boxSizing: 'border-box' }}>
 
         {/* Header */}
         <div style={{ marginBottom: '28px' }}>
-          <h1 style={{ fontSize: '22px', fontWeight: '700', color: '#1D1D1F', letterSpacing: '-0.03em', margin: 0 }}>Einstellungen</h1>
-          <p style={{ fontSize: '13px', color: '#86868B', margin: '3px 0 0', letterSpacing: '-0.01em' }}>Verwalte deine Unternehmens- und Dokumenteinstellungen</p>
+          <h1 style={{ fontSize: '22px', fontWeight: '700', color: c.text, letterSpacing: '-0.03em', margin: 0 }}>Einstellungen</h1>
+          <p style={{ fontSize: '13px', color: c.textSecondary, margin: '3px 0 0', letterSpacing: '-0.01em' }}>Verwalte deine Unternehmens- und Dokumenteinstellungen</p>
         </div>
 
         {/* Tabs */}
-        <div style={{ display: 'flex', gap: '4px', background: 'rgba(0,0,0,0.06)', borderRadius: '12px', padding: '4px', marginBottom: '24px', width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}>
+        <div style={{ display: 'flex', gap: '4px', background: c.inputBg, borderRadius: '12px', padding: '4px', marginBottom: '24px', width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}>
           {TABS.map(tab => {
             const Icon = tab.icon;
             const active = activeTab === tab.id;
             return (
               <button key={tab.id} onClick={() => setActiveTab(tab.id)}
                 style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', borderRadius: '9px', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: active ? '600' : '500',
-                  background: active ? '#fff' : 'transparent', color: active ? '#1D1D1F' : '#86868B',
-                  boxShadow: active ? '0 1px 4px rgba(0,0,0,0.1)' : 'none', transition: 'all 0.15s', letterSpacing: '-0.01em' }}>
+                  background: active ? c.card : 'transparent', color: active ? c.text : c.textSecondary,
+                  boxShadow: active ? '0 1px 4px rgba(0,0,0,0.12)' : 'none', transition: 'all 0.15s', letterSpacing: '-0.01em', whiteSpace: 'nowrap' }}>
                 <Icon size={14} />
                 {tab.label}
               </button>
@@ -797,6 +800,69 @@ export default function Settings() {
 
         {/* ── Tab: Team ── */}
         {activeTab === 'team' && <TeamSettings />}
+
+        {/* ── Tab: Darstellung ── */}
+        {activeTab === 'darstellung' && (
+          <div className="card space-y-6">
+            <div>
+              <h2 style={{ fontSize: 16, fontWeight: 700, color: c.text, marginBottom: 4 }}>Erscheinungsbild</h2>
+              <p style={{ fontSize: 13, color: c.textSecondary }}>Wähle zwischen hellem und dunklem Design.</p>
+            </div>
+
+            {/* Theme Selector */}
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+              {[
+                { value: 'light', label: 'Hell',   icon: Sun,    desc: 'Immer helles Design' },
+                { value: 'auto',  label: 'System',  icon: SunMoon, desc: 'Folgt dem Gerät' },
+                { value: 'dark',  label: 'Dunkel',  icon: Moon,   desc: 'Immer dunkles Design' },
+              ].map(({ value, label, icon: Icon, desc }) => {
+                const isActive = theme === value;
+                return (
+                  <button
+                    key={value}
+                    onClick={() => setTheme(value)}
+                    style={{
+                      flex: '1 1 140px', padding: '16px', borderRadius: 14, border: `2px solid ${isActive ? c.blue : c.border}`,
+                      background: isActive ? c.blueLight : c.cardSecondary,
+                      cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+                      <Icon size={18} color={isActive ? c.blue : c.textSecondary} strokeWidth={1.75} />
+                      <span style={{ fontSize: 14, fontWeight: 600, color: isActive ? c.blue : c.text }}>{label}</span>
+                      {isActive && (
+                        <span style={{
+                          marginLeft: 'auto', width: 18, height: 18, borderRadius: '50%',
+                          background: c.blue, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}>
+                          <Check size={10} color="#fff" strokeWidth={3} />
+                        </span>
+                      )}
+                    </div>
+                    <p style={{ fontSize: 12, color: c.textTertiary, margin: 0 }}>{desc}</p>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Preview */}
+            <div>
+              <p style={{ fontSize: 12, fontWeight: 600, color: c.textSecondary, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>Vorschau</p>
+              <div style={{ borderRadius: 14, overflow: 'hidden', border: `1px solid ${c.border}` }}>
+                <div style={{ background: isDark ? '#000' : '#F5F5F7', padding: 16 }}>
+                  <div style={{ background: isDark ? '#1C1C1E' : '#fff', borderRadius: 10, padding: '12px 16px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: isDark ? '#F5F5F5' : '#1D1D1F', marginBottom: 4 }}>Beispiel-Karte</div>
+                    <div style={{ fontSize: 11.5, color: isDark ? '#8E8E93' : '#86868B' }}>So sehen Inhalte im {isDark ? 'dunklen' : 'hellen'} Modus aus.</div>
+                    <div style={{ marginTop: 10, display: 'flex', gap: 6 }}>
+                      <span style={{ padding: '3px 10px', borderRadius: 99, fontSize: 11, fontWeight: 600, background: isDark ? 'rgba(10,132,255,0.15)' : 'rgba(0,113,227,0.1)', color: isDark ? '#0A84FF' : '#0071E3' }}>Aktiv</span>
+                      <span style={{ padding: '3px 10px', borderRadius: 99, fontSize: 11, fontWeight: 600, background: isDark ? '#2C2C2E' : '#F2F2F7', color: isDark ? '#8E8E93' : '#6E6E73' }}>Normal</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

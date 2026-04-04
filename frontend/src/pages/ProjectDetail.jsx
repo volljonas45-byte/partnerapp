@@ -24,6 +24,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import { useConfirm } from '../hooks/useConfirm';
 import WorkflowPanel from '../components/workflow/WorkflowPanel';
 import ProjectTimerButton from '../components/ProjectTimerButton';
+import { useTheme } from '../context/ThemeContext';
 
 // ── Health + Next Step ────────────────────────────────────────────────────────
 
@@ -162,7 +163,7 @@ const CHANGE_TYPE_CONFIG = {
 };
 const CHANGE_STATUS_CYCLE = ['offen', 'in_bearbeitung', 'erledigt'];
 const CHANGE_STATUS_CONFIG = {
-  offen:          { label: 'Offen',          bg: '#F2F2F7', color: '#6E6E73' },
+  offen:          { label: 'Offen',          bg: '#F2F2F7', color: c.textTertiary },
   in_bearbeitung: { label: 'In Bearbeitung', bg: '#E8F1FF', color: '#0071E3' },
   erledigt:       { label: 'Erledigt',       bg: '#D1FAE5', color: '#059669' },
 };
@@ -246,6 +247,7 @@ function InfoRow({ label, value }) {
 
 // ── Main component ────────────────────────────────────────────────────────────
 export default function ProjectDetail() {
+  const { c, isDark } = useTheme();
   const { id }   = useParams();
   const navigate = useNavigate();
   const qc       = useQueryClient();
@@ -544,14 +546,14 @@ export default function ProjectDetail() {
   const openChanges = changes.filter(c => c.status !== 'erledigt').length;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: isMobile ? 'auto' : '100vh', minHeight: '100vh', background: '#F5F5F7', overflow: isMobile ? 'visible' : 'hidden', maxWidth: '100vw' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: isMobile ? 'auto' : '100vh', minHeight: '100vh', background: c.bg, overflow: isMobile ? 'visible' : 'hidden', maxWidth: '100vw' }}>
 
       {/* ── HEADER ───────────────────────────────────────────────────────────── */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: '8px',
         padding: isMobile ? '0 14px' : '0 28px',
         height: isMobile ? 52 : 60, flexShrink: 0,
-        background: '#fff', borderBottom: '1px solid rgba(0,0,0,0.08)',
+        background: c.card, borderBottom: '1px solid rgba(0,0,0,0.08)',
         overflowX: 'auto', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch',
       }}>
         <button
@@ -559,7 +561,7 @@ export default function ProjectDetail() {
           style={{
             display: 'flex', alignItems: 'center', gap: '5px',
             padding: '5px 10px', borderRadius: '8px', border: 'none',
-            background: 'transparent', color: '#86868B', fontSize: '13px',
+            background: 'transparent', color: c.textSecondary, fontSize: '13px',
             cursor: 'pointer', transition: 'background 0.12s, color 0.12s',
           }}
           onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.05)'; e.currentTarget.style.color = '#1D1D1F'; }}
@@ -568,11 +570,11 @@ export default function ProjectDetail() {
           <ArrowLeft size={14} /> Websites
         </button>
         <span style={{ color: '#D1D1D6', fontSize: '14px' }}>/</span>
-        <h1 style={{ fontSize: '16px', fontWeight: '700', color: '#1D1D1F', letterSpacing: '-0.02em', margin: 0 }}>
+        <h1 style={{ fontSize: '16px', fontWeight: '700', color: c.text, letterSpacing: '-0.02em', margin: 0 }}>
           {project.name}
         </h1>
         {project.type && (
-          <span style={{ fontSize: '11px', fontWeight: '500', color: '#6E6E73', background: '#F2F2F7', padding: '2px 8px', borderRadius: '6px' }}>
+          <span style={{ fontSize: '11px', fontWeight: '500', color: c.textTertiary, background: c.cardSecondary, padding: '2px 8px', borderRadius: '6px' }}>
             {TYPE_LABELS[project.type] || project.type}
           </span>
         )}
@@ -596,7 +598,7 @@ export default function ProjectDetail() {
 
       {/* ── TAB BAR ──────────────────────────────────────────────────────────── */}
       <div style={{
-        display: 'flex', gap: 0, background: '#fff',
+        display: 'flex', gap: 0, background: c.card,
         borderBottom: '1px solid rgba(0,0,0,0.08)',
         padding: isMobile ? '0 14px' : '0 28px',
         flexShrink: 0, overflowX: 'auto', scrollbarWidth: 'none',
@@ -620,7 +622,7 @@ export default function ProjectDetail() {
           >
             {tab.label}
             {tab.key === 'tasks' && tasks.length > 0 && (
-              <span style={{ fontSize: '10px', fontWeight: '600', background: '#F2F2F7', color: '#6E6E73', padding: '1px 6px', borderRadius: '99px' }}>
+              <span style={{ fontSize: '10px', fontWeight: '600', background: c.cardSecondary, color: c.textTertiary, padding: '1px 6px', borderRadius: '99px' }}>
                 {doneTasks}/{tasks.length}
               </span>
             )}
@@ -667,14 +669,14 @@ export default function ProjectDetail() {
         const invoicePct    = totalBudget > 0 ? Math.min(100, Math.round((totalInvoiced / totalBudget) * 100)) : 0;
         const openTaskCount = tasks.filter(t => t.status !== 'done').length;
 
-        const card = { background: '#fff', borderRadius: '16px', padding: '22px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' };
+        const card = { background: c.card, borderRadius: '16px', padding: '22px', border: `1px solid ${c.borderSubtle}`, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' };
         const sectionTitle = { fontSize: '11px', fontWeight: '600', color: '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.05em' };
         const linkBtn = { fontSize: '12px', color: '#0071E3', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '500' };
 
         return (
           <div>
             {/* ── Summary Bar ── */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '14px', padding: '11px 18px', background: '#fff', borderRadius: '14px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '14px', padding: '11px 18px', background: c.card, borderRadius: '14px', border: `1px solid ${c.borderSubtle}`, boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
               {/* Health chip */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '3px 10px', borderRadius: '8px', flexShrink: 0,
                 background: health === 'good' ? 'rgba(52,199,89,0.1)' : health === 'warning' ? 'rgba(245,158,11,0.1)' : 'rgba(239,68,68,0.1)',
@@ -703,18 +705,18 @@ export default function ProjectDetail() {
               {/* Open items */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                 {openTaskCount > 0 && (
-                  <button onClick={() => setActiveTab('tasks')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: '12px', color: '#6E6E73' }}>
-                    <span style={{ fontWeight: '700', color: '#1D1D1F' }}>{openTaskCount}</span> Aufgaben
+                  <button onClick={() => setActiveTab('tasks')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: '12px', color: c.textTertiary }}>
+                    <span style={{ fontWeight: '700', color: c.text }}>{openTaskCount}</span> Aufgaben
                   </button>
                 )}
                 {openCh.length > 0 && (
-                  <button onClick={() => setActiveTab('changes')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: '12px', color: '#6E6E73' }}>
+                  <button onClick={() => setActiveTab('changes')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: '12px', color: c.textTertiary }}>
                     <span style={{ fontWeight: '700', color: urgentCh.length > 0 ? '#EF4444' : '#1D1D1F' }}>{openCh.length}</span> Änderungen
                     {urgentCh.length > 0 && <span style={{ fontSize: '10px', fontWeight: '700', background: 'rgba(239,68,68,0.1)', color: '#EF4444', padding: '1px 5px', borderRadius: '5px', marginLeft: '5px' }}>{urgentCh.length} dringend</span>}
                   </button>
                 )}
                 {pendingInvoices.length > 0 && (
-                  <button onClick={() => setActiveTab('finance')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: '12px', color: '#6E6E73' }}>
+                  <button onClick={() => setActiveTab('finance')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: '12px', color: c.textTertiary }}>
                     <span style={{ fontWeight: '700', color: '#F59E0B' }}>{pendingInvoices.length}</span> {pendingInvoices.length === 1 ? 'Rechnung' : 'Rechnungen'}
                   </button>
                 )}
@@ -740,7 +742,7 @@ export default function ProjectDetail() {
                 <p style={{ ...sectionTitle, marginBottom: '10px' }}>Klient</p>
                 {client ? (
                   <>
-                    <p style={{ fontSize: '15px', fontWeight: '700', color: '#1D1D1F', letterSpacing: '-0.02em', lineHeight: 1.2, marginBottom: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <p style={{ fontSize: '15px', fontWeight: '700', color: c.text, letterSpacing: '-0.02em', lineHeight: 1.2, marginBottom: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {client.company_name || client.name}
                     </p>
                     <p style={{ fontSize: '11px', color: '#8E8E93', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -760,12 +762,12 @@ export default function ProjectDetail() {
               {/* Budget */}
               <div style={card}>
                 <p style={{ ...sectionTitle, marginBottom: '10px' }}>Budget</p>
-                <p style={{ fontSize: '26px', fontWeight: '700', letterSpacing: '-0.04em', lineHeight: 1, marginBottom: totalBudget > 0 ? '9px' : '4px', color: '#1D1D1F' }}>
+                <p style={{ fontSize: '26px', fontWeight: '700', letterSpacing: '-0.04em', lineHeight: 1, marginBottom: totalBudget > 0 ? '9px' : '4px', color: c.text }}>
                   {project.budget ? `${Number(project.budget).toLocaleString('de-DE')} €` : '—'}
                 </p>
                 {totalBudget > 0 ? (
                   <>
-                    <div style={{ height: '3px', background: '#F2F2F7', borderRadius: '2px', marginBottom: '5px' }}>
+                    <div style={{ height: '3px', background: c.cardSecondary, borderRadius: '2px', marginBottom: '5px' }}>
                       <div style={{ height: '100%', borderRadius: '2px', width: `${invoicePct}%`, background: invoicePct >= 100 ? '#34C759' : '#0071E3', transition: 'width 0.4s ease' }} />
                     </div>
                     <p style={{ fontSize: '11px', color: '#8E8E93' }}>{formatCurrency(totalInvoiced)} fakturiert · {invoicePct}%</p>
@@ -847,7 +849,7 @@ export default function ProjectDetail() {
                         <span style={{ fontSize: '20px' }}>{curPhase?.emoji || '📋'}</span>
                         <div>
                           <p style={sectionTitle}>Aktuelle Phase</p>
-                          <p style={{ fontSize: '15px', fontWeight: '700', color: '#1D1D1F', letterSpacing: '-0.02em' }}>{curPhase?.label || '—'}</p>
+                          <p style={{ fontSize: '15px', fontWeight: '700', color: c.text, letterSpacing: '-0.02em' }}>{curPhase?.label || '—'}</p>
                         </div>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -859,7 +861,7 @@ export default function ProjectDetail() {
                     </div>
 
                     {/* Progress bar */}
-                    <div style={{ height: '4px', background: '#F2F2F7', borderRadius: '2px', marginBottom: '16px' }}>
+                    <div style={{ height: '4px', background: c.cardSecondary, borderRadius: '2px', marginBottom: '16px' }}>
                       <div style={{ height: '100%', borderRadius: '2px', background: phasePct === 100 ? '#34C759' : '#0071E3', width: `${phasePct}%`, transition: 'width 0.4s' }} />
                     </div>
 
@@ -924,7 +926,7 @@ export default function ProjectDetail() {
                           value={changeForm.title}
                           onChange={e => setChangeForm(f => ({ ...f, title: e.target.value }))}
                           placeholder="Neue Änderung..."
-                          style={{ flex: 1, fontSize: '12px', padding: '7px 10px', borderRadius: '8px', border: '1px solid #E5E5EA', outline: 'none', background: '#FAFAFA', color: '#1D1D1F' }}
+                          style={{ flex: 1, fontSize: '12px', padding: '7px 10px', borderRadius: '8px', border: '1px solid #E5E5EA', outline: 'none', background: '#FAFAFA', color: c.text }}
                         />
                         <button type="submit" disabled={!changeForm.title.trim() || createChangeMutation.isPending}
                           style={{ padding: '7px 11px', borderRadius: '8px', background: changeForm.title.trim() ? '#0071E3' : '#E5E5EA', border: 'none', color: changeForm.title.trim() ? '#fff' : '#8E8E93', cursor: changeForm.title.trim() ? 'pointer' : 'default', display: 'flex', alignItems: 'center', transition: 'background 0.12s' }}>
@@ -960,7 +962,7 @@ export default function ProjectDetail() {
                             <div key={ch.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', borderRadius: '10px', border: '1px solid #F2F2F7', background: '#FAFAFA' }}>
                               <div style={{ width: '3px', alignSelf: 'stretch', borderRadius: '2px', background: pc.color, flexShrink: 0 }} />
                               <span style={{ fontSize: '10px', fontWeight: '700', padding: '2px 6px', borderRadius: '5px', background: tc.bg, color: tc.color, flexShrink: 0 }}>{tc.label}</span>
-                              <span style={{ flex: 1, fontSize: '12px', color: '#1D1D1F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ch.title}</span>
+                              <span style={{ flex: 1, fontSize: '12px', color: c.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ch.title}</span>
                               <button
                                 onClick={() => updateChangeMutation.mutate({ cid: ch.id, data: { status: 'erledigt' } })}
                                 title="Als erledigt markieren"
@@ -1002,7 +1004,7 @@ export default function ProjectDetail() {
                       value={newTask}
                       onChange={e => setNewTask(e.target.value)}
                       placeholder="Neue Aufgabe..."
-                      style={{ flex: 1, fontSize: '12px', padding: '7px 10px', borderRadius: '8px', border: '1px solid #E5E5EA', outline: 'none', background: '#FAFAFA', color: '#1D1D1F' }}
+                      style={{ flex: 1, fontSize: '12px', padding: '7px 10px', borderRadius: '8px', border: '1px solid #E5E5EA', outline: 'none', background: '#FAFAFA', color: c.text }}
                     />
                     <button type="submit" disabled={!newTask.trim() || createTaskMutation.isPending}
                       style={{ padding: '7px 11px', borderRadius: '8px', background: newTask.trim() ? '#0071E3' : '#E5E5EA', border: 'none', color: newTask.trim() ? '#fff' : '#8E8E93', cursor: newTask.trim() ? 'pointer' : 'default', display: 'flex', alignItems: 'center', transition: 'background 0.12s' }}>
@@ -1029,7 +1031,7 @@ export default function ProjectDetail() {
                           <div style={{ width: '16px', height: '16px', borderRadius: '50%', flexShrink: 0, border: `2px solid ${isDoing ? '#0071E3' : '#D1D1D6'}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             {isDoing && <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#0071E3' }} />}
                           </div>
-                          <span style={{ flex: 1, fontSize: '12px', color: '#1D1D1F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{task.title}</span>
+                          <span style={{ flex: 1, fontSize: '12px', color: c.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{task.title}</span>
                           {isDoing && <span style={{ fontSize: '9px', fontWeight: '700', background: '#0071E3', color: '#fff', padding: '1px 5px', borderRadius: '4px', flexShrink: 0 }}>Aktiv</span>}
                         </div>
                       );
@@ -1062,13 +1064,13 @@ export default function ProjectDetail() {
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <p style={{ fontSize: '12px', fontWeight: '600', color: '#0071E3' }}>Live-Website</p>
-                        <p style={{ fontSize: '11px', color: '#86868B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{project.live_url.replace(/^https?:\/\//, '')}</p>
+                        <p style={{ fontSize: '11px', color: c.textSecondary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{project.live_url.replace(/^https?:\/\//, '')}</p>
                       </div>
                       <ExternalLink size={12} color="#0071E3" style={{ flexShrink: 0 }} />
                     </a>
                   ) : (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', borderRadius: '10px', background: '#FAFAFA', border: '1px dashed #E5E5EA' }}>
-                      <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: '#F2F2F7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: c.cardSecondary, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                         <Globe size={13} color="#C7C7CC" />
                       </div>
                       <p style={{ fontSize: '12px', color: '#C7C7CC' }}>Live-URL noch nicht eingetragen</p>
@@ -1087,7 +1089,7 @@ export default function ProjectDetail() {
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <p style={{ fontSize: '12px', fontWeight: '600', color: '#059669' }}>Domain</p>
-                        <p style={{ fontSize: '11px', color: '#86868B' }}>{project.domain_name}</p>
+                        <p style={{ fontSize: '11px', color: c.textSecondary }}>{project.domain_name}</p>
                       </div>
                       <ExternalLink size={12} color="#34C759" style={{ flexShrink: 0 }} />
                     </a>
@@ -1105,7 +1107,7 @@ export default function ProjectDetail() {
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <p style={{ fontSize: '12px', fontWeight: '600', color: '#5856D6' }}>Repository</p>
-                        <p style={{ fontSize: '11px', color: '#86868B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{project.repository_url.replace(/^https?:\/\//, '')}</p>
+                        <p style={{ fontSize: '11px', color: c.textSecondary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{project.repository_url.replace(/^https?:\/\//, '')}</p>
                       </div>
                       <ExternalLink size={12} color="#5856D6" style={{ flexShrink: 0 }} />
                     </a>
@@ -1114,9 +1116,9 @@ export default function ProjectDetail() {
                   {/* Tech summary */}
                   {(project.build_type || project.hosting_provider || project.frontend) && (
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', paddingTop: '4px' }}>
-                      {project.build_type && <span style={{ fontSize: '11px', fontWeight: '500', padding: '3px 8px', borderRadius: '6px', background: '#F2F2F7', color: '#6E6E73' }}>{BUILD_TYPE_LABELS[project.build_type] || project.build_type}</span>}
-                      {project.frontend && <span style={{ fontSize: '11px', fontWeight: '500', padding: '3px 8px', borderRadius: '6px', background: '#F2F2F7', color: '#6E6E73' }}>{FRONTEND_LABELS[project.frontend] || project.frontend}</span>}
-                      {project.hosting_provider && <span style={{ fontSize: '11px', fontWeight: '500', padding: '3px 8px', borderRadius: '6px', background: '#F2F2F7', color: '#6E6E73' }}>{HOSTING_LABELS[project.hosting_provider] || project.hosting_provider}</span>}
+                      {project.build_type && <span style={{ fontSize: '11px', fontWeight: '500', padding: '3px 8px', borderRadius: '6px', background: c.cardSecondary, color: c.textTertiary }}>{BUILD_TYPE_LABELS[project.build_type] || project.build_type}</span>}
+                      {project.frontend && <span style={{ fontSize: '11px', fontWeight: '500', padding: '3px 8px', borderRadius: '6px', background: c.cardSecondary, color: c.textTertiary }}>{FRONTEND_LABELS[project.frontend] || project.frontend}</span>}
+                      {project.hosting_provider && <span style={{ fontSize: '11px', fontWeight: '500', padding: '3px 8px', borderRadius: '6px', background: c.cardSecondary, color: c.textTertiary }}>{HOSTING_LABELS[project.hosting_provider] || project.hosting_provider}</span>}
                     </div>
                   )}
 
@@ -1153,7 +1155,7 @@ export default function ProjectDetail() {
                           <ClipboardList size={13} color="#0071E3" />
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <p style={{ fontSize: '12px', fontWeight: '600', color: '#1D1D1F' }}>{q.quote_number}</p>
+                          <p style={{ fontSize: '12px', fontWeight: '600', color: c.text }}>{q.quote_number}</p>
                           <p style={{ fontSize: '11px', color: '#8E8E93' }}>Angebot · {formatCurrency(q.total)}</p>
                         </div>
                         <StatusBadge status={q.status} />
@@ -1171,7 +1173,7 @@ export default function ProjectDetail() {
                           <Euro size={13} color="#F59E0B" />
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <p style={{ fontSize: '12px', fontWeight: '600', color: '#1D1D1F' }}>{inv.invoice_number}</p>
+                          <p style={{ fontSize: '12px', fontWeight: '600', color: c.text }}>{inv.invoice_number}</p>
                           <p style={{ fontSize: '11px', color: '#8E8E93' }}>Rechnung · {formatCurrency(inv.total)}</p>
                         </div>
                         <StatusBadge status={inv.status} />
@@ -1277,7 +1279,7 @@ export default function ProjectDetail() {
                           }}>
                             {cfg?.label || 'Demo'}
                           </span>
-                          <div style={{ marginTop: '5px', height: '3px', background: '#F2F2F7', borderRadius: '2px', width: '100px' }}>
+                          <div style={{ marginTop: '5px', height: '3px', background: c.cardSecondary, borderRadius: '2px', width: '100px' }}>
                             <div style={{
                               height: '100%', borderRadius: '2px',
                               background: phase === 'abgeschlossen' ? '#34C759' : '#0071E3',
@@ -1351,7 +1353,7 @@ export default function ProjectDetail() {
                   <div style={{ width: '26px', height: '26px', borderRadius: '8px', background: 'rgba(0,113,227,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <Building2 size={13} color="#0071E3" />
                   </div>
-                  <span style={{ fontSize: '13px', fontWeight: '600', color: '#1D1D1F', letterSpacing: '-0.01em' }}>
+                  <span style={{ fontSize: '13px', fontWeight: '600', color: c.text, letterSpacing: '-0.01em' }}>
                     {project.client_name}
                   </span>
                 </div>
@@ -1370,15 +1372,15 @@ export default function ProjectDetail() {
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
                   <User size={13} color="#86868B" style={{ marginTop: '1px', flexShrink: 0 }} />
                   <div>
-                    <span style={{ fontSize: '10px', color: '#86868B', display: 'block', marginBottom: '2px' }}>ANSPRECHPARTNER</span>
-                    <span style={{ fontSize: '13px', color: '#1D1D1F', fontWeight: '500' }}>{project.contact_person || '–'}</span>
+                    <span style={{ fontSize: '10px', color: c.textSecondary, display: 'block', marginBottom: '2px' }}>ANSPRECHPARTNER</span>
+                    <span style={{ fontSize: '13px', color: c.text, fontWeight: '500' }}>{project.contact_person || '–'}</span>
                   </div>
                 </div>
                 {/* E-Mail */}
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
                   <Mail size={13} color="#86868B" style={{ marginTop: '1px', flexShrink: 0 }} />
                   <div style={{ minWidth: 0 }}>
-                    <span style={{ fontSize: '10px', color: '#86868B', display: 'block', marginBottom: '2px' }}>E-MAIL</span>
+                    <span style={{ fontSize: '10px', color: c.textSecondary, display: 'block', marginBottom: '2px' }}>E-MAIL</span>
                     {project.client_email
                       ? <a href={`mailto:${project.client_email}`} style={{ fontSize: '13px', color: '#0071E3', fontWeight: '500', textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>{project.client_email}</a>
                       : <span style={{ fontSize: '13px', color: '#C7C7CC' }}>–</span>}
@@ -1388,9 +1390,9 @@ export default function ProjectDetail() {
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
                   <Phone size={13} color="#86868B" style={{ marginTop: '1px', flexShrink: 0 }} />
                   <div>
-                    <span style={{ fontSize: '10px', color: '#86868B', display: 'block', marginBottom: '2px' }}>TELEFON</span>
+                    <span style={{ fontSize: '10px', color: c.textSecondary, display: 'block', marginBottom: '2px' }}>TELEFON</span>
                     {project.client_phone
-                      ? <a href={`tel:${project.client_phone}`} style={{ fontSize: '13px', color: '#1D1D1F', fontWeight: '500', textDecoration: 'none' }}>{project.client_phone}</a>
+                      ? <a href={`tel:${project.client_phone}`} style={{ fontSize: '13px', color: c.text, fontWeight: '500', textDecoration: 'none' }}>{project.client_phone}</a>
                       : <span style={{ fontSize: '13px', color: '#C7C7CC' }}>–</span>}
                   </div>
                 </div>
@@ -1399,8 +1401,8 @@ export default function ProjectDetail() {
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
                     <MapPin size={13} color="#86868B" style={{ marginTop: '1px', flexShrink: 0 }} />
                     <div>
-                      <span style={{ fontSize: '10px', color: '#86868B', display: 'block', marginBottom: '2px' }}>ADRESSE</span>
-                      <span style={{ fontSize: '13px', color: '#1D1D1F', fontWeight: '500', lineHeight: 1.4 }}>
+                      <span style={{ fontSize: '10px', color: c.textSecondary, display: 'block', marginBottom: '2px' }}>ADRESSE</span>
+                      <span style={{ fontSize: '13px', color: c.text, fontWeight: '500', lineHeight: 1.4 }}>
                         {[project.client_address, [project.client_postal_code, project.client_city].filter(Boolean).join(' ')].filter(Boolean).join(', ')}
                       </span>
                     </div>
@@ -1411,8 +1413,8 @@ export default function ProjectDetail() {
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
                     <Shield size={13} color="#86868B" style={{ marginTop: '1px', flexShrink: 0 }} />
                     <div>
-                      <span style={{ fontSize: '10px', color: '#86868B', display: 'block', marginBottom: '2px' }}>UST-IDNR</span>
-                      <span style={{ fontSize: '13px', color: '#1D1D1F', fontWeight: '500' }}>{clientLegal.vat_id}</span>
+                      <span style={{ fontSize: '10px', color: c.textSecondary, display: 'block', marginBottom: '2px' }}>UST-IDNR</span>
+                      <span style={{ fontSize: '13px', color: c.text, fontWeight: '500' }}>{clientLegal.vat_id}</span>
                     </div>
                   </div>
                 )}
@@ -1421,8 +1423,8 @@ export default function ProjectDetail() {
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
                     <Shield size={13} color="#86868B" style={{ marginTop: '1px', flexShrink: 0 }} />
                     <div>
-                      <span style={{ fontSize: '10px', color: '#86868B', display: 'block', marginBottom: '2px' }}>DSGVO</span>
-                      <span style={{ fontSize: '13px', color: '#1D1D1F', fontWeight: '500' }}>{clientLegal.dsgvo_provider}</span>
+                      <span style={{ fontSize: '10px', color: c.textSecondary, display: 'block', marginBottom: '2px' }}>DSGVO</span>
+                      <span style={{ fontSize: '13px', color: c.text, fontWeight: '500' }}>{clientLegal.dsgvo_provider}</span>
                     </div>
                   </div>
                 )}
@@ -1561,7 +1563,7 @@ export default function ProjectDetail() {
 
             return (
               <div key={phaseKey} style={{
-                background: '#fff', borderRadius: '14px',
+                background: c.card, borderRadius: '14px',
                 border: `1px solid ${isCurrent ? '#C8DEFF' : '#F2F2F7'}`,
                 borderLeft: `3px solid ${isDone ? '#34C759' : isCurrent ? '#0071E3' : '#E5E5EA'}`,
                 overflow: 'hidden',
@@ -1616,8 +1618,8 @@ export default function ProjectDetail() {
           })}
 
           {/* Eigene Aufgaben */}
-          <div style={{ background: '#fff', borderRadius: '14px', border: '1px solid #F2F2F7', overflow: 'hidden' }}>
-            <div style={{ padding: '12px 16px', borderBottom: '1px solid #F2F2F7', fontSize: '13px', fontWeight: 600, color: '#1D1D1F' }}>
+          <div style={{ background: c.card, borderRadius: '14px', border: '1px solid #F2F2F7', overflow: 'hidden' }}>
+            <div style={{ padding: '12px 16px', borderBottom: '1px solid #F2F2F7', fontSize: '13px', fontWeight: 600, color: c.text }}>
               Eigene Aufgaben
             </div>
             <div style={{ padding: '12px 16px' }}>
@@ -2041,10 +2043,10 @@ export default function ProjectDetail() {
                   <AlertTriangle size={15} color={critical > 0 ? '#EF4444' : '#F59E0B'} />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <p style={{ fontSize: '13px', fontWeight: '600', color: '#1D1D1F', marginBottom: '2px' }}>
+                  <p style={{ fontSize: '13px', fontWeight: '600', color: c.text, marginBottom: '2px' }}>
                     {open + inProg} offene {open + inProg === 1 ? 'Änderung' : 'Änderungen'}
                   </p>
-                  <p style={{ fontSize: '12px', color: '#86868B' }}>
+                  <p style={{ fontSize: '12px', color: c.textSecondary }}>
                     {[
                       open > 0 && `${open} offen`,
                       inProg > 0 && `${inProg} in Bearbeitung`,
@@ -2058,7 +2060,7 @@ export default function ProjectDetail() {
           })()}
 
           {/* Quick-add form */}
-          <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #E5E5EA', padding: '20px' }}>
+          <div style={{ background: c.card, borderRadius: '16px', border: '1px solid #E5E5EA', padding: '20px' }}>
             <form
               onSubmit={e => {
                 e.preventDefault();
@@ -2076,7 +2078,7 @@ export default function ProjectDetail() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '14px' }}>
                 {/* Type */}
                 <div>
-                  <p style={{ fontSize: '11px', fontWeight: '600', color: '#86868B', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '7px' }}>Typ</p>
+                  <p style={{ fontSize: '11px', fontWeight: '600', color: c.textSecondary, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '7px' }}>Typ</p>
                   <div style={{ display: 'flex', gap: '5px' }}>
                     {Object.entries(CHANGE_TYPE_CONFIG).map(([k, v]) => (
                       <button key={k} type="button"
@@ -2094,7 +2096,7 @@ export default function ProjectDetail() {
                 </div>
                 {/* Priority */}
                 <div>
-                  <p style={{ fontSize: '11px', fontWeight: '600', color: '#86868B', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '7px' }}>Priorität</p>
+                  <p style={{ fontSize: '11px', fontWeight: '600', color: c.textSecondary, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '7px' }}>Priorität</p>
                   <div style={{ display: 'flex', gap: '5px' }}>
                     {PRIORITY_ORDER.map(k => {
                       const v = PRIORITY_CONFIG[k];
@@ -2135,7 +2137,7 @@ export default function ProjectDetail() {
           {changes.length > 0 && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
               {/* Type filter pills */}
-              <div style={{ display: 'flex', gap: '4px', background: '#F2F2F7', borderRadius: '10px', padding: '3px' }}>
+              <div style={{ display: 'flex', gap: '4px', background: c.cardSecondary, borderRadius: '10px', padding: '3px' }}>
                 {[['all','Alle'], ['bug','Bug'], ['kunde','Kunde'], ['intern','Intern']].map(([k, label]) => (
                   <button key={k} type="button"
                     onClick={() => setChangeTypeFilter(k)}
@@ -2150,7 +2152,7 @@ export default function ProjectDetail() {
                 ))}
               </div>
               {/* Status filter pills */}
-              <div style={{ display: 'flex', gap: '4px', background: '#F2F2F7', borderRadius: '10px', padding: '3px' }}>
+              <div style={{ display: 'flex', gap: '4px', background: c.cardSecondary, borderRadius: '10px', padding: '3px' }}>
                 {[['all','Alle'], ['offen','Offen'], ['in_bearbeitung','In Arbeit'], ['erledigt','Erledigt']].map(([k, label]) => (
                   <button key={k} type="button"
                     onClick={() => setChangeStatusFilter(k)}
@@ -2188,8 +2190,8 @@ export default function ProjectDetail() {
 
             if (filtered.length === 0) {
               return (
-                <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #E5E5EA', padding: '48px', textAlign: 'center' }}>
-                  <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: '#F2F2F7', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
+                <div style={{ background: c.card, borderRadius: '16px', border: '1px solid #E5E5EA', padding: '48px', textAlign: 'center' }}>
+                  <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: c.cardSecondary, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
                     <CheckSquare size={18} color="#C7C7CC" />
                   </div>
                   <p style={{ fontSize: '14px', fontWeight: '500', color: '#3C3C43', marginBottom: '4px' }}>
@@ -2314,7 +2316,7 @@ export default function ProjectDetail() {
                               />
                               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                                 <div>
-                                  <p style={{ fontSize: '11px', fontWeight: '600', color: '#86868B', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Typ</p>
+                                  <p style={{ fontSize: '11px', fontWeight: '600', color: c.textSecondary, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Typ</p>
                                   <div style={{ display: 'flex', gap: '4px' }}>
                                     {Object.entries(CHANGE_TYPE_CONFIG).map(([k, v]) => (
                                       <button key={k} type="button"
@@ -2330,7 +2332,7 @@ export default function ProjectDetail() {
                                   </div>
                                 </div>
                                 <div>
-                                  <p style={{ fontSize: '11px', fontWeight: '600', color: '#86868B', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Priorität</p>
+                                  <p style={{ fontSize: '11px', fontWeight: '600', color: c.textSecondary, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Priorität</p>
                                   <div style={{ display: 'flex', gap: '4px' }}>
                                     {PRIORITY_ORDER.map(k => {
                                       const v = PRIORITY_CONFIG[k];
@@ -2351,7 +2353,7 @@ export default function ProjectDetail() {
                                 </div>
                               </div>
                               <div>
-                                <p style={{ fontSize: '11px', fontWeight: '600', color: '#86868B', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Zuständig</p>
+                                <p style={{ fontSize: '11px', fontWeight: '600', color: c.textSecondary, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Zuständig</p>
                                 <select
                                   className="input"
                                   value={editChangeForm.assignee_id || ''}

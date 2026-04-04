@@ -9,6 +9,7 @@ import StatusBadge from '../components/StatusBadge';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useConfirm } from '../hooks/useConfirm';
 import { useMobile } from '../hooks/useMobile';
+import { useTheme } from '../context/ThemeContext';
 
 const STATUS_FILTERS = [
   { key: 'all',       label: 'Alle'       },
@@ -20,6 +21,7 @@ const STATUS_FILTERS = [
 ];
 
 export default function Invoices() {
+  const { c, isDark } = useTheme();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const isMobile = useMobile();
@@ -85,7 +87,7 @@ export default function Invoices() {
         <div className="skeleton h-9 w-72 rounded-lg" />
       </div>
       <div className="card p-0 overflow-hidden">
-        <div style={{ padding: '10px 18px', background: 'rgba(118,118,128,0.06)', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+        <div style={{ padding: '10px 18px', background: 'rgba(118,118,128,0.06)', borderBottom: `1px solid ${c.borderSubtle}` }}>
           <div className="skeleton h-3 w-32" />
         </div>
         {[...Array(5)].map((_, i) => (
@@ -104,12 +106,12 @@ export default function Invoices() {
   // ── Mobile layout ─────────────────────────────────────────────
   if (isMobile) {
     return (
-      <div style={{ background: '#F5F5F7', minHeight: '100vh' }}>
+      <div style={{ background: c.bg, minHeight: '100vh' }}>
         {/* Header */}
         <div style={{ padding: '20px 16px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <h1 style={{ fontSize: 22, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-0.4px', margin: 0 }}>Rechnungen</h1>
-            <p style={{ fontSize: 13, color: '#86868B', margin: '2px 0 0' }}>
+            <h1 style={{ fontSize: 22, fontWeight: 700, color: c.text, letterSpacing: '-0.4px', margin: 0 }}>Rechnungen</h1>
+            <p style={{ fontSize: 13, color: c.textSecondary, margin: '2px 0 0' }}>
               {invoices.length} gesamt{overdueCount > 0 && <span style={{ color: '#FF3B30', marginLeft: 6 }}>· {overdueCount} überfällig</span>}
             </p>
           </div>
@@ -124,9 +126,9 @@ export default function Invoices() {
 
         {/* Search */}
         <div style={{ padding: '0 16px 10px', position: 'relative' }}>
-          <Search size={14} style={{ position: 'absolute', left: 28, top: '50%', transform: 'translateY(-50%)', color: '#86868B', pointerEvents: 'none' }} />
+          <Search size={14} style={{ position: 'absolute', left: 28, top: '50%', transform: 'translateY(-50%)', color: c.textSecondary, pointerEvents: 'none' }} />
           <input
-            style={{ width: '100%', padding: '10px 12px 10px 36px', borderRadius: 12, border: '1px solid rgba(0,0,0,0.1)', background: '#fff', fontSize: 15, outline: 'none', boxSizing: 'border-box' }}
+            style={{ width: '100%', padding: '10px 12px 10px 36px', borderRadius: 12, border: '1px solid rgba(0,0,0,0.1)', background: c.card, fontSize: 15, outline: 'none', boxSizing: 'border-box' }}
             placeholder="Suchen…"
             value={search}
             onChange={e => setSearch(e.target.value)}
@@ -158,12 +160,12 @@ export default function Invoices() {
         {/* Card list */}
         <div style={{ padding: '0 16px' }}>
           {filtered.length === 0 ? (
-            <div style={{ background: '#fff', borderRadius: 16, padding: '40px 20px', textAlign: 'center' }}>
+            <div style={{ background: c.card, borderRadius: 16, padding: '40px 20px', textAlign: 'center' }}>
               <FileText size={32} color="#D1D1D6" strokeWidth={1.25} style={{ margin: '0 auto 12px' }} />
-              <p style={{ fontSize: 15, fontWeight: 600, color: '#1D1D1F', margin: '0 0 4px' }}>
+              <p style={{ fontSize: 15, fontWeight: 600, color: c.text, margin: '0 0 4px' }}>
                 {search || statusFilter !== 'all' ? 'Keine Rechnungen gefunden' : 'Noch keine Rechnungen'}
               </p>
-              <p style={{ fontSize: 13, color: '#86868B', margin: 0 }}>
+              <p style={{ fontSize: 13, color: c.textSecondary, margin: 0 }}>
                 {search ? `Keine Treffer für „${search}"` : 'Erstelle jetzt deine erste Rechnung.'}
               </p>
               {!search && statusFilter === 'all' && (
@@ -173,7 +175,7 @@ export default function Invoices() {
               )}
             </div>
           ) : (
-            <div style={{ background: '#fff', borderRadius: 16, overflow: 'hidden', border: '1px solid rgba(0,0,0,0.06)' }}>
+            <div style={{ background: c.card, borderRadius: 16, overflow: 'hidden', border: `1px solid ${c.borderSubtle}` }}>
               {filtered.map((inv, idx) => {
                 const isOverdue = inv.status === 'overdue' || (inv.due_date && isPast(inv.due_date) && inv.status !== 'paid' && inv.status !== 'cancelled');
                 return (
@@ -187,13 +189,13 @@ export default function Invoices() {
                   >
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                        <span style={{ fontSize: 15, fontWeight: 600, color: '#1D1D1F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <span style={{ fontSize: 15, fontWeight: 600, color: c.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {inv.client_name}
                         </span>
                         <StatusBadge status={inv.status} />
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ fontSize: 12, color: '#86868B', fontFamily: 'monospace' }}>{inv.invoice_number}</span>
+                        <span style={{ fontSize: 12, color: c.textSecondary, fontFamily: 'monospace' }}>{inv.invoice_number}</span>
                         {inv.due_date && (
                           <span style={{ fontSize: 12, color: isOverdue ? '#FF3B30' : '#86868B', display: 'flex', alignItems: 'center', gap: 3 }}>
                             {isOverdue && <AlertTriangle size={10} />}

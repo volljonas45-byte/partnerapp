@@ -12,11 +12,12 @@ import { projectsApi } from '../api/projects';
 import { areasApi } from '../api/areas';
 import { clientsApi } from '../api/clients';
 import ProjectTimerButton from '../components/ProjectTimerButton';
+import { useTheme } from '../context/ThemeContext';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const STATUS_CFG = {
-  planned:            { label: 'Geplant',          color: '#86868B', bg: 'rgba(118,118,128,0.1)'  },
+  planned:            { label: 'Geplant',          color: c.textSecondary, bg: 'rgba(118,118,128,0.1)'  },
   active:             { label: 'Aktiv',             color: '#0071E3', bg: 'rgba(0,113,227,0.1)'    },
   feedback:           { label: 'Feedback',          color: '#C05621', bg: 'rgba(192,86,33,0.1)'    },
   review:             { label: 'Review',            color: '#6D28D9', bg: 'rgba(109,40,217,0.1)'   },
@@ -46,7 +47,7 @@ function relDeadline(iso) {
   if (diff < 0)  return { text: `${Math.abs(diff)}d überfällig`, color: '#FF3B30' };
   if (diff === 0) return { text: 'Heute fällig',                  color: '#FF9500' };
   if (diff <= 3)  return { text: `in ${diff} Tagen`,              color: '#FF9500' };
-  return { text: new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: 'short' }), color: '#86868B' };
+  return { text: new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: 'short' }), color: c.textSecondary };
 }
 
 function avatarInitials(name = '') {
@@ -93,8 +94,8 @@ function TypeBadge({ isWeb }) {
 function KpiCard({ icon: Icon, label, value, sub, color }) {
   return (
     <div style={{
-      background: '#fff', borderRadius: 14, padding: '18px 20px',
-      border: '1px solid rgba(0,0,0,0.06)', display: 'flex', alignItems: 'flex-start', gap: 14,
+      background: c.card, borderRadius: 14, padding: '18px 20px',
+      border: `1px solid ${c.borderSubtle}`, display: 'flex', alignItems: 'flex-start', gap: 14,
     }}>
       <div style={{
         width: 38, height: 38, borderRadius: 10, flexShrink: 0,
@@ -103,8 +104,8 @@ function KpiCard({ icon: Icon, label, value, sub, color }) {
         <Icon size={17} color={color} />
       </div>
       <div>
-        <div style={{ fontSize: 22, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-0.5px', lineHeight: 1.1 }}>{value}</div>
-        <div style={{ fontSize: 12, fontWeight: 500, color: '#86868B', marginTop: 2 }}>{label}</div>
+        <div style={{ fontSize: 22, fontWeight: 700, color: c.text, letterSpacing: '-0.5px', lineHeight: 1.1 }}>{value}</div>
+        <div style={{ fontSize: 12, fontWeight: 500, color: c.textSecondary, marginTop: 2 }}>{label}</div>
         {sub && <div style={{ fontSize: 11, color: '#AEAEB2', marginTop: 3 }}>{sub}</div>}
       </div>
     </div>
@@ -125,8 +126,8 @@ function ProjectCard({ project, onClick }) {
     <div
       onClick={onClick}
       style={{
-        background: '#fff', borderRadius: 14, padding: '0',
-        border: '1px solid rgba(0,0,0,0.06)', cursor: 'pointer', overflow: 'hidden',
+        background: c.card, borderRadius: 14, padding: '0',
+        border: `1px solid ${c.borderSubtle}`, cursor: 'pointer', overflow: 'hidden',
         transition: 'box-shadow 0.15s, transform 0.15s',
         display: 'flex', flexDirection: 'column',
       }}
@@ -141,13 +142,13 @@ function ProjectCard({ project, onClick }) {
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{
-              fontSize: 14, fontWeight: 600, color: '#1D1D1F',
+              fontSize: 14, fontWeight: 600, color: c.text,
               letterSpacing: '-0.2px', lineHeight: '1.3', wordBreak: 'break-word',
             }}>
               {project.name}
             </div>
             {project.client_name && (
-              <div style={{ fontSize: 11.5, color: '#86868B', marginTop: 2 }}>{project.client_name}</div>
+              <div style={{ fontSize: 11.5, color: c.textSecondary, marginTop: 2 }}>{project.client_name}</div>
             )}
           </div>
           <TypeBadge isWeb={web} />
@@ -172,10 +173,10 @@ function ProjectCard({ project, onClick }) {
         {tasks > 0 && (
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-              <span style={{ fontSize: 10.5, color: '#86868B' }}>{doneTasks}/{tasks} Tasks</span>
+              <span style={{ fontSize: 10.5, color: c.textSecondary }}>{doneTasks}/{tasks} Tasks</span>
               <span style={{ fontSize: 10.5, fontWeight: 600, color: accent }}>{progress}%</span>
             </div>
-            <div style={{ height: 4, background: '#F2F2F7', borderRadius: 99, overflow: 'hidden' }}>
+            <div style={{ height: 4, background: c.cardSecondary, borderRadius: 99, overflow: 'hidden' }}>
               <div style={{ height: '100%', width: `${progress}%`, background: accent, borderRadius: 99, transition: 'width 0.3s' }} />
             </div>
           </div>
@@ -223,7 +224,7 @@ function ProjectRow({ project, onClick }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
         <div style={{ width: 3, height: 28, borderRadius: 99, background: accent, flexShrink: 0 }} />
         <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: 13.5, fontWeight: 600, color: '#1D1D1F', letterSpacing: '-0.2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <div style={{ fontSize: 13.5, fontWeight: 600, color: c.text, letterSpacing: '-0.2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {project.name}
           </div>
           {project.client_name && (
@@ -244,7 +245,7 @@ function ProjectRow({ project, onClick }) {
       </div>
 
       {/* Area */}
-      <div style={{ fontSize: 11.5, color: '#86868B', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+      <div style={{ fontSize: 11.5, color: c.textSecondary, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
         {project.area_name || '—'}
       </div>
 
@@ -290,7 +291,7 @@ function CreateModal({ type, onClose, onCreate, isPending, clients }) {
     >
       <div
         style={{
-          background: '#fff', borderRadius: 18, padding: '28px 28px 24px',
+          background: c.card, borderRadius: 18, padding: '28px 28px 24px',
           width: '100%', maxWidth: 420, boxShadow: '0 24px 60px rgba(0,0,0,0.18)',
         }}
         onClick={e => e.stopPropagation()}
@@ -300,11 +301,11 @@ function CreateModal({ type, onClose, onCreate, isPending, clients }) {
             <div style={{ width: 34, height: 34, borderRadius: 9, background: `${accent}18`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               {isWeb ? <Globe size={16} color={accent} /> : <Briefcase size={16} color={accent} />}
             </div>
-            <span style={{ fontSize: 17, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-0.3px' }}>
+            <span style={{ fontSize: 17, fontWeight: 700, color: c.text, letterSpacing: '-0.3px' }}>
               Neue {isWeb ? 'Website' : 'Projekt'}
             </span>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#86868B', padding: 4 }}>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: c.textSecondary, padding: 4 }}>
             <X size={18} />
           </button>
         </div>
@@ -335,7 +336,7 @@ function CreateModal({ type, onClose, onCreate, isPending, clients }) {
               style={{
                 width: '100%', padding: '10px 12px', borderRadius: 10, fontSize: 14,
                 border: '1.5px solid #E5E5EA', outline: 'none', boxSizing: 'border-box',
-                background: '#fff', cursor: 'pointer',
+                background: c.card, cursor: 'pointer',
               }}
             >
               <option value="">Kein Kunde</option>
@@ -351,7 +352,7 @@ function CreateModal({ type, onClose, onCreate, isPending, clients }) {
                 onChange={e => setStatus(e.target.value)}
                 style={{
                   width: '100%', padding: '10px 12px', borderRadius: 10, fontSize: 13.5,
-                  border: '1.5px solid #E5E5EA', outline: 'none', background: '#fff', cursor: 'pointer',
+                  border: '1.5px solid #E5E5EA', outline: 'none', background: c.card, cursor: 'pointer',
                 }}
               >
                 {Object.entries(STATUS_CFG).map(([k, v]) => (
@@ -379,7 +380,7 @@ function CreateModal({ type, onClose, onCreate, isPending, clients }) {
               onClick={onClose}
               style={{
                 flex: 1, padding: '10px', borderRadius: 10, fontSize: 14, fontWeight: 600,
-                border: '1.5px solid #E5E5EA', background: '#fff', cursor: 'pointer', color: '#636366',
+                border: '1.5px solid #E5E5EA', background: c.card, cursor: 'pointer', color: '#636366',
               }}
             >
               Abbrechen
@@ -412,6 +413,7 @@ const TABS = [
 ];
 
 export default function WorkOverview() {
+  const { c, isDark } = useTheme();
   const isMobile  = useMobile();
   const navigate  = useNavigate();
   const qc        = useQueryClient();
@@ -490,19 +492,19 @@ export default function WorkOverview() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#F5F5F7' }}>
+    <div style={{ minHeight: '100vh', background: c.bg }}>
 
       {/* ── Header ── */}
       <div style={{
         background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(20px)',
-        borderBottom: '1px solid rgba(0,0,0,0.06)', padding: '20px 28px 0', position: 'sticky', top: 0, zIndex: 10,
+        borderBottom: `1px solid ${c.borderSubtle}`, padding: '20px 28px 0', position: 'sticky', top: 0, zIndex: 10,
       }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16 }}>
           <div>
-            <h1 style={{ fontSize: 24, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-0.5px', margin: 0 }}>
+            <h1 style={{ fontSize: 24, fontWeight: 700, color: c.text, letterSpacing: '-0.5px', margin: 0 }}>
               Arbeit
             </h1>
-            <p style={{ fontSize: 13, color: '#86868B', margin: '3px 0 0' }}>
+            <p style={{ fontSize: 13, color: c.textSecondary, margin: '3px 0 0' }}>
               {allProjects.length} Einträge · {activeWeb} Websites aktiv · {activePrj} Projekte aktiv
             </p>
           </div>
@@ -596,8 +598,8 @@ export default function WorkOverview() {
         {/* ── Filter bar ── */}
         <div style={{
           display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16,
-          background: '#fff', borderRadius: 12, padding: '10px 14px',
-          border: '1px solid rgba(0,0,0,0.06)',
+          background: c.card, borderRadius: 12, padding: '10px 14px',
+          border: `1px solid ${c.borderSubtle}`,
         }}>
           {/* Search */}
           <div style={{ position: 'relative', flex: 1, maxWidth: 320 }}>
@@ -619,7 +621,7 @@ export default function WorkOverview() {
             onChange={e => setFilterStatus(e.target.value)}
             style={{
               padding: '7px 10px', borderRadius: 8, fontSize: 13, border: '1.5px solid #E5E5EA',
-              background: '#fff', cursor: 'pointer', outline: 'none', color: '#1D1D1F',
+              background: c.card, cursor: 'pointer', outline: 'none', color: c.text,
             }}
           >
             <option value="">Alle Status</option>
@@ -645,7 +647,7 @@ export default function WorkOverview() {
           <div style={{ flex: 1 }} />
 
           {/* View toggle */}
-          <div style={{ display: 'flex', background: '#F2F2F7', borderRadius: 8, padding: 3 }}>
+          <div style={{ display: 'flex', background: c.cardSecondary, borderRadius: 8, padding: 3 }}>
             {[['grid', LayoutGrid], ['list', List]].map(([mode, Icon]) => (
               <button
                 key={mode}
@@ -666,15 +668,15 @@ export default function WorkOverview() {
 
         {/* ── Content ── */}
         {isLoading ? (
-          <div style={{ textAlign: 'center', padding: '60px 0', color: '#86868B', fontSize: 14 }}>Laden...</div>
+          <div style={{ textAlign: 'center', padding: '60px 0', color: c.textSecondary, fontSize: 14 }}>Laden...</div>
         ) : enriched.length === 0 ? (
           <div style={{
             textAlign: 'center', padding: '60px 0',
-            background: '#fff', borderRadius: 14, border: '1px solid rgba(0,0,0,0.06)',
+            background: c.card, borderRadius: 14, border: `1px solid ${c.borderSubtle}`,
           }}>
             <div style={{ fontSize: 32, marginBottom: 10 }}>📭</div>
-            <div style={{ fontSize: 15, fontWeight: 600, color: '#1D1D1F' }}>Keine Einträge gefunden</div>
-            <div style={{ fontSize: 13, color: '#86868B', marginTop: 4 }}>
+            <div style={{ fontSize: 15, fontWeight: 600, color: c.text }}>Keine Einträge gefunden</div>
+            <div style={{ fontSize: 13, color: c.textSecondary, marginTop: 4 }}>
               {search || filterStatus ? 'Filter anpassen oder zurücksetzen' : 'Erstelle deine erste Website oder Projekt'}
             </div>
           </div>
@@ -685,13 +687,13 @@ export default function WorkOverview() {
             ))}
           </div>
         ) : (
-          <div style={{ background: '#fff', borderRadius: 14, border: '1px solid rgba(0,0,0,0.06)', overflow: 'hidden' }}>
+          <div style={{ background: c.card, borderRadius: 14, border: `1px solid ${c.borderSubtle}`, overflow: 'hidden' }}>
             {/* List header */}
             <div style={{
               display: 'grid', gridTemplateColumns: '1fr 120px 130px 110px 100px 80px',
               gap: 12, padding: '9px 16px',
-              background: '#F9F9FB', borderBottom: '1px solid rgba(0,0,0,0.06)',
-              fontSize: 11, fontWeight: 700, color: '#86868B', textTransform: 'uppercase', letterSpacing: '0.06em',
+              background: '#F9F9FB', borderBottom: `1px solid ${c.borderSubtle}`,
+              fontSize: 11, fontWeight: 700, color: c.textSecondary, textTransform: 'uppercase', letterSpacing: '0.06em',
             }}>
               <span>Name</span>
               <span>Typ</span>

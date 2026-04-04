@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { intakeApi } from '../api/intake';
 
 function avatarColor(str = '') {
@@ -17,6 +18,7 @@ function avatarColor(str = '') {
 
 export default function Sidebar() {
   const { logout, user, isAdmin, isPM } = useAuth();
+  const { c, isDark } = useTheme();
   const navigate = useNavigate();
 
   const NAV_GROUPS = [
@@ -73,23 +75,46 @@ export default function Sidebar() {
   const bgColor  = user?.color || avatarColor(user?.email || '');
 
   return (
-    <aside className="w-[240px] shrink-0 flex flex-col h-screen bg-white/85 backdrop-blur-2xl border-r border-black/[0.06] z-10">
+    <aside style={{
+      width: 240,
+      flexShrink: 0,
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100vh',
+      background: c.sidebarBg,
+      backdropFilter: 'blur(24px)',
+      WebkitBackdropFilter: 'blur(24px)',
+      borderRight: `1px solid ${c.borderSubtle}`,
+      zIndex: 10,
+      transition: 'background 0.2s ease, border-color 0.2s ease',
+    }}>
 
       {/* Logo */}
-      <div className="px-5 pt-5 pb-2 shrink-0">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-[9px] bg-[#0071E3] flex items-center justify-center shadow-[0_2px_8px_rgba(0,113,227,0.35)]">
+      <div style={{ padding: '20px 20px 8px', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{
+            width: 32, height: 32, borderRadius: 9, background: c.blue,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: `0 2px 8px ${c.blueLight}`,
+          }}>
             <Zap size={14} color="#fff" strokeWidth={2.5} />
           </div>
-          <span className="text-[15px] font-semibold text-[#1D1D1F] tracking-[-0.3px]">Vecturo</span>
+          <span style={{ fontSize: 15, fontWeight: 600, color: c.text, letterSpacing: '-0.3px' }}>Vecturo</span>
         </div>
       </div>
 
       {/* New project CTA */}
-      <div className="px-4 py-3 shrink-0">
+      <div style={{ padding: '0 16px 12px', flexShrink: 0 }}>
         <button
           onClick={() => navigate('/wizard')}
-          className="w-full flex items-center justify-center gap-1.5 py-[9px] px-4 text-[13px] font-medium text-white bg-[#0071E3] rounded-[10px] shadow-[0_1px_3px_rgba(0,113,227,0.3)] transition-all duration-150 hover:bg-[#0077ED] active:scale-[0.98]"
+          style={{
+            width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            gap: 6, padding: '9px 16px', fontSize: 13, fontWeight: 500,
+            color: '#fff', background: c.blue, border: 'none', borderRadius: 10,
+            cursor: 'pointer', transition: 'opacity 0.15s ease',
+          }}
+          onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
+          onMouseLeave={e => e.currentTarget.style.opacity = '1'}
         >
           <Plus size={14} strokeWidth={2} />
           Neues Projekt
@@ -97,32 +122,47 @@ export default function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-3 pb-2">
+      <nav style={{ flex: 1, overflowY: 'auto', padding: '0 12px 8px' }}>
         {NAV_GROUPS.map((group, gi) => (
           <div key={gi}>
             {group.label && (
-              <p className="px-3 pt-4 pb-1.5 text-[10.5px] font-semibold text-[#86868B] uppercase tracking-[0.08em] select-none">
+              <p style={{
+                padding: '16px 12px 6px', fontSize: 10.5, fontWeight: 600,
+                color: c.textSecondary, textTransform: 'uppercase',
+                letterSpacing: '0.08em', userSelect: 'none', margin: 0,
+              }}>
                 {group.label}
               </p>
             )}
-            <div className="space-y-0.5">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               {group.items.map(({ to, icon: Icon, label }) => (
-                <NavLink key={to} to={to} end={to === '/'} className="block no-underline">
+                <NavLink key={to} to={to} end={to === '/'} style={{ textDecoration: 'none' }}>
                   {({ isActive }) => (
-                    <div className={[
-                      'relative flex items-center gap-2.5 px-3 py-[7px] rounded-[10px]',
-                      'text-[13.5px] tracking-[-0.01em] cursor-pointer transition-all duration-[120ms]',
-                      isActive
-                        ? 'bg-[#E8F0FE] text-[#0071E3] font-medium'
-                        : 'text-[#424245] font-normal hover:bg-black/[0.04] hover:text-[#1D1D1F]',
-                    ].join(' ')}>
+                    <div style={{
+                      position: 'relative',
+                      display: 'flex', alignItems: 'center', gap: 10,
+                      padding: '7px 12px', borderRadius: 10,
+                      fontSize: 13.5, letterSpacing: '-0.01em', cursor: 'pointer',
+                      transition: 'background 0.12s ease, color 0.12s ease',
+                      background: isActive ? c.blueLight : 'transparent',
+                      color: isActive ? c.blue : (isDark ? '#AEAEB2' : '#424245'),
+                      fontWeight: isActive ? 500 : 400,
+                    }}>
                       {isActive && (
-                        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-[18px] bg-[#0071E3] rounded-r-full" />
+                        <span style={{
+                          position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)',
+                          width: 3, height: 18, background: c.blue, borderRadius: '0 2px 2px 0',
+                        }} />
                       )}
-                      <Icon size={15} color={isActive ? '#0071E3' : '#86868B'} strokeWidth={isActive ? 2 : 1.75} />
-                      <span className="flex-1">{label}</span>
+                      <Icon size={15} color={isActive ? c.blue : c.textSecondary} strokeWidth={isActive ? 2 : 1.75} />
+                      <span style={{ flex: 1 }}>{label}</span>
                       {to === '/intake' && unread?.count > 0 && (
-                        <span className="min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full bg-[#FF3B30] text-white text-[10px] font-bold leading-none">
+                        <span style={{
+                          minWidth: 18, height: 18, padding: '0 4px',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          borderRadius: 99, background: '#FF3B30',
+                          color: '#fff', fontSize: 10, fontWeight: 700,
+                        }}>
                           {unread.count > 99 ? '99+' : unread.count}
                         </span>
                       )}
@@ -136,29 +176,44 @@ export default function Sidebar() {
       </nav>
 
       {/* User */}
-      <div className="px-3 py-3 border-t border-black/[0.06] shrink-0">
-        <div className="flex items-center gap-2.5 px-2 py-2 rounded-[10px] mb-1">
-          <div className="relative shrink-0">
-            <div
-              className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white overflow-hidden"
-              style={{ background: bgColor }}
-            >
+      <div style={{
+        padding: '12px', borderTop: `1px solid ${c.borderSubtle}`, flexShrink: 0,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px', borderRadius: 10, marginBottom: 4 }}>
+          <div style={{ position: 'relative', flexShrink: 0 }}>
+            <div style={{
+              width: 28, height: 28, borderRadius: '50%',
+              background: bgColor, display: 'flex', alignItems: 'center',
+              justifyContent: 'center', fontSize: 10, fontWeight: 700,
+              color: '#fff', overflow: 'hidden',
+            }}>
               {user?.avatar_base64
-                ? <img src={user.avatar_base64} alt="" className="w-full h-full object-cover" />
+                ? <img src={user.avatar_base64} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 : initials}
             </div>
-            <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-[#34C759] rounded-full border-2 border-white block" />
+            <span style={{
+              position: 'absolute', bottom: -2, right: -2,
+              width: 10, height: 10, background: '#34C759',
+              borderRadius: '50%', border: `2px solid ${c.sidebarBg}`, display: 'block',
+            }} />
           </div>
-          <div className="min-w-0 flex-1">
+          <div style={{ minWidth: 0, flex: 1 }}>
             {user?.name && (
-              <p className="text-[12px] font-medium text-[#1D1D1F] truncate leading-snug">{user.name}</p>
+              <p style={{ fontSize: 12, fontWeight: 500, color: c.text, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.name}</p>
             )}
-            <p className="text-[11px] text-[#6E6E73] truncate leading-snug">{user?.email}</p>
+            <p style={{ fontSize: 11, color: c.textTertiary, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.email}</p>
           </div>
         </div>
         <button
           onClick={logout}
-          className="w-full flex items-center gap-2 px-3 py-1.5 text-[12.5px] text-[#86868B] rounded-[8px] hover:bg-red-500/10 hover:text-[#FF3B30] transition-all duration-150 cursor-pointer"
+          style={{
+            width: '100%', display: 'flex', alignItems: 'center', gap: 8,
+            padding: '6px 12px', fontSize: 12.5, color: c.textSecondary,
+            borderRadius: 8, border: 'none', background: 'none',
+            cursor: 'pointer', transition: 'background 0.15s ease, color 0.15s ease',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,59,48,0.1)'; e.currentTarget.style.color = '#FF3B30'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = c.textSecondary; }}
         >
           <LogOut size={13} strokeWidth={1.75} />
           Abmelden

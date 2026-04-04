@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { CalendarDays, X } from 'lucide-react';
+import { useTheme } from '../../context/ThemeContext';
 
 function toISO(d) { return d.toISOString().slice(0, 10); }
 
@@ -19,6 +20,7 @@ const QUICK = [
 ];
 
 export default function FollowupScheduler({ leadId, currentDate, onSave, onClose }) {
+  const { c } = useTheme();
   const [date, setDate] = useState(currentDate || defaultDate());
   const [note, setNote] = useState('');
 
@@ -39,7 +41,7 @@ export default function FollowupScheduler({ leadId, currentDate, onSave, onClose
     >
       <div
         style={{
-          background: '#fff', borderRadius: 20, padding: '24px', width: '100%', maxWidth: 360,
+          background: c.card, borderRadius: 20, padding: '24px', width: '100%', maxWidth: 360,
           boxShadow: '0 24px 60px rgba(0,0,0,0.22)',
           animation: 'modalIn 0.25s cubic-bezier(0.34,1.38,0.64,1) both',
           boxSizing: 'border-box', overflow: 'hidden',
@@ -54,9 +56,9 @@ export default function FollowupScheduler({ leadId, currentDate, onSave, onClose
             <div style={{ width: 34, height: 34, borderRadius: 9, background: 'rgba(0,113,227,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <CalendarDays size={16} color="#0071E3" />
             </div>
-            <span style={{ fontSize: 16, fontWeight: 700, color: '#1D1D1F' }}>Follow-up planen</span>
+            <span style={{ fontSize: 16, fontWeight: 700, color: c.text }}>Follow-up planen</span>
           </div>
-          <button onClick={onClose} style={{ background: 'rgba(0,0,0,0.06)', border: 'none', cursor: 'pointer', color: '#636366', padding: 0, width: 28, height: 28, borderRadius: 99, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <button onClick={onClose} style={{ background: c.inputBg, border: 'none', cursor: 'pointer', color: c.textTertiary, padding: 0, width: 28, height: 28, borderRadius: 99, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <X size={15} />
           </button>
         </div>
@@ -72,11 +74,11 @@ export default function FollowupScheduler({ leadId, currentDate, onSave, onClose
                 onClick={() => setDate(val)}
                 style={{
                   padding: '6px 13px', borderRadius: 99, fontSize: 12.5, fontWeight: 600,
-                  background: isActive ? '#0071E3' : 'rgba(0,113,227,0.08)',
-                  color: isActive ? '#fff' : '#0071E3',
+                  background: isActive ? c.blue : c.blueLight,
+                  color: isActive ? '#fff' : c.blue,
                   border: 'none', cursor: 'pointer',
                   transition: 'all 0.15s',
-                  boxShadow: isActive ? '0 2px 8px rgba(0,113,227,0.3)' : 'none',
+                  boxShadow: isActive ? `0 2px 8px ${c.blue}40` : 'none',
                 }}
               >{label}</button>
             );
@@ -85,26 +87,26 @@ export default function FollowupScheduler({ leadId, currentDate, onSave, onClose
 
         {/* Date input */}
         <div style={{ marginBottom: 14 }}>
-          <label style={{ fontSize: 12, fontWeight: 600, color: '#636366', display: 'block', marginBottom: 5 }}>Datum</label>
-          <div style={{ overflow: 'hidden', borderRadius: 10, border: '1.5px solid #E5E5EA' }}>
+          <label style={{ fontSize: 12, fontWeight: 600, color: c.textTertiary, display: 'block', marginBottom: 5 }}>Datum</label>
+          <div style={{ overflow: 'hidden', borderRadius: 10, border: `1.5px solid ${c.border}` }}>
             <input
               type="date"
               value={date}
               onChange={e => setDate(e.target.value)}
-              style={{ width: '100%', padding: '10px 12px', border: 'none', outline: 'none', fontSize: 14, boxSizing: 'border-box', display: 'block', background: '#fff', textAlign: 'center' }}
+              style={{ width: '100%', padding: '10px 12px', border: 'none', outline: 'none', fontSize: 14, boxSizing: 'border-box', display: 'block', background: c.cardSecondary, textAlign: 'center', color: c.text }}
             />
           </div>
         </div>
 
         {/* Note */}
         <div style={{ marginBottom: 18 }}>
-          <label style={{ fontSize: 12, fontWeight: 600, color: '#636366', display: 'block', marginBottom: 5 }}>Notiz</label>
+          <label style={{ fontSize: 12, fontWeight: 600, color: c.textTertiary, display: 'block', marginBottom: 5 }}>Notiz</label>
           <textarea
             value={note}
             onChange={e => setNote(e.target.value)}
             placeholder="Notiz zum Follow-up..."
             rows={2}
-            style={{ width: '100%', padding: '10px 12px', borderRadius: 10, fontSize: 13.5, border: '1.5px solid #E5E5EA', outline: 'none', resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box' }}
+            style={{ width: '100%', padding: '10px 12px', borderRadius: 10, fontSize: 13.5, border: `1.5px solid ${c.border}`, outline: 'none', resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box', background: c.cardSecondary, color: c.text }}
           />
         </div>
 
@@ -112,14 +114,14 @@ export default function FollowupScheduler({ leadId, currentDate, onSave, onClose
         <div style={{ display: 'flex', gap: 10 }}>
           <button
             onClick={onClose}
-            style={{ flex: 1, padding: '11px', borderRadius: 10, fontSize: 14, fontWeight: 600, border: '1.5px solid #E5E5EA', background: '#fff', color: '#636366', cursor: 'pointer' }}
+            style={{ flex: 1, padding: '11px', borderRadius: 10, fontSize: 14, fontWeight: 600, border: `1.5px solid ${c.border}`, background: c.card, color: c.textSecondary, cursor: 'pointer' }}
           >
             Abbrechen
           </button>
           <button
             onClick={handleSave}
             disabled={!date}
-            style={{ flex: 2, padding: '11px', borderRadius: 10, fontSize: 14, fontWeight: 600, border: 'none', background: date ? '#0071E3' : '#E5E5EA', color: date ? '#fff' : '#AEAEB2', cursor: date ? 'pointer' : 'not-allowed' }}
+            style={{ flex: 2, padding: '11px', borderRadius: 10, fontSize: 14, fontWeight: 600, border: 'none', background: date ? c.blue : c.border, color: date ? '#fff' : c.textTertiary, cursor: date ? 'pointer' : 'not-allowed' }}
           >
             Speichern
           </button>

@@ -12,19 +12,20 @@ import { formatCurrency, formatDate } from '../utils/formatters';
 import StatusBadge from '../components/StatusBadge';
 import LoadingSpinner from '../components/LoadingSpinner';
 import toast from 'react-hot-toast';
+import { useTheme } from '../context/ThemeContext';
 
 // ── Shared styles ──────────────────────────────────────────────────────────────
 
 const CARD = {
-  background: '#fff',
+  background: c.card,
   borderRadius: '16px',
   border: '1px solid rgba(0,0,0,0.07)',
   boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
   padding: '20px',
 };
 
-const LABEL = { fontSize: '11px', color: '#86868B', letterSpacing: '0.02em', marginBottom: '4px', display: 'block' };
-const VALUE = { fontSize: '14px', color: '#1D1D1F', fontWeight: '500', margin: 0, letterSpacing: '-0.01em' };
+const LABEL = { fontSize: '11px', color: c.textSecondary, letterSpacing: '0.02em', marginBottom: '4px', display: 'block' };
+const VALUE = { fontSize: '14px', color: c.text, fontWeight: '500', margin: 0, letterSpacing: '-0.01em' };
 const EMPTY = { fontSize: '14px', color: '#C7C7CC', margin: 0 };
 
 // ── ContactPersonWidget ────────────────────────────────────────────────────────
@@ -66,12 +67,12 @@ function ContactPersonWidget({ client, clientId }) {
           <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(0,113,227,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <User size={14} color="#0071E3" />
           </div>
-          <span style={{ fontSize: '14px', fontWeight: '600', color: '#1D1D1F', letterSpacing: '-0.01em' }}>Kontaktperson</span>
+          <span style={{ fontSize: '14px', fontWeight: '600', color: c.text, letterSpacing: '-0.01em' }}>Kontaktperson</span>
         </div>
         {editing ? (
           <div style={{ display: 'flex', gap: '8px' }}>
             <button onClick={() => setEditing(false)}
-              style={{ fontSize: '12px', color: '#86868B', background: 'none', border: 'none', cursor: 'pointer', padding: '5px 10px', borderRadius: '8px' }}>
+              style={{ fontSize: '12px', color: c.textSecondary, background: 'none', border: 'none', cursor: 'pointer', padding: '5px 10px', borderRadius: '8px' }}>
               Abbrechen
             </button>
             <button onClick={() => saveMutation.mutate(form)} disabled={saveMutation.isPending}
@@ -81,7 +82,7 @@ function ContactPersonWidget({ client, clientId }) {
           </div>
         ) : (
           <button onClick={startEdit}
-            style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: '#86868B', background: 'none', border: 'none', cursor: 'pointer', padding: '5px 10px', borderRadius: '8px' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: c.textSecondary, background: 'none', border: 'none', cursor: 'pointer', padding: '5px 10px', borderRadius: '8px' }}
             onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.05)'}
             onMouseLeave={e => e.currentTarget.style.background = 'none'}>
             <Pencil size={12} /> Bearbeiten
@@ -104,7 +105,7 @@ function ContactPersonWidget({ client, clientId }) {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
           {/* Name */}
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-            <div style={{ width: '32px', height: '32px', borderRadius: '9px', background: '#F5F5F7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <div style={{ width: '32px', height: '32px', borderRadius: '9px', background: c.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <User size={14} color="#86868B" />
             </div>
             <div>
@@ -117,7 +118,7 @@ function ContactPersonWidget({ client, clientId }) {
 
           {/* E-Mail */}
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-            <div style={{ width: '32px', height: '32px', borderRadius: '9px', background: '#F5F5F7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <div style={{ width: '32px', height: '32px', borderRadius: '9px', background: c.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <Mail size={14} color="#86868B" />
             </div>
             <div style={{ minWidth: 0 }}>
@@ -130,7 +131,7 @@ function ContactPersonWidget({ client, clientId }) {
 
           {/* Telefon */}
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-            <div style={{ width: '32px', height: '32px', borderRadius: '9px', background: '#F5F5F7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <div style={{ width: '32px', height: '32px', borderRadius: '9px', background: c.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <Phone size={14} color="#86868B" />
             </div>
             <div>
@@ -177,12 +178,12 @@ function LegalSetup({ clientId }) {
           <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(52,199,89,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <ShieldCheck size={14} color="#34C759" />
           </div>
-          <span style={{ fontSize: '14px', fontWeight: '600', color: '#1D1D1F', letterSpacing: '-0.01em' }}>Legal Setup</span>
+          <span style={{ fontSize: '14px', fontWeight: '600', color: c.text, letterSpacing: '-0.01em' }}>Legal Setup</span>
         </div>
         {form ? (
           <div style={{ display: 'flex', gap: '8px' }}>
             <button onClick={() => setForm(null)}
-              style={{ fontSize: '12px', color: '#86868B', background: 'none', border: 'none', cursor: 'pointer', padding: '5px 10px', borderRadius: '8px' }}>
+              style={{ fontSize: '12px', color: c.textSecondary, background: 'none', border: 'none', cursor: 'pointer', padding: '5px 10px', borderRadius: '8px' }}>
               Abbrechen
             </button>
             <button onClick={() => saveMutation.mutate(form)} disabled={saveMutation.isPending}
@@ -193,7 +194,7 @@ function LegalSetup({ clientId }) {
         ) : (
           <button
             onClick={() => setForm({ company_name: data.company_name || '', address: data.address || '', vat_id: data.vat_id || '', dsgvo_provider: data.dsgvo_provider || '' })}
-            style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: '#86868B', background: 'none', border: 'none', cursor: 'pointer', padding: '5px 10px', borderRadius: '8px' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: c.textSecondary, background: 'none', border: 'none', cursor: 'pointer', padding: '5px 10px', borderRadius: '8px' }}
             onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.05)'}
             onMouseLeave={e => e.currentTarget.style.background = 'none'}>
             <Pencil size={12} /> Bearbeiten
@@ -232,6 +233,7 @@ function LegalSetup({ clientId }) {
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 export default function ClientDetail() {
+  const { c, isDark } = useTheme();
   const { id } = useParams();
   const navigate = useNavigate();
 
@@ -251,7 +253,7 @@ export default function ClientDetail() {
   });
 
   if (clientLoading || invoicesLoading) return <LoadingSpinner className="h-64" />;
-  if (!client) return <div style={{ padding: '32px', color: '#86868B' }}>Kunde nicht gefunden.</div>;
+  if (!client) return <div style={{ padding: '32px', color: c.textSecondary }}>Kunde nicht gefunden.</div>;
 
   const address = [
     client.address,
@@ -266,15 +268,15 @@ export default function ClientDetail() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '28px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <button onClick={() => navigate('/clients')}
-            style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(0,0,0,0.05)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#86868B' }}
+            style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(0,0,0,0.05)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.textSecondary }}
             onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.09)'}
             onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0.05)'}>
             <ArrowLeft size={18} />
           </button>
           <div>
-            <h1 style={{ fontSize: '20px', fontWeight: '700', color: '#1D1D1F', letterSpacing: '-0.03em', margin: 0 }}>{client.company_name}</h1>
+            <h1 style={{ fontSize: '20px', fontWeight: '700', color: c.text, letterSpacing: '-0.03em', margin: 0 }}>{client.company_name}</h1>
             {client.contact_person && (
-              <p style={{ fontSize: '13px', color: '#86868B', margin: '2px 0 0', letterSpacing: '-0.01em' }}>{client.contact_person}</p>
+              <p style={{ fontSize: '13px', color: c.textSecondary, margin: '2px 0 0', letterSpacing: '-0.01em' }}>{client.contact_person}</p>
             )}
           </div>
         </div>
@@ -306,7 +308,7 @@ export default function ClientDetail() {
         {/* Gesamtumsatz */}
         <div style={CARD}>
           <span style={LABEL}>GESAMTUMSATZ</span>
-          <p style={{ fontSize: '22px', fontWeight: '700', color: '#1D1D1F', margin: 0, letterSpacing: '-0.03em' }}>
+          <p style={{ fontSize: '22px', fontWeight: '700', color: c.text, margin: 0, letterSpacing: '-0.03em' }}>
             {formatCurrency(client.total_revenue || 0)}
           </p>
         </div>
@@ -322,11 +324,11 @@ export default function ClientDetail() {
         {/* Rechnungen */}
         <div style={CARD}>
           <span style={LABEL}>RECHNUNGEN</span>
-          <p style={{ fontSize: '22px', fontWeight: '700', color: '#1D1D1F', margin: 0, letterSpacing: '-0.03em' }}>
+          <p style={{ fontSize: '22px', fontWeight: '700', color: c.text, margin: 0, letterSpacing: '-0.03em' }}>
             {client.invoice_count || 0}
           </p>
           {client.last_invoice_date && (
-            <p style={{ fontSize: '11px', color: '#86868B', margin: '4px 0 0' }}>Letzte: {formatDate(client.last_invoice_date)}</p>
+            <p style={{ fontSize: '11px', color: c.textSecondary, margin: '4px 0 0' }}>Letzte: {formatDate(client.last_invoice_date)}</p>
           )}
         </div>
 
@@ -357,14 +359,14 @@ export default function ClientDetail() {
 
       {/* ── Websites ── */}
       <div style={{ ...CARD, padding: 0, overflow: 'hidden', marginBottom: '12px' }}>
-        <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ padding: '16px 20px', borderBottom: `1px solid ${c.borderSubtle}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(0,113,227,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Globe size={14} color="#0071E3" />
             </div>
-            <span style={{ fontSize: '14px', fontWeight: '600', color: '#1D1D1F', letterSpacing: '-0.01em' }}>
+            <span style={{ fontSize: '14px', fontWeight: '600', color: c.text, letterSpacing: '-0.01em' }}>
               Websites
-              <span style={{ marginLeft: '6px', fontSize: '13px', color: '#86868B', fontWeight: '400' }}>{clientProjects.length}</span>
+              <span style={{ marginLeft: '6px', fontSize: '13px', color: c.textSecondary, fontWeight: '400' }}>{clientProjects.length}</span>
             </span>
           </div>
           <button onClick={() => navigate('/websites/new')} style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', fontWeight: '600', color: '#0071E3', background: 'rgba(0,113,227,0.08)', border: 'none', borderRadius: '8px', cursor: 'pointer', padding: '5px 12px' }}>
@@ -375,7 +377,7 @@ export default function ClientDetail() {
         {clientProjects.length === 0 ? (
           <div style={{ padding: '40px 20px', textAlign: 'center' }}>
             <Globe size={28} color="#D1D1D6" style={{ margin: '0 auto 10px' }} />
-            <p style={{ fontSize: '14px', color: '#86868B', margin: 0 }}>Noch keine Website für diesen Kunden.</p>
+            <p style={{ fontSize: '14px', color: c.textSecondary, margin: 0 }}>Noch keine Website für diesen Kunden.</p>
           </div>
         ) : (
           <div>
@@ -406,8 +408,8 @@ export default function ClientDetail() {
 
                   {/* Name */}
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: '14px', fontWeight: '600', color: '#1D1D1F', margin: 0, letterSpacing: '-0.01em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</p>
-                    {p.deadline && <p style={{ fontSize: '11px', color: '#86868B', margin: '2px 0 0' }}>Deadline: {formatDate(p.deadline)}</p>}
+                    <p style={{ fontSize: '14px', fontWeight: '600', color: c.text, margin: 0, letterSpacing: '-0.01em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</p>
+                    {p.deadline && <p style={{ fontSize: '11px', color: c.textSecondary, margin: '2px 0 0' }}>Deadline: {formatDate(p.deadline)}</p>}
                   </div>
 
                   {/* Phase badge */}
@@ -422,7 +424,7 @@ export default function ClientDetail() {
 
                   {/* Progress bar */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
-                    <div style={{ width: '56px', height: '3px', background: '#F2F2F7', borderRadius: '2px' }}>
+                    <div style={{ width: '56px', height: '3px', background: c.cardSecondary, borderRadius: '2px' }}>
                       <div style={{ width: `${pct}%`, height: '100%', background: isLast ? '#34C759' : '#0071E3', borderRadius: '2px' }} />
                     </div>
                     <span style={{ fontSize: '11px', color: '#8E8E93' }}>{phaseIdx + 1}/{total}</span>
@@ -438,14 +440,14 @@ export default function ClientDetail() {
 
       {/* ── Rechnungen ── */}
       <div style={{ ...CARD, padding: 0, overflow: 'hidden' }}>
-        <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ padding: '16px 20px', borderBottom: `1px solid ${c.borderSubtle}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(0,113,227,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <FileText size={14} color="#0071E3" />
             </div>
-            <span style={{ fontSize: '14px', fontWeight: '600', color: '#1D1D1F', letterSpacing: '-0.01em' }}>
+            <span style={{ fontSize: '14px', fontWeight: '600', color: c.text, letterSpacing: '-0.01em' }}>
               Rechnungen
-              <span style={{ marginLeft: '6px', fontSize: '13px', color: '#86868B', fontWeight: '400' }}>{invoices.length}</span>
+              <span style={{ marginLeft: '6px', fontSize: '13px', color: c.textSecondary, fontWeight: '400' }}>{invoices.length}</span>
             </span>
           </div>
         </div>
@@ -453,7 +455,7 @@ export default function ClientDetail() {
         {invoices.length === 0 ? (
           <div style={{ padding: '48px 20px', textAlign: 'center' }}>
             <FileText size={32} color="#D1D1D6" style={{ margin: '0 auto 12px' }} />
-            <p style={{ fontSize: '14px', color: '#86868B', margin: '0 0 16px' }}>Noch keine Rechnungen für diesen Kunden.</p>
+            <p style={{ fontSize: '14px', color: c.textSecondary, margin: '0 0 16px' }}>Noch keine Rechnungen für diesen Kunden.</p>
             <button onClick={() => navigate('/invoices/new')} className="btn-primary">
               <Plus size={16} /> Rechnung erstellen
             </button>
@@ -461,9 +463,9 @@ export default function ClientDetail() {
         ) : (
           <table style={{ width: '100%', fontSize: '13px', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+              <tr style={{ borderBottom: `1px solid ${c.borderSubtle}` }}>
                 {['Nummer', 'Datum', 'Fällig', 'Status', 'Betrag'].map((h, i) => (
-                  <th key={h} style={{ padding: '10px 20px', textAlign: i === 4 ? 'right' : 'left', fontSize: '11px', fontWeight: '600', color: '#86868B', letterSpacing: '0.04em', textTransform: 'uppercase' }}>{h}</th>
+                  <th key={h} style={{ padding: '10px 20px', textAlign: i === 4 ? 'right' : 'left', fontSize: '11px', fontWeight: '600', color: c.textSecondary, letterSpacing: '0.04em', textTransform: 'uppercase' }}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -473,11 +475,11 @@ export default function ClientDetail() {
                   style={{ borderBottom: '1px solid rgba(0,0,0,0.04)', cursor: 'pointer', transition: 'background 0.1s' }}
                   onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.025)'}
                   onMouseLeave={e => e.currentTarget.style.background = 'none'}>
-                  <td style={{ padding: '12px 20px', fontWeight: '600', color: '#1D1D1F' }}>{inv.invoice_number}</td>
-                  <td style={{ padding: '12px 20px', color: '#86868B' }}>{formatDate(inv.issue_date)}</td>
-                  <td style={{ padding: '12px 20px', color: '#86868B' }}>{formatDate(inv.due_date)}</td>
+                  <td style={{ padding: '12px 20px', fontWeight: '600', color: c.text }}>{inv.invoice_number}</td>
+                  <td style={{ padding: '12px 20px', color: c.textSecondary }}>{formatDate(inv.issue_date)}</td>
+                  <td style={{ padding: '12px 20px', color: c.textSecondary }}>{formatDate(inv.due_date)}</td>
                   <td style={{ padding: '12px 20px' }}><StatusBadge status={inv.status} /></td>
-                  <td style={{ padding: '12px 20px', textAlign: 'right', fontWeight: '700', color: '#1D1D1F' }}>{formatCurrency(inv.total)}</td>
+                  <td style={{ padding: '12px 20px', textAlign: 'right', fontWeight: '700', color: c.text }}>{formatCurrency(inv.total)}</td>
                 </tr>
               ))}
             </tbody>

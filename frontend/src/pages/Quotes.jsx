@@ -9,6 +9,7 @@ import StatusBadge from '../components/StatusBadge';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useConfirm } from '../hooks/useConfirm';
 import { useMobile } from '../hooks/useMobile';
+import { useTheme } from '../context/ThemeContext';
 
 const STATUS_FILTERS = [
   { key: 'all',       label: 'Alle'        },
@@ -21,6 +22,7 @@ const STATUS_FILTERS = [
 ];
 
 export default function Quotes() {
+  const { c, isDark } = useTheme();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const isMobile = useMobile();
@@ -82,7 +84,7 @@ export default function Quotes() {
         <div className="skeleton h-9 w-64 rounded-lg" />
       </div>
       <div className="card p-0 overflow-hidden">
-        <div style={{ padding: '10px 18px', background: 'rgba(118,118,128,0.06)', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+        <div style={{ padding: '10px 18px', background: 'rgba(118,118,128,0.06)', borderBottom: `1px solid ${c.borderSubtle}` }}>
           <div className="skeleton h-3 w-28" />
         </div>
         {[...Array(5)].map((_, i) => (
@@ -101,12 +103,12 @@ export default function Quotes() {
   // ── Mobile layout ─────────────────────────────────────────────
   if (isMobile) {
     return (
-      <div style={{ background: '#F5F5F7', minHeight: '100vh' }}>
+      <div style={{ background: c.bg, minHeight: '100vh' }}>
         {/* Header */}
         <div style={{ padding: '20px 16px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <h1 style={{ fontSize: 22, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-0.4px', margin: 0 }}>Angebote</h1>
-            <p style={{ fontSize: 13, color: '#86868B', margin: '2px 0 0' }}>{quotes.length} gesamt</p>
+            <h1 style={{ fontSize: 22, fontWeight: 700, color: c.text, letterSpacing: '-0.4px', margin: 0 }}>Angebote</h1>
+            <p style={{ fontSize: 13, color: c.textSecondary, margin: '2px 0 0' }}>{quotes.length} gesamt</p>
           </div>
           <button
             onClick={() => navigate('/quotes/new')}
@@ -119,9 +121,9 @@ export default function Quotes() {
 
         {/* Search */}
         <div style={{ padding: '0 16px 10px', position: 'relative' }}>
-          <Search size={14} style={{ position: 'absolute', left: 28, top: '50%', transform: 'translateY(-50%)', color: '#86868B', pointerEvents: 'none' }} />
+          <Search size={14} style={{ position: 'absolute', left: 28, top: '50%', transform: 'translateY(-50%)', color: c.textSecondary, pointerEvents: 'none' }} />
           <input
-            style={{ width: '100%', padding: '10px 12px 10px 36px', borderRadius: 12, border: '1px solid rgba(0,0,0,0.1)', background: '#fff', fontSize: 15, outline: 'none', boxSizing: 'border-box' }}
+            style={{ width: '100%', padding: '10px 12px 10px 36px', borderRadius: 12, border: '1px solid rgba(0,0,0,0.1)', background: c.card, fontSize: 15, outline: 'none', boxSizing: 'border-box' }}
             placeholder="Suchen…"
             value={search}
             onChange={e => setSearch(e.target.value)}
@@ -148,9 +150,9 @@ export default function Quotes() {
         {/* Card list */}
         <div style={{ padding: '0 16px' }}>
           {filtered.length === 0 ? (
-            <div style={{ background: '#fff', borderRadius: 16, padding: '40px 20px', textAlign: 'center' }}>
+            <div style={{ background: c.card, borderRadius: 16, padding: '40px 20px', textAlign: 'center' }}>
               <ClipboardList size={32} color="#D1D1D6" strokeWidth={1.25} style={{ margin: '0 auto 12px' }} />
-              <p style={{ fontSize: 15, fontWeight: 600, color: '#1D1D1F', margin: '0 0 4px' }}>
+              <p style={{ fontSize: 15, fontWeight: 600, color: c.text, margin: '0 0 4px' }}>
                 {search || statusFilter !== 'all' ? 'Keine Angebote gefunden' : 'Noch keine Angebote'}
               </p>
               {!search && statusFilter === 'all' && (
@@ -160,7 +162,7 @@ export default function Quotes() {
               )}
             </div>
           ) : (
-            <div style={{ background: '#fff', borderRadius: 16, overflow: 'hidden', border: '1px solid rgba(0,0,0,0.06)' }}>
+            <div style={{ background: c.card, borderRadius: 16, overflow: 'hidden', border: `1px solid ${c.borderSubtle}` }}>
               {filtered.map((q, idx) => (
                 <div
                   key={q.id}
@@ -172,20 +174,20 @@ export default function Quotes() {
                 >
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                      <span style={{ fontSize: 15, fontWeight: 600, color: '#1D1D1F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <span style={{ fontSize: 15, fontWeight: 600, color: c.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {q.client_name}
                       </span>
                       <StatusBadge status={q.status} />
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontSize: 12, color: '#86868B', fontFamily: 'monospace' }}>{q.quote_number}</span>
+                      <span style={{ fontSize: 12, color: c.textSecondary, fontFamily: 'monospace' }}>{q.quote_number}</span>
                       {q.valid_until && (
-                        <span style={{ fontSize: 12, color: '#86868B' }}>· Gültig bis {formatDate(q.valid_until)}</span>
+                        <span style={{ fontSize: 12, color: c.textSecondary }}>· Gültig bis {formatDate(q.valid_until)}</span>
                       )}
                     </div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                    <span style={{ fontSize: 16, fontWeight: 700, color: '#1D1D1F' }}>
+                    <span style={{ fontSize: 16, fontWeight: 700, color: c.text }}>
                       {formatCurrency(q.total)}
                     </span>
                     <ChevronRight size={16} color="#C7C7CC" />

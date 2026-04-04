@@ -3,10 +3,12 @@ import Sidebar from './Sidebar';
 import BottomNav from './BottomNav';
 import MobileDrawer from './MobileDrawer';
 import { useMobile } from '../hooks/useMobile';
+import { useTheme } from '../context/ThemeContext';
 
 export default function Layout({ children }) {
   const isMobile = useMobile();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const { c } = useTheme();
 
   return (
     <div style={{
@@ -14,8 +16,9 @@ export default function Layout({ children }) {
       height: '100vh',
       overflow: isMobile ? 'auto' : 'hidden',
       overflowX: 'hidden',
-      background: '#F5F5F7',
+      background: c.bg,
       maxWidth: '100vw',
+      transition: 'background 0.2s ease',
     }}>
       {/* Sidebar — nur Desktop */}
       {!isMobile && <Sidebar />}

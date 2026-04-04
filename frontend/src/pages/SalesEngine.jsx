@@ -17,6 +17,7 @@ import SalesTargetModal from '../components/sales/SalesTargetModal';
 import ExcelImportModal from '../components/sales/ExcelImportModal';
 import CreateLeadModal from '../components/sales/CreateLeadModal';
 import { useMobile } from '../hooks/useMobile';
+import { useTheme } from '../context/ThemeContext';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -93,11 +94,12 @@ const TABS = [
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 function KpiCard({ icon: Icon, label, value, sub, color, target }) {
+  const { c } = useTheme();
   const pct = target ? Math.min(100, Math.round((value / target) * 100)) : null;
   return (
     <div style={{
-      background: '#fff', borderRadius: 12, padding: '12px 14px',
-      border: '1px solid rgba(0,0,0,0.06)', display: 'flex', flexDirection: 'column', gap: 6,
+      background: c.card, borderRadius: 12, padding: '12px 14px',
+      border: `1px solid ${c.borderSubtle}`, display: 'flex', flexDirection: 'column', gap: 6,
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         <div style={{
@@ -107,18 +109,18 @@ function KpiCard({ icon: Icon, label, value, sub, color, target }) {
           <Icon size={15} color={color} />
         </div>
         <div>
-          <div style={{ fontSize: 22, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-0.5px', lineHeight: 1 }}>{value}</div>
-          <div style={{ fontSize: 11, fontWeight: 500, color: '#86868B', marginTop: 2 }}>{label}</div>
+          <div style={{ fontSize: 22, fontWeight: 700, color: c.text, letterSpacing: '-0.5px', lineHeight: 1 }}>{value}</div>
+          <div style={{ fontSize: 11, fontWeight: 500, color: c.textSecondary, marginTop: 2 }}>{label}</div>
         </div>
-        {sub && <div style={{ fontSize: 11, color: '#AEAEB2', marginLeft: 'auto', textAlign: 'right' }}>{sub}</div>}
+        {sub && <div style={{ fontSize: 11, color: c.textTertiary, marginLeft: 'auto', textAlign: 'right' }}>{sub}</div>}
       </div>
       {pct !== null && (
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
-            <span style={{ fontSize: 10, color: '#86868B' }}>{value}/{target}</span>
+            <span style={{ fontSize: 10, color: c.textSecondary }}>{value}/{target}</span>
             <span style={{ fontSize: 10, fontWeight: 600, color }}>{pct}%</span>
           </div>
-          <div style={{ height: 3, background: '#F2F2F7', borderRadius: 99, overflow: 'hidden' }}>
+          <div style={{ height: 3, background: c.cardSecondary, borderRadius: 99, overflow: 'hidden' }}>
             <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: 99, transition: 'width 0.4s' }} />
           </div>
         </div>
@@ -128,6 +130,7 @@ function KpiCard({ icon: Icon, label, value, sub, color, target }) {
 }
 
 function LeadRow({ lead, isSelected, onClick, onCall }) {
+  const { c } = useTheme();
   const fu = followupInfo(lead.next_followup_date);
   const ws = WEBSITE_STATUS_CFG[lead.website_status];
   const pc = PRIORITY_CFG[lead.priority ?? 0];
@@ -138,12 +141,12 @@ function LeadRow({ lead, isSelected, onClick, onCall }) {
       onClick={onClick}
       style={{
         display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px',
-        borderBottom: '1px solid rgba(0,0,0,0.04)', cursor: 'pointer',
-        background: isSelected ? 'rgba(0,113,227,0.06)' : 'transparent',
-        borderLeft: isSelected ? '3px solid #0071E3' : '3px solid transparent',
+        borderBottom: `1px solid ${c.borderSubtle}`, cursor: 'pointer',
+        background: isSelected ? c.blueLight : 'transparent',
+        borderLeft: isSelected ? `3px solid ${c.blue}` : '3px solid transparent',
         transition: 'background 0.1s',
       }}
-      onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = '#F9F9FB'; }}
+      onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = c.cardSecondary; }}
       onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = 'transparent'; }}
     >
       {/* Priority dot */}
@@ -152,7 +155,7 @@ function LeadRow({ lead, isSelected, onClick, onCall }) {
       {/* Text block — nimmt den ganzen verfügbaren Platz */}
       <div style={{ flex: 1, minWidth: 0 }}>
         {/* Zeile 1: Firmenname — volle Breite */}
-        <div style={{ fontSize: 13, fontWeight: 600, color: '#1D1D1F', letterSpacing: '-0.1px', marginBottom: 3 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: c.text, letterSpacing: '-0.1px', marginBottom: 3 }}>
           {lead.company_name}
         </div>
         {/* Zeile 2: Badges + Stadt */}
@@ -170,7 +173,7 @@ function LeadRow({ lead, isSelected, onClick, onCall }) {
           )}
 
           {(lead.city || lead.contact_person) && (
-            <span style={{ fontSize: 10.5, color: '#AEAEB2', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <span style={{ fontSize: 10.5, color: c.textTertiary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {[lead.contact_person, lead.city].filter(Boolean).join(' · ')}
             </span>
           )}
@@ -181,8 +184,8 @@ function LeadRow({ lead, isSelected, onClick, onCall }) {
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3, flexShrink: 0 }}>
         {fu ? (
           <span style={{ fontSize: 10, fontWeight: 700, color: fu.color, whiteSpace: 'nowrap' }}>{fu.label}</span>
-        ) : <span style={{ fontSize: 10, color: '#E5E5EA' }}>—</span>}
-        <span style={{ fontSize: 10, color: '#AEAEB2' }}>
+        ) : <span style={{ fontSize: 10, color: c.border }}>—</span>}
+        <span style={{ fontSize: 10, color: c.textTertiary }}>
           {lead.total_calls ? `${lead.total_calls}x angerufen` : 'noch kein Anruf'}
         </span>
       </div>
@@ -194,8 +197,8 @@ function LeadRow({ lead, isSelected, onClick, onCall }) {
         title={lead.phone || 'Keine Nummer'}
         style={{
           width: 30, height: 30, borderRadius: 8, border: 'none', flexShrink: 0,
-          background: lead.phone ? 'rgba(52,199,89,0.12)' : 'rgba(0,0,0,0.04)',
-          color: lead.phone ? '#34C759' : '#C7C7CC',
+          background: lead.phone ? 'rgba(52,199,89,0.12)' : c.inputBg,
+          color: lead.phone ? '#34C759' : c.textTertiary,
           cursor: lead.phone ? 'pointer' : 'not-allowed',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           transition: 'background 0.15s',
@@ -210,15 +213,16 @@ function LeadRow({ lead, isSelected, onClick, onCall }) {
 }
 
 function EmptyDetail() {
+  const { c } = useTheme();
   return (
     <div style={{
-      background: '#fff', borderRadius: 14, border: '1px solid rgba(0,0,0,0.06)',
+      background: c.card, borderRadius: 14, border: `1px solid ${c.borderSubtle}`,
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-      height: '100%', gap: 12, color: '#AEAEB2',
+      height: '100%', gap: 12, color: c.textSecondary,
     }}>
       <MousePointerClick size={36} strokeWidth={1.5} />
-      <div style={{ fontSize: 14, fontWeight: 600, color: '#86868B' }}>Lead auswählen</div>
-      <div style={{ fontSize: 12.5, color: '#AEAEB2' }}>Klicke einen Lead in der Liste an</div>
+      <div style={{ fontSize: 14, fontWeight: 600, color: c.textSecondary }}>Lead auswählen</div>
+      <div style={{ fontSize: 12.5, color: c.textTertiary }}>Klicke einen Lead in der Liste an</div>
     </div>
   );
 }
@@ -228,6 +232,7 @@ function EmptyDetail() {
 export default function SalesEngine() {
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const { c, isDark } = useTheme();
 
   // UI state
   const [tab, setTab]                       = useState('due');
@@ -438,17 +443,17 @@ export default function SalesEngine() {
     const s = selectedLead ? (LEAD_STATUSES[selectedLead.status] || LEAD_STATUSES.neu) : null;
 
     return (
-      <div style={{ minHeight: '100%', background: '#F5F5F7', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ minHeight: '100%', background: c.bg, display: 'flex', flexDirection: 'column' }}>
 
         {/* Mobile Header */}
-        <div style={{ background: '#fff', borderBottom: '1px solid rgba(0,0,0,0.06)', position: 'sticky', top: 0, zIndex: 20 }}>
+        <div style={{ background: c.card, borderBottom: `1px solid ${c.borderSubtle}`, position: 'sticky', top: 0, zIndex: 20 }}>
           <div style={{ padding: '14px 16px 0' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
               <div>
-                <h1 style={{ fontSize: 20, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-0.5px', margin: 0, display: 'flex', alignItems: 'center', gap: 7 }}>
+                <h1 style={{ fontSize: 20, fontWeight: 700, color: c.text, letterSpacing: '-0.5px', margin: 0, display: 'flex', alignItems: 'center', gap: 7 }}>
                   <Flame size={18} color="#FF9500" /> Sales Engine
                 </h1>
-                <p style={{ fontSize: 11.5, color: '#86868B', margin: '2px 0 0' }}>
+                <p style={{ fontSize: 11.5, color: c.textSecondary, margin: '2px 0 0' }}>
                   {t.calls_total || 0} Anrufe · {stats?.followups_due || 0} Follow-ups
                 </p>
               </div>
@@ -473,16 +478,16 @@ export default function SalesEngine() {
                 ].map(({ icon: Icon, label, value, color, target: tgt, sub }) => {
                   const pct = tgt ? Math.min(100, Math.round((value / tgt) * 100)) : null;
                   return (
-                    <div key={label} style={{ background: '#F5F5F7', borderRadius: 12, padding: '10px 14px', minWidth: 110, flexShrink: 0 }}>
+                    <div key={label} style={{ background: c.cardSecondary, borderRadius: 12, padding: '10px 14px', minWidth: 110, flexShrink: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                         <Icon size={13} color={color} />
-                        <span style={{ fontSize: 11, color: '#86868B', fontWeight: 500 }}>{label}</span>
-                        {sub && <span style={{ fontSize: 10, color: '#AEAEB2', marginLeft: 'auto' }}>{sub}</span>}
+                        <span style={{ fontSize: 11, color: c.textSecondary, fontWeight: 500 }}>{label}</span>
+                        {sub && <span style={{ fontSize: 10, color: c.textTertiary, marginLeft: 'auto' }}>{sub}</span>}
                       </div>
-                      <div style={{ fontSize: 22, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-0.5px' }}>{value}</div>
+                      <div style={{ fontSize: 22, fontWeight: 700, color: c.text, letterSpacing: '-0.5px' }}>{value}</div>
                       {pct !== null && (
                         <div style={{ marginTop: 4 }}>
-                          <div style={{ height: 3, background: 'rgba(0,0,0,0.08)', borderRadius: 99, overflow: 'hidden' }}>
+                          <div style={{ height: 3, background: c.inputBg, borderRadius: 99, overflow: 'hidden' }}>
                             <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: 99 }} />
                           </div>
                           <div style={{ fontSize: 9, color, fontWeight: 600, marginTop: 2 }}>{value}/{tgt} · {pct}%</div>
@@ -511,8 +516,8 @@ export default function SalesEngine() {
               {TABS.map(tb => (
                 <button key={tb.key} onClick={() => setTab(tb.key)} style={{
                   padding: '8px 12px', fontSize: 12.5, fontWeight: tab === tb.key ? 600 : 500,
-                  color: tab === tb.key ? '#1D1D1F' : '#86868B', background: 'none', border: 'none',
-                  borderBottom: tab === tb.key ? '2px solid #0071E3' : '2px solid transparent',
+                  color: tab === tb.key ? c.text : c.textSecondary, background: 'none', border: 'none',
+                  borderBottom: tab === tb.key ? `2px solid ${c.blue}` : '2px solid transparent',
                   cursor: 'pointer', whiteSpace: 'nowrap',
                 }}>
                   {tb.label}
@@ -523,19 +528,19 @@ export default function SalesEngine() {
         </div>
 
         {/* Search */}
-        <div style={{ padding: '10px 16px', background: '#fff', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
+        <div style={{ padding: '10px 16px', background: c.card, borderBottom: `1px solid ${c.borderSubtle}` }}>
           <div style={{ position: 'relative' }}>
-            <Search size={14} color="#AEAEB2" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+            <Search size={14} color={c.textTertiary} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
             <input
               value={search} onChange={e => setSearch(e.target.value)}
               placeholder="Suchen..."
-              style={{ width: '100%', padding: '9px 10px 9px 32px', borderRadius: 10, fontSize: 14, border: '1.5px solid #E5E5EA', outline: 'none', boxSizing: 'border-box', background: '#FAFAFA' }}
+              style={{ width: '100%', padding: '9px 10px 9px 32px', borderRadius: 10, fontSize: 14, border: `1.5px solid ${c.border}`, outline: 'none', boxSizing: 'border-box', background: c.cardSecondary, color: c.text }}
             />
           </div>
         </div>
 
         {/* Lead Count */}
-        <div style={{ padding: '6px 16px', fontSize: 11, color: '#AEAEB2' }}>
+        <div style={{ padding: '6px 16px', fontSize: 11, color: c.textTertiary }}>
           {leadsLoading ? 'Laden...' : `${leads.length} Lead${leads.length !== 1 ? 's' : ''}`}
         </div>
 
@@ -561,13 +566,13 @@ export default function SalesEngine() {
                   onClick={() => setSelectedLeadId(lead.id)}
                   style={{
                     display: 'flex', alignItems: 'center', gap: 12,
-                    padding: '13px 16px', background: '#fff',
-                    borderBottom: '1px solid rgba(0,0,0,0.05)', cursor: 'pointer',
+                    padding: '13px 16px', background: c.card,
+                    borderBottom: `1px solid ${c.borderSubtle}`, cursor: 'pointer',
                   }}
                 >
                   <div style={{ width: 8, height: 8, borderRadius: '50%', background: pc.dot, flexShrink: 0 }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: '#1D1D1F', marginBottom: 4 }}>{lead.company_name}</div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: c.text, marginBottom: 4 }}>{lead.company_name}</div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
                       <span style={{ padding: '2px 7px', borderRadius: 99, fontSize: 10.5, fontWeight: 600, background: ls.bg, color: ls.color }}>{ls.label}</span>
                       {ws && <span style={{ padding: '2px 6px', borderRadius: 6, fontSize: 10, fontWeight: 600, background: ws.bg, color: ws.color }}>{ws.short}</span>}
@@ -607,17 +612,17 @@ export default function SalesEngine() {
             {/* Sheet */}
             <div style={{
               position: 'fixed', bottom: 0, left: 0, right: 0,
-              height: '88vh', background: '#fff',
+              height: '88vh', background: c.card,
               borderRadius: '20px 20px 0 0',
-              boxShadow: '0 -8px 40px rgba(0,0,0,0.18)',
+              boxShadow: '0 -8px 40px rgba(0,0,0,0.25)',
               zIndex: 120, display: 'flex', flexDirection: 'column', overflow: 'hidden',
             }}>
               {/* Sheet Handle + Header */}
-              <div style={{ padding: '10px 16px 12px', borderBottom: '1px solid rgba(0,0,0,0.06)', flexShrink: 0 }}>
-                <div style={{ width: 36, height: 4, borderRadius: 99, background: 'rgba(0,0,0,0.12)', margin: '0 auto 12px' }} />
+              <div style={{ padding: '10px 16px 12px', borderBottom: `1px solid ${c.borderSubtle}`, flexShrink: 0 }}>
+                <div style={{ width: 36, height: 4, borderRadius: 99, background: c.border, margin: '0 auto 12px' }} />
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 17, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-0.4px', marginBottom: 6 }}>
+                    <div style={{ fontSize: 17, fontWeight: 700, color: c.text, letterSpacing: '-0.4px', marginBottom: 6 }}>
                       {selectedLead.company_name}
                     </div>
                     {/* Status + Priority */}
@@ -627,8 +632,8 @@ export default function SalesEngine() {
                       {selectedLead.city && <span style={{ fontSize: 12, color: '#86868B', display: 'flex', alignItems: 'center', gap: 3 }}><MapPin size={11} />{selectedLead.city}</span>}
                     </div>
                   </div>
-                  <button onClick={() => setSelectedLeadId(null)} style={{ width: 30, height: 30, borderRadius: 99, border: 'none', background: 'rgba(0,0,0,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
-                    <X size={15} color="#636366" />
+                  <button onClick={() => setSelectedLeadId(null)} style={{ width: 30, height: 30, borderRadius: 99, border: 'none', background: c.inputBg, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
+                    <X size={15} color={c.textSecondary} />
                   </button>
                 </div>
               </div>
@@ -639,7 +644,7 @@ export default function SalesEngine() {
                 {/* Contact chips */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 18 }}>
                   {selectedLead.contact_person && (
-                    <div style={{ fontSize: 13.5, color: '#636366', fontWeight: 500 }}>{selectedLead.contact_person}</div>
+                    <div style={{ fontSize: 13.5, color: c.textTertiary, fontWeight: 500 }}>{selectedLead.contact_person}</div>
                   )}
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                     {selectedLead.phone && (
@@ -662,7 +667,7 @@ export default function SalesEngine() {
 
                 {/* Status ändern */}
                 <div style={{ marginBottom: 16 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: '#86868B', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 10 }}>Status</div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: c.textSecondary, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 10 }}>Status</div>
                   <div style={{ overflowX: 'auto', margin: '0 -16px', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
                     <div style={{ display: 'flex', gap: 7, padding: '0 16px 4px', width: 'max-content' }}>
                       {Object.entries(LEAD_STATUSES)
@@ -685,50 +690,50 @@ export default function SalesEngine() {
                 </div>
 
                 {/* Follow-up */}
-                <div style={{ background: '#F5F5F7', borderRadius: 12, padding: '12px 14px', marginBottom: 12 }}>
+                <div style={{ background: c.cardSecondary, borderRadius: 12, padding: '12px 14px', marginBottom: 12 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: '#86868B', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Follow-up</span>
-                    <button onClick={() => setFollowupFor({ leadId: selectedLeadId })} style={{ padding: '4px 10px', borderRadius: 7, fontSize: 12, fontWeight: 600, background: 'rgba(0,113,227,0.1)', color: '#0071E3', border: 'none', cursor: 'pointer' }}>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: c.textSecondary, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Follow-up</span>
+                    <button onClick={() => setFollowupFor({ leadId: selectedLeadId })} style={{ padding: '4px 10px', borderRadius: 7, fontSize: 12, fontWeight: 600, background: c.blueLight, color: c.blue, border: 'none', cursor: 'pointer' }}>
                       {selectedLead.next_followup_date ? 'Ändern' : 'Planen'}
                     </button>
                   </div>
                   {selectedLead.next_followup_date ? (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <CalendarDays size={15} color={fwInfo?.color || '#86868B'} />
-                      <span style={{ fontSize: 14, fontWeight: 600, color: fwInfo?.color || '#1D1D1F' }}>
+                      <span style={{ fontSize: 14, fontWeight: 600, color: fwInfo?.color || c.text }}>
                         {fmtDate(selectedLead.next_followup_date, { day: '2-digit', month: 'long', year: 'numeric' })}
                       </span>
                       {fwInfo && <span style={{ fontSize: 11, fontWeight: 600, padding: '1px 6px', borderRadius: 99, background: fwInfo.color + '18', color: fwInfo.color }}>{fwInfo.label}</span>}
                     </div>
                   ) : (
-                    <div style={{ fontSize: 13, color: '#AEAEB2' }}>Kein Follow-up geplant</div>
+                    <div style={{ fontSize: 13, color: c.textTertiary }}>Kein Follow-up geplant</div>
                   )}
                   {selectedLead.next_followup_note && <div style={{ fontSize: 12, color: '#86868B', marginTop: 4 }}>{selectedLead.next_followup_note}</div>}
                 </div>
 
                 {/* Notizen */}
                 <div style={{ marginBottom: 12 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: '#86868B', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>Notizen</div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: c.textSecondary, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>Notizen</div>
                   <textarea
                     value={notes} onChange={e => setNotes(e.target.value)} onBlur={handleNotesBlur}
                     placeholder="Notizen zum Lead..."
                     rows={3}
-                    style={{ width: '100%', padding: '10px 12px', borderRadius: 10, fontSize: 14, border: '1.5px solid #E5E5EA', outline: 'none', resize: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }}
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: 10, fontSize: 14, border: `1.5px solid ${c.border}`, outline: 'none', resize: 'none', fontFamily: 'inherit', boxSizing: 'border-box', background: c.cardSecondary, color: c.text }}
                   />
                 </div>
 
                 {/* Anrufe */}
                 {leadCalls.length > 0 && (
                   <div style={{ marginBottom: 12 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: '#86868B', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>Anrufe ({leadCalls.length})</div>
-                    <div style={{ background: '#F5F5F7', borderRadius: 12, overflow: 'hidden' }}>
-                      {leadCalls.slice(0, 5).map((c, idx) => {
-                        const o = OUTCOME_CFG[c.outcome] || OUTCOME_CFG.reached;
+                    <div style={{ fontSize: 11, fontWeight: 700, color: c.textSecondary, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>Anrufe ({leadCalls.length})</div>
+                    <div style={{ background: c.cardSecondary, borderRadius: 12, overflow: 'hidden' }}>
+                      {leadCalls.slice(0, 5).map((call, idx) => {
+                        const o = OUTCOME_CFG[call.outcome] || OUTCOME_CFG.reached;
                         return (
-                          <div key={c.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderBottom: idx < Math.min(leadCalls.length, 5) - 1 ? '1px solid rgba(0,0,0,0.05)' : 'none' }}>
+                          <div key={call.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderBottom: idx < Math.min(leadCalls.length, 5) - 1 ? `1px solid ${c.borderSubtle}` : 'none' }}>
                             <div>
-                              <div style={{ fontSize: 12.5, fontWeight: 600, color: '#1D1D1F' }}>{fmtDateTime(c.started_at)}</div>
-                              {c.notes && <div style={{ fontSize: 11.5, color: '#86868B', marginTop: 2 }}>{c.notes}</div>}
+                              <div style={{ fontSize: 12.5, fontWeight: 600, color: c.text }}>{fmtDateTime(call.started_at)}</div>
+                              {call.notes && <div style={{ fontSize: 11.5, color: c.textSecondary, marginTop: 2 }}>{call.notes}</div>}
                             </div>
                             <span style={{ padding: '3px 8px', borderRadius: 99, fontSize: 10.5, fontWeight: 600, background: o.bg, color: o.color }}>{o.label}</span>
                           </div>
@@ -741,7 +746,7 @@ export default function SalesEngine() {
                 {/* Vollansicht */}
                 <button
                   onClick={() => { setSelectedLeadId(null); navigate(`/sales/leads/${selectedLeadId}`); }}
-                  style={{ width: '100%', padding: '12px', borderRadius: 12, background: 'rgba(0,0,0,0.05)', color: '#636366', border: 'none', cursor: 'pointer', fontSize: 13.5, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                  style={{ width: '100%', padding: '12px', borderRadius: 12, background: c.inputBg, color: c.textSecondary, border: 'none', cursor: 'pointer', fontSize: 13.5, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
                 >
                   Vollansicht öffnen <ChevronRight size={15} />
                 </button>
@@ -751,7 +756,7 @@ export default function SalesEngine() {
               <div style={{
                 padding: '12px 16px',
                 paddingBottom: 'calc(12px + env(safe-area-inset-bottom))',
-                borderTop: '1px solid rgba(0,0,0,0.06)', background: '#fff',
+                borderTop: `1px solid ${c.borderSubtle}`, background: c.card,
                 display: 'flex', gap: 10, flexShrink: 0,
               }}>
                 <button
@@ -799,12 +804,12 @@ export default function SalesEngine() {
         {/* Title */}
         <div style={{ flexShrink: 0 }}>
           <h1 style={{
-            fontSize: 20, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-0.5px',
+            fontSize: 20, fontWeight: 700, color: c.text, letterSpacing: '-0.5px',
             margin: 0, display: 'flex', alignItems: 'center', gap: 8,
           }}>
             <Flame size={18} color="#FF9500" /> Sales Engine
           </h1>
-          <p style={{ fontSize: 11.5, color: '#86868B', margin: '2px 0 0' }}>
+          <p style={{ fontSize: 11.5, color: c.textSecondary, margin: '2px 0 0' }}>
             {t.calls_total || 0} Anrufe · {t.calls_reached || 0} Gespräche · {stats?.followups_due || 0} Follow-ups
             {stats?.demos_active > 0 && <span style={{ color: '#34C759', fontWeight: 600 }}> · {stats.demos_active} Demos</span>}
           </p>
@@ -846,7 +851,7 @@ export default function SalesEngine() {
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               width: 34, height: 34, borderRadius: 9,
-              background: 'rgba(0,0,0,0.05)', color: '#636366',
+              background: c.inputBg, color: c.textSecondary,
               border: 'none', cursor: 'pointer',
             }}
           >
@@ -888,11 +893,11 @@ export default function SalesEngine() {
 
         {/* ════ LEFT: Lead List ════ */}
         <div style={{
-          background: '#fff', borderRadius: 14, border: '1px solid rgba(0,0,0,0.06)',
+          background: c.card, borderRadius: 14, border: `1px solid ${c.borderSubtle}`,
           display: 'flex', flexDirection: 'column', overflow: 'hidden',
         }}>
           {/* List header */}
-          <div style={{ padding: '12px 14px 0', borderBottom: '1px solid rgba(0,0,0,0.06)', flexShrink: 0 }}>
+          <div style={{ padding: '12px 14px 0', borderBottom: `1px solid ${c.borderSubtle}`, flexShrink: 0 }}>
             {/* Tabs */}
             <div style={{ display: 'flex', gap: 0, overflowX: 'auto', marginBottom: 10 }}>
               {TABS.map(t => (
@@ -900,8 +905,8 @@ export default function SalesEngine() {
                   key={t.key} onClick={() => setTab(t.key)}
                   style={{
                     padding: '6px 10px', fontSize: 12, fontWeight: tab === t.key ? 600 : 500,
-                    color: tab === t.key ? '#1D1D1F' : '#86868B', background: 'none', border: 'none',
-                    borderBottom: tab === t.key ? '2px solid #0071E3' : '2px solid transparent',
+                    color: tab === t.key ? c.text : c.textSecondary, background: 'none', border: 'none',
+                    borderBottom: tab === t.key ? `2px solid ${c.blue}` : '2px solid transparent',
                     cursor: 'pointer', transition: 'color 0.15s', whiteSpace: 'nowrap',
                   }}
                 >
@@ -911,21 +916,21 @@ export default function SalesEngine() {
             </div>
             {/* Search */}
             <div style={{ position: 'relative', marginBottom: 10 }}>
-              <Search size={13} color="#AEAEB2" style={{ position: 'absolute', left: 9, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+              <Search size={13} color={c.textTertiary} style={{ position: 'absolute', left: 9, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
               <input
                 value={search} onChange={e => setSearch(e.target.value)}
                 placeholder="Suchen..."
                 style={{
                   width: '100%', padding: '7px 9px 7px 28px', borderRadius: 8,
-                  fontSize: 12.5, border: '1.5px solid #E5E5EA', outline: 'none',
-                  boxSizing: 'border-box', background: '#FAFAFA',
+                  fontSize: 12.5, border: `1.5px solid ${c.border}`, outline: 'none',
+                  boxSizing: 'border-box', background: c.cardSecondary, color: c.text,
                 }}
               />
             </div>
           </div>
 
           {/* Lead count */}
-          <div style={{ padding: '6px 14px', fontSize: 11, color: '#AEAEB2', flexShrink: 0, borderBottom: '1px solid rgba(0,0,0,0.03)' }}>
+          <div style={{ padding: '6px 14px', fontSize: 11, color: c.textTertiary, flexShrink: 0, borderBottom: `1px solid ${c.borderSubtle}` }}>
             {leadsLoading ? 'Laden...' : `${leads.length} Lead${leads.length !== 1 ? 's' : ''}`}
           </div>
 
@@ -934,8 +939,8 @@ export default function SalesEngine() {
             {!leadsLoading && leads.length === 0 ? (
               <div style={{ padding: '40px 0', textAlign: 'center' }}>
                 <div style={{ fontSize: 26, marginBottom: 6 }}>📭</div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#1D1D1F' }}>Keine Leads</div>
-                <div style={{ fontSize: 12, color: '#86868B', marginTop: 2 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: c.text }}>Keine Leads</div>
+                <div style={{ fontSize: 12, color: c.textSecondary, marginTop: 2 }}>
                   {tab === 'due' ? 'Keine Follow-ups heute fällig' : 'Leads anlegen oder per Excel importieren'}
                 </div>
               </div>
@@ -956,43 +961,43 @@ export default function SalesEngine() {
         {/* ════ MIDDLE: Lead Detail ════ */}
         {!selectedLead ? <EmptyDetail /> : (
           <div style={{
-            background: '#fff', borderRadius: 14, border: '1px solid rgba(0,0,0,0.06)',
+            background: c.card, borderRadius: 14, border: `1px solid ${c.borderSubtle}`,
             display: 'flex', flexDirection: 'column', overflow: 'hidden',
           }}>
             {/* Detail header */}
             <div style={{
-              padding: '16px 20px 14px', borderBottom: '1px solid rgba(0,0,0,0.06)', flexShrink: 0,
+              padding: '16px 20px 14px', borderBottom: `1px solid ${c.borderSubtle}`, flexShrink: 0,
             }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 10 }}>
                 <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-0.4px', marginBottom: 4 }}>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: c.text, letterSpacing: '-0.4px', marginBottom: 4 }}>
                     {selectedLead.company_name}
                   </div>
                   {/* Contact chips */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
                     {selectedLead.contact_person && (
-                      <span style={{ fontSize: 12, color: '#636366', display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <span style={{ fontSize: 12, color: c.textTertiary, display: 'flex', alignItems: 'center', gap: 4 }}>
                         {selectedLead.contact_person}
                       </span>
                     )}
                     {selectedLead.city && (
-                      <span style={{ fontSize: 12, color: '#86868B', display: 'flex', alignItems: 'center', gap: 3 }}>
+                      <span style={{ fontSize: 12, color: c.textSecondary, display: 'flex', alignItems: 'center', gap: 3 }}>
                         <MapPin size={11} />{selectedLead.city}
                       </span>
                     )}
                     {selectedLead.phone && (
-                      <a href={`tel:${selectedLead.phone}`} style={{ fontSize: 12, color: '#0071E3', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 3 }}>
+                      <a href={`tel:${selectedLead.phone}`} style={{ fontSize: 12, color: c.blue, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 3 }}>
                         <Phone size={11} />{selectedLead.phone}
                       </a>
                     )}
                     {selectedLead.email && (
-                      <a href={`mailto:${selectedLead.email}`} style={{ fontSize: 12, color: '#0071E3', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 3 }}>
+                      <a href={`mailto:${selectedLead.email}`} style={{ fontSize: 12, color: c.blue, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 3 }}>
                         <Mail size={11} />{selectedLead.email}
                       </a>
                     )}
                     {selectedLead.domain && (
                       <a href={`https://${selectedLead.domain}`} target="_blank" rel="noopener noreferrer"
-                        style={{ fontSize: 12, color: '#0071E3', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 3 }}>
+                        style={{ fontSize: 12, color: c.blue, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 3 }}>
                         <Globe size={11} />{selectedLead.domain} <ExternalLink size={10} />
                       </a>
                     )}
@@ -1067,8 +1072,8 @@ export default function SalesEngine() {
                     title="Vollansicht öffnen"
                     style={{
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      width: 30, height: 30, borderRadius: 8, border: '1px solid rgba(0,0,0,0.1)',
-                      background: 'transparent', color: '#86868B', cursor: 'pointer',
+                      width: 30, height: 30, borderRadius: 8, border: `1px solid ${c.borderSubtle}`,
+                      background: 'transparent', color: c.textSecondary, cursor: 'pointer',
                     }}
                   >
                     <ArrowRight size={14} />
@@ -1109,16 +1114,16 @@ export default function SalesEngine() {
                   </button>
                   {showStatusMenu && (
                     <div style={{
-                      position: 'absolute', left: 0, top: '100%', marginTop: 4, background: '#fff',
+                      position: 'absolute', left: 0, top: '100%', marginTop: 4, background: c.card,
                       borderRadius: 12, padding: 5, minWidth: 160, zIndex: 50,
-                      boxShadow: '0 8px 32px rgba(0,0,0,0.14)', border: '1px solid rgba(0,0,0,0.08)',
+                      boxShadow: c.shadowLg, border: `1px solid ${c.borderSubtle}`,
                     }}>
                       {Object.entries(LEAD_STATUSES)
                         .filter(([k]) => k !== 'abgeschlossen')
                         .map(([k, v]) => (
                           <button key={k} onClick={() => handleStatusChange(k)} style={{
                             display: 'block', width: '100%', padding: '7px 10px', fontSize: 12.5, fontWeight: 500,
-                            color: selectedLead.status === k ? v.color : '#1D1D1F',
+                            color: selectedLead.status === k ? v.color : c.text,
                             background: selectedLead.status === k ? v.bg : 'none',
                             border: 'none', borderRadius: 7, cursor: 'pointer', textAlign: 'left',
                           }}>
@@ -1135,9 +1140,9 @@ export default function SalesEngine() {
                   onChange={e => updateLeadMut.mutate({ id: selectedLeadId, data: { priority: Number(e.target.value) } })}
                   style={{
                     padding: '4px 8px', borderRadius: 8, fontSize: 11.5, fontWeight: 600,
-                    border: '1.5px solid #E5E5EA', outline: 'none', cursor: 'pointer',
+                    border: `1.5px solid ${c.border}`, outline: 'none', cursor: 'pointer',
                     color: PRIORITY_CFG[selectedLead.priority ?? 0].color,
-                    background: '#fff',
+                    background: c.card,
                   }}
                 >
                   <option value={0}>Normal</option>
@@ -1157,7 +1162,7 @@ export default function SalesEngine() {
 
                 {/* Industry */}
                 {selectedLead.industry && (
-                  <span style={{ fontSize: 11.5, color: '#86868B', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <span style={{ fontSize: 11.5, color: c.textSecondary, display: 'flex', alignItems: 'center', gap: 4 }}>
                     <Building2 size={11} /> {selectedLead.industry}
                   </span>
                 )}
@@ -1168,19 +1173,19 @@ export default function SalesEngine() {
             <div style={{ flex: 1, minHeight: 0, display: 'grid', gridTemplateColumns: '1fr 280px', overflow: 'hidden' }}>
 
               {/* LEFT: Notes + Follow-up + Deal */}
-              <div style={{ overflowY: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 14, borderRight: '1px solid rgba(0,0,0,0.06)' }}>
+              <div style={{ overflowY: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 14, borderRight: `1px solid ${c.borderSubtle}` }}>
 
                 {/* Follow-up */}
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: '#86868B', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: c.textSecondary, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                       Follow-up
                     </span>
                     <button
                       onClick={() => setFollowupFor({ leadId: selectedLeadId })}
                       style={{
                         padding: '3px 9px', borderRadius: 7, fontSize: 11.5, fontWeight: 600,
-                        background: 'rgba(0,113,227,0.1)', color: '#0071E3', border: 'none', cursor: 'pointer',
+                        background: c.blueLight, color: c.blue, border: 'none', cursor: 'pointer',
                       }}
                     >
                       {selectedLead.next_followup_date ? 'Ändern' : 'Planen'}
@@ -1190,7 +1195,7 @@ export default function SalesEngine() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <CalendarDays size={15} color={fwInfo?.color || '#86868B'} />
                       <div>
-                        <span style={{ fontSize: 13.5, fontWeight: 600, color: fwInfo?.color || '#1D1D1F' }}>
+                        <span style={{ fontSize: 13.5, fontWeight: 600, color: fwInfo?.color || c.text }}>
                           {fmtDate(selectedLead.next_followup_date, { day: '2-digit', month: 'long', year: 'numeric' })}
                         </span>
                         {fwInfo && (
@@ -1200,18 +1205,18 @@ export default function SalesEngine() {
                           }}>{fwInfo.label}</span>
                         )}
                         {selectedLead.next_followup_note && (
-                          <div style={{ fontSize: 12, color: '#86868B', marginTop: 3 }}>{selectedLead.next_followup_note}</div>
+                          <div style={{ fontSize: 12, color: c.textSecondary, marginTop: 3 }}>{selectedLead.next_followup_note}</div>
                         )}
                       </div>
                     </div>
                   ) : (
-                    <div style={{ fontSize: 12.5, color: '#AEAEB2' }}>Kein Follow-up geplant</div>
+                    <div style={{ fontSize: 12.5, color: c.textTertiary }}>Kein Follow-up geplant</div>
                   )}
                 </div>
 
                 {/* Notes */}
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: '#86868B', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: c.textSecondary, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>
                     Notizen
                   </div>
                   <textarea
@@ -1221,26 +1226,26 @@ export default function SalesEngine() {
                     placeholder="Notizen zum Lead..."
                     style={{
                       width: '100%', minHeight: 140, padding: '10px 12px', borderRadius: 10,
-                      fontSize: 13, border: '1.5px solid #E5E5EA', outline: 'none',
+                      fontSize: 13, border: `1.5px solid ${c.border}`, outline: 'none',
                       resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box',
-                      lineHeight: 1.5, color: '#1D1D1F',
+                      lineHeight: 1.5, color: c.text, background: c.cardSecondary,
                     }}
-                    onFocus={e => { e.target.style.borderColor = '#0071E3'; }}
-                    onBlurCapture={e => { e.target.style.borderColor = '#E5E5EA'; }}
+                    onFocus={e => { e.target.style.borderColor = c.blue; }}
+                    onBlurCapture={e => { e.target.style.borderColor = c.border; }}
                   />
                 </div>
 
                 {/* Details grid */}
                 <div>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: '#86868B', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: c.textSecondary, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>
                     Details
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                     {/* Deal value */}
                     <div>
-                      <label style={{ fontSize: 11, fontWeight: 600, color: '#AEAEB2', display: 'block', marginBottom: 4 }}>Deal-Wert</label>
+                      <label style={{ fontSize: 11, fontWeight: 600, color: c.textTertiary, display: 'block', marginBottom: 4 }}>Deal-Wert</label>
                       <div style={{ position: 'relative' }}>
-                        <Euro size={12} color="#86868B" style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+                        <Euro size={12} color={c.textSecondary} style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
                         <input
                           type="number" min={0} step={100}
                           defaultValue={selectedLead.deal_value || ''}
@@ -1250,33 +1255,33 @@ export default function SalesEngine() {
                             if (v !== selectedLead.deal_value) updateLeadMut.mutate({ id: selectedLeadId, data: { deal_value: v } });
                           }}
                           placeholder="0"
-                          style={{ width: '100%', padding: '7px 8px 7px 24px', borderRadius: 8, fontSize: 12.5, border: '1.5px solid #E5E5EA', outline: 'none', boxSizing: 'border-box' }}
+                          style={{ width: '100%', padding: '7px 8px 7px 24px', borderRadius: 8, fontSize: 12.5, border: `1.5px solid ${c.border}`, outline: 'none', boxSizing: 'border-box', background: c.cardSecondary, color: c.text }}
                         />
                       </div>
                     </div>
 
                     {/* Kontaktperson — immer editierbar */}
                     <div>
-                      <label style={{ fontSize: 11, fontWeight: 600, color: '#AEAEB2', display: 'block', marginBottom: 4 }}>Kontaktperson</label>
+                      <label style={{ fontSize: 11, fontWeight: 600, color: c.textTertiary, display: 'block', marginBottom: 4 }}>Kontaktperson</label>
                       <input
                         key={`cp-${selectedLeadId}`}
                         defaultValue={selectedLead.contact_person || ''}
                         onBlur={e => { if (e.target.value !== (selectedLead.contact_person || '')) updateLeadMut.mutate({ id: selectedLeadId, data: { contact_person: e.target.value } }); }}
                         placeholder="Max Mustermann"
-                        style={{ width: '100%', padding: '7px 8px', borderRadius: 8, fontSize: 12.5, border: '1.5px solid #E5E5EA', outline: 'none', boxSizing: 'border-box' }}
+                        style={{ width: '100%', padding: '7px 8px', borderRadius: 8, fontSize: 12.5, border: `1.5px solid ${c.border}`, outline: 'none', boxSizing: 'border-box', background: c.cardSecondary, color: c.text }}
                       />
                     </div>
 
                     {/* Phone (editable for non-converted) */}
                     {!isConverted && (
                       <div>
-                        <label style={{ fontSize: 11, fontWeight: 600, color: '#AEAEB2', display: 'block', marginBottom: 4 }}>Telefon</label>
+                        <label style={{ fontSize: 11, fontWeight: 600, color: c.textTertiary, display: 'block', marginBottom: 4 }}>Telefon</label>
                         <input
                           key={`ph-${selectedLeadId}`}
                           defaultValue={selectedLead.phone || ''}
                           onBlur={e => { if (e.target.value !== (selectedLead.phone || '')) updateLeadMut.mutate({ id: selectedLeadId, data: { phone: e.target.value } }); }}
                           placeholder="0711 123456"
-                          style={{ width: '100%', padding: '7px 8px', borderRadius: 8, fontSize: 12.5, border: '1.5px solid #E5E5EA', outline: 'none', boxSizing: 'border-box' }}
+                          style={{ width: '100%', padding: '7px 8px', borderRadius: 8, fontSize: 12.5, border: `1.5px solid ${c.border}`, outline: 'none', boxSizing: 'border-box', background: c.cardSecondary, color: c.text }}
                         />
                       </div>
                     )}
@@ -1296,13 +1301,13 @@ export default function SalesEngine() {
 
                     {!isConverted && (
                       <div>
-                        <label style={{ fontSize: 11, fontWeight: 600, color: '#AEAEB2', display: 'block', marginBottom: 4 }}>Domain</label>
+                        <label style={{ fontSize: 11, fontWeight: 600, color: c.textTertiary, display: 'block', marginBottom: 4 }}>Domain</label>
                         <input
                           key={`dm-${selectedLeadId}`}
                           defaultValue={selectedLead.domain || ''}
                           onBlur={e => { if (e.target.value !== (selectedLead.domain || '')) updateLeadMut.mutate({ id: selectedLeadId, data: { domain: e.target.value } }); }}
                           placeholder="firma.de"
-                          style={{ width: '100%', padding: '7px 8px', borderRadius: 8, fontSize: 12.5, border: '1.5px solid #E5E5EA', outline: 'none', boxSizing: 'border-box' }}
+                          style={{ width: '100%', padding: '7px 8px', borderRadius: 8, fontSize: 12.5, border: `1.5px solid ${c.border}`, outline: 'none', boxSizing: 'border-box', background: c.cardSecondary, color: c.text }}
                         />
                       </div>
                     )}
@@ -1313,38 +1318,38 @@ export default function SalesEngine() {
               {/* RIGHT: Call history */}
               <div style={{ overflowY: 'auto', padding: '16px 16px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: '#86868B', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Anrufe</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: c.textSecondary, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Anrufe</span>
                   <span style={{
-                    fontSize: 11, fontWeight: 600, color: '#86868B',
-                    background: '#F2F2F7', padding: '2px 7px', borderRadius: 99,
+                    fontSize: 11, fontWeight: 600, color: c.textSecondary,
+                    background: c.cardSecondary, padding: '2px 7px', borderRadius: 99,
                   }}>{leadCalls.length}</span>
                 </div>
 
                 {leadCalls.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '28px 0', color: '#AEAEB2' }}>
+                  <div style={{ textAlign: 'center', padding: '28px 0', color: c.textTertiary }}>
                     <Phone size={22} strokeWidth={1.5} style={{ marginBottom: 8 }} />
                     <div style={{ fontSize: 12.5 }}>Noch keine Anrufe</div>
                   </div>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-                    {leadCalls.map(c => {
-                      const o = OUTCOME_CFG[c.outcome] || OUTCOME_CFG.reached;
+                    {leadCalls.map(callItem => {
+                      const o = OUTCOME_CFG[callItem.outcome] || OUTCOME_CFG.reached;
                       return (
-                        <div key={c.id} style={{ padding: '10px 0', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
+                        <div key={callItem.id} style={{ padding: '10px 0', borderBottom: `1px solid ${c.borderSubtle}` }}>
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 3 }}>
-                            <span style={{ fontSize: 11.5, fontWeight: 600, color: '#1D1D1F' }}>
-                              {fmtDateTime(c.started_at)}
+                            <span style={{ fontSize: 11.5, fontWeight: 600, color: c.text }}>
+                              {fmtDateTime(callItem.started_at)}
                             </span>
                             <span style={{
                               padding: '2px 6px', borderRadius: 99, fontSize: 10, fontWeight: 600,
                               background: o.bg, color: o.color,
                             }}>{o.label}</span>
                           </div>
-                          {c.duration_sec && (
-                            <div style={{ fontSize: 11, color: '#AEAEB2' }}>{fmtDuration(c.duration_sec)}</div>
+                          {callItem.duration_sec && (
+                            <div style={{ fontSize: 11, color: c.textTertiary }}>{fmtDuration(callItem.duration_sec)}</div>
                           )}
-                          {c.notes && (
-                            <div style={{ fontSize: 11.5, color: '#636366', marginTop: 4, lineHeight: 1.4 }}>{c.notes}</div>
+                          {callItem.notes && (
+                            <div style={{ fontSize: 11.5, color: c.textTertiary, marginTop: 4, lineHeight: 1.4 }}>{callItem.notes}</div>
                           )}
                         </div>
                       );
@@ -1362,59 +1367,59 @@ export default function SalesEngine() {
         }}>
           {/* Chart */}
           <div style={{
-            background: '#fff', borderRadius: 14, padding: '14px 16px 8px',
-            border: '1px solid rgba(0,0,0,0.06)', flexShrink: 0,
+            background: c.card, borderRadius: 14, padding: '14px 16px 8px',
+            border: `1px solid ${c.borderSubtle}`, flexShrink: 0,
           }}>
-            <div style={{ fontSize: 12.5, fontWeight: 700, color: '#1D1D1F', marginBottom: 12, letterSpacing: '-0.1px' }}>
+            <div style={{ fontSize: 12.5, fontWeight: 700, color: c.text, marginBottom: 12, letterSpacing: '-0.1px' }}>
               Anrufe / Tag
             </div>
             <ResponsiveContainer width="100%" height={140}>
               <BarChart data={chartDays} barSize={12}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
-                <XAxis dataKey="label" tick={{ fontSize: 9, fill: '#AEAEB2' }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 9, fill: '#AEAEB2' }} axisLine={false} tickLine={false} width={20} allowDecimals={false} />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={c.borderSubtle} />
+                <XAxis dataKey="label" tick={{ fontSize: 9, fill: c.textTertiary }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 9, fill: c.textTertiary }} axisLine={false} tickLine={false} width={20} allowDecimals={false} />
                 <Tooltip
-                  contentStyle={{ borderRadius: 10, border: '1px solid rgba(0,0,0,0.08)', fontSize: 11.5, boxShadow: '0 4px 16px rgba(0,0,0,0.1)' }}
-                  labelStyle={{ fontWeight: 600, color: '#1D1D1F' }}
+                  contentStyle={{ borderRadius: 10, border: `1px solid ${c.borderSubtle}`, fontSize: 11.5, background: c.card, color: c.text }}
+                  labelStyle={{ fontWeight: 600, color: c.text }}
                 />
                 <Bar dataKey="reached"     name="Erreicht"       stackId="a" fill="#34C759" radius={[0,0,0,0]} />
-                <Bar dataKey="not_reached" name="Nicht erreicht" stackId="a" fill="#E5E5EA" radius={[3,3,0,0]} />
+                <Bar dataKey="not_reached" name="Nicht erreicht" stackId="a" fill={c.border} radius={[3,3,0,0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
 
           {/* Recent calls */}
           <div style={{
-            background: '#fff', borderRadius: 14, padding: 16,
-            border: '1px solid rgba(0,0,0,0.06)', flex: 1,
+            background: c.card, borderRadius: 14, padding: 16,
+            border: `1px solid ${c.borderSubtle}`, flex: 1,
           }}>
-            <div style={{ fontSize: 12.5, fontWeight: 700, color: '#1D1D1F', marginBottom: 12, letterSpacing: '-0.1px' }}>
+            <div style={{ fontSize: 12.5, fontWeight: 700, color: c.text, marginBottom: 12, letterSpacing: '-0.1px' }}>
               Letzte Anrufe
             </div>
             {recentCalls.length === 0 ? (
-              <div style={{ fontSize: 12.5, color: '#AEAEB2', textAlign: 'center', padding: '20px 0' }}>
+              <div style={{ fontSize: 12.5, color: c.textTertiary, textAlign: 'center', padding: '20px 0' }}>
                 Noch keine Anrufe heute
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-                {recentCalls.map(c => {
-                  const o = OUTCOME_CFG[c.outcome] || OUTCOME_CFG.reached;
+                {recentCalls.map(rc => {
+                  const o = OUTCOME_CFG[rc.outcome] || OUTCOME_CFG.reached;
                   return (
                     <div
-                      key={c.id}
-                      onClick={() => c.lead_id && setSelectedLeadId(c.lead_id)}
+                      key={rc.id}
+                      onClick={() => rc.lead_id && setSelectedLeadId(rc.lead_id)}
                       style={{
                         display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0',
-                        borderBottom: '1px solid rgba(0,0,0,0.04)',
-                        cursor: c.lead_id ? 'pointer' : 'default',
+                        borderBottom: `1px solid ${c.borderSubtle}`,
+                        cursor: rc.lead_id ? 'pointer' : 'default',
                       }}
                     >
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{
-                          fontSize: 12.5, fontWeight: 600, color: '#1D1D1F',
+                          fontSize: 12.5, fontWeight: 600, color: c.text,
                           whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                        }}>{c.company_name}</div>
-                        <div style={{ fontSize: 10.5, color: '#AEAEB2' }}>{relTime(c.started_at)}</div>
+                        }}>{rc.company_name}</div>
+                        <div style={{ fontSize: 10.5, color: c.textTertiary }}>{relTime(rc.started_at)}</div>
                       </div>
                       <span style={{
                         padding: '2px 6px', borderRadius: 99, fontSize: 10, fontWeight: 600,

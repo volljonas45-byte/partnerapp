@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import { timeApi, fahrtenbuchApi } from '../api/time';
 import { projectsApi } from '../api/projects';
 import { useConfirm } from '../hooks/useConfirm';
+import { useTheme } from '../context/ThemeContext';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -86,20 +87,20 @@ function ProjectPicker({ value, onChange, projects, placeholder = 'Kein Projekt'
         }}
       >
         {selected ? selected.name : placeholder}
-        <ChevronDown size={13} style={{ color: '#86868B' }} />
+        <ChevronDown size={13} style={{ color: c.textSecondary }} />
       </button>
       {open && (
         <div style={{
           position: 'absolute', top: '100%', left: 0, marginTop: 4, zIndex: 100,
-          background: '#fff', borderRadius: 12, minWidth: 200, maxHeight: 260, overflowY: 'auto',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.14)', border: '1px solid rgba(0,0,0,0.06)',
+          background: c.card, borderRadius: 12, minWidth: 200, maxHeight: 260, overflowY: 'auto',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.14)', border: `1px solid ${c.borderSubtle}`,
         }}>
           <button
             onClick={() => { onChange(null); setOpen(false); }}
             style={{
               display: 'block', width: '100%', textAlign: 'left',
               padding: '9px 14px', border: 'none', background: 'none',
-              fontSize: 13, cursor: 'pointer', color: '#86868B',
+              fontSize: 13, cursor: 'pointer', color: c.textSecondary,
             }}
             onMouseEnter={e => e.currentTarget.style.background = '#F5F5F7'}
             onMouseLeave={e => e.currentTarget.style.background = 'none'}
@@ -113,7 +114,7 @@ function ProjectPicker({ value, onChange, projects, placeholder = 'Kein Projekt'
               style={{
                 display: 'block', width: '100%', textAlign: 'left',
                 padding: '9px 14px', border: 'none', background: 'none',
-                fontSize: 13, cursor: 'pointer', color: '#1D1D1F',
+                fontSize: 13, cursor: 'pointer', color: c.text,
                 fontWeight: value === p.id ? '500' : '400',
               }}
               onMouseEnter={e => e.currentTarget.style.background = '#F5F5F7'}
@@ -153,7 +154,7 @@ function TimerBar({ activeTimer, projects, onStart, onStop }) {
   return (
     <div style={{
       display: 'flex', alignItems: 'center', gap: 10,
-      padding: '12px 20px', background: '#fff',
+      padding: '12px 20px', background: c.card,
       borderRadius: 16, marginBottom: 24,
       boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.05)',
     }}>
@@ -233,8 +234,8 @@ function EntryRow({ entry, projects, onDelete, onEdit }) {
     >
       {/* Description + project */}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 14, color: '#1D1D1F', fontWeight: 400 }}>
-          {entry.description || <span style={{ color: '#86868B' }}>Keine Beschreibung</span>}
+        <div style={{ fontSize: 14, color: c.text, fontWeight: 400 }}>
+          {entry.description || <span style={{ color: c.textSecondary }}>Keine Beschreibung</span>}
         </div>
         {entry.project_name && (
           <div style={{ fontSize: 12, color: '#0071E3', marginTop: 2 }}>{entry.project_name}</div>
@@ -242,7 +243,7 @@ function EntryRow({ entry, projects, onDelete, onEdit }) {
       </div>
 
       {/* Time range */}
-      <div style={{ fontSize: 13, color: '#6E6E73', whiteSpace: 'nowrap' }}>
+      <div style={{ fontSize: 13, color: c.textTertiary, whiteSpace: 'nowrap' }}>
         {fmtTime(entry.start_time)}
         {entry.end_time ? ` – ${fmtTime(entry.end_time)}` : (
           <span style={{ color: '#0071E3', fontWeight: 500 }}> – läuft ⏱</span>
@@ -264,7 +265,7 @@ function EntryRow({ entry, projects, onDelete, onEdit }) {
       >
         <button
           onClick={() => onEdit(entry)}
-          style={{ padding: 6, border: 'none', background: 'none', cursor: 'pointer', borderRadius: 6, color: '#86868B' }}
+          style={{ padding: 6, border: 'none', background: 'none', cursor: 'pointer', borderRadius: 6, color: c.textSecondary }}
           onMouseEnter={e => { e.currentTarget.style.background = '#F5F5F7'; e.currentTarget.style.color = '#1D1D1F'; }}
           onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#86868B'; }}
           title="Bearbeiten"
@@ -273,7 +274,7 @@ function EntryRow({ entry, projects, onDelete, onEdit }) {
         </button>
         <button
           onClick={() => onDelete(entry.id)}
-          style={{ padding: 6, border: 'none', background: 'none', cursor: 'pointer', borderRadius: 6, color: '#86868B' }}
+          style={{ padding: 6, border: 'none', background: 'none', cursor: 'pointer', borderRadius: 6, color: c.textSecondary }}
           onMouseEnter={e => { e.currentTarget.style.background = '#FFF0EF'; e.currentTarget.style.color = '#FF3B30'; }}
           onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#86868B'; }}
           title="Löschen"
@@ -318,7 +319,7 @@ function ManualEntryForm({ projects, onSave, onCancel, initial = null }) {
 
   return (
     <div style={{
-      background: '#fff', borderRadius: 16, padding: 20, marginBottom: 16,
+      background: c.card, borderRadius: 16, padding: 20, marginBottom: 16,
       boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.05)',
     }} className="animate-slide-up">
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 10 }}>
@@ -370,7 +371,7 @@ function FahrtForm({ projects, onSave, onCancel, initial = null }) {
 
   return (
     <div style={{
-      background: '#fff', borderRadius: 16, padding: 20, marginBottom: 16,
+      background: c.card, borderRadius: 16, padding: 20, marginBottom: 16,
       boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.05)',
     }} className="animate-slide-up">
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 10 }}>
@@ -416,6 +417,7 @@ function FahrtForm({ projects, onSave, onCancel, initial = null }) {
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function TimeTracking() {
+  const { c, isDark } = useTheme();
   const qc = useQueryClient();
   const { confirm, ConfirmDialogNode } = useConfirm();
   const [tab, setTab] = useState('time'); // 'time' | 'fahrtenbuch'
@@ -609,7 +611,7 @@ export default function TimeTracking() {
               style={{
                 display: 'flex', alignItems: 'center', gap: 6, marginBottom: 16,
                 padding: '8px 14px', borderRadius: 980, border: '1px dashed rgba(0,0,0,0.15)',
-                background: 'transparent', cursor: 'pointer', fontSize: 13, color: '#6E6E73',
+                background: 'transparent', cursor: 'pointer', fontSize: 13, color: c.textTertiary,
                 transition: 'all 0.15s',
               }}
               onMouseEnter={e => { e.currentTarget.style.borderColor = '#0071E3'; e.currentTarget.style.color = '#0071E3'; }}
@@ -652,8 +654,8 @@ export default function TimeTracking() {
               <div style={{ width: 48, height: 48, background: 'rgba(0,113,227,0.08)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
                 <Clock size={22} color="#0071E3" />
               </div>
-              <p style={{ fontWeight: 500, color: '#1D1D1F', marginBottom: 4 }}>Noch keine Einträge</p>
-              <p style={{ fontSize: 13, color: '#86868B', marginBottom: 20 }}>Starte den Timer oder trag Zeit manuell ein.</p>
+              <p style={{ fontWeight: 500, color: c.text, marginBottom: 4 }}>Noch keine Einträge</p>
+              <p style={{ fontSize: 13, color: c.textSecondary, marginBottom: 20 }}>Starte den Timer oder trag Zeit manuell ein.</p>
               <button onClick={() => setShowManual(true)} className="btn-primary" style={{ margin: '0 auto' }}>
                 <Plus size={14} /> Eintrag hinzufügen
               </button>
@@ -679,11 +681,11 @@ export default function TimeTracking() {
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         {collapsed ? <ChevronRight size={14} color="#86868B" /> : <ChevronDown size={14} color="#86868B" />}
-                        <span style={{ fontSize: 13, fontWeight: 500, color: '#1D1D1F' }}>
+                        <span style={{ fontSize: 13, fontWeight: 500, color: c.text }}>
                           {isToday ? 'Heute' : fmtDate(date)}
                         </span>
                       </div>
-                      <span style={{ fontSize: 13, fontWeight: 500, color: '#6E6E73', fontVariantNumeric: 'tabular-nums' }}>
+                      <span style={{ fontSize: 13, fontWeight: 500, color: c.textTertiary, fontVariantNumeric: 'tabular-nums' }}>
                         {fmtSec(dayTotal)}
                       </span>
                     </button>
@@ -720,7 +722,7 @@ export default function TimeTracking() {
                 style={{ width: 160 }}
               />
               {fahrten.length > 0 && (
-                <span style={{ fontSize: 13, color: '#6E6E73' }}>
+                <span style={{ fontSize: 13, color: c.textTertiary }}>
                   {totalKm.toLocaleString('de-DE', { maximumFractionDigits: 1 })} km gesamt
                 </span>
               )}
@@ -764,8 +766,8 @@ export default function TimeTracking() {
               <div style={{ width: 48, height: 48, background: 'rgba(0,113,227,0.08)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
                 <Car size={22} color="#0071E3" />
               </div>
-              <p style={{ fontWeight: 500, color: '#1D1D1F', marginBottom: 4 }}>Keine Fahrten in diesem Monat</p>
-              <p style={{ fontSize: 13, color: '#86868B', marginBottom: 20 }}>Trage deine erste Fahrt ein.</p>
+              <p style={{ fontWeight: 500, color: c.text, marginBottom: 4 }}>Keine Fahrten in diesem Monat</p>
+              <p style={{ fontSize: 13, color: c.textSecondary, marginBottom: 20 }}>Trage deine erste Fahrt ein.</p>
               <button onClick={() => setShowFahrForm(true)} className="btn-primary" style={{ margin: '0 auto' }}>
                 <Plus size={14} /> Fahrt hinzufügen
               </button>
@@ -774,7 +776,7 @@ export default function TimeTracking() {
             <div className="card p-0 overflow-hidden">
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
-                  <tr style={{ background: 'rgba(118,118,128,0.06)', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+                  <tr style={{ background: 'rgba(118,118,128,0.06)', borderBottom: `1px solid ${c.borderSubtle}` }}>
                     {['Datum', 'Route', 'km', 'Zweck', 'Projekt', ''].map((h, i) => (
                       <th key={i} className="table-header-cell" style={{ paddingLeft: i === 0 ? 16 : undefined }}>{h}</th>
                     ))}
@@ -789,7 +791,7 @@ export default function TimeTracking() {
                       onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,113,227,0.02)'}
                       onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                     >
-                      <td className="table-cell" style={{ paddingLeft: 16, fontSize: 13, color: '#6E6E73', whiteSpace: 'nowrap' }}>
+                      <td className="table-cell" style={{ paddingLeft: 16, fontSize: 13, color: c.textTertiary, whiteSpace: 'nowrap' }}>
                         {new Date(f.date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' })}
                       </td>
                       <td className="table-cell">
@@ -797,12 +799,12 @@ export default function TimeTracking() {
                           <MapPin size={12} color="#86868B" />
                           {f.from_loc && f.to_loc ? `${f.from_loc} → ${f.to_loc}` : (f.from_loc || f.to_loc || '–')}
                         </div>
-                        {f.notes && <div style={{ fontSize: 12, color: '#86868B', marginTop: 2 }}>{f.notes}</div>}
+                        {f.notes && <div style={{ fontSize: 12, color: c.textSecondary, marginTop: 2 }}>{f.notes}</div>}
                       </td>
                       <td className="table-cell" style={{ fontSize: 14, fontWeight: 500, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
                         {f.distance_km > 0 ? `${Number(f.distance_km).toLocaleString('de-DE')} km` : '–'}
                       </td>
-                      <td className="table-cell" style={{ fontSize: 13, color: '#6E6E73' }}>{f.purpose || '–'}</td>
+                      <td className="table-cell" style={{ fontSize: 13, color: c.textTertiary }}>{f.purpose || '–'}</td>
                       <td className="table-cell" style={{ fontSize: 13, color: '#0071E3' }}>{f.project_name || <span style={{ color: '#D2D2D7' }}>–</span>}</td>
                       <td className="table-cell" style={{ paddingRight: 12 }}>
                         <div style={{ display: 'flex', gap: 2, justifyContent: 'flex-end', opacity: 0, transition: 'opacity 0.15s' }}
@@ -811,7 +813,7 @@ export default function TimeTracking() {
                         >
                           <button
                             onClick={() => { setEditFahr(f); setShowFahrForm(false); }}
-                            style={{ padding: 6, border: 'none', background: 'none', cursor: 'pointer', borderRadius: 6, color: '#86868B' }}
+                            style={{ padding: 6, border: 'none', background: 'none', cursor: 'pointer', borderRadius: 6, color: c.textSecondary }}
                             onMouseEnter={e => { e.currentTarget.style.background = '#F5F5F7'; e.currentTarget.style.color = '#1D1D1F'; }}
                             onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#86868B'; }}
                           >
@@ -819,7 +821,7 @@ export default function TimeTracking() {
                           </button>
                           <button
                             onClick={() => handleDeleteFahr(f.id)}
-                            style={{ padding: 6, border: 'none', background: 'none', cursor: 'pointer', borderRadius: 6, color: '#86868B' }}
+                            style={{ padding: 6, border: 'none', background: 'none', cursor: 'pointer', borderRadius: 6, color: c.textSecondary }}
                             onMouseEnter={e => { e.currentTarget.style.background = '#FFF0EF'; e.currentTarget.style.color = '#FF3B30'; }}
                             onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#86868B'; }}
                           >

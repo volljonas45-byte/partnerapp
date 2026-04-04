@@ -6,6 +6,7 @@ import {
   LogOut, X, Plus, Zap,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { useQuery } from '@tanstack/react-query';
 import { intakeApi } from '../api/intake';
 
@@ -54,6 +55,7 @@ const SECTIONS = [
 
 export default function MobileDrawer({ onClose }) {
   const { logout, user, isAdmin, isPM } = useAuth();
+  const { c } = useTheme();
   const navigate = useNavigate();
 
   const { data: unread } = useQuery({
@@ -77,7 +79,7 @@ export default function MobileDrawer({ onClose }) {
       <div
         onClick={onClose}
         style={{
-          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)',
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
           zIndex: 150, backdropFilter: 'blur(2px)',
         }}
       />
@@ -85,33 +87,44 @@ export default function MobileDrawer({ onClose }) {
       {/* Drawer */}
       <div style={{
         position: 'fixed', bottom: 0, left: 0, right: 0,
-        background: '#F5F5F7', borderRadius: '20px 20px 0 0',
+        background: c.bg, borderRadius: '20px 20px 0 0',
         zIndex: 160, maxHeight: '88vh', overflowY: 'auto',
         paddingBottom: 'calc(env(safe-area-inset-bottom) + 80px)',
+        transition: 'background 0.2s ease',
       }}>
         {/* Handle + Header */}
         <div style={{
-          position: 'sticky', top: 0, background: '#F5F5F7',
-          padding: '12px 20px 8px', borderBottom: '1px solid rgba(0,0,0,0.06)',
+          position: 'sticky', top: 0,
+          background: c.bg,
+          padding: '12px 20px 8px', borderBottom: `1px solid ${c.borderSubtle}`,
           zIndex: 1,
+          transition: 'background 0.2s ease',
         }}>
           {/* Drag handle */}
           <div style={{
-            width: 36, height: 4, borderRadius: 99, background: 'rgba(0,0,0,0.15)',
+            width: 36, height: 4, borderRadius: 99,
+            background: c.border,
             margin: '0 auto 12px',
           }} />
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <div style={{
-                width: 28, height: 28, borderRadius: 8, background: '#0071E3',
+                width: 28, height: 28, borderRadius: 8, background: c.blue,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
                 <Zap size={13} color="#fff" strokeWidth={2.5} />
               </div>
-              <span style={{ fontSize: 16, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-0.3px' }}>Vecturo</span>
+              <span style={{ fontSize: 16, fontWeight: 700, color: c.text, letterSpacing: '-0.3px' }}>Vecturo</span>
             </div>
-            <button onClick={onClose} style={{ width: 32, height: 32, borderRadius: 99, border: 'none', background: 'rgba(0,0,0,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-              <X size={16} color="#636366" />
+            <button
+              onClick={onClose}
+              style={{
+                width: 32, height: 32, borderRadius: 99, border: 'none',
+                background: c.inputBg, display: 'flex', alignItems: 'center',
+                justifyContent: 'center', cursor: 'pointer',
+              }}
+            >
+              <X size={16} color={c.textSecondary} />
             </button>
           </div>
         </div>
@@ -122,7 +135,7 @@ export default function MobileDrawer({ onClose }) {
             onClick={() => handleNav('/wizard')}
             style={{
               width: '100%', padding: '13px', borderRadius: 14,
-              background: '#0071E3', color: '#fff', border: 'none',
+              background: c.blue, color: '#fff', border: 'none',
               fontSize: 15, fontWeight: 600, cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             }}
@@ -140,10 +153,17 @@ export default function MobileDrawer({ onClose }) {
 
           return (
             <div key={si} style={{ padding: '10px 16px 0' }}>
-              <p style={{ fontSize: 11, fontWeight: 700, color: '#86868B', textTransform: 'uppercase', letterSpacing: '0.08em', paddingLeft: 4, marginBottom: 6 }}>
+              <p style={{
+                fontSize: 11, fontWeight: 700, color: c.textSecondary,
+                textTransform: 'uppercase', letterSpacing: '0.08em',
+                paddingLeft: 4, marginBottom: 6,
+              }}>
                 {section.label}
               </p>
-              <div style={{ background: '#fff', borderRadius: 14, overflow: 'hidden', border: '1px solid rgba(0,0,0,0.06)' }}>
+              <div style={{
+                background: c.card, borderRadius: 14, overflow: 'hidden',
+                border: `1px solid ${c.borderSubtle}`,
+              }}>
                 {items.map(({ to, icon: Icon, label, badge }, idx) => (
                   <button
                     key={to}
@@ -151,20 +171,20 @@ export default function MobileDrawer({ onClose }) {
                     style={{
                       width: '100%', display: 'flex', alignItems: 'center', gap: 12,
                       padding: '14px 16px',
-                      borderBottom: idx < items.length - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none',
+                      borderBottom: idx < items.length - 1 ? `1px solid ${c.borderSubtle}` : 'none',
                       background: 'none', border: 'none',
-                      borderBottom: idx < items.length - 1 ? '1px solid rgba(0,0,0,0.05)' : 'none',
+                      borderBottom: idx < items.length - 1 ? `1px solid ${c.borderSubtle}` : 'none',
                       cursor: 'pointer', textAlign: 'left',
                     }}
                   >
                     <div style={{
                       width: 34, height: 34, borderRadius: 9,
-                      background: 'rgba(0,0,0,0.05)',
+                      background: c.inputBg,
                       display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                     }}>
-                      <Icon size={16} color="#636366" strokeWidth={1.75} />
+                      <Icon size={16} color={c.textSecondary} strokeWidth={1.75} />
                     </div>
-                    <span style={{ fontSize: 15, fontWeight: 500, color: '#1D1D1F', flex: 1 }}>{label}</span>
+                    <span style={{ fontSize: 15, fontWeight: 500, color: c.text, flex: 1 }}>{label}</span>
                     {badge && unread?.count > 0 && (
                       <span style={{
                         minWidth: 20, height: 20, borderRadius: 99, padding: '0 5px',
@@ -173,7 +193,7 @@ export default function MobileDrawer({ onClose }) {
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                       }}>{unread.count > 99 ? '99+' : unread.count}</span>
                     )}
-                    <span style={{ fontSize: 14, color: '#C7C7CC' }}>›</span>
+                    <span style={{ fontSize: 14, color: c.border }}>›</span>
                   </button>
                 ))}
               </div>
@@ -183,20 +203,29 @@ export default function MobileDrawer({ onClose }) {
 
         {/* User + Logout */}
         <div style={{ padding: '16px 16px 0' }}>
-          <div style={{ background: '#fff', borderRadius: 14, overflow: 'hidden', border: '1px solid rgba(0,0,0,0.06)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
+          <div style={{
+            background: c.card, borderRadius: 14, overflow: 'hidden',
+            border: `1px solid ${c.borderSubtle}`,
+          }}>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 12,
+              padding: '14px 16px', borderBottom: `1px solid ${c.borderSubtle}`,
+            }}>
               <div style={{
                 width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
-                background: bgColor, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 12, fontWeight: 700, color: '#fff', overflow: 'hidden',
+                background: bgColor, display: 'flex', alignItems: 'center',
+                justifyContent: 'center', fontSize: 12, fontWeight: 700,
+                color: '#fff', overflow: 'hidden',
               }}>
                 {user?.avatar_base64
                   ? <img src={user.avatar_base64} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   : initials}
               </div>
               <div style={{ minWidth: 0, flex: 1 }}>
-                {user?.name && <div style={{ fontSize: 14, fontWeight: 600, color: '#1D1D1F', marginBottom: 1 }}>{user.name}</div>}
-                <div style={{ fontSize: 12, color: '#86868B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.email}</div>
+                {user?.name && (
+                  <div style={{ fontSize: 14, fontWeight: 600, color: c.text, marginBottom: 1 }}>{user.name}</div>
+                )}
+                <div style={{ fontSize: 12, color: c.textSecondary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.email}</div>
               </div>
             </div>
             <button
@@ -207,12 +236,13 @@ export default function MobileDrawer({ onClose }) {
               }}
             >
               <div style={{
-                width: 34, height: 34, borderRadius: 9, background: 'rgba(255,59,48,0.1)',
+                width: 34, height: 34, borderRadius: 9,
+                background: 'rgba(255,59,48,0.1)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
               }}>
-                <LogOut size={16} color="#FF3B30" strokeWidth={1.75} />
+                <LogOut size={16} color="#FF453A" strokeWidth={1.75} />
               </div>
-              <span style={{ fontSize: 15, fontWeight: 500, color: '#FF3B30' }}>Abmelden</span>
+              <span style={{ fontSize: 15, fontWeight: 500, color: '#FF453A' }}>Abmelden</span>
             </button>
           </div>
         </div>

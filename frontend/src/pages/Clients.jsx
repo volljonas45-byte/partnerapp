@@ -8,6 +8,7 @@ import Modal from '../components/Modal';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useConfirm } from '../hooks/useConfirm';
 import { useMobile } from '../hooks/useMobile';
+import { useTheme } from '../context/ThemeContext';
 
 const EMPTY_FORM = {
   company_name: '', contact_person: '', address: '',
@@ -80,6 +81,7 @@ export default function Clients() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const isMobile = useMobile();
+  const { c } = useTheme();
 
   const [search, setSearch]   = useState('');
   const [modal, setModal]     = useState(null);
@@ -160,7 +162,7 @@ export default function Clients() {
       </div>
       <div className="skeleton h-9 w-56 rounded-xl mb-5" />
       <div className="card p-0 overflow-hidden">
-        <div style={{ padding: '10px 18px', background: 'rgba(118,118,128,0.06)', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+        <div style={{ padding: '10px 18px', background: 'rgba(118,118,128,0.06)', borderBottom: `1px solid ${c.borderSubtle}` }}>
           <div className="skeleton h-3 w-24" />
         </div>
         {[...Array(5)].map((_, i) => (
@@ -180,12 +182,12 @@ export default function Clients() {
   // ── Mobile layout ─────────────────────────────────────────────
   if (isMobile) {
     return (
-      <div style={{ background: '#F5F5F7', minHeight: '100vh' }}>
+      <div style={{ background: c.bg, minHeight: '100vh' }}>
         {/* Header */}
         <div style={{ padding: '20px 16px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <h1 style={{ fontSize: 22, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-0.4px', margin: 0 }}>Kunden</h1>
-            <p style={{ fontSize: 13, color: '#86868B', margin: '2px 0 0' }}>
+            <h1 style={{ fontSize: 22, fontWeight: 700, color: c.text, letterSpacing: '-0.4px', margin: 0 }}>Kunden</h1>
+            <p style={{ fontSize: 13, color: c.textSecondary, margin: '2px 0 0' }}>
               {clients.length} {clients.length === 1 ? 'Kunde' : 'Kunden'}
             </p>
           </div>
@@ -200,9 +202,9 @@ export default function Clients() {
 
         {/* Search */}
         <div style={{ padding: '0 16px 14px', position: 'relative' }}>
-          <Search size={14} style={{ position: 'absolute', left: 28, top: '50%', transform: 'translateY(-50%)', color: '#86868B', pointerEvents: 'none' }} />
+          <Search size={14} style={{ position: 'absolute', left: 28, top: '50%', transform: 'translateY(-50%)', color: c.textSecondary, pointerEvents: 'none' }} />
           <input
-            style={{ width: '100%', padding: '10px 12px 10px 36px', borderRadius: 12, border: '1px solid rgba(0,0,0,0.1)', background: '#fff', fontSize: 15, outline: 'none', boxSizing: 'border-box' }}
+            style={{ width: '100%', padding: '10px 12px 10px 36px', borderRadius: 12, border: '1px solid rgba(0,0,0,0.1)', background: c.card, fontSize: 15, outline: 'none', boxSizing: 'border-box' }}
             placeholder="Suchen…"
             value={search}
             onChange={e => setSearch(e.target.value)}
@@ -212,12 +214,12 @@ export default function Clients() {
         {/* Card list */}
         <div style={{ padding: '0 16px' }}>
           {filtered.length === 0 ? (
-            <div style={{ background: '#fff', borderRadius: 16, padding: '40px 20px', textAlign: 'center' }}>
+            <div style={{ background: c.card, borderRadius: 16, padding: '40px 20px', textAlign: 'center' }}>
               <Building2 size={32} color="#D1D1D6" strokeWidth={1.25} style={{ margin: '0 auto 12px' }} />
-              <p style={{ fontSize: 15, fontWeight: 600, color: '#1D1D1F', margin: '0 0 4px' }}>
+              <p style={{ fontSize: 15, fontWeight: 600, color: c.text, margin: '0 0 4px' }}>
                 {search ? 'Keine Kunden gefunden' : 'Noch keine Kunden'}
               </p>
-              <p style={{ fontSize: 13, color: '#86868B', margin: 0 }}>
+              <p style={{ fontSize: 13, color: c.textSecondary, margin: 0 }}>
                 {search ? `Keine Treffer für „${search}"` : 'Lege jetzt deinen ersten Kunden an.'}
               </p>
               {!search && (
@@ -227,7 +229,7 @@ export default function Clients() {
               )}
             </div>
           ) : (
-            <div style={{ background: '#fff', borderRadius: 16, overflow: 'hidden', border: '1px solid rgba(0,0,0,0.06)' }}>
+            <div style={{ background: c.card, borderRadius: 16, overflow: 'hidden', border: `1px solid ${c.borderSubtle}` }}>
               {filtered.map((c, idx) => (
                 <div
                   key={c.id}
@@ -239,15 +241,15 @@ export default function Clients() {
                 >
                   <ClientAvatar name={c.company_name} />
                   <div style={{ flex: 1, minWidth: 0, marginLeft: 12 }}>
-                    <p style={{ fontSize: 15, fontWeight: 600, color: '#1D1D1F', margin: '0 0 3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <p style={{ fontSize: 15, fontWeight: 600, color: c.text, margin: '0 0 3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {c.company_name}
                     </p>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 10px' }}>
                       {c.contact_person && (
-                        <span style={{ fontSize: 12, color: '#86868B' }}>{c.contact_person}</span>
+                        <span style={{ fontSize: 12, color: c.textSecondary }}>{c.contact_person}</span>
                       )}
                       {c.city && (
-                        <span style={{ fontSize: 12, color: '#86868B' }}>{c.city}</span>
+                        <span style={{ fontSize: 12, color: c.textSecondary }}>{c.city}</span>
                       )}
                     </div>
                   </div>

@@ -9,12 +9,13 @@ import toast from 'react-hot-toast';
 import { projectsApi } from '../api/projects';
 import { areasApi } from '../api/areas';
 import { useConfirm } from '../hooks/useConfirm';
+import { useTheme } from '../context/ThemeContext';
 import ProjectTimerButton from '../components/ProjectTimerButton';
 
 // ── Status config ─────────────────────────────────────────────────────────────
 
 const STATUS_CONFIG = {
-  planned:            { label: 'Geplant',           color: '#86868B', bg: 'rgba(118,118,128,0.1)'  },
+  planned:            { label: 'Geplant',           color: c.textSecondary, bg: 'rgba(118,118,128,0.1)'  },
   active:             { label: 'Aktiv',             color: '#0071E3', bg: 'rgba(0,113,227,0.1)'    },
   completed:          { label: 'Abgeschlossen',     color: '#34C759', bg: 'rgba(52,199,89,0.1)'    },
   waiting_for_client: { label: 'Wartet auf Kunde',  color: '#FF9500', bg: 'rgba(255,149,0,0.1)'    },
@@ -61,14 +62,14 @@ function Modal({ title, onClose, children }) {
     >
       <div
         style={{
-          background: '#fff', borderRadius: '20px',
+          background: c.card, borderRadius: '20px',
           boxShadow: '0 24px 64px rgba(0,0,0,0.15)',
           width: '100%', maxWidth: '420px', padding: '26px',
         }}
         onClick={e => e.stopPropagation()}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '22px' }}>
-          <span style={{ fontSize: '17px', fontWeight: '700', color: '#1D1D1F', letterSpacing: '-0.02em' }}>{title}</span>
+          <span style={{ fontSize: '17px', fontWeight: '700', color: c.text, letterSpacing: '-0.02em' }}>{title}</span>
           <button
             onClick={onClose}
             style={{
@@ -94,7 +95,7 @@ function CreateProjectModal({ onClose, onCreate, isPending }) {
   const [deadline, setDeadline] = useState('');
 
   const inputStyle = {
-    width: '100%', padding: '9px 12px', fontSize: '14px', color: '#1D1D1F',
+    width: '100%', padding: '9px 12px', fontSize: '14px', color: c.text,
     background: 'rgba(0,0,0,0.04)', border: '1.5px solid transparent',
     borderRadius: '10px', outline: 'none', boxSizing: 'border-box',
     letterSpacing: '-0.01em', transition: 'border-color 0.15s',
@@ -102,7 +103,7 @@ function CreateProjectModal({ onClose, onCreate, isPending }) {
   };
 
   const labelStyle = {
-    display: 'block', fontSize: '11px', fontWeight: '600', color: '#86868B',
+    display: 'block', fontSize: '11px', fontWeight: '600', color: c.textSecondary,
     marginBottom: '6px', letterSpacing: '0.05em', textTransform: 'uppercase',
   };
 
@@ -172,7 +173,7 @@ function CreateProjectModal({ onClose, onCreate, isPending }) {
             onClick={onClose}
             style={{
               padding: '9px 18px', fontSize: '13px', fontWeight: '600',
-              color: '#86868B', background: 'rgba(0,0,0,0.06)',
+              color: c.textSecondary, background: 'rgba(0,0,0,0.06)',
               border: 'none', borderRadius: '99px', cursor: 'pointer',
             }}
           >
@@ -217,7 +218,7 @@ function ProjectCard({ project, areaColor, onDelete }) {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        background: '#fff',
+        background: c.card,
         borderRadius: '14px',
         border: '1px solid rgba(0,0,0,0.07)',
         boxShadow: hovered ? '0 4px 20px rgba(0,0,0,0.1)' : '0 1px 4px rgba(0,0,0,0.05)',
@@ -241,7 +242,7 @@ function ProjectCard({ project, areaColor, onDelete }) {
         {/* Top row: name + delete */}
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px' }}>
           <p style={{
-            margin: 0, fontSize: '15px', fontWeight: '700', color: '#1D1D1F',
+            margin: 0, fontSize: '15px', fontWeight: '700', color: c.text,
             letterSpacing: '-0.02em', lineHeight: 1.3,
             overflow: 'hidden', textOverflow: 'ellipsis',
             display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
@@ -266,7 +267,7 @@ function ProjectCard({ project, areaColor, onDelete }) {
         {/* Description */}
         {project.description && (
           <p style={{
-            margin: 0, fontSize: '12px', color: '#86868B', letterSpacing: '-0.01em', lineHeight: 1.45,
+            margin: 0, fontSize: '12px', color: c.textSecondary, letterSpacing: '-0.01em', lineHeight: 1.45,
             overflow: 'hidden', textOverflow: 'ellipsis',
             display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
           }}>
@@ -297,7 +298,7 @@ function ProjectCard({ project, areaColor, onDelete }) {
           <StatusPill status={project.status} />
 
           {taskTotal > 0 && (
-            <span style={{ fontSize: '11px', color: '#86868B', fontWeight: '500', whiteSpace: 'nowrap' }}>
+            <span style={{ fontSize: '11px', color: c.textSecondary, fontWeight: '500', whiteSpace: 'nowrap' }}>
               {taskDone}/{taskTotal} Aufgaben
             </span>
           )}
@@ -379,7 +380,7 @@ function AreaSection({ area, projects, onDelete }) {
 
         {/* Name */}
         <span style={{
-          fontSize: '14px', fontWeight: '700', color: '#1D1D1F',
+          fontSize: '14px', fontWeight: '700', color: c.text,
           letterSpacing: '-0.02em',
         }}>
           {areaName}
@@ -388,7 +389,7 @@ function AreaSection({ area, projects, onDelete }) {
         {/* Count badge */}
         <span style={{
           padding: '2px 8px', borderRadius: '99px', fontSize: '11px', fontWeight: '600',
-          background: 'rgba(0,0,0,0.06)', color: '#86868B',
+          background: 'rgba(0,0,0,0.06)', color: c.textSecondary,
         }}>
           {count}
         </span>
@@ -438,6 +439,7 @@ export default function Projects() {
   const qc       = useQueryClient();
   const navigate = useNavigate();
   const { confirm, ConfirmDialogNode } = useConfirm();
+  const { c } = useTheme();
 
   const [showCreate,  setShowCreate]  = useState(false);
   const [search,      setSearch]      = useState('');
@@ -537,28 +539,28 @@ export default function Projects() {
   // ── Render ───────────────────────────────────────────────────────────────────
 
   const inputBase = {
-    fontSize: '13px', color: '#1D1D1F', background: '#fff',
+    fontSize: '13px', color: c.text, background: c.card,
     border: '1.5px solid rgba(0,0,0,0.1)', borderRadius: '10px',
     outline: 'none', letterSpacing: '-0.01em', fontFamily: 'inherit',
     transition: 'border-color 0.15s',
   };
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#F5F5F7' }}>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: c.bg }}>
       {ConfirmDialogNode}
 
       {/* ── Header ── */}
       <div style={{
         padding: '28px 32px 0',
         flexShrink: 0,
-        background: '#F5F5F7',
+        background: c.bg,
       }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', marginBottom: '20px' }}>
           <div>
-            <h1 style={{ fontSize: '24px', fontWeight: '700', color: '#1D1D1F', letterSpacing: '-0.03em', margin: 0 }}>
+            <h1 style={{ fontSize: '24px', fontWeight: '700', color: c.text, letterSpacing: '-0.03em', margin: 0 }}>
               Projekte
             </h1>
-            <p style={{ fontSize: '13px', color: '#86868B', margin: '4px 0 0', letterSpacing: '-0.01em' }}>
+            <p style={{ fontSize: '13px', color: c.textSecondary, margin: '4px 0 0', letterSpacing: '-0.01em' }}>
               {projects.length} {projects.length === 1 ? 'Projekt' : 'Projekte'} · {areas.length} {areas.length === 1 ? 'Bereich' : 'Bereiche'}
             </p>
           </div>
@@ -657,10 +659,10 @@ export default function Projects() {
             }}>
               <Zap size={30} color="#0071E3" strokeWidth={1.5} />
             </div>
-            <p style={{ fontSize: '18px', fontWeight: '700', color: '#1D1D1F', letterSpacing: '-0.02em', margin: 0 }}>
+            <p style={{ fontSize: '18px', fontWeight: '700', color: c.text, letterSpacing: '-0.02em', margin: 0 }}>
               Noch keine Projekte
             </p>
-            <p style={{ fontSize: '14px', color: '#86868B', margin: 0, maxWidth: '280px', lineHeight: 1.55 }}>
+            <p style={{ fontSize: '14px', color: c.textSecondary, margin: 0, maxWidth: '280px', lineHeight: 1.55 }}>
               Erstelle dein erstes Projekt und behalte den Überblick über alle Aufgaben.
             </p>
             <button
@@ -692,10 +694,10 @@ export default function Projects() {
             }}>
               <Search size={24} color="#C7C7CC" />
             </div>
-            <p style={{ fontSize: '16px', fontWeight: '600', color: '#1D1D1F', letterSpacing: '-0.02em', margin: 0 }}>
+            <p style={{ fontSize: '16px', fontWeight: '600', color: c.text, letterSpacing: '-0.02em', margin: 0 }}>
               Keine Treffer
             </p>
-            <p style={{ fontSize: '13px', color: '#86868B', margin: 0 }}>
+            <p style={{ fontSize: '13px', color: c.textSecondary, margin: 0 }}>
               Versuche andere Filter oder einen anderen Suchbegriff.
             </p>
             <button

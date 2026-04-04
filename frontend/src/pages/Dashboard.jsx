@@ -1,19 +1,21 @@
 import { useState, useMemo } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useMobile } from '../hooks/useMobile';
 import BottomNav from '../components/BottomNav';
 import MobileDrawer from '../components/MobileDrawer';
+import SharedSidebar from '../components/Sidebar';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { projectsApi } from '../api/projects';
 import { invoicesApi } from '../api/invoices';
 import { timeApi } from '../api/time';
 import { calendarApi } from '../api/calendar';
 import { workflowApi } from '../api/workflow';
 import {
-  LayoutDashboard, Globe, Briefcase, CalendarDays, Clock, BarChart2, FolderKanban,
+  Globe, Briefcase, CalendarDays, Clock, BarChart2, FolderKanban,
   ClipboardCheck, PackageCheck, Layers, FileText, ClipboardList,
-  Users, UserCog, Settings, LogOut, Zap, Plus, ChevronRight,
+  Users, UserCog, Settings, Zap, Plus, ChevronRight,
   Globe2, Receipt, UserPlus, CalendarPlus, CheckCircle2, AlertCircle,
   CalendarRange, Flame,
 } from 'lucide-react';
@@ -61,13 +63,13 @@ function fmtCurrency(n) {
 }
 
 // ─── DONUT CHART ──────────────────────────────────────────────────
-function Donut({ value, max, color = '#0071E3', size = 80, sw = 8 }) {
+function Donut({ value, max, color = '#0071E3', size = 80, sw = 8, trackColor }) {
   const r    = (size - sw) / 2;
   const circ = 2 * Math.PI * r;
   const pct  = max > 0 ? Math.min(value / max, 1) : 0;
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#F2F2F7" strokeWidth={sw} />
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={trackColor || '#F2F2F7'} strokeWidth={sw} />
       {pct > 0 && (
         <circle
           cx={size / 2} cy={size / 2} r={r}
@@ -80,138 +82,10 @@ function Donut({ value, max, color = '#0071E3', size = 80, sw = 8 }) {
   );
 }
 
-// ─── SIDEBAR ──────────────────────────────────────────────────────
-const NAV_GROUPS = [
-  { label: null, items: [
-    { to: '/',               icon: LayoutDashboard, label: 'Dashboard'     },
-    { to: '/work',           icon: FolderKanban,    label: 'Arbeit'        },
-    { to: '/calendar',       icon: CalendarDays,    label: 'Kalender'      },
-    { to: '/time-tracking',  icon: Clock,           label: 'Zeiterfassung' },
-    { to: '/timeline',       icon: CalendarRange,   label: 'Timeline'      },
-    { to: '/team-dashboard', icon: BarChart2,       label: 'Team'          },
-  ]},
-  { label: 'Vertrieb', items: [
-    { to: '/sales', icon: Flame, label: 'Sales Engine' },
-  ]},
-  { label: 'Workflow', items: [
-    { to: '/intake',     icon: ClipboardCheck, label: 'Intake'     },
-    { to: '/delivery',   icon: PackageCheck,   label: 'Übergabe'   },
-    { to: '/onboarding', icon: Layers,         label: 'Onboarding' },
-  ]},
-  { label: 'Finanzen', items: [
-    { to: '/invoices', icon: FileText,      label: 'Rechnungen' },
-    { to: '/quotes',   icon: ClipboardList, label: 'Angebote'   },
-  ]},
-  { label: 'Verwaltung', items: [
-    { to: '/clients',  icon: Users,    label: 'Kunden'        },
-    { to: '/team',     icon: UserCog,  label: 'Team'          },
-    { to: '/settings', icon: Settings, label: 'Einstellungen' },
-  ]},
-];
-
-function avatarBg(s = '') {
-  const cs = ['#BF5AF2', '#0071E3', '#34C759', '#FF9500', '#FF3B30'];
-  let h = 0;
-  for (const c of s) h = c.charCodeAt(0) + ((h << 5) - h);
-  return cs[Math.abs(h) % cs.length];
-}
-
-function Sidebar() {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
-  const name     = user?.name || user?.email || '?';
-  const initials = name.trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
-  const bg       = user?.color || avatarBg(user?.email || '');
-
-  return (
-    <aside className="w-[240px] shrink-0 flex flex-col h-screen bg-white/85 backdrop-blur-2xl border-r border-black/[0.06] z-10">
-      <div className="px-5 pt-5 pb-2 shrink-0">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-[9px] bg-[#0071E3] flex items-center justify-center shadow-[0_2px_8px_rgba(0,113,227,0.35)]">
-            <Zap size={14} color="#fff" strokeWidth={2.5} />
-          </div>
-          <span className="text-[15px] font-semibold text-[#1D1D1F] tracking-[-0.3px]">Vecturo</span>
-        </div>
-      </div>
-
-      <div className="px-4 py-3 shrink-0">
-        <button
-          onClick={() => navigate('/wizard')}
-          className="w-full flex items-center justify-center gap-1.5 py-[9px] px-4 text-[13px] font-medium text-white bg-[#0071E3] rounded-[10px] shadow-[0_1px_3px_rgba(0,113,227,0.3)] transition-all duration-150 hover:bg-[#0077ED] active:scale-[0.98]"
-        >
-          <Plus size={14} strokeWidth={2} />
-          Neues Projekt
-        </button>
-      </div>
-
-      <nav className="flex-1 overflow-y-auto px-3 pb-2">
-        {NAV_GROUPS.map((g, gi) => (
-          <div key={gi}>
-            {g.label && (
-              <p className="px-3 pt-4 pb-1.5 text-[10.5px] font-semibold text-[#86868B] uppercase tracking-[0.08em] select-none">
-                {g.label}
-              </p>
-            )}
-            <div className="space-y-0.5">
-              {g.items.map(({ to, icon: Icon, label }) => (
-                <NavLink key={to} to={to} end={to === '/'} className="block no-underline">
-                  {({ isActive }) => (
-                    <div className={[
-                      'relative flex items-center gap-2.5 px-3 py-[7px] rounded-[10px]',
-                      'text-[13.5px] tracking-[-0.01em] cursor-pointer transition-all duration-[120ms]',
-                      isActive
-                        ? 'bg-[#E8F0FE] text-[#0071E3] font-medium'
-                        : 'text-[#424245] font-normal hover:bg-black/[0.04] hover:text-[#1D1D1F]',
-                    ].join(' ')}>
-                      {isActive && (
-                        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-[18px] bg-[#0071E3] rounded-r-full" />
-                      )}
-                      <Icon size={15} color={isActive ? '#0071E3' : '#86868B'} strokeWidth={isActive ? 2 : 1.75} />
-                      <span>{label}</span>
-                    </div>
-                  )}
-                </NavLink>
-              ))}
-            </div>
-          </div>
-        ))}
-      </nav>
-
-      <div className="px-3 py-3 border-t border-black/[0.06] shrink-0">
-        <div className="flex items-center gap-2.5 px-2 py-2 rounded-[10px] mb-1">
-          <div className="relative shrink-0">
-            <div
-              className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white overflow-hidden"
-              style={{ background: bg }}
-            >
-              {user?.avatar_base64
-                ? <img src={user.avatar_base64} alt="" className="w-full h-full object-cover" />
-                : initials}
-            </div>
-            <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-[#34C759] rounded-full border-2 border-white block" />
-          </div>
-          <div className="min-w-0 flex-1">
-            {user?.name && (
-              <p className="text-[12px] font-medium text-[#1D1D1F] truncate leading-snug">{user.name}</p>
-            )}
-            <p className="text-[11px] text-[#6E6E73] truncate leading-snug">{user?.email}</p>
-          </div>
-        </div>
-        <button
-          onClick={logout}
-          className="w-full flex items-center gap-2 px-3 py-1.5 text-[12.5px] text-[#86868B] rounded-[8px] hover:bg-red-500/10 hover:text-[#FF3B30] transition-all duration-150 cursor-pointer"
-        >
-          <LogOut size={13} strokeWidth={1.75} />
-          Abmelden
-        </button>
-      </div>
-    </aside>
-  );
-}
-
 // ─── DASHBOARD ────────────────────────────────────────────────────
 export default function VecturoDashboard() {
   const { user } = useAuth();
+  const { c, isDark } = useTheme();
   const navigate = useNavigate();
   const isMobile = useMobile();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -293,18 +167,26 @@ export default function VecturoDashboard() {
 
   // Health status pill
   const healthState = useMemo(() => {
-    if (overdueInvoices.length > 0) return { label: `${overdueInvoices.length} überfällige Rechnung${overdueInvoices.length > 1 ? 'en' : ''}`, color: '#FF3B30', bg: '#FFE5E5' };
-    if (dueReminders.length > 0)    return { label: `${dueReminders.length} Follow-up${dueReminders.length > 1 ? 's' : ''} fällig`, color: '#FF9F0A', bg: '#FFF8E8' };
+    if (overdueInvoices.length > 0) return {
+      label: `${overdueInvoices.length} überfällige Rechnung${overdueInvoices.length > 1 ? 'en' : ''}`,
+      color: '#FF3B30',
+      bg: isDark ? 'rgba(255,69,58,0.15)' : '#FFE5E5',
+    };
+    if (dueReminders.length > 0) return {
+      label: `${dueReminders.length} Follow-up${dueReminders.length > 1 ? 's' : ''} fällig`,
+      color: '#FF9F0A',
+      bg: isDark ? 'rgba(255,159,10,0.15)' : '#FFF8E8',
+    };
     return { label: 'Alles im Griff', color: '#34C759', bg: null };
-  }, [overdueInvoices, dueReminders]);
+  }, [overdueInvoices, dueReminders, isDark]);
 
   // ── Render ────────────────────────────────────────────────────
   return (
     <div
-      className={isMobile ? "flex flex-col bg-[#F5F5F7] min-h-screen" : "flex h-screen bg-[#F5F5F7] overflow-hidden"}
-      style={{ fontFamily: "system-ui,-apple-system,'Segoe UI',sans-serif" }}
+      className={isMobile ? "flex flex-col min-h-screen" : "flex h-screen overflow-hidden"}
+      style={{ background: c.bg, fontFamily: "system-ui,-apple-system,'Segoe UI',sans-serif" }}
     >
-      {!isMobile && <Sidebar />}
+      {!isMobile && <SharedSidebar />}
 
       <main className="flex-1 overflow-y-auto" style={{ paddingBottom: isMobile ? 'calc(62px + env(safe-area-inset-bottom) + 20px)' : 0 }}>
         <div className="max-w-[1280px] mx-auto px-5 pb-12" style={{ paddingTop: isMobile ? 'calc(20px + env(safe-area-inset-top))' : '20px' }}>
@@ -312,10 +194,13 @@ export default function VecturoDashboard() {
           {/* ── HEADER ─────────────────────────────────────────── */}
           <header className="flex items-start justify-between mb-8 gap-4 flex-wrap">
             <div>
-              <h1 className="text-[22px] font-semibold text-[#1D1D1F] tracking-[-0.3px] leading-none">
+              <h1
+                className="text-[22px] font-semibold tracking-[-0.3px] leading-none"
+                style={{ color: c.text }}
+              >
                 {greeting}{first ? `, ${first}` : ''}
               </h1>
-              <p className="text-[14px] text-[#6E6E73] mt-1.5">{todayStr}</p>
+              <p className="text-[14px] mt-1.5" style={{ color: c.textTertiary }}>{todayStr}</p>
               <div
                 className="inline-flex items-center gap-1.5 mt-2.5 px-2.5 py-1 rounded-full"
                 style={healthState.bg ? { background: healthState.bg } : {}}
@@ -329,14 +214,18 @@ export default function VecturoDashboard() {
             <div className="flex items-center gap-2 flex-wrap">
               <button
                 onClick={() => navigate('/wizard')}
-                className="flex items-center gap-1.5 px-4 py-[9px] text-[13px] font-medium text-[#0071E3] bg-white border border-[#0071E3]/25 rounded-[10px] shadow-[0_1px_3px_rgba(0,0,0,0.06)] hover:bg-[#E8F0FE] transition-all duration-150 active:scale-[0.98]"
+                className="flex items-center gap-1.5 px-4 py-[9px] text-[13px] font-medium rounded-[10px] shadow-[0_1px_3px_rgba(0,0,0,0.06)] transition-all duration-150 active:scale-[0.98]"
+                style={{ color: c.blue, background: c.card, border: `1px solid ${c.blue}40` }}
+                onMouseEnter={e => e.currentTarget.style.background = c.blueLight}
+                onMouseLeave={e => e.currentTarget.style.background = c.card}
               >
                 <Globe size={14} strokeWidth={1.75} />
                 Website erstellen
               </button>
               <button
                 onClick={() => navigate('/invoices/new')}
-                className="flex items-center gap-1.5 px-4 py-[9px] text-[13px] font-medium text-white bg-[#0071E3] rounded-[10px] shadow-[0_1px_3px_rgba(0,113,227,0.25)] hover:bg-[#0077ED] transition-all duration-150 active:scale-[0.98]"
+                className="flex items-center gap-1.5 px-4 py-[9px] text-[13px] font-medium text-white rounded-[10px] shadow-[0_1px_3px_rgba(0,113,227,0.25)] hover:opacity-90 transition-all duration-150 active:scale-[0.98]"
+                style={{ background: c.blue }}
               >
                 <Receipt size={14} strokeWidth={1.75} />
                 Rechnung erstellen
@@ -346,7 +235,10 @@ export default function VecturoDashboard() {
 
           {/* ── KPI ROW ────────────────────────────────────────── */}
           <section className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
-            <div className="bg-[#1D1D1F] rounded-[14px] p-5 shadow-[0_1px_3px_rgba(0,0,0,0.12)]">
+            <div
+              className="rounded-[14px] p-5 shadow-[0_1px_3px_rgba(0,0,0,0.12)]"
+              style={{ background: isDark ? '#2C2C2E' : '#1D1D1F' }}
+            >
               <div className="flex items-center justify-between mb-4">
                 <Globe size={15} color="#636366" strokeWidth={1.75} />
                 <span className="text-[10.5px] font-semibold text-[#636366] uppercase tracking-[0.2px]">
@@ -365,35 +257,39 @@ export default function VecturoDashboard() {
 
             <div
               onClick={() => navigate('/invoices')}
-              className="bg-white rounded-[14px] p-5 border border-black/[0.06] shadow-[0_1px_3px_rgba(0,0,0,0.08)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.10)] hover:-translate-y-px transition-all duration-150 cursor-pointer"
+              className="rounded-[14px] p-5 shadow-[0_1px_3px_rgba(0,0,0,0.08)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.10)] hover:-translate-y-px transition-all duration-150 cursor-pointer"
+              style={{ background: c.card, border: `1px solid ${c.border}` }}
             >
               <div className="flex items-center justify-between mb-4">
-                <FileText size={15} color="#86868B" strokeWidth={1.75} />
-                <span className="text-[10.5px] font-semibold text-[#86868B] uppercase tracking-[0.2px]">
+                <FileText size={15} color={c.textSecondary} strokeWidth={1.75} />
+                <span className="text-[10.5px] font-semibold uppercase tracking-[0.2px]" style={{ color: c.textSecondary }}>
                   Offener Umsatz
                 </span>
               </div>
-              <p className="text-[32px] font-bold text-[#1D1D1F] tracking-[-0.5px] leading-none">
+              <p className="text-[32px] font-bold tracking-[-0.5px] leading-none" style={{ color: c.text }}>
                 {fmtCurrency(openAmount)}
               </p>
-              <p className="text-[13px] text-[#6E6E73] mt-2">
+              <p className="text-[13px] mt-2" style={{ color: c.textTertiary }}>
                 {openInvoices.length + overdueInvoices.length === 0
                   ? 'Keine offenen Rechnungen'
                   : `${openInvoices.length + overdueInvoices.length} Rechnung${openInvoices.length + overdueInvoices.length !== 1 ? 'en' : ''} offen`}
               </p>
             </div>
 
-            <div className="bg-white rounded-[14px] p-5 border border-black/[0.06] shadow-[0_1px_3px_rgba(0,0,0,0.08)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.10)] hover:-translate-y-px transition-all duration-150">
+            <div
+              className="rounded-[14px] p-5 shadow-[0_1px_3px_rgba(0,0,0,0.08)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.10)] hover:-translate-y-px transition-all duration-150"
+              style={{ background: c.card, border: `1px solid ${c.border}` }}
+            >
               <div className="flex items-center justify-between mb-4">
-                <CheckCircle2 size={15} color="#86868B" strokeWidth={1.75} />
-                <span className="text-[10.5px] font-semibold text-[#86868B] uppercase tracking-[0.2px]">
+                <CheckCircle2 size={15} color={c.textSecondary} strokeWidth={1.75} />
+                <span className="text-[10.5px] font-semibold uppercase tracking-[0.2px]" style={{ color: c.textSecondary }}>
                   Follow-ups heute
                 </span>
               </div>
-              <p className="text-[32px] font-bold text-[#1D1D1F] tracking-[-0.5px] leading-none">
+              <p className="text-[32px] font-bold tracking-[-0.5px] leading-none" style={{ color: c.text }}>
                 {dueReminders.length}
               </p>
-              <p className="text-[13px] text-[#6E6E73] mt-2">
+              <p className="text-[13px] mt-2" style={{ color: c.textTertiary }}>
                 {dueReminders.length === 0 ? 'Keine fälligen' : `${dueReminders.length} fällig`}
               </p>
             </div>
@@ -403,14 +299,18 @@ export default function VecturoDashboard() {
           <section className="mb-6">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <h2 className="text-[15px] font-semibold text-[#1D1D1F] tracking-[-0.1px]">Aktive Websites</h2>
-                <span className="px-2 py-0.5 text-[11px] font-semibold text-[#6E6E73] bg-[#F2F2F7] rounded-full">
+                <h2 className="text-[15px] font-semibold tracking-[-0.1px]" style={{ color: c.text }}>Aktive Websites</h2>
+                <span
+                  className="px-2 py-0.5 text-[11px] font-semibold rounded-full"
+                  style={{ color: c.textTertiary, background: c.cardSecondary }}
+                >
                   {activeProjects.length}
                 </span>
               </div>
               <button
                 onClick={() => navigate('/websites')}
-                className="flex items-center gap-0.5 text-[13px] text-[#0071E3] font-medium hover:opacity-70 transition-opacity"
+                className="flex items-center gap-0.5 text-[13px] font-medium hover:opacity-70 transition-opacity"
+                style={{ color: c.blue }}
               >
                 Alle <ChevronRight size={14} strokeWidth={2} />
               </button>
@@ -420,12 +320,16 @@ export default function VecturoDashboard() {
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => navigate('/wizard')}
-                  className="w-[208px] border-2 border-dashed border-black/[0.12] rounded-[14px] p-4 flex flex-col items-center justify-center gap-2 hover:border-[#0071E3]/35 hover:bg-[#E8F0FE]/30 transition-all duration-150 cursor-pointer group h-[140px]"
+                  className="w-[208px] border-2 border-dashed rounded-[14px] p-4 flex flex-col items-center justify-center gap-2 transition-all duration-150 cursor-pointer group h-[140px]"
+                  style={{ borderColor: c.border }}
                 >
-                  <div className="w-10 h-10 rounded-[11px] bg-[#F2F2F7] group-hover:bg-[#E8F0FE] flex items-center justify-center transition-colors">
-                    <Plus size={20} color="#86868B" strokeWidth={1.75} />
+                  <div
+                    className="w-10 h-10 rounded-[11px] flex items-center justify-center transition-colors"
+                    style={{ background: c.cardSecondary }}
+                  >
+                    <Plus size={20} color={c.textSecondary} strokeWidth={1.75} />
                   </div>
-                  <span className="text-[12.5px] font-medium text-[#6E6E73]">Website erstellen</span>
+                  <span className="text-[12.5px] font-medium" style={{ color: c.textTertiary }}>Website erstellen</span>
                 </button>
               </div>
             ) : (
@@ -439,15 +343,19 @@ export default function VecturoDashboard() {
                     <div
                       key={p.id}
                       onClick={() => navigate(`/websites/${p.id}`)}
-                      className="shrink-0 w-[208px] bg-white rounded-[14px] p-4 border border-black/[0.06] shadow-[0_1px_3px_rgba(0,0,0,0.08)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.10)] hover:-translate-y-px transition-all duration-150 cursor-pointer"
+                      className="shrink-0 w-[208px] rounded-[14px] p-4 shadow-[0_1px_3px_rgba(0,0,0,0.08)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.10)] hover:-translate-y-px transition-all duration-150 cursor-pointer"
+                      style={{ background: c.card, border: `1px solid ${c.border}` }}
                     >
-                      <div className="w-10 h-10 rounded-[11px] bg-[#F2F2F7] flex items-center justify-center mb-3">
-                        <Globe2 size={20} color="#86868B" strokeWidth={1.5} />
+                      <div
+                        className="w-10 h-10 rounded-[11px] flex items-center justify-center mb-3"
+                        style={{ background: c.cardSecondary }}
+                      >
+                        <Globe2 size={20} color={c.textSecondary} strokeWidth={1.5} />
                       </div>
-                      <p className="text-[13.5px] font-semibold text-[#1D1D1F] truncate leading-snug">
+                      <p className="text-[13.5px] font-semibold truncate leading-snug" style={{ color: c.text }}>
                         {p.client_name || 'Kein Kunde'}
                       </p>
-                      <p className="text-[12px] text-[#6E6E73] truncate mt-0.5 mb-3">{p.name}</p>
+                      <p className="text-[12px] truncate mt-0.5 mb-3" style={{ color: c.textTertiary }}>{p.name}</p>
                       <span className={`inline-block px-2 py-0.5 text-[11px] font-semibold rounded-[6px] ${st.tw}`}>
                         {st.label}
                       </span>
@@ -457,12 +365,16 @@ export default function VecturoDashboard() {
 
                 <button
                   onClick={() => navigate('/wizard')}
-                  className="shrink-0 w-[208px] border-2 border-dashed border-black/[0.12] rounded-[14px] p-4 flex flex-col items-center justify-center gap-2 hover:border-[#0071E3]/35 hover:bg-[#E8F0FE]/30 transition-all duration-150 cursor-pointer group"
+                  className="shrink-0 w-[208px] border-2 border-dashed rounded-[14px] p-4 flex flex-col items-center justify-center gap-2 transition-all duration-150 cursor-pointer group"
+                  style={{ borderColor: c.border }}
                 >
-                  <div className="w-10 h-10 rounded-[11px] bg-[#F2F2F7] group-hover:bg-[#E8F0FE] flex items-center justify-center transition-colors">
-                    <Plus size={20} color="#86868B" strokeWidth={1.75} />
+                  <div
+                    className="w-10 h-10 rounded-[11px] flex items-center justify-center transition-colors"
+                    style={{ background: c.cardSecondary }}
+                  >
+                    <Plus size={20} color={c.textSecondary} strokeWidth={1.75} />
                   </div>
-                  <span className="text-[12.5px] font-medium text-[#6E6E73]">Website erstellen</span>
+                  <span className="text-[12.5px] font-medium" style={{ color: c.textTertiary }}>Website erstellen</span>
                 </button>
               </div>
             )}
@@ -472,16 +384,22 @@ export default function VecturoDashboard() {
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-3 mb-3">
 
             {/* Table */}
-            <div className="bg-white rounded-[14px] border border-black/[0.06] shadow-[0_1px_3px_rgba(0,0,0,0.08)] overflow-hidden">
-              <div className="flex items-center justify-between px-5 py-4 border-b border-black/[0.05]">
-                <h2 className="text-[15px] font-semibold text-[#1D1D1F] tracking-[-0.1px]">Zuletzt aktiv</h2>
+            <div
+              className="rounded-[14px] shadow-[0_1px_3px_rgba(0,0,0,0.08)] overflow-hidden"
+              style={{ background: c.card, border: `1px solid ${c.border}` }}
+            >
+              <div
+                className="flex items-center justify-between px-5 py-4"
+                style={{ borderBottom: `1px solid ${c.borderSubtle}` }}
+              >
+                <h2 className="text-[15px] font-semibold tracking-[-0.1px]" style={{ color: c.text }}>Zuletzt aktiv</h2>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="border-b border-black/[0.05]">
+                  <thead style={{ borderBottom: `1px solid ${c.borderSubtle}` }}>
                     <tr>
                       {['Name', 'Kunde', 'Status', 'Zuletzt'].map(h => (
-                        <th key={h} className="px-5 py-3 text-left text-[11px] font-semibold text-[#6E6E73] uppercase tracking-[0.2px] whitespace-nowrap">
+                        <th key={h} className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.2px] whitespace-nowrap" style={{ color: c.textTertiary }}>
                           {h}
                         </th>
                       ))}
@@ -494,20 +412,22 @@ export default function VecturoDashboard() {
                         <tr
                           key={p.id}
                           onClick={() => navigate(`/websites/${p.id}`)}
-                          className={[
-                            'border-b border-black/[0.04] last:border-0 cursor-pointer',
-                            'hover:bg-[#F5F5F7] transition-colors duration-100',
-                            i % 2 === 1 ? 'bg-[#FAFAFA]' : 'bg-white',
-                          ].join(' ')}
+                          className="cursor-pointer transition-colors duration-100 last:border-0"
+                          style={{
+                            borderBottom: `1px solid ${c.borderSubtle}`,
+                            background: i % 2 === 1 ? c.cardSecondary : c.card,
+                          }}
+                          onMouseEnter={e => e.currentTarget.style.background = isDark ? '#2C2C2E' : '#F5F5F7'}
+                          onMouseLeave={e => e.currentTarget.style.background = i % 2 === 1 ? c.cardSecondary : c.card}
                         >
-                          <td className="px-5 py-3 text-[13px] font-medium text-[#1D1D1F] max-w-[200px] truncate">{p.name}</td>
-                          <td className="px-5 py-3 text-[13px] text-[#6E6E73] max-w-[160px] truncate">{p.client_name || '—'}</td>
+                          <td className="px-5 py-3 text-[13px] font-medium max-w-[200px] truncate" style={{ color: c.text }}>{p.name}</td>
+                          <td className="px-5 py-3 text-[13px] max-w-[160px] truncate" style={{ color: c.textTertiary }}>{p.client_name || '—'}</td>
                           <td className="px-5 py-3 whitespace-nowrap">
                             <span className={`inline-block px-2 py-0.5 text-[11px] font-semibold rounded-[6px] ${st.tw}`}>
                               {st.label}
                             </span>
                           </td>
-                          <td className="px-5 py-3 text-[13px] text-[#6E6E73] whitespace-nowrap">
+                          <td className="px-5 py-3 text-[13px] whitespace-nowrap" style={{ color: c.textTertiary }}>
                             {relDate(p.created_at)}
                           </td>
                         </tr>
@@ -515,7 +435,7 @@ export default function VecturoDashboard() {
                     })}
                     {projects.length === 0 && (
                       <tr>
-                        <td colSpan={4} className="px-5 py-8 text-center text-[13px] text-[#6E6E73]">
+                        <td colSpan={4} className="px-5 py-8 text-center text-[13px]" style={{ color: c.textTertiary }}>
                           Noch keine Websites angelegt.
                         </td>
                       </tr>
@@ -529,39 +449,49 @@ export default function VecturoDashboard() {
             <div className="flex flex-col gap-3">
 
               {/* Finanzen */}
-              <div className="bg-white rounded-[14px] p-5 border border-black/[0.06] shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
+              <div
+                className="rounded-[14px] p-5 shadow-[0_1px_3px_rgba(0,0,0,0.08)]"
+                style={{ background: c.card, border: `1px solid ${c.border}` }}
+              >
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-[15px] font-semibold text-[#1D1D1F] tracking-[-0.1px]">Finanzen</h2>
+                  <h2 className="text-[15px] font-semibold tracking-[-0.1px]" style={{ color: c.text }}>Finanzen</h2>
                   <button
                     onClick={() => navigate('/invoices')}
-                    className="flex items-center gap-0.5 text-[12px] text-[#0071E3] font-medium hover:opacity-70 transition-opacity"
+                    className="flex items-center gap-0.5 text-[12px] font-medium hover:opacity-70 transition-opacity"
+                    style={{ color: c.blue }}
                   >
                     Alle <ChevronRight size={13} strokeWidth={2} />
                   </button>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
                   {[
-                    { label: 'Offen',      val: openInvoices.length,    color: '#FF9F0A', bg: '#FFF8E8' },
-                    { label: 'Überfällig', val: overdueInvoices.length, color: '#FF3B30', bg: '#FFE5E5' },
+                    { label: 'Offen',      val: openInvoices.length,    color: '#FF9F0A', bg: isDark ? 'rgba(255,159,10,0.15)' : '#FFF8E8' },
+                    { label: 'Überfällig', val: overdueInvoices.length, color: '#FF3B30', bg: isDark ? 'rgba(255,69,58,0.15)'  : '#FFE5E5' },
                     { label: 'Bezahlt',    val: paidAmount >= 1000
                         ? `${(paidAmount / 1000).toFixed(1)}k`
                         : `${Math.round(paidAmount)}`,
-                      color: '#34C759', bg: '#E8F8EE' },
+                      color: '#34C759', bg: isDark ? 'rgba(52,199,89,0.15)' : '#E8F8EE' },
                   ].map(({ label, val, color, bg }) => (
                     <div key={label} className="flex flex-col items-center py-3 px-2 rounded-[10px]" style={{ background: bg }}>
                       <p className="text-[18px] font-bold leading-none" style={{ color }}>{val}</p>
-                      <p className="text-[11px] font-medium text-[#6E6E73] mt-1 text-center leading-tight">{label}</p>
+                      <p className="text-[11px] font-medium mt-1 text-center leading-tight" style={{ color: c.textSecondary }}>{label}</p>
                     </div>
                   ))}
                 </div>
               </div>
 
               {/* Follow-ups */}
-              <div className="bg-white rounded-[14px] p-5 border border-black/[0.06] shadow-[0_1px_3px_rgba(0,0,0,0.08)] flex-1 flex flex-col">
+              <div
+                className="rounded-[14px] p-5 shadow-[0_1px_3px_rgba(0,0,0,0.08)] flex-1 flex flex-col"
+                style={{ background: c.card, border: `1px solid ${c.border}` }}
+              >
                 <div className="flex items-center justify-between mb-3">
-                  <h2 className="text-[15px] font-semibold text-[#1D1D1F] tracking-[-0.1px]">Follow-ups</h2>
+                  <h2 className="text-[15px] font-semibold tracking-[-0.1px]" style={{ color: c.text }}>Follow-ups</h2>
                   {dueReminders.length > 0 && (
-                    <span className="px-2 py-0.5 text-[11px] font-semibold bg-[#FFF8E8] text-[#B35A00] rounded-full">
+                    <span
+                      className="px-2 py-0.5 text-[11px] font-semibold rounded-full"
+                      style={{ background: isDark ? 'rgba(255,159,10,0.15)' : '#FFF8E8', color: '#B35A00' }}
+                    >
                       {dueReminders.length} fällig
                     </span>
                   )}
@@ -569,9 +499,9 @@ export default function VecturoDashboard() {
 
                 {dueReminders.length === 0 ? (
                   <div className="flex-1 flex flex-col items-center justify-center text-center py-4">
-                    <CheckCircle2 size={28} color="#D1D1D6" strokeWidth={1.25} />
-                    <p className="text-[13px] font-medium text-[#1D1D1F] mt-3">Alles erledigt</p>
-                    <p className="text-[12px] text-[#6E6E73] mt-0.5">Keine fälligen Follow-ups.</p>
+                    <CheckCircle2 size={28} color={c.border} strokeWidth={1.25} />
+                    <p className="text-[13px] font-medium mt-3" style={{ color: c.text }}>Alles erledigt</p>
+                    <p className="text-[12px] mt-0.5" style={{ color: c.textTertiary }}>Keine fälligen Follow-ups.</p>
                   </div>
                 ) : (
                   <div className="space-y-2 flex-1">
@@ -579,12 +509,13 @@ export default function VecturoDashboard() {
                       <div
                         key={r.id}
                         onClick={() => navigate(`/websites/${r.project_id}`)}
-                        className="flex items-start gap-2.5 px-3 py-2.5 rounded-[10px] bg-[#FFF8E8] hover:bg-[#FFF0D0] transition-colors cursor-pointer"
+                        className="flex items-start gap-2.5 px-3 py-2.5 rounded-[10px] transition-colors cursor-pointer"
+                        style={{ background: isDark ? 'rgba(255,159,10,0.12)' : '#FFF8E8' }}
                       >
                         <AlertCircle size={14} color="#FF9F0A" strokeWidth={2} className="mt-0.5 shrink-0" />
                         <div className="min-w-0">
-                          <p className="text-[12.5px] font-medium text-[#1D1D1F] truncate">{r.text || r.note || 'Erinnerung'}</p>
-                          <p className="text-[11px] text-[#6E6E73] truncate">{r.project_name}</p>
+                          <p className="text-[12.5px] font-medium truncate" style={{ color: c.text }}>{r.text || r.note || 'Erinnerung'}</p>
+                          <p className="text-[11px] truncate" style={{ color: c.textTertiary }}>{r.project_name}</p>
                         </div>
                       </div>
                     ))}
@@ -598,31 +529,35 @@ export default function VecturoDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
 
             {/* Time Tracking */}
-            <div className="bg-white rounded-[14px] p-5 border border-black/[0.06] shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
+            <div
+              className="rounded-[14px] p-5 shadow-[0_1px_3px_rgba(0,0,0,0.08)]"
+              style={{ background: c.card, border: `1px solid ${c.border}` }}
+            >
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-[15px] font-semibold text-[#1D1D1F] tracking-[-0.1px]">Zeiterfassung</h2>
+                <h2 className="text-[15px] font-semibold tracking-[-0.1px]" style={{ color: c.text }}>Zeiterfassung</h2>
                 <button
                   onClick={() => navigate('/time-tracking')}
-                  className="text-[12px] text-[#0071E3] font-medium hover:opacity-70 transition-opacity"
+                  className="text-[12px] font-medium hover:opacity-70 transition-opacity"
+                  style={{ color: c.blue }}
                 >
                   Details
                 </button>
               </div>
               <div className="flex items-center gap-4">
                 <div className="relative shrink-0">
-                  <Donut value={weekSec} max={144000} color="#0071E3" size={80} sw={8} />
+                  <Donut value={weekSec} max={144000} color={c.blue} size={80} sw={8} trackColor={c.cardSecondary} />
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <Clock size={16} color="#86868B" strokeWidth={1.5} />
+                    <Clock size={16} color={c.textSecondary} strokeWidth={1.5} />
                   </div>
                 </div>
                 <div>
-                  <p className="text-[22px] font-bold text-[#1D1D1F] tracking-[-0.4px] leading-none">
+                  <p className="text-[22px] font-bold tracking-[-0.4px] leading-none" style={{ color: c.text }}>
                     {weekSec > 0 ? fmt(weekSec) : '—'}
                   </p>
-                  <p className="text-[12px] text-[#6E6E73] mt-1">Diese Woche</p>
+                  <p className="text-[12px] mt-1" style={{ color: c.textTertiary }}>Diese Woche</p>
                   <div className="flex items-center gap-1.5 mt-2">
                     <span className="w-2 h-2 rounded-full bg-[#34C759] block shrink-0" />
-                    <span className="text-[12px] text-[#6E6E73]">
+                    <span className="text-[12px]" style={{ color: c.textTertiary }}>
                       {todaySec > 0 ? fmt(todaySec) : '0m'} heute
                     </span>
                   </div>
@@ -631,12 +566,16 @@ export default function VecturoDashboard() {
             </div>
 
             {/* Kalender heute */}
-            <div className="bg-white rounded-[14px] p-5 border border-black/[0.06] shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
+            <div
+              className="rounded-[14px] p-5 shadow-[0_1px_3px_rgba(0,0,0,0.08)]"
+              style={{ background: c.card, border: `1px solid ${c.border}` }}
+            >
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-[15px] font-semibold text-[#1D1D1F] tracking-[-0.1px]">Heute</h2>
+                <h2 className="text-[15px] font-semibold tracking-[-0.1px]" style={{ color: c.text }}>Heute</h2>
                 <button
                   onClick={() => navigate('/calendar')}
-                  className="flex items-center gap-0.5 text-[12px] text-[#0071E3] font-medium hover:opacity-70 transition-opacity"
+                  className="flex items-center gap-0.5 text-[12px] font-medium hover:opacity-70 transition-opacity"
+                  style={{ color: c.blue }}
                 >
                   Kalender <ChevronRight size={13} strokeWidth={2} />
                 </button>
@@ -644,23 +583,26 @@ export default function VecturoDashboard() {
 
               {todayEvents.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-4 text-center">
-                  <CalendarDays size={24} color="#D1D1D6" strokeWidth={1.25} />
-                  <p className="text-[12.5px] text-[#6E6E73] mt-2">Keine Termine heute</p>
+                  <CalendarDays size={24} color={c.border} strokeWidth={1.25} />
+                  <p className="text-[12.5px] mt-2" style={{ color: c.textTertiary }}>Keine Termine heute</p>
                 </div>
               ) : (
                 <div className="space-y-1">
                   {todayEvents.map((ev, i) => (
                     <div
                       key={ev.id || i}
-                      className="flex items-center gap-3 px-3 py-2 rounded-[10px] hover:bg-[#F5F5F7] transition-colors cursor-default"
+                      className="flex items-center gap-3 px-3 py-2 rounded-[10px] transition-colors cursor-default"
+                      style={{ background: 'transparent' }}
+                      onMouseEnter={e => e.currentTarget.style.background = c.cardSecondary}
+                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                     >
                       <span
                         className="w-[3px] h-9 rounded-full shrink-0"
-                        style={{ background: ev.color || '#0071E3' }}
+                        style={{ background: ev.color || c.blue }}
                       />
                       <div>
-                        <p className="text-[13px] font-medium text-[#1D1D1F] leading-snug">{ev.title}</p>
-                        <p className="text-[11px] text-[#6E6E73]">{fmtTime(ev.start_time)} Uhr</p>
+                        <p className="text-[13px] font-medium leading-snug" style={{ color: c.text }}>{ev.title}</p>
+                        <p className="text-[11px]" style={{ color: c.textTertiary }}>{fmtTime(ev.start_time)} Uhr</p>
                       </div>
                     </div>
                   ))}
@@ -669,8 +611,11 @@ export default function VecturoDashboard() {
             </div>
 
             {/* Schnellaktionen */}
-            <div className="bg-white rounded-[14px] p-5 border border-black/[0.06] shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
-              <h2 className="text-[15px] font-semibold text-[#1D1D1F] tracking-[-0.1px] mb-4">Schnellaktionen</h2>
+            <div
+              className="rounded-[14px] p-5 shadow-[0_1px_3px_rgba(0,0,0,0.08)]"
+              style={{ background: c.card, border: `1px solid ${c.border}` }}
+            >
+              <h2 className="text-[15px] font-semibold tracking-[-0.1px] mb-4" style={{ color: c.text }}>Schnellaktionen</h2>
               <div className="grid grid-cols-2 gap-2">
                 {[
                   { icon: Globe,        label: 'Website',  cb: () => navigate('/wizard')       },
@@ -682,7 +627,16 @@ export default function VecturoDashboard() {
                   <button
                     key={label}
                     onClick={cb}
-                    className="flex flex-col items-center justify-center gap-2 p-4 rounded-[12px] bg-[#F5F5F7] text-[#424245] hover:bg-[#E8F0FE] hover:text-[#0071E3] transition-all duration-150 active:scale-[0.97] cursor-pointer"
+                    className="flex flex-col items-center justify-center gap-2 p-4 rounded-[12px] transition-all duration-150 active:scale-[0.97] cursor-pointer"
+                    style={{ background: c.cardSecondary, color: c.textSecondary }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.background = c.blueLight;
+                      e.currentTarget.style.color = c.blue;
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.background = c.cardSecondary;
+                      e.currentTarget.style.color = c.textSecondary;
+                    }}
                   >
                     <Icon size={22} strokeWidth={1.5} />
                     <span className="text-[12px] font-medium">{label}</span>

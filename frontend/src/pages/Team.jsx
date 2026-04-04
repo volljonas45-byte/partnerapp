@@ -7,6 +7,7 @@ import { teamApi } from '../api/team';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useAuth } from '../context/AuthContext';
 import { useConfirm } from '../hooks/useConfirm';
+import { useTheme } from '../context/ThemeContext';
 
 // ── Konstanten ────────────────────────────────────────────────────────────────
 
@@ -63,6 +64,7 @@ function RoleBadge({ role }) {
 // ── Hauptkomponente ───────────────────────────────────────────────────────────
 
 export default function Team() {
+  const { c, isDark } = useTheme();
   const qc = useQueryClient();
   const navigate = useNavigate();
   const { user, isAdmin } = useAuth();

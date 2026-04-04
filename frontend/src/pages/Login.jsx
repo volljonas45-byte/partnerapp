@@ -4,11 +4,13 @@ import { Zap } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { authApi } from '../api/auth';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 
 export default function Login() {
   const navigate = useNavigate();
   const { login, isAuthenticated } = useAuth();
 
+  const { c } = useTheme();
   const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail]           = useState('');
   const [password, setPassword]     = useState('');
@@ -40,7 +42,7 @@ export default function Login() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: '#F5F5F7',
+      background: c.bg,
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
