@@ -64,7 +64,8 @@ const authLimiter = rateLimit({
 });
 
 app.use('/api/', apiLimiter);
-app.use('/api/auth/', authLimiter);
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
 
 app.use(express.json({ limit: '5mb' })); // 5mb to allow base64 logo uploads
 app.use(express.urlencoded({ extended: true }));
