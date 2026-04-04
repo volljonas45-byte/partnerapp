@@ -86,6 +86,8 @@ const TABS = [
   { key: 'follow_up',    label: 'Follow Up' },
   { key: 'interessiert', label: 'Interessiert' },
   { key: 'demo',         label: 'Demo' },
+  { key: 'spaeter',      label: 'Später' },
+  { key: 'verloren',     label: 'Verloren' },
 ];
 
 // ── Sub-components ────────────────────────────────────────────────────────────
@@ -402,7 +404,14 @@ export default function SalesEngine() {
   function handleStatusChange(status) {
     updateLeadMut.mutate({ id: selectedLeadId, data: { status } });
     setShowStatusMenu(false);
-    toast.success('Status aktualisiert');
+    const archiveStatuses = ['verloren', 'spaeter'];
+    if (archiveStatuses.includes(status)) {
+      setSelectedLeadId(null);
+      setTab(status);
+      toast.success(status === 'verloren' ? 'Lead als Verloren markiert' : 'Lead auf Später verschoben');
+    } else {
+      toast.success('Status aktualisiert');
+    }
   }
 
   // ── Derived data ──────────────────────────────────────────────────────────
@@ -651,13 +660,29 @@ export default function SalesEngine() {
                   </div>
                 </div>
 
-                {/* Current Status (read-only) */}
-                {s && (
-                  <div style={{ marginBottom: 16 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: '#86868B', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>Status</div>
-                    <span style={{ padding: '6px 14px', borderRadius: 99, fontSize: 13, fontWeight: 600, background: s.bg, color: s.color }}>{s.label}</span>
+                {/* Status ändern */}
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#86868B', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 10 }}>Status</div>
+                  <div style={{ overflowX: 'auto', margin: '0 -16px', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
+                    <div style={{ display: 'flex', gap: 7, padding: '0 16px 4px', width: 'max-content' }}>
+                      {Object.entries(LEAD_STATUSES)
+                        .filter(([k]) => k !== 'abgeschlossen')
+                        .map(([k, v]) => {
+                          const isActive = selectedLead.status === k;
+                          return (
+                            <button key={k} onClick={() => handleStatusChange(k)} style={{
+                              padding: '7px 15px', borderRadius: 99, fontSize: 12.5, fontWeight: 600,
+                              background: isActive ? v.color : v.bg,
+                              color: isActive ? '#fff' : v.color,
+                              border: 'none', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
+                              transition: 'all 0.15s',
+                              boxShadow: isActive ? `0 2px 8px ${v.color}40` : 'none',
+                            }}>{v.label}</button>
+                          );
+                        })}
+                    </div>
                   </div>
-                )}
+                </div>
 
                 {/* Follow-up */}
                 <div style={{ background: '#F5F5F7', borderRadius: 12, padding: '12px 14px', marginBottom: 12 }}>
