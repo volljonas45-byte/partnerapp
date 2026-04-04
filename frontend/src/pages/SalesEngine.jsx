@@ -597,8 +597,8 @@ export default function SalesEngine() {
             />
             {/* Sheet */}
             <div style={{
-              position: 'fixed', bottom: 'calc(72px + env(safe-area-inset-bottom))', left: 0, right: 0,
-              height: '80vh', background: '#fff',
+              position: 'fixed', bottom: 0, left: 0, right: 0,
+              height: '88vh', background: '#fff',
               borderRadius: '20px 20px 0 0',
               boxShadow: '0 -8px 40px rgba(0,0,0,0.18)',
               zIndex: 90, display: 'flex', flexDirection: 'column', overflow: 'hidden',
@@ -724,7 +724,9 @@ export default function SalesEngine() {
 
               {/* Sheet Footer — sticky Actions */}
               <div style={{
-                padding: '12px 16px', borderTop: '1px solid rgba(0,0,0,0.06)', background: '#fff',
+                padding: '12px 16px',
+                paddingBottom: 'calc(12px + env(safe-area-inset-bottom))',
+                borderTop: '1px solid rgba(0,0,0,0.06)', background: '#fff',
                 display: 'flex', gap: 10, flexShrink: 0,
               }}>
                 <button
