@@ -651,20 +651,13 @@ export default function SalesEngine() {
                   </div>
                 </div>
 
-                {/* Status Change */}
-                <div style={{ marginBottom: 16 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: '#86868B', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>Status ändern</div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                    {Object.entries(LEAD_STATUSES).filter(([k]) => k !== 'abgeschlossen').map(([k, v]) => (
-                      <button key={k} onClick={() => handleStatusChange(k)} style={{
-                        padding: '6px 12px', borderRadius: 99, fontSize: 12, fontWeight: 600,
-                        background: selectedLead.status === k ? v.color : v.bg,
-                        color: selectedLead.status === k ? '#fff' : v.color,
-                        border: 'none', cursor: 'pointer',
-                      }}>{v.label}</button>
-                    ))}
+                {/* Current Status (read-only) */}
+                {s && (
+                  <div style={{ marginBottom: 16 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#86868B', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>Status</div>
+                    <span style={{ padding: '6px 14px', borderRadius: 99, fontSize: 13, fontWeight: 600, background: s.bg, color: s.color }}>{s.label}</span>
                   </div>
-                </div>
+                )}
 
                 {/* Follow-up */}
                 <div style={{ background: '#F5F5F7', borderRadius: 12, padding: '12px 14px', marginBottom: 12 }}>

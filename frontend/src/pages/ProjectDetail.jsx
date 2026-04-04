@@ -674,7 +674,7 @@ export default function ProjectDetail() {
         return (
           <div>
             {/* ── Summary Bar ── */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '14px', padding: '11px 18px', background: '#fff', borderRadius: '14px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '14px', padding: '11px 18px', background: '#fff', borderRadius: '14px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
               {/* Health chip */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '3px 10px', borderRadius: '8px', flexShrink: 0,
                 background: health === 'good' ? 'rgba(52,199,89,0.1)' : health === 'warning' ? 'rgba(245,158,11,0.1)' : 'rgba(239,68,68,0.1)',
@@ -728,7 +728,7 @@ export default function ProjectDetail() {
             </div>
 
             {/* ── KPI Row (4 cols) ── */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '14px', marginBottom: '14px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: '14px', marginBottom: '14px' }}>
 
               {/* Klient */}
               <div
@@ -838,7 +838,7 @@ export default function ProjectDetail() {
               const nextPhaseKey  = PHASE_ORDER[curPhaseIdx + 1];
               const nextPhaseLabel = nextPhaseKey ? PHASES[nextPhaseKey]?.label : null;
               return (
-                <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: '14px', marginBottom: '14px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '3fr 2fr', gap: '14px', marginBottom: '14px' }}>
 
                   {/* Aktuelle Phase Widget */}
                   <div style={card}>
@@ -987,7 +987,7 @@ export default function ProjectDetail() {
             })()}
 
             {/* ── Row 3: Aufgaben + Quick Links + Finanzen ── */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '14px' }}>
 
               {/* Aufgaben */}
               <div style={card}>
