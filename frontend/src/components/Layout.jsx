@@ -27,6 +27,7 @@ export default function Layout({ children }) {
         overflowX: 'hidden',
         minWidth: 0,
         maxWidth: '100%',
+        paddingTop: isMobile ? 'env(safe-area-inset-top)' : 0,
         paddingBottom: isMobile ? 'calc(62px + env(safe-area-inset-bottom) + 20px)' : 0,
       }}>
         {children}
