@@ -593,7 +593,7 @@ export default function SalesEngine() {
             {/* Backdrop */}
             <div
               onClick={() => setSelectedLeadId(null)}
-              style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex: 80, backdropFilter: 'blur(2px)' }}
+              style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex: 110, backdropFilter: 'blur(2px)' }}
             />
             {/* Sheet */}
             <div style={{
@@ -601,7 +601,7 @@ export default function SalesEngine() {
               height: '88vh', background: '#fff',
               borderRadius: '20px 20px 0 0',
               boxShadow: '0 -8px 40px rgba(0,0,0,0.18)',
-              zIndex: 90, display: 'flex', flexDirection: 'column', overflow: 'hidden',
+              zIndex: 120, display: 'flex', flexDirection: 'column', overflow: 'hidden',
             }}>
               {/* Sheet Handle + Header */}
               <div style={{ padding: '10px 16px 12px', borderBottom: '1px solid rgba(0,0,0,0.06)', flexShrink: 0 }}>
