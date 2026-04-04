@@ -86,12 +86,14 @@ export default function FollowupScheduler({ leadId, currentDate, onSave, onClose
         {/* Date input */}
         <div style={{ marginBottom: 14 }}>
           <label style={{ fontSize: 12, fontWeight: 600, color: '#636366', display: 'block', marginBottom: 5 }}>Datum</label>
-          <input
-            type="date"
-            value={date}
-            onChange={e => setDate(e.target.value)}
-            style={{ width: '100%', padding: '10px 12px', borderRadius: 10, fontSize: 14, border: '1.5px solid #E5E5EA', outline: 'none', boxSizing: 'border-box', display: 'block', minWidth: 0 }}
-          />
+          <div style={{ overflow: 'hidden', borderRadius: 10, border: '1.5px solid #E5E5EA' }}>
+            <input
+              type="date"
+              value={date}
+              onChange={e => setDate(e.target.value)}
+              style={{ width: '100%', padding: '10px 12px', border: 'none', outline: 'none', fontSize: 14, boxSizing: 'border-box', display: 'block', background: '#fff' }}
+            />
+          </div>
         </div>
 
         {/* Note */}
