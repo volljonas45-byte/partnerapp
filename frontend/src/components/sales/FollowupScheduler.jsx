@@ -32,16 +32,17 @@ export default function FollowupScheduler({ leadId, currentDate, onSave, onClose
       style={{
         position: 'fixed', inset: 0, zIndex: 150, display: 'flex',
         alignItems: 'center', justifyContent: 'center',
+        padding: '0 16px', boxSizing: 'border-box',
         background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(6px)',
       }}
       onClick={onClose}
     >
       <div
         style={{
-          background: '#fff', borderRadius: 20, padding: '24px', width: 'calc(100% - 32px)', maxWidth: 360,
+          background: '#fff', borderRadius: 20, padding: '24px', width: '100%', maxWidth: 360,
           boxShadow: '0 24px 60px rgba(0,0,0,0.22)',
           animation: 'modalIn 0.25s cubic-bezier(0.34,1.38,0.64,1) both',
-          margin: '0 16px',
+          boxSizing: 'border-box', overflow: 'hidden',
         }}
         onClick={e => e.stopPropagation()}
       >
@@ -89,7 +90,7 @@ export default function FollowupScheduler({ leadId, currentDate, onSave, onClose
             type="date"
             value={date}
             onChange={e => setDate(e.target.value)}
-            style={{ width: '100%', padding: '10px 12px', borderRadius: 10, fontSize: 14, border: '1.5px solid #E5E5EA', outline: 'none', boxSizing: 'border-box' }}
+            style={{ width: '100%', padding: '10px 12px', borderRadius: 10, fontSize: 14, border: '1.5px solid #E5E5EA', outline: 'none', boxSizing: 'border-box', display: 'block', minWidth: 0 }}
           />
         </div>
 
