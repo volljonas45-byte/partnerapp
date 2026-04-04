@@ -171,7 +171,6 @@ export default function MobileDrawer({ onClose }) {
                     style={{
                       width: '100%', display: 'flex', alignItems: 'center', gap: 12,
                       padding: '14px 16px',
-                      borderBottom: idx < items.length - 1 ? `1px solid ${c.borderSubtle}` : 'none',
                       background: 'none', border: 'none',
                       borderBottom: idx < items.length - 1 ? `1px solid ${c.borderSubtle}` : 'none',
                       cursor: 'pointer', textAlign: 'left',
