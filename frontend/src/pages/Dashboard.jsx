@@ -307,7 +307,7 @@ export default function VecturoDashboard() {
       {!isMobile && <Sidebar />}
 
       <main className="flex-1 overflow-y-auto" style={{ paddingBottom: isMobile ? 'calc(62px + env(safe-area-inset-bottom) + 20px)' : 0 }}>
-        <div className="max-w-[1280px] mx-auto px-5 py-5 pb-12">
+        <div className="max-w-[1280px] mx-auto px-5 pb-12" style={{ paddingTop: isMobile ? 'calc(20px + env(safe-area-inset-top))' : '20px' }}>
 
           {/* ── HEADER ─────────────────────────────────────────── */}
           <header className="flex items-start justify-between mb-8 gap-4 flex-wrap">
