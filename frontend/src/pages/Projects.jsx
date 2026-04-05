@@ -15,7 +15,7 @@ import ProjectTimerButton from '../components/ProjectTimerButton';
 // ── Status config ─────────────────────────────────────────────────────────────
 
 const STATUS_CONFIG = {
-  planned:            { label: 'Geplant',           color: c.textSecondary, bg: 'rgba(118,118,128,0.1)'  },
+  planned:            { label: 'Geplant',           color: '#86868B', bg: 'rgba(118,118,128,0.1)'  },
   active:             { label: 'Aktiv',             color: '#0071E3', bg: 'rgba(0,113,227,0.1)'    },
   completed:          { label: 'Abgeschlossen',     color: '#34C759', bg: 'rgba(52,199,89,0.1)'    },
   waiting_for_client: { label: 'Wartet auf Kunde',  color: '#FF9500', bg: 'rgba(255,149,0,0.1)'    },

@@ -24,8 +24,8 @@ const CARD = {
   padding: '20px',
 };
 
-const LABEL = { fontSize: '11px', color: c.textSecondary, letterSpacing: '0.02em', marginBottom: '4px', display: 'block' };
-const VALUE = { fontSize: '14px', color: c.text, fontWeight: '500', margin: 0, letterSpacing: '-0.01em' };
+const LABEL = { fontSize: '11px', color: '#86868B', letterSpacing: '0.02em', marginBottom: '4px', display: 'block' };
+const VALUE = { fontSize: '14px', color: '#1D1D1F', fontWeight: '500', margin: 0, letterSpacing: '-0.01em' };
 const EMPTY = { fontSize: '14px', color: '#C7C7CC', margin: 0 };
 
 // ── ContactPersonWidget ────────────────────────────────────────────────────────
