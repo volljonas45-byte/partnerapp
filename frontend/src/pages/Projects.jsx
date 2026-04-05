@@ -45,6 +45,7 @@ function StatusPill({ status }) {
 // ── Modal wrapper ─────────────────────────────────────────────────────────────
 
 function Modal({ title, onClose, children }) {
+  const { c } = useTheme();
   useEffect(() => {
     const fn = e => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('keydown', fn);
@@ -89,6 +90,7 @@ function Modal({ title, onClose, children }) {
 // ── Create project modal ──────────────────────────────────────────────────────
 
 function CreateProjectModal({ onClose, onCreate, isPending }) {
+  const { c } = useTheme();
   const [name, setName]         = useState('');
   const [description, setDesc]  = useState('');
   const [status, setStatus]     = useState('planned');
@@ -200,6 +202,7 @@ function CreateProjectModal({ onClose, onCreate, isPending }) {
 // ── Project card ──────────────────────────────────────────────────────────────
 
 function ProjectCard({ project, areaColor, onDelete }) {
+  const { c } = useTheme();
   const navigate = useNavigate();
   const [hovered, setHovered] = useState(false);
 
@@ -347,6 +350,7 @@ function ProjectCard({ project, areaColor, onDelete }) {
 // ── Area section ──────────────────────────────────────────────────────────────
 
 function AreaSection({ area, projects, onDelete }) {
+  const { c } = useTheme();
   const [collapsed, setCollapsed] = useState(false);
 
   const areaColor  = area?.color  || '#0071E3';

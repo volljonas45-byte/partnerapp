@@ -16,13 +16,13 @@ import { useTheme } from '../context/ThemeContext';
 
 // ── Shared styles ──────────────────────────────────────────────────────────────
 
-const CARD = {
+const CARD = (c) => ({
   background: c.card,
   borderRadius: '16px',
   border: '1px solid rgba(0,0,0,0.07)',
   boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
   padding: '20px',
-};
+});
 
 const LABEL = { fontSize: '11px', color: '#86868B', letterSpacing: '0.02em', marginBottom: '4px', display: 'block' };
 const VALUE = { fontSize: '14px', color: '#1D1D1F', fontWeight: '500', margin: 0, letterSpacing: '-0.01em' };
@@ -31,6 +31,7 @@ const EMPTY = { fontSize: '14px', color: '#C7C7CC', margin: 0 };
 // ── ContactPersonWidget ────────────────────────────────────────────────────────
 
 function ContactPersonWidget({ client, clientId }) {
+  const { c } = useTheme();
   const qc = useQueryClient();
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({});
@@ -60,7 +61,7 @@ function ContactPersonWidget({ client, clientId }) {
   }
 
   return (
-    <div style={CARD}>
+    <div style={CARD(c)}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -150,6 +151,7 @@ function ContactPersonWidget({ client, clientId }) {
 // ── LegalSetup ────────────────────────────────────────────────────────────────
 
 function LegalSetup({ clientId }) {
+  const { c } = useTheme();
   const qc = useQueryClient();
   const { data: legal } = useQuery({
     queryKey: ['legal', clientId],
@@ -172,7 +174,7 @@ function LegalSetup({ clientId }) {
   const data = form ?? legal ?? {};
 
   return (
-    <div style={CARD}>
+    <div style={CARD(c)}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(52,199,89,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -306,7 +308,7 @@ export default function ClientDetail() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: '12px', marginBottom: '12px' }}>
 
         {/* Gesamtumsatz */}
-        <div style={CARD}>
+        <div style={CARD(c)}>
           <span style={LABEL}>GESAMTUMSATZ</span>
           <p style={{ fontSize: '22px', fontWeight: '700', color: c.text, margin: 0, letterSpacing: '-0.03em' }}>
             {formatCurrency(client.total_revenue || 0)}
@@ -314,7 +316,7 @@ export default function ClientDetail() {
         </div>
 
         {/* Bezahlter Umsatz */}
-        <div style={CARD}>
+        <div style={CARD(c)}>
           <span style={LABEL}>BEZAHLTER UMSATZ</span>
           <p style={{ fontSize: '22px', fontWeight: '700', color: '#34C759', margin: 0, letterSpacing: '-0.03em' }}>
             {formatCurrency(client.paid_revenue || 0)}
@@ -322,7 +324,7 @@ export default function ClientDetail() {
         </div>
 
         {/* Rechnungen */}
-        <div style={CARD}>
+        <div style={CARD(c)}>
           <span style={LABEL}>RECHNUNGEN</span>
           <p style={{ fontSize: '22px', fontWeight: '700', color: c.text, margin: 0, letterSpacing: '-0.03em' }}>
             {client.invoice_count || 0}
@@ -333,7 +335,7 @@ export default function ClientDetail() {
         </div>
 
         {/* Adresse / Kontakt */}
-        <div style={{ ...CARD, minWidth: '180px' }}>
+        <div style={{ ...CARD(c),minWidth: '180px' }}>
           <span style={LABEL}>ADRESSE</span>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             {address && (
@@ -358,7 +360,7 @@ export default function ClientDetail() {
       </div>
 
       {/* ── Websites ── */}
-      <div style={{ ...CARD, padding: 0, overflow: 'hidden', marginBottom: '12px' }}>
+      <div style={{ ...CARD(c),padding: 0, overflow: 'hidden', marginBottom: '12px' }}>
         <div style={{ padding: '16px 20px', borderBottom: `1px solid ${c.borderSubtle}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(0,113,227,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -439,7 +441,7 @@ export default function ClientDetail() {
       </div>
 
       {/* ── Rechnungen ── */}
-      <div style={{ ...CARD, padding: 0, overflow: 'hidden' }}>
+      <div style={{ ...CARD(c),padding: 0, overflow: 'hidden' }}>
         <div style={{ padding: '16px 20px', borderBottom: `1px solid ${c.borderSubtle}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(0,113,227,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

@@ -17,7 +17,7 @@ import { useTheme } from '../context/ThemeContext';
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const STATUS_CFG = {
-  planned:            { label: 'Geplant',          color: c.textSecondary, bg: 'rgba(118,118,128,0.1)'  },
+  planned:            { label: 'Geplant',          color: '#86868B', bg: 'rgba(118,118,128,0.1)'  },
   active:             { label: 'Aktiv',             color: '#0071E3', bg: 'rgba(0,113,227,0.1)'    },
   feedback:           { label: 'Feedback',          color: '#C05621', bg: 'rgba(192,86,33,0.1)'    },
   review:             { label: 'Review',            color: '#6D28D9', bg: 'rgba(109,40,217,0.1)'   },
@@ -47,7 +47,7 @@ function relDeadline(iso) {
   if (diff < 0)  return { text: `${Math.abs(diff)}d überfällig`, color: '#FF3B30' };
   if (diff === 0) return { text: 'Heute fällig',                  color: '#FF9500' };
   if (diff <= 3)  return { text: `in ${diff} Tagen`,              color: '#FF9500' };
-  return { text: new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: 'short' }), color: c.textSecondary };
+  return { text: new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: 'short' }), color: '#86868B' };
 }
 
 function avatarInitials(name = '') {
@@ -92,6 +92,7 @@ function TypeBadge({ isWeb }) {
 }
 
 function KpiCard({ icon: Icon, label, value, sub, color }) {
+  const { c } = useTheme();
   return (
     <div style={{
       background: c.card, borderRadius: 14, padding: '18px 20px',
@@ -115,6 +116,7 @@ function KpiCard({ icon: Icon, label, value, sub, color }) {
 // ─── Card view ────────────────────────────────────────────────────────────────
 
 function ProjectCard({ project, onClick }) {
+  const { c } = useTheme();
   const web = isWebsite(project);
   const deadline = relDeadline(project.deadline);
   const accent = web ? '#0071E3' : '#7C3AED';
@@ -204,6 +206,7 @@ function ProjectCard({ project, onClick }) {
 // ─── Row view ─────────────────────────────────────────────────────────────────
 
 function ProjectRow({ project, onClick }) {
+  const { c } = useTheme();
   const web = isWebsite(project);
   const deadline = relDeadline(project.deadline);
   const accent = web ? '#0071E3' : '#7C3AED';
@@ -260,6 +263,7 @@ function ProjectRow({ project, onClick }) {
 // ─── Create Modal ─────────────────────────────────────────────────────────────
 
 function CreateModal({ type, onClose, onCreate, isPending, clients }) {
+  const { c } = useTheme();
   const [name, setName] = useState('');
   const [clientId, setClientId] = useState('');
   const [status, setStatus] = useState('planned');

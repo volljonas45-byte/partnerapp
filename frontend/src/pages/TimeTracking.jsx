@@ -62,6 +62,7 @@ function nowLocalDatetime() {
 // ── Project Picker ────────────────────────────────────────────────────────────
 
 function ProjectPicker({ value, onChange, projects, placeholder = 'Kein Projekt' }) {
+  const { c } = useTheme();
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -132,6 +133,7 @@ function ProjectPicker({ value, onChange, projects, placeholder = 'Kein Projekt'
 // ── Timer Bar ─────────────────────────────────────────────────────────────────
 
 function TimerBar({ activeTimer, projects, onStart, onStop }) {
+  const { c } = useTheme();
   const [desc, setDesc] = useState('');
   const [projectId, setProjectId] = useState(null);
   const [elapsed, setElapsed] = useState(0);
@@ -219,6 +221,7 @@ function TimerBar({ activeTimer, projects, onStart, onStop }) {
 // ── Entry Row ─────────────────────────────────────────────────────────────────
 
 function EntryRow({ entry, projects, onDelete, onEdit }) {
+  const { c } = useTheme();
   const isRunning = !entry.end_time;
 
   return (
@@ -289,6 +292,7 @@ function EntryRow({ entry, projects, onDelete, onEdit }) {
 // ── Manual Entry Form ─────────────────────────────────────────────────────────
 
 function ManualEntryForm({ projects, onSave, onCancel, initial = null }) {
+  const { c } = useTheme();
   const today = nowLocalDatetime().slice(0, 10);
   const [form, setForm] = useState(initial ? {
     project_id: initial.project_id || null,
@@ -357,6 +361,7 @@ function ManualEntryForm({ projects, onSave, onCancel, initial = null }) {
 // ── Fahrtenbuch Form ──────────────────────────────────────────────────────────
 
 function FahrtForm({ projects, onSave, onCancel, initial = null }) {
+  const { c } = useTheme();
   const [form, setForm] = useState(initial || {
     project_id: null, date: todayISO(), from_loc: '', to_loc: '',
     distance_km: '', purpose: '', notes: '',

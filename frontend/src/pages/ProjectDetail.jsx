@@ -163,7 +163,7 @@ const CHANGE_TYPE_CONFIG = {
 };
 const CHANGE_STATUS_CYCLE = ['offen', 'in_bearbeitung', 'erledigt'];
 const CHANGE_STATUS_CONFIG = {
-  offen:          { label: 'Offen',          bg: '#F2F2F7', color: c.textTertiary },
+  offen:          { label: 'Offen',          bg: '#F2F2F7', color: '#6E6E73' },
   in_bearbeitung: { label: 'In Bearbeitung', bg: '#E8F1FF', color: '#0071E3' },
   erledigt:       { label: 'Erledigt',       bg: '#D1FAE5', color: '#059669' },
 };
