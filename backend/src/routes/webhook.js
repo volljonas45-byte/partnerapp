@@ -141,9 +141,9 @@ router.post('/anfrage', async (req, res) => {
 
     // Also create client_legal entry (like the wizard does)
     await run(
-      `INSERT INTO client_legal (user_id, client_id, company_name, address)
-       VALUES (?, ?, ?, ?) ON CONFLICT DO NOTHING`,
-      [userId, clientId, name, '']
+      `INSERT INTO client_legal (client_id, company_name, address)
+       VALUES (?, ?, ?) ON CONFLICT DO NOTHING`,
+      [clientId, name, '']
     );
 
     // 4. Create project
@@ -165,17 +165,7 @@ router.post('/anfrage', async (req, res) => {
     );
     const projectId = projectResult.lastInsertRowid;
 
-    // Initialize project checklist
-    await run(
-      `INSERT INTO project_checklists (user_id, project_id, checklist)
-       VALUES (?, ?, ?) ON CONFLICT DO NOTHING`,
-      [userId, projectId, JSON.stringify({
-        domain_connected: false, imprint_added: false, privacy_policy_added: false,
-        mobile_optimized: false, tracking_installed: false, client_access_given: false,
-      })]
-    );
-
-    // 5. Set workflow decision (goal from features)
+    // 5. Set workflow decision (goal from features) — optional
     try {
       const goalMap = { anfragen: 'leads', seo: 'branding', verkaufen: 'sales', termin: 'bookings', mobil: 'information', schnell: 'information' };
       const firstFeature = (features || [])[0];
