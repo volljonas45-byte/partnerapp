@@ -20,15 +20,19 @@ function createTransporter() {
 
 function buildNotificationHtml(data) {
   const rows = [
-    ['Name',             data.name],
+    ['Ansprechpartner',  data.contactPerson || data.name || '—'],
+    ['Unternehmen',      data.companyName || '—'],
     ['E-Mail',           `<a href="mailto:${data.email}">${data.email}</a>`],
     ['Telefon',          data.phone || '—'],
-    ['Website-Typ',      data.websiteTypeLabel || '—'],
-    ['Branche',          data.businessTypeLabel || '—'],
-    ['Ziele',            (data.featuresLabels || []).join(', ') || '—'],
+    ['Branche',          data.industry || '—'],
+    ['Website vorhanden',data.hasWebsite || '—'],
+    ['Website-URL',      data.websiteUrl || '—'],
+    ['Projekttyp',       data.projectTypeLabel || '—'],
+    ['Ziel',             data.goalLabel || '—'],
+    ['Gewünschte Seiten',data.pages || '—'],
     ['Zeitplan',         data.timelineLabel || '—'],
+    ['Hinweise',         data.firstNotes || '—'],
     ['Gebuchter Termin', data.appointmentDate && data.appointmentTime ? `${data.appointmentDate} um ${data.appointmentTime} Uhr` : '—'],
-    ['Hinweise',         data.message || '—'],
   ].map(([l, v]) => `<tr><td style="color:#6E6E73;padding:6px 0;width:38%;font-size:13px">${l}</td><td style="font-weight:600;font-size:13px">${v}</td></tr>`).join('');
 
   return `<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"></head>
@@ -53,18 +57,22 @@ function buildNotificationHtml(data) {
 
 // ── Template ──────────────────────────────────────────────────────────────────
 
-const TEMPLATE_NAME = 'Website-Anfrage (JR Agency)';
+const TEMPLATE_NAME = 'Website-Anfrage v2 (JR Agency)';
 
 const TEMPLATE_FIELDS = [
-  { key: 'contact_name',    label: 'Name',                    type: 'text' },
+  { key: 'contact_person',  label: 'Ansprechpartner',         type: 'text' },
+  { key: 'company_name',    label: 'Unternehmen',             type: 'text' },
   { key: 'contact_email',   label: 'E-Mail',                  type: 'text' },
   { key: 'contact_phone',   label: 'Telefon',                 type: 'text' },
-  { key: 'website_type',    label: 'Website-Typ',             type: 'text' },
-  { key: 'business_type',   label: 'Branche',                 type: 'text' },
-  { key: 'features',        label: 'Gewünschte Funktionen',   type: 'text' },
+  { key: 'industry',        label: 'Branche',                 type: 'text' },
+  { key: 'has_website',     label: 'Website vorhanden',       type: 'text' },
+  { key: 'website_url',     label: 'Website-URL',             type: 'text' },
+  { key: 'project_type',    label: 'Projekttyp',              type: 'text' },
+  { key: 'goal',            label: 'Ziel',                    type: 'text' },
+  { key: 'pages',           label: 'Gewünschte Seiten',       type: 'text' },
   { key: 'timeline',        label: 'Zeitplan',                type: 'text' },
+  { key: 'first_notes',     label: 'Hinweise & Wünsche',      type: 'text' },
   { key: 'appointment',     label: 'Gebuchter Termin',        type: 'text' },
-  { key: 'message',         label: 'Hinweise & Wünsche',      type: 'text' },
 ];
 
 async function getOrCreateTemplate(userId) {
@@ -84,9 +92,11 @@ async function getOrCreateTemplate(userId) {
 
 router.post('/anfrage', async (req, res) => {
   try {
-    const { secret, name, email, phone, message,
-            websiteTypeLabel, businessTypeLabel,
-            featuresLabels, timelineLabel,
+    const { secret, name, email, phone,
+            companyName, contactPerson, industry,
+            hasWebsite, websiteUrl,
+            projectTypeLabel, goalLabel,
+            pages, firstNotes, timelineLabel,
             appointmentDate, appointmentTime } = req.body;
 
     if (!secret || secret !== process.env.WEBHOOK_SECRET)
@@ -106,22 +116,27 @@ router.post('/anfrage', async (req, res) => {
 
     // Intake-Formular als bereits eingereicht speichern
     const token = crypto.randomBytes(24).toString('hex');
+    const displayName = contactPerson || companyName || name;
     const responses = {
-      contact_name:  name,
-      contact_email: email,
-      contact_phone: phone || '',
-      website_type:  websiteTypeLabel || '',
-      business_type: businessTypeLabel || '',
-      features:      (featuresLabels || []).join(', '),
-      timeline:      timelineLabel || '',
-      appointment:   appointmentDate && appointmentTime ? `${appointmentDate} um ${appointmentTime} Uhr` : '',
-      message:       message || '',
+      contact_person: contactPerson || name || '',
+      company_name:   companyName || '',
+      contact_email:  email,
+      contact_phone:  phone || '',
+      industry:       industry || '',
+      has_website:    hasWebsite || '',
+      website_url:    websiteUrl || '',
+      project_type:   projectTypeLabel || '',
+      goal:           goalLabel || '',
+      pages:          pages || '',
+      timeline:       timelineLabel || '',
+      first_notes:    firstNotes || '',
+      appointment:    appointmentDate && appointmentTime ? `${appointmentDate} um ${appointmentTime} Uhr` : '',
     };
 
     await run(
       `INSERT INTO intake_forms (user_id, template_id, title, token, status, responses, submitted_at, seen)
        VALUES (?, ?, ?, ?, 'submitted', ?, NOW(), 0) RETURNING id`,
-      [userId, templateId, `Demo-Anfrage: ${name}`, token, JSON.stringify(responses)]
+      [userId, templateId, `Demo-Anfrage: ${displayName}`, token, JSON.stringify(responses)]
     );
 
     // E-Mail Benachrichtigung
@@ -131,8 +146,8 @@ router.post('/anfrage', async (req, res) => {
         await transporter.sendMail({
           from:    process.env.EMAIL_FROM || process.env.EMAIL_USER,
           to:      process.env.EMAIL_USER,
-          subject: `Neue Website-Anfrage: ${name}`,
-          html:    buildNotificationHtml({ name, email, phone, websiteTypeLabel, businessTypeLabel, featuresLabels, timelineLabel, appointmentDate, appointmentTime, message }),
+          subject: `Neue Website-Anfrage: ${displayName}`,
+          html:    buildNotificationHtml({ name, email, phone, companyName, contactPerson, industry, hasWebsite, websiteUrl, projectTypeLabel, goalLabel, pages, firstNotes, timelineLabel, appointmentDate, appointmentTime }),
         });
       }
     } catch (emailErr) {
