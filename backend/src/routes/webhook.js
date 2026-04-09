@@ -55,9 +55,28 @@ function buildNotificationHtml(data) {
 </table></td></tr></table></body></html>`;
 }
 
+// ── Label maps (for email display) ────────────────────────────────────────────
+
+const PROJECT_TYPE_LABELS = {
+  unternehmenswebsite: 'Unternehmenswebsite', portfolio: 'Portfolio',
+  funnel: 'Sales Funnel', shop: 'Online-Shop', buchung: 'Buchungswebsite',
+  blog: 'Blog / Magazine', community: 'Community / Verein',
+};
+const GOAL_LABELS = {
+  leads: 'Leads generieren', bookings: 'Buchungen erhalten',
+  sales: 'Produkte verkaufen', branding: 'Marke aufbauen',
+  portfolio: 'Portfolio zeigen', information: 'Informieren',
+};
+const PAGE_LABELS = {
+  startseite: 'Startseite', ueber_uns: 'Über uns', leistungen: 'Leistungen',
+  portfolio: 'Portfolio', referenzen: 'Referenzen', blog: 'Blog',
+  shop: 'Shop', kontakt: 'Kontakt', impressum: 'Impressum',
+  datenschutz: 'Datenschutz', faq: 'FAQ', karriere: 'Karriere',
+};
+
 // ── Template ──────────────────────────────────────────────────────────────────
 
-const TEMPLATE_NAME = 'Website-Anfrage v3 (JR Agency)';
+const TEMPLATE_NAME = 'Website-Anfrage v4 (JR Agency)';
 
 // Field IDs match Vecturo Wizard field names so the intake view renders consistently
 const TEMPLATE_FIELDS = [
@@ -96,7 +115,7 @@ router.post('/anfrage', async (req, res) => {
     const { secret, name, email, phone,
             companyName, contactPerson, industry,
             hasWebsite, websiteUrl,
-            projectTypeLabel, goalLabel,
+            projectType, goal,
             pages, firstNotes, timelineLabel,
             appointmentDate, appointmentTime } = req.body;
 
@@ -118,6 +137,9 @@ router.post('/anfrage', async (req, res) => {
     // Intake-Formular als bereits eingereicht speichern
     const token = crypto.randomBytes(24).toString('hex');
     const displayName = contactPerson || companyName || name;
+    const pagesArray  = Array.isArray(pages) ? pages : (pages ? pages.split(', ') : []);
+    const pagesLabel  = pagesArray.map(p => PAGE_LABELS[p] || p).join(', ');
+
     const responses = {
       company_name:   companyName || '',
       contact_person: contactPerson || name || '',
@@ -126,9 +148,9 @@ router.post('/anfrage', async (req, res) => {
       industry:       industry || '',
       has_website:    hasWebsite || '',
       website_url:    websiteUrl || '',
-      project_type:   projectTypeLabel || '',
-      goal:           goalLabel || '',
-      pages:          pages || '',
+      project_type:   projectType || '',      // value → wizard can use directly
+      goal:           goal || '',             // value → wizard can use directly
+      pages:          pagesLabel,             // readable labels for display
       timeline:       timelineLabel || '',
       first_notes:    firstNotes || '',
       appointment:    appointmentDate && appointmentTime ? `${appointmentDate} um ${appointmentTime} Uhr` : '',
@@ -141,6 +163,8 @@ router.post('/anfrage', async (req, res) => {
     );
 
     // E-Mail Benachrichtigung
+    const projectTypeLabel = PROJECT_TYPE_LABELS[projectType] || projectType || '';
+    const goalLabel        = GOAL_LABELS[goal] || goal || '';
     try {
       const transporter = createTransporter();
       if (transporter) {
@@ -148,7 +172,7 @@ router.post('/anfrage', async (req, res) => {
           from:    process.env.EMAIL_FROM || process.env.EMAIL_USER,
           to:      process.env.EMAIL_USER,
           subject: `Neue Website-Anfrage: ${displayName}`,
-          html:    buildNotificationHtml({ name, email, phone, companyName, contactPerson, industry, hasWebsite, websiteUrl, projectTypeLabel, goalLabel, pages, firstNotes, timelineLabel, appointmentDate, appointmentTime }),
+          html:    buildNotificationHtml({ name, email, phone, companyName, contactPerson, industry, hasWebsite, websiteUrl, projectTypeLabel, goalLabel, pages: pagesLabel, firstNotes, timelineLabel, appointmentDate, appointmentTime }),
         });
       }
     } catch (emailErr) {

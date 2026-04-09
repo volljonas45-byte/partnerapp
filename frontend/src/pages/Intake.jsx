@@ -1,8 +1,9 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Plus, Trash2, Edit2, Copy, ClipboardList, FileText, X, Link,
-  CheckCircle2, Inbox, Eye, User, Calendar,
+  CheckCircle2, Inbox, Eye, User, Calendar, Sparkles,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { intakeApi } from '../api/intake';
@@ -497,8 +498,38 @@ function FillModal({ form, onClose, onSubmit, isPending }) {
 // ── ResponsesPanel ────────────────────────────────────────────────────────────
 
 function ResponsesPanel({ form, onClose }) {
+  const navigate  = useNavigate();
   const fields    = form.fields    || [];
   const responses = form.responses || {};
+
+  const PAGE_LABEL_TO_VALUE = {
+    'Startseite': 'startseite', 'Über uns': 'ueber_uns', 'Leistungen': 'leistungen',
+    'Portfolio': 'portfolio', 'Referenzen': 'referenzen', 'Blog': 'blog',
+    'Shop': 'shop', 'Kontakt': 'kontakt', 'Impressum': 'impressum',
+    'Datenschutz': 'datenschutz', 'FAQ': 'faq', 'Karriere': 'karriere',
+  };
+
+  function openWizard() {
+    const rawPages = responses.pages ? responses.pages.split(', ').filter(Boolean) : [];
+    // support both value keys and human-readable labels
+    const mappedPages = rawPages.map(p => PAGE_LABEL_TO_VALUE[p] || p);
+
+    const prefill = {
+      company_name:   responses.company_name   || '',
+      contact_person: responses.contact_person || '',
+      email:          responses.email          || '',
+      phone:          responses.phone          || '',
+      industry:       responses.industry       || '',
+      has_website:    responses.has_website === 'Ja' ? true : responses.has_website === 'Nein' ? false : null,
+      website_url:    responses.website_url    || '',
+      project_type:   responses.project_type   || '',
+      goal:           responses.goal           || '',
+      pages:          mappedPages,
+      first_notes:    responses.first_notes    || '',
+    };
+    onClose();
+    navigate('/wizard', { state: { prefill } });
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-end">
@@ -556,6 +587,17 @@ function ResponsesPanel({ form, onClose }) {
               );
             })
           )}
+        </div>
+
+        {/* Footer – Wizard Button */}
+        <div className="px-6 py-4 border-t border-gray-100">
+          <button
+            onClick={openWizard}
+            className="w-full flex items-center justify-center gap-2 bg-apple-blue hover:bg-blue-600 text-white text-sm font-semibold px-4 py-3 rounded-xl transition-colors"
+          >
+            <Sparkles size={15} />
+            Im Wizard öffnen & Projekt anlegen
+          </button>
         </div>
       </div>
     </div>
