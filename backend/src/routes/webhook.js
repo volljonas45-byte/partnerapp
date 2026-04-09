@@ -1,11 +1,11 @@
-const express  = require('express');
-const crypto   = require('crypto');
+const express    = require('express');
+const crypto     = require('crypto');
 const nodemailer = require('nodemailer');
-const { getOne, getAll, run } = require('../db/pg');
+const { getOne, run } = require('../db/pg');
 
 const router = express.Router();
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// ── Email ─────────────────────────────────────────────────────────────────────
 
 function createTransporter() {
   const { EMAIL_HOST, EMAIL_USER, EMAIL_PASS } = process.env;
@@ -18,76 +18,53 @@ function createTransporter() {
   });
 }
 
-// ── Notification email HTML ───────────────────────────────────────────────────
-
-function buildNotificationHtml({ name, email, phone, websiteTypeLabel, businessTypeLabel, featuresLabels, timelineLabel, appointmentDate, appointmentTime, message }) {
+function buildNotificationHtml(data) {
   const rows = [
-    ['Name',            name],
-    ['E-Mail',          `<a href="mailto:${email}" style="color:#0071E3">${email}</a>`],
-    ['Telefon',         phone || '—'],
-    ['Website-Typ',     websiteTypeLabel || '—'],
-    ['Branche',         businessTypeLabel || '—'],
-    ['Gewünschte Ziele', (featuresLabels || []).join(', ') || '—'],
-    ['Zeitplan',        timelineLabel || '—'],
-    ['Gebuchter Termin', appointmentDate && appointmentTime ? `${appointmentDate} um ${appointmentTime} Uhr` : '—'],
-    ['Hinweise',        message || '—'],
-  ].map(([label, val]) => `
-    <tr>
-      <td style="color:#6E6E73;padding:7px 0;width:38%;vertical-align:top;font-size:13px">${label}</td>
-      <td style="font-weight:600;padding:7px 0;font-size:13px;color:#1D1D1F">${val}</td>
-    </tr>`).join('');
+    ['Name',             data.name],
+    ['E-Mail',           `<a href="mailto:${data.email}">${data.email}</a>`],
+    ['Telefon',          data.phone || '—'],
+    ['Website-Typ',      data.websiteTypeLabel || '—'],
+    ['Branche',          data.businessTypeLabel || '—'],
+    ['Ziele',            (data.featuresLabels || []).join(', ') || '—'],
+    ['Zeitplan',         data.timelineLabel || '—'],
+    ['Gebuchter Termin', data.appointmentDate && data.appointmentTime ? `${data.appointmentDate} um ${data.appointmentTime} Uhr` : '—'],
+    ['Hinweise',         data.message || '—'],
+  ].map(([l, v]) => `<tr><td style="color:#6E6E73;padding:6px 0;width:38%;font-size:13px">${l}</td><td style="font-weight:600;font-size:13px">${v}</td></tr>`).join('');
 
-  return `<!DOCTYPE html>
-<html lang="de">
-<head><meta charset="UTF-8"></head>
-<body style="margin:0;padding:0;background:#F5F5F7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#F5F5F7;padding:40px 20px">
-    <tr><td align="center">
-      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.08)">
-
-        <tr><td style="background:#0071E3;padding:22px 32px">
-          <p style="margin:0;color:#fff;font-size:17px;font-weight:700">JR Agency Services</p>
-          <p style="margin:4px 0 0;color:rgba(255,255,255,.7);font-size:13px">Neue Website-Anfrage eingegangen</p>
-        </td></tr>
-
-        <tr><td style="padding:28px 32px">
-          <p style="margin:0 0 20px;font-size:15px;color:#1D1D1F">
-            Eine neue Demo-Anfrage wurde soeben über die Website eingereicht.
-          </p>
-
-          <table width="100%" cellpadding="0" cellspacing="0"
-                 style="background:#F5F5F7;border-radius:12px;padding:14px 20px;margin-bottom:8px">
-            ${rows}
-          </table>
-        </td></tr>
-
-        <tr><td style="border-top:1px solid #E5E5EA;padding:18px 32px">
-          <p style="margin:0;font-size:13px;color:#86868B">
-            Erstellt automatisch von der JR Agency Website · ${new Date().toLocaleString('de-DE')}
-          </p>
-        </td></tr>
-
-      </table>
-    </td></tr>
-  </table>
-</body>
-</html>`;
+  return `<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#F5F5F7;font-family:-apple-system,sans-serif">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#F5F5F7;padding:40px 20px">
+<tr><td align="center">
+<table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+<tr><td style="background:#0071E3;padding:22px 32px">
+  <p style="margin:0;color:#fff;font-size:17px;font-weight:700">JR Agency Services</p>
+  <p style="margin:4px 0 0;color:rgba(255,255,255,.7);font-size:13px">Neue Website-Anfrage eingegangen</p>
+</td></tr>
+<tr><td style="padding:28px 32px">
+  <p style="margin:0 0 20px;font-size:15px;color:#1D1D1F">Eine neue Demo-Anfrage wurde soeben über die Website eingereicht.</p>
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#F5F5F7;border-radius:12px;padding:14px 20px">${rows}</table>
+  <p style="margin:20px 0 0;font-size:14px;color:#6E6E73">Den vollständigen Eintrag findest du in Vecturo unter <strong>Intake → Posteingang</strong>.</p>
+</td></tr>
+<tr><td style="border-top:1px solid #E5E5EA;padding:18px 32px">
+  <p style="margin:0;font-size:13px;color:#86868B">Erstellt automatisch · ${new Date().toLocaleString('de-DE')}</p>
+</td></tr>
+</table></td></tr></table></body></html>`;
 }
 
-// ─── TEMPLATE: find existing or create ───────────────────────────────────────
+// ── Template ──────────────────────────────────────────────────────────────────
 
 const TEMPLATE_NAME = 'Website-Anfrage (JR Agency)';
 
 const TEMPLATE_FIELDS = [
-  { key: 'website_type',   label: 'Website-Typ',           type: 'text' },
-  { key: 'business_type',  label: 'Branche',                type: 'text' },
-  { key: 'features',       label: 'Gewünschte Funktionen',  type: 'text' },
-  { key: 'timeline',       label: 'Zeitplan',               type: 'text' },
-  { key: 'contact_name',   label: 'Name',                   type: 'text' },
-  { key: 'contact_email',  label: 'E-Mail',                 type: 'text' },
-  { key: 'contact_phone',  label: 'Telefon',                type: 'text' },
-  { key: 'appointment',    label: 'Gebuchter Termin',       type: 'text' },
-  { key: 'message',        label: 'Hinweise & Wünsche',     type: 'text' },
+  { key: 'contact_name',    label: 'Name',                    type: 'text' },
+  { key: 'contact_email',   label: 'E-Mail',                  type: 'text' },
+  { key: 'contact_phone',   label: 'Telefon',                 type: 'text' },
+  { key: 'website_type',    label: 'Website-Typ',             type: 'text' },
+  { key: 'business_type',   label: 'Branche',                 type: 'text' },
+  { key: 'features',        label: 'Gewünschte Funktionen',   type: 'text' },
+  { key: 'timeline',        label: 'Zeitplan',                type: 'text' },
+  { key: 'appointment',     label: 'Gebuchter Termin',        type: 'text' },
+  { key: 'message',         label: 'Hinweise & Wünsche',      type: 'text' },
 ];
 
 async function getOrCreateTemplate(userId) {
@@ -96,117 +73,58 @@ async function getOrCreateTemplate(userId) {
     [userId, TEMPLATE_NAME]
   );
   if (tmpl) return tmpl.id;
-
   const r = await run(
     'INSERT INTO intake_templates (user_id, name, description, fields) VALUES (?, ?, ?, ?) RETURNING id',
-    [userId, TEMPLATE_NAME, 'Automatisch erstellte Anfragen von der JR Agency Website', JSON.stringify(TEMPLATE_FIELDS)]
+    [userId, TEMPLATE_NAME, 'Anfragen von der JR Agency Website', JSON.stringify(TEMPLATE_FIELDS)]
   );
   return r.lastInsertRowid;
 }
 
-// ─── POST /api/webhook/anfrage ────────────────────────────────────────────────
+// ── POST /api/webhook/anfrage ─────────────────────────────────────────────────
 
 router.post('/anfrage', async (req, res) => {
   try {
-    // 1. Validate secret
     const { secret, name, email, phone, message,
-            websiteType, websiteTypeLabel,
-            businessType, businessTypeLabel,
-            features, featuresLabels,
-            timeline, timelineLabel,
+            websiteTypeLabel, businessTypeLabel,
+            featuresLabels, timelineLabel,
             appointmentDate, appointmentTime } = req.body;
 
-    if (!secret || secret !== process.env.WEBHOOK_SECRET) {
+    if (!secret || secret !== process.env.WEBHOOK_SECRET)
       return res.status(401).json({ error: 'Unauthorized' });
-    }
-    if (!name || !email) {
+    if (!name || !email)
       return res.status(400).json({ error: 'name und email sind Pflichtfelder' });
-    }
 
-    // 2. Find workspace user
+    // Workspace-User ermitteln
     const userEmail = process.env.WEBHOOK_USER_EMAIL;
     if (!userEmail) return res.status(500).json({ error: 'WEBHOOK_USER_EMAIL nicht konfiguriert' });
-
     const user = await getOne('SELECT id, workspace_owner_id FROM users WHERE email = ?', [userEmail]);
     if (!user) return res.status(500).json({ error: `Kein Benutzer mit E-Mail ${userEmail} gefunden` });
-    // workspaceUserId = workspace_owner_id falls Teammitglied, sonst eigene id
     const userId = user.workspace_owner_id ?? user.id;
 
-    // 3. Create client
-    const clientResult = await run(
-      `INSERT INTO clients (user_id, company_name, contact_person, email, phone, industry)
-       VALUES (?, ?, ?, ?, ?, ?) RETURNING id`,
-      [userId, name, name, email, phone || '', businessTypeLabel || '']
-    );
-    const clientId = clientResult.lastInsertRowid;
-
-    // Also create client_legal entry (like the wizard does)
-    await run(
-      `INSERT INTO client_legal (client_id, company_name, address)
-       VALUES (?, ?, ?) ON CONFLICT DO NOTHING`,
-      [clientId, name, '']
-    );
-
-    // 4. Create project
-    const year = new Date().getFullYear();
-    const projectName = `${name} – Website ${year}`;
-    const description = [
-      websiteTypeLabel   ? `Website-Typ: ${websiteTypeLabel}` : null,
-      businessTypeLabel  ? `Branche: ${businessTypeLabel}`     : null,
-      featuresLabels?.length ? `Ziele: ${featuresLabels.join(', ')}` : null,
-      timelineLabel      ? `Zeitplan: ${timelineLabel}`         : null,
-      appointmentDate && appointmentTime ? `Termin: ${appointmentDate} um ${appointmentTime} Uhr` : null,
-      message            ? `Hinweise: ${message}`               : null,
-    ].filter(Boolean).join('\n');
-
-    const projectResult = await run(
-      `INSERT INTO projects (user_id, client_id, name, type, status, description, project_type)
-       VALUES (?, ?, ?, ?, 'planned', ?, 'website') RETURNING id`,
-      [userId, clientId, projectName, websiteTypeLabel || '', description]
-    );
-    const projectId = projectResult.lastInsertRowid;
-
-    // 5. Set workflow decision (goal from features) — optional
-    try {
-      const goalMap = { anfragen: 'leads', seo: 'branding', verkaufen: 'sales', termin: 'bookings', mobil: 'information', schnell: 'information' };
-      const firstFeature = (features || [])[0];
-      const goal = goalMap[firstFeature] || 'leads';
-      const existingWf = await getOne('SELECT id, decisions FROM project_workflows WHERE project_id = ?', [projectId]);
-      if (existingWf) {
-        const merged = { ...(JSON.parse(existingWf.decisions || '{}')), goal, build_type: 'gecodet' };
-        await run('UPDATE project_workflows SET decisions = ? WHERE project_id = ?', [JSON.stringify(merged), projectId]);
-      } else {
-        await run(
-          `INSERT INTO project_workflows (user_id, project_id, current_phase, decisions) VALUES (?, ?, 'demo', ?)`,
-          [userId, projectId, JSON.stringify({ goal, build_type: 'gecodet' })]
-        );
-      }
-    } catch (_) { /* workflow optional */ }
-
-    // 6. Intake template + form (pre-submitted)
+    // Intake-Template holen oder erstellen
     const templateId = await getOrCreateTemplate(userId);
+
+    // Intake-Formular als bereits eingereicht speichern
     const token = crypto.randomBytes(24).toString('hex');
     const responses = {
-      website_type:  websiteTypeLabel  || '',
-      business_type: businessTypeLabel || '',
-      features:      (featuresLabels  || []).join(', '),
-      timeline:      timelineLabel     || '',
       contact_name:  name,
       contact_email: email,
-      contact_phone: phone  || '',
+      contact_phone: phone || '',
+      website_type:  websiteTypeLabel || '',
+      business_type: businessTypeLabel || '',
+      features:      (featuresLabels || []).join(', '),
+      timeline:      timelineLabel || '',
       appointment:   appointmentDate && appointmentTime ? `${appointmentDate} um ${appointmentTime} Uhr` : '',
       message:       message || '',
     };
 
     await run(
-      `INSERT INTO intake_forms
-         (user_id, template_id, project_id, client_id, title, token, status, responses, submitted_at, seen)
-       VALUES (?, ?, ?, ?, ?, ?, 'submitted', ?, NOW(), 0) RETURNING id`,
-      [userId, templateId, projectId, clientId,
-       `Demo-Anfrage: ${name}`, token, JSON.stringify(responses)]
+      `INSERT INTO intake_forms (user_id, template_id, title, token, status, responses, submitted_at, seen)
+       VALUES (?, ?, ?, ?, 'submitted', ?, NOW(), 0) RETURNING id`,
+      [userId, templateId, `Demo-Anfrage: ${name}`, token, JSON.stringify(responses)]
     );
 
-    // 7. Send notification email
+    // E-Mail Benachrichtigung
     try {
       const transporter = createTransporter();
       if (transporter) {
@@ -218,11 +136,10 @@ router.post('/anfrage', async (req, res) => {
         });
       }
     } catch (emailErr) {
-      console.error('[webhook] E-Mail fehlgeschlagen:', emailErr.message);
-      // Don't fail the whole request because of email
+      console.error('[webhook] E-Mail Fehler:', emailErr.message);
     }
 
-    res.json({ success: true, clientId, projectId });
+    res.json({ success: true });
 
   } catch (err) {
     console.error('[webhook POST /anfrage]', err);
