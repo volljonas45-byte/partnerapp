@@ -60,19 +60,19 @@ function buildNotificationHtml(data) {
 const TEMPLATE_NAME = 'Website-Anfrage v2 (JR Agency)';
 
 const TEMPLATE_FIELDS = [
-  { key: 'contact_person',  label: 'Ansprechpartner',         type: 'text' },
-  { key: 'company_name',    label: 'Unternehmen',             type: 'text' },
-  { key: 'contact_email',   label: 'E-Mail',                  type: 'text' },
-  { key: 'contact_phone',   label: 'Telefon',                 type: 'text' },
-  { key: 'industry',        label: 'Branche',                 type: 'text' },
-  { key: 'has_website',     label: 'Website vorhanden',       type: 'text' },
-  { key: 'website_url',     label: 'Website-URL',             type: 'text' },
-  { key: 'project_type',    label: 'Projekttyp',              type: 'text' },
-  { key: 'goal',            label: 'Ziel',                    type: 'text' },
-  { key: 'pages',           label: 'Gewünschte Seiten',       type: 'text' },
-  { key: 'timeline',        label: 'Zeitplan',                type: 'text' },
-  { key: 'first_notes',     label: 'Hinweise & Wünsche',      type: 'text' },
-  { key: 'appointment',     label: 'Gebuchter Termin',        type: 'text' },
+  { id: 'contact_person', key: 'contact_person', label: 'Ansprechpartner',   type: 'text' },
+  { id: 'company_name',   key: 'company_name',   label: 'Unternehmen',       type: 'text' },
+  { id: 'contact_email',  key: 'contact_email',  label: 'E-Mail',            type: 'text' },
+  { id: 'contact_phone',  key: 'contact_phone',  label: 'Telefon',           type: 'text' },
+  { id: 'industry',       key: 'industry',       label: 'Branche',           type: 'text' },
+  { id: 'has_website',    key: 'has_website',    label: 'Website vorhanden', type: 'text' },
+  { id: 'website_url',    key: 'website_url',    label: 'Website-URL',       type: 'text' },
+  { id: 'project_type',   key: 'project_type',   label: 'Projekttyp',        type: 'text' },
+  { id: 'goal',           key: 'goal',           label: 'Ziel',              type: 'text' },
+  { id: 'pages',          key: 'pages',          label: 'Gewünschte Seiten', type: 'text' },
+  { id: 'timeline',       key: 'timeline',       label: 'Zeitplan',          type: 'text' },
+  { id: 'first_notes',    key: 'first_notes',    label: 'Hinweise & Wünsche', type: 'text' },
+  { id: 'appointment',    key: 'appointment',    label: 'Gebuchter Termin',  type: 'text' },
 ];
 
 async function getOrCreateTemplate(userId) {
