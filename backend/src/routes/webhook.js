@@ -127,9 +127,10 @@ router.post('/anfrage', async (req, res) => {
     const userEmail = process.env.WEBHOOK_USER_EMAIL;
     if (!userEmail) return res.status(500).json({ error: 'WEBHOOK_USER_EMAIL nicht konfiguriert' });
 
-    const user = await getOne('SELECT id FROM users WHERE email = ?', [userEmail]);
+    const user = await getOne('SELECT id, workspace_owner_id FROM users WHERE email = ?', [userEmail]);
     if (!user) return res.status(500).json({ error: `Kein Benutzer mit E-Mail ${userEmail} gefunden` });
-    const userId = user.id;
+    // workspaceUserId = workspace_owner_id falls Teammitglied, sonst eigene id
+    const userId = user.workspace_owner_id ?? user.id;
 
     // 3. Create client
     const clientResult = await run(
