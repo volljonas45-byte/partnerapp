@@ -57,22 +57,23 @@ function buildNotificationHtml(data) {
 
 // ── Template ──────────────────────────────────────────────────────────────────
 
-const TEMPLATE_NAME = 'Website-Anfrage v2 (JR Agency)';
+const TEMPLATE_NAME = 'Website-Anfrage v3 (JR Agency)';
 
+// Field IDs match Vecturo Wizard field names so the intake view renders consistently
 const TEMPLATE_FIELDS = [
-  { id: 'contact_person', key: 'contact_person', label: 'Ansprechpartner',   type: 'text' },
-  { id: 'company_name',   key: 'company_name',   label: 'Unternehmen',       type: 'text' },
-  { id: 'contact_email',  key: 'contact_email',  label: 'E-Mail',            type: 'text' },
-  { id: 'contact_phone',  key: 'contact_phone',  label: 'Telefon',           type: 'text' },
-  { id: 'industry',       key: 'industry',       label: 'Branche',           type: 'text' },
-  { id: 'has_website',    key: 'has_website',    label: 'Website vorhanden', type: 'text' },
-  { id: 'website_url',    key: 'website_url',    label: 'Website-URL',       type: 'text' },
-  { id: 'project_type',   key: 'project_type',   label: 'Projekttyp',        type: 'text' },
-  { id: 'goal',           key: 'goal',           label: 'Ziel',              type: 'text' },
-  { id: 'pages',          key: 'pages',          label: 'Gewünschte Seiten', type: 'text' },
-  { id: 'timeline',       key: 'timeline',       label: 'Zeitplan',          type: 'text' },
-  { id: 'first_notes',    key: 'first_notes',    label: 'Hinweise & Wünsche', type: 'text' },
-  { id: 'appointment',    key: 'appointment',    label: 'Gebuchter Termin',  type: 'text' },
+  { id: 'company_name',    label: 'Unternehmen',        type: 'text' },
+  { id: 'contact_person',  label: 'Ansprechpartner',    type: 'text' },
+  { id: 'email',           label: 'E-Mail',             type: 'text' },
+  { id: 'phone',           label: 'Telefon',            type: 'text' },
+  { id: 'industry',        label: 'Branche',            type: 'text' },
+  { id: 'has_website',     label: 'Website vorhanden',  type: 'text' },
+  { id: 'website_url',     label: 'Website-URL',        type: 'text' },
+  { id: 'project_type',    label: 'Projekttyp',         type: 'text' },
+  { id: 'goal',            label: 'Ziel',               type: 'text' },
+  { id: 'pages',           label: 'Gewünschte Seiten',  type: 'text' },
+  { id: 'timeline',        label: 'Zeitplan',           type: 'text' },
+  { id: 'first_notes',     label: 'Hinweise & Wünsche', type: 'text' },
+  { id: 'appointment',     label: 'Gebuchter Termin',   type: 'text' },
 ];
 
 async function getOrCreateTemplate(userId) {
@@ -118,10 +119,10 @@ router.post('/anfrage', async (req, res) => {
     const token = crypto.randomBytes(24).toString('hex');
     const displayName = contactPerson || companyName || name;
     const responses = {
-      contact_person: contactPerson || name || '',
       company_name:   companyName || '',
-      contact_email:  email,
-      contact_phone:  phone || '',
+      contact_person: contactPerson || name || '',
+      email:          email,
+      phone:          phone || '',
       industry:       industry || '',
       has_website:    hasWebsite || '',
       website_url:    websiteUrl || '',
