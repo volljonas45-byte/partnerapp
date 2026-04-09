@@ -139,6 +139,7 @@ function buildResponses(formType, body) {
 
   if (formType === 'branding') {
     return {
+      form_type:      'branding',
       company_name:   companyName || '',
       contact_person: contactPerson || name || '',
       email:          email,
@@ -153,6 +154,7 @@ function buildResponses(formType, body) {
 
   if (formType === 'social-media') {
     return {
+      form_type:      'social-media',
       company_name:   companyName || '',
       contact_person: contactPerson || name || '',
       email:          email,
@@ -169,6 +171,7 @@ function buildResponses(formType, body) {
   const pagesArray = Array.isArray(pages) ? pages : (pages ? pages.split(', ') : []);
   const pagesLabel = pagesArray.map(p => PAGE_LABELS[p] || p).join(', ');
   return {
+    form_type:      'webdesign',
     company_name:   companyName || '',
     contact_person: contactPerson || name || '',
     email:          email,

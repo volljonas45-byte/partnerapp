@@ -27,6 +27,8 @@ import OnboardingTemplateBuilder from './pages/OnboardingTemplateBuilder';
 import OnboardingFlows          from './pages/OnboardingFlows';
 import OnboardingClient         from './pages/OnboardingClient';
 import Wizard                   from './pages/Wizard';
+import BrandingWizard           from './pages/BrandingWizard';
+import SocialMediaWizard        from './pages/SocialMediaWizard';
 import Intake                   from './pages/Intake';
 import IntakePublic             from './pages/IntakePublic';
 import Delivery                 from './pages/Delivery';
@@ -104,7 +106,9 @@ function AppRoutes() {
       <Route path="/work"           element={<ProtectedRoute><WorkOverview /></ProtectedRoute>} />
       <Route path="/sales"          element={<ProtectedRoute><SalesEngine /></ProtectedRoute>} />
       <Route path="/sales/leads/:id" element={<ProtectedRoute><SalesLeadDetail /></ProtectedRoute>} />
-      <Route path="/wizard"   element={<ProtectedRoute><Wizard /></ProtectedRoute>} />
+      <Route path="/wizard"              element={<ProtectedRoute><Wizard /></ProtectedRoute>} />
+      <Route path="/wizard/branding"     element={<ProtectedRoute><BrandingWizard /></ProtectedRoute>} />
+      <Route path="/wizard/social-media" element={<ProtectedRoute><SocialMediaWizard /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
       <Route path="/team"           element={<ProtectedRoute><Team /></ProtectedRoute>} />
       <Route path="/team/invite"    element={<ProtectedRoute><NewTeamMember /></ProtectedRoute>} />

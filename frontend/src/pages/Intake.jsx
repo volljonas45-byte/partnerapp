@@ -510,10 +510,41 @@ function ResponsesPanel({ form, onClose }) {
   };
 
   function openWizard() {
-    const rawPages = responses.pages ? responses.pages.split(', ').filter(Boolean) : [];
-    // support both value keys and human-readable labels
-    const mappedPages = rawPages.map(p => PAGE_LABEL_TO_VALUE[p] || p);
+    const ft = responses.form_type;
 
+    if (ft === 'branding') {
+      onClose();
+      navigate('/wizard/branding', { state: { prefill: {
+        company_name:   responses.company_name   || '',
+        contact_person: responses.contact_person || '',
+        email:          responses.email          || '',
+        phone:          responses.phone          || '',
+        industry:       responses.industry       || '',
+        leistungen:     responses.leistungen ? responses.leistungen.split(', ').filter(Boolean) : [],
+        stil:           responses.stil           || '',
+        first_notes:    responses.first_notes    || '',
+      }}});
+      return;
+    }
+
+    if (ft === 'social-media') {
+      onClose();
+      navigate('/wizard/social-media', { state: { prefill: {
+        company_name:   responses.company_name   || '',
+        contact_person: responses.contact_person || '',
+        email:          responses.email          || '',
+        phone:          responses.phone          || '',
+        industry:       responses.industry       || '',
+        kanaele:        responses.kanaele ? responses.kanaele.split(', ').filter(Boolean) : [],
+        ziel:           responses.ziel           || '',
+        first_notes:    responses.first_notes    || '',
+      }}});
+      return;
+    }
+
+    // webdesign (default)
+    const rawPages = responses.pages ? responses.pages.split(', ').filter(Boolean) : [];
+    const mappedPages = rawPages.map(p => PAGE_LABEL_TO_VALUE[p] || p);
     const prefill = {
       company_name:   responses.company_name   || '',
       contact_person: responses.contact_person || '',
@@ -530,6 +561,11 @@ function ResponsesPanel({ form, onClose }) {
     onClose();
     navigate('/wizard', { state: { prefill } });
   }
+
+  const wizardButtonLabel = {
+    branding:      'Im Branding-Wizard öffnen',
+    'social-media':'Im Social-Media-Wizard öffnen',
+  }[responses.form_type] || 'Im Wizard öffnen & Projekt anlegen';
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-end">
@@ -596,7 +632,7 @@ function ResponsesPanel({ form, onClose }) {
             className="w-full flex items-center justify-center gap-2 bg-apple-blue hover:bg-blue-600 text-white text-sm font-semibold px-4 py-3 rounded-xl transition-colors"
           >
             <Sparkles size={15} />
-            Im Wizard öffnen & Projekt anlegen
+            {wizardButtonLabel}
           </button>
         </div>
       </div>
@@ -611,6 +647,7 @@ export default function Intake() {
   const { confirm, ConfirmDialogNode } = useConfirm();
 
   const [activeTab, setActiveTab]             = useState('inbox');
+  const [inboxFilter, setInboxFilter]         = useState('all');
   const [showNewFormModal, setShowNewFormModal] = useState(false);
   const [showTemplateEditor, setShowTemplateEditor] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState(null);
@@ -825,14 +862,48 @@ export default function Intake() {
         {/* ── POSTEINGANG TAB ── */}
         {activeTab === 'inbox' && (
           <>
-            {inbox.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-24">
-                <Inbox size={36} className="text-gray-200 mb-3" />
-                <p className="text-sm text-gray-400">Noch keine ausgefüllten Formulare.</p>
+            {/* Filter-Bar */}
+            {inbox.length > 0 && (
+              <div className="flex gap-2 pt-4 pb-2 flex-wrap">
+                {[
+                  { key: 'all',          label: 'Alle' },
+                  { key: 'webdesign',    label: 'Webdesign' },
+                  { key: 'branding',     label: 'Branding' },
+                  { key: 'social-media', label: 'Social Media' },
+                ].map(({ key, label }) => (
+                  <button
+                    key={key}
+                    onClick={() => setInboxFilter(key)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                      inboxFilter === key
+                        ? 'bg-gray-900 text-white'
+                        : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
               </div>
-            ) : (
+            )}
+            {(() => {
+              const filteredInbox = inbox.filter(item =>
+                inboxFilter === 'all' || item.responses?.form_type === inboxFilter
+              );
+              if (inbox.length === 0) return (
+                <div className="flex flex-col items-center justify-center py-24">
+                  <Inbox size={36} className="text-gray-200 mb-3" />
+                  <p className="text-sm text-gray-400">Noch keine ausgefüllten Formulare.</p>
+                </div>
+              );
+              if (filteredInbox.length === 0) return (
+                <div className="flex flex-col items-center justify-center py-16">
+                  <Inbox size={30} className="text-gray-200 mb-3" />
+                  <p className="text-sm text-gray-400">Keine Anfragen in dieser Kategorie.</p>
+                </div>
+              );
+              return (
               <div className="space-y-3">
-                {inbox.map(item => (
+                {filteredInbox.map(item => (
                   <button
                     key={item.id}
                     onClick={() => handleOpenInboxItem(item)}
@@ -864,7 +935,8 @@ export default function Intake() {
                   </button>
                 ))}
               </div>
-            )}
+              );
+            })()}
           </>
         )}
 
