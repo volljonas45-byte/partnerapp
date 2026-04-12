@@ -762,14 +762,30 @@ Wenn ein Feld nicht erkennbar ist, setze null. Telefonnummer immer mit Vorwahl.`
       }
     };
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+    // Fallback chain: try multiple models in case one hits rate limits
+    const models = ['gemini-2.5-flash-lite', 'gemini-2.0-flash-lite', 'gemini-2.0-flash'];
+    let geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${models[0]}:generateContent?key=${apiKey}`;
+    const fetchOpts = {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    };
+
+    // Try each model until one works (rate limit fallback)
+    let response;
+    for (let i = 0; i < models.length; i++) {
+      geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${models[i]}:generateContent?key=${apiKey}`;
+      response = await fetch(geminiUrl, fetchOpts);
+      if (response.status === 429 && i < models.length - 1) {
+        console.log(`[screenshot-import] ${models[i]} rate limited, trying ${models[i + 1]}`);
+        continue;
       }
-    );
+      break;
+    }
+
+    if (response.status === 429) {
+      return res.status(429).json({ error: 'API-Limit erreicht. Bitte warte 30 Sekunden und versuche es erneut.' });
+    }
 
     if (!response.ok) {
       const errText = await response.text();
