@@ -23,6 +23,9 @@ export const salesApi = {
   stats:          (params = {}) => api.get('/api/sales/stats', { params }).then(r => r.data),
   chart:          (days = 14, params = {}) => api.get('/api/sales/stats/chart', { params: { days, ...params } }).then(r => r.data),
 
+  // Screenshot import (Gemini Vision)
+  analyzeScreenshot: (image)    => api.post('/api/sales/screenshot-import', { image }).then(r => r.data),
+
   // Targets
   getTargets:     ()            => api.get('/api/sales/targets').then(r => r.data),
   updateTargets:  (data)        => api.put('/api/sales/targets', data).then(r => r.data),

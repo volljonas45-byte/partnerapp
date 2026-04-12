@@ -6,7 +6,7 @@ import {
   Phone, Search, Flame, Settings, AlertCircle, CheckCircle2, Plus, Clock,
   PhoneCall, FileSpreadsheet, Building2, Mail, Globe, MapPin, ExternalLink,
   ChevronDown, CalendarDays, Euro, UserCheck, ArrowRight, MousePointerClick,
-  Sparkles, X, ChevronRight, Users,
+  Sparkles, X, ChevronRight, Users, Camera,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { salesApi } from '../api/sales';
@@ -17,6 +17,7 @@ import FollowupScheduler from '../components/sales/FollowupScheduler';
 import SalesTargetModal from '../components/sales/SalesTargetModal';
 import ExcelImportModal from '../components/sales/ExcelImportModal';
 import CreateLeadModal from '../components/sales/CreateLeadModal';
+import ScreenshotImportModal from '../components/sales/ScreenshotImportModal';
 import { useMobile } from '../hooks/useMobile';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
@@ -274,6 +275,7 @@ export default function SalesEngine() {
   const [showAddLead, setShowAddLead]       = useState(false);
   const [showExcelImport, setShowExcelImport] = useState(false);
   const [showTargets, setShowTargets]       = useState(false);
+  const [showScreenshot, setShowScreenshot] = useState(false);
   const [viewOwnerId, setViewOwnerId]       = useState(null); // null = me
   const [activeCall, setActiveCall]         = useState(null);
   const [followupFor, setFollowupFor]       = useState(null);
@@ -743,6 +745,9 @@ export default function SalesEngine() {
                 </p>
               </div>
               <div style={{ display: 'flex', gap: 6 }}>
+                <button onClick={() => setShowScreenshot(true)} style={{ padding: '7px 10px', borderRadius: 9, fontSize: 12, fontWeight: 600, background: 'rgba(0,113,227,0.08)', color: '#0071E3', border: 'none', cursor: 'pointer' }}>
+                  <Camera size={14} />
+                </button>
                 <button onClick={() => setShowExcelImport(true)} style={{ padding: '7px 10px', borderRadius: 9, fontSize: 12, fontWeight: 600, background: 'rgba(52,199,89,0.1)', color: '#1A8F40', border: 'none', cursor: 'pointer' }}>
                   <FileSpreadsheet size={14} />
                 </button>
@@ -1115,6 +1120,7 @@ export default function SalesEngine() {
         {showAddLead && <CreateLeadModal onClose={() => setShowAddLead(false)} onCreate={data => createLeadMut.mutate(data)} isCreating={createLeadMut.isPending} />}
         {showExcelImport && <ExcelImportModal onClose={() => setShowExcelImport(false)} onImport={handleImport} isImporting={importLeadsMut.isPending} />}
         {showTargets && stats?.targets && <SalesTargetModal targets={stats.targets} onSave={data => updateTargetsMut.mutate(data)} onClose={() => setShowTargets(false)} isPending={updateTargetsMut.isPending} />}
+        {showScreenshot && <ScreenshotImportModal onClose={() => setShowScreenshot(false)} onCreate={data => { createLeadMut.mutate(data); setShowScreenshot(false); }} isCreating={createLeadMut.isPending} />}
       </div>
     );
   }
@@ -1154,6 +1160,17 @@ export default function SalesEngine() {
 
         {/* Action buttons */}
         <div style={{ display: 'flex', gap: 6, flexShrink: 0, alignItems: 'center' }}>
+          <button
+            onClick={() => setShowScreenshot(true)}
+            title="Google Maps Screenshot importieren"
+            style={{
+              display: 'flex', alignItems: 'center', gap: 5, padding: '7px 12px', borderRadius: 9,
+              fontSize: 12, fontWeight: 600, background: 'rgba(0,113,227,0.08)', color: '#0071E3',
+              border: '1px solid rgba(0,113,227,0.15)', cursor: 'pointer',
+            }}
+          >
+            <Camera size={13} /> Screenshot
+          </button>
           <button
             onClick={() => setShowExcelImport(true)}
             style={{
@@ -1839,6 +1856,13 @@ export default function SalesEngine() {
           onSave={data => updateTargetsMut.mutate(data)}
           onClose={() => setShowTargets(false)}
           isPending={updateTargetsMut.isPending}
+        />
+      )}
+      {showScreenshot && (
+        <ScreenshotImportModal
+          onClose={() => setShowScreenshot(false)}
+          onCreate={data => { createLeadMut.mutate(data); setShowScreenshot(false); }}
+          isCreating={createLeadMut.isPending}
         />
       )}
     </div>
