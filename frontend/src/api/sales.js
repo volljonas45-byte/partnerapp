@@ -19,9 +19,9 @@ export const salesApi = {
   updateCall:     (id, data)    => api.put(`/api/sales/calls/${id}`, data).then(r => r.data),
   deleteCall:     (id)          => api.delete(`/api/sales/calls/${id}`).then(r => r.data),
 
-  // Stats
-  stats:          ()            => api.get('/api/sales/stats').then(r => r.data),
-  chart:          (days = 14)   => api.get('/api/sales/stats/chart', { params: { days } }).then(r => r.data),
+  // Stats (support owner_id param)
+  stats:          (params = {}) => api.get('/api/sales/stats', { params }).then(r => r.data),
+  chart:          (days = 14, params = {}) => api.get('/api/sales/stats/chart', { params: { days, ...params } }).then(r => r.data),
 
   // Targets
   getTargets:     ()            => api.get('/api/sales/targets').then(r => r.data),

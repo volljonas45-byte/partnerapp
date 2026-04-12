@@ -522,6 +522,7 @@ CREATE TABLE IF NOT EXISTS calendar_events (
 CREATE TABLE IF NOT EXISTS sales_leads (
   id                  SERIAL PRIMARY KEY,
   user_id             INTEGER NOT NULL,
+  owner_id            INTEGER NOT NULL REFERENCES users(id),
   client_id           INTEGER NOT NULL UNIQUE,
   status              TEXT NOT NULL DEFAULT 'neu',
   priority            INTEGER DEFAULT 0,
@@ -538,6 +539,7 @@ CREATE TABLE IF NOT EXISTS sales_leads (
 CREATE TABLE IF NOT EXISTS sales_calls (
   id               SERIAL PRIMARY KEY,
   user_id          INTEGER NOT NULL,
+  owner_id         INTEGER NOT NULL REFERENCES users(id),
   client_id        INTEGER NOT NULL,
   lead_id          INTEGER DEFAULT NULL,
   started_at       TIMESTAMP NOT NULL DEFAULT NOW(),

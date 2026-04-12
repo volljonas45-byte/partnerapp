@@ -58,6 +58,7 @@ const LEAD_SELECT = `
     COALESCE(sl.email,          c.email)           AS email,
     COALESCE(sl.branch,         c.industry)        AS industry,
     sl.branch, sl.city, sl.website_status, sl.domain,
+    u_owner.name AS owner_name, u_owner.color AS owner_color,
     (SELECT MAX(sc.started_at)
      FROM sales_calls sc
      WHERE sc.user_id = sl.user_id
@@ -70,6 +71,7 @@ const LEAD_SELECT = `
     )::int AS total_calls
   FROM sales_leads sl
   LEFT JOIN clients c ON c.id = sl.client_id
+  LEFT JOIN users u_owner ON u_owner.id = sl.owner_id
 `;
 
 // ── LEADS ────────────────────────────────────────────────────────────────────
@@ -77,10 +79,21 @@ const LEAD_SELECT = `
 // GET /api/sales/leads
 router.get('/leads', async (req, res) => {
   try {
-    const { status, due_today, due_tomorrow, due_week, search } = req.query;
+    const { status, due_today, due_tomorrow, due_week, search, owner_id } = req.query;
     let sql = LEAD_SELECT + ' WHERE sl.user_id = ?';
     const params = [req.workspaceUserId];
     const TERMINAL = "('gewonnen', 'abgeschlossen', 'verloren', 'kein_interesse')";
+
+    // Owner filtering: default = my leads
+    if (owner_id === 'all') {
+      // show all workspace leads
+    } else if (owner_id && owner_id !== 'me') {
+      sql += ' AND sl.owner_id = ?';
+      params.push(parseInt(owner_id, 10));
+    } else {
+      sql += ' AND sl.owner_id = ?';
+      params.push(req.userId);
+    }
 
     if (status) {
       // "verloren" tab shows both verloren and kein_interesse
@@ -173,12 +186,12 @@ router.post('/leads', async (req, res) => {
 
     const result = await run(
       `INSERT INTO sales_leads
-         (user_id, client_id, company_name, contact_person, phone, email,
+         (user_id, owner_id, client_id, company_name, contact_person, phone, email,
           branch, city, website_status, domain,
           status, notes, priority, next_followup_date, next_followup_note, deal_value)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`,
       [
-        req.workspaceUserId,
+        req.workspaceUserId, req.userId,
         client_id || null,
         company_name || null, contact_person || null, phone || null, email || null,
         branch || null, city || null, website_status || null, domain || null,
@@ -226,11 +239,11 @@ router.post('/leads/import', async (req, res) => {
 
       await run(
         `INSERT INTO sales_leads
-           (user_id, company_name, contact_person, phone, email, branch, city,
+           (user_id, owner_id, company_name, contact_person, phone, email, branch, city,
             website_status, domain, status, notes, priority, next_followup_date, deal_value)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
-          req.workspaceUserId,
+          req.workspaceUserId, req.userId,
           company_name, contact_person || null, phone || null, email || null,
           branch || null, city || null, website_status || null, domain || null,
           status || 'neu', notes || '', priority ?? 0,
@@ -308,6 +321,7 @@ router.put('/leads/:id', async (req, res) => {
     const {
       status, notes, priority, next_followup_date, next_followup_note, deal_value,
       company_name, contact_person, phone, email, branch, city, website_status, domain,
+      owner_id,
     } = req.body;
 
     const updates = [];
@@ -331,6 +345,7 @@ router.put('/leads/:id', async (req, res) => {
     if (city            !== undefined) { updates.push('city = ?');                 params.push(city); }
     if (website_status  !== undefined) { updates.push('website_status = ?');       params.push(website_status); }
     if (domain          !== undefined) { updates.push('domain = ?');               params.push(domain); }
+    if (owner_id        !== undefined) { updates.push('owner_id = ?');             params.push(owner_id); }
 
     if (updates.length === 0) return res.json(lead);
 
@@ -418,9 +433,9 @@ router.post('/calls', async (req, res) => {
     }
 
     const result = await run(
-      `INSERT INTO sales_calls (user_id, client_id, lead_id, outcome, notes, duration_sec)
-       VALUES (?, ?, ?, ?, ?, ?) RETURNING id`,
-      [req.workspaceUserId, client_id || null, resolvedLeadId, outcome || 'reached', notes || '', duration_sec || null]
+      `INSERT INTO sales_calls (user_id, owner_id, client_id, lead_id, outcome, notes, duration_sec)
+       VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id`,
+      [req.workspaceUserId, req.userId, client_id || null, resolvedLeadId, outcome || 'reached', notes || '', duration_sec || null]
     );
 
     const created = await getOne('SELECT * FROM sales_calls WHERE id = ?', [result.lastInsertRowid]);
@@ -475,9 +490,17 @@ router.delete('/calls/:id', async (req, res) => {
 
 router.get('/stats', async (req, res) => {
   try {
-    const uid = req.workspaceUserId;
+    const wsId = req.workspaceUserId;
+    const ownerId = req.query.owner_id === 'all' ? null
+      : (req.query.owner_id ? parseInt(req.query.owner_id, 10) : req.userId);
     const today = todayStr();
     const weekStart = weekStartStr();
+
+    // Calls stats — filter by owner_id when viewing a specific user
+    const callFilter = ownerId
+      ? 'user_id = ? AND owner_id = ?'
+      : 'user_id = ?';
+    const callParams = ownerId ? [wsId, ownerId] : [wsId];
 
     const todayStats = await getOne(`
       SELECT
@@ -485,42 +508,50 @@ router.get('/stats', async (req, res) => {
         COUNT(*) FILTER (WHERE outcome = 'reached')::int AS calls_reached,
         COUNT(*) FILTER (WHERE outcome = 'not_reached')::int AS calls_not_reached
       FROM sales_calls
-      WHERE user_id = ? AND started_at::date = ?::date
-    `, [uid, today]);
+      WHERE ${callFilter} AND started_at::date = ?::date
+    `, [...callParams, today]);
+
+    // Lead stats — filter by owner_id
+    const leadFilter = ownerId
+      ? 'user_id = ? AND owner_id = ?'
+      : 'user_id = ?';
+    const leadParams = ownerId ? [wsId, ownerId] : [wsId];
 
     const todayClosings = await getOne(`
       SELECT COUNT(*)::int AS count FROM sales_leads
-      WHERE user_id = ? AND (won_at::date = ?::date)
-    `, [uid, today]);
+      WHERE ${leadFilter} AND (won_at::date = ?::date)
+    `, [...leadParams, today]);
 
     const weekStats = await getOne(`
       SELECT
         COUNT(*)::int AS calls_total,
         COUNT(*) FILTER (WHERE outcome = 'reached')::int AS calls_reached
       FROM sales_calls
-      WHERE user_id = ? AND started_at::date >= ?::date
-    `, [uid, weekStart]);
+      WHERE ${callFilter} AND started_at::date >= ?::date
+    `, [...callParams, weekStart]);
 
     const weekClosings = await getOne(`
       SELECT COUNT(*)::int AS count FROM sales_leads
-      WHERE user_id = ? AND won_at::date >= ?::date
-    `, [uid, weekStart]);
+      WHERE ${leadFilter} AND won_at::date >= ?::date
+    `, [...leadParams, weekStart]);
 
     const followupsDue = await getOne(`
       SELECT COUNT(*)::int AS count FROM sales_leads
-      WHERE user_id = ? AND next_followup_date IS NOT NULL AND next_followup_date <= ?
+      WHERE ${leadFilter} AND next_followup_date IS NOT NULL AND next_followup_date <= ?
         AND status NOT IN ('gewonnen', 'abgeschlossen', 'verloren', 'kein_interesse')
-    `, [uid, today]);
+    `, [...leadParams, today]);
 
     const demosActive = await getOne(`
       SELECT COUNT(*)::int AS count FROM sales_leads
-      WHERE user_id = ? AND status = 'demo'
-    `, [uid]);
+      WHERE ${leadFilter} AND status = 'demo'
+    `, leadParams);
 
-    let targets = await getOne('SELECT * FROM sales_targets WHERE user_id = ?', [uid]);
+    // Targets: always per logged-in user (personal goals)
+    const targetUserId = req.userId;
+    let targets = await getOne('SELECT * FROM sales_targets WHERE user_id = ?', [targetUserId]);
     if (!targets) {
-      await run('INSERT INTO sales_targets (user_id) VALUES (?) RETURNING id', [uid]);
-      targets = await getOne('SELECT * FROM sales_targets WHERE user_id = ?', [uid]);
+      await run('INSERT INTO sales_targets (user_id) VALUES (?) RETURNING id', [targetUserId]);
+      targets = await getOne('SELECT * FROM sales_targets WHERE user_id = ?', [targetUserId]);
     }
 
     const callsTotal  = todayStats?.calls_total   || 0;
@@ -561,7 +592,14 @@ router.get('/stats', async (req, res) => {
 router.get('/stats/chart', async (req, res) => {
   try {
     const days = parseInt(req.query.days, 10) || 14;
-    const uid  = req.workspaceUserId;
+    const wsId = req.workspaceUserId;
+    const ownerId = req.query.owner_id === 'all' ? null
+      : (req.query.owner_id ? parseInt(req.query.owner_id, 10) : req.userId);
+
+    const filter = ownerId
+      ? 'user_id = ? AND owner_id = ?'
+      : 'user_id = ?';
+    const filterParams = ownerId ? [wsId, ownerId] : [wsId];
 
     const rows = await getAll(`
       SELECT
@@ -570,10 +608,10 @@ router.get('/stats/chart', async (req, res) => {
         COUNT(*) FILTER (WHERE outcome = 'reached')::int AS reached,
         COUNT(*) FILTER (WHERE outcome = 'not_reached')::int AS not_reached
       FROM sales_calls
-      WHERE user_id = ? AND started_at >= NOW() - INTERVAL '1 day' * ?
+      WHERE ${filter} AND started_at >= NOW() - INTERVAL '1 day' * ?
       GROUP BY started_at::date
       ORDER BY date ASC
-    `, [uid, days]);
+    `, [...filterParams, days]);
 
     const map = {};
     rows.forEach(r => {
@@ -599,10 +637,11 @@ router.get('/stats/chart', async (req, res) => {
 
 router.get('/targets', async (req, res) => {
   try {
-    let targets = await getOne('SELECT * FROM sales_targets WHERE user_id = ?', [req.workspaceUserId]);
+    const uid = req.userId; // personal targets
+    let targets = await getOne('SELECT * FROM sales_targets WHERE user_id = ?', [uid]);
     if (!targets) {
-      await run('INSERT INTO sales_targets (user_id) VALUES (?) RETURNING id', [req.workspaceUserId]);
-      targets = await getOne('SELECT * FROM sales_targets WHERE user_id = ?', [req.workspaceUserId]);
+      await run('INSERT INTO sales_targets (user_id) VALUES (?) RETURNING id', [uid]);
+      targets = await getOne('SELECT * FROM sales_targets WHERE user_id = ?', [uid]);
     }
     res.json(targets);
   } catch (err) {
@@ -613,9 +652,10 @@ router.get('/targets', async (req, res) => {
 
 router.put('/targets', async (req, res) => {
   try {
-    let targets = await getOne('SELECT * FROM sales_targets WHERE user_id = ?', [req.workspaceUserId]);
+    const uid = req.userId; // personal targets
+    let targets = await getOne('SELECT * FROM sales_targets WHERE user_id = ?', [uid]);
     if (!targets) {
-      await run('INSERT INTO sales_targets (user_id) VALUES (?) RETURNING id', [req.workspaceUserId]);
+      await run('INSERT INTO sales_targets (user_id) VALUES (?) RETURNING id', [uid]);
     }
     const { daily_calls, daily_connects, daily_closings, weekly_calls, weekly_closings } = req.body;
     await run(`
@@ -623,9 +663,9 @@ router.put('/targets', async (req, res) => {
         daily_calls = ?, daily_connects = ?, daily_closings = ?,
         weekly_calls = ?, weekly_closings = ?, updated_at = NOW()
       WHERE user_id = ?
-    `, [daily_calls ?? 30, daily_connects ?? 10, daily_closings ?? 2, weekly_calls ?? 150, weekly_closings ?? 8, req.workspaceUserId]);
+    `, [daily_calls ?? 30, daily_connects ?? 10, daily_closings ?? 2, weekly_calls ?? 150, weekly_closings ?? 8, uid]);
 
-    const updated = await getOne('SELECT * FROM sales_targets WHERE user_id = ?', [req.workspaceUserId]);
+    const updated = await getOne('SELECT * FROM sales_targets WHERE user_id = ?', [uid]);
     res.json(updated);
   } catch (err) {
     console.error('[sales/targets PUT]', err);

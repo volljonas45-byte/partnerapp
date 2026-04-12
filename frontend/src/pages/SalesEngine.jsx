@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { salesApi } from '../api/sales';
+import { teamApi } from '../api/team';
 import { LEAD_STATUSES } from '../components/sales/LeadStatusBadge';
 import CallInProgressSheet from '../components/sales/CallInProgressSheet';
 import FollowupScheduler from '../components/sales/FollowupScheduler';
@@ -18,6 +19,7 @@ import ExcelImportModal from '../components/sales/ExcelImportModal';
 import CreateLeadModal from '../components/sales/CreateLeadModal';
 import { useMobile } from '../hooks/useMobile';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -151,7 +153,7 @@ function KpiCard({ icon: Icon, label, value, sub, color, target }) {
   );
 }
 
-function LeadRow({ lead, isSelected, onClick, onCall }) {
+function LeadRow({ lead, isSelected, onClick, onCall, showOwner = false }) {
   const { c } = useTheme();
   const fu = followupInfo(lead.next_followup_date);
   const ws = WEBSITE_STATUS_CFG[lead.website_status];
@@ -171,8 +173,16 @@ function LeadRow({ lead, isSelected, onClick, onCall }) {
       onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = c.cardSecondary; }}
       onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = 'transparent'; }}
     >
-      {/* Priority dot */}
-      <div style={{ width: 7, height: 7, borderRadius: '50%', flexShrink: 0, background: pc.dot, marginTop: 1 }} />
+      {/* Priority dot + optional owner ring */}
+      <div style={{ position: 'relative', width: 7, height: 7, flexShrink: 0, marginTop: 1 }}>
+        <div style={{ width: 7, height: 7, borderRadius: '50%', background: pc.dot }} />
+        {showOwner && lead.owner_color && (
+          <div title={lead.owner_name} style={{
+            position: 'absolute', top: -4, left: -4, width: 14, height: 14, borderRadius: '50%',
+            border: `2px solid ${lead.owner_color}`, boxSizing: 'border-box',
+          }} />
+        )}
+      </div>
 
       {/* Text block — nimmt den ganzen verfügbaren Platz */}
       <div style={{ flex: 1, minWidth: 0 }}>
@@ -255,6 +265,7 @@ export default function SalesEngine() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { c, isDark } = useTheme();
+  const { user } = useAuth();
 
   // UI state
   const [tab, setTab]                       = useState('due');
@@ -263,6 +274,7 @@ export default function SalesEngine() {
   const [showAddLead, setShowAddLead]       = useState(false);
   const [showExcelImport, setShowExcelImport] = useState(false);
   const [showTargets, setShowTargets]       = useState(false);
+  const [viewOwnerId, setViewOwnerId]       = useState(null); // null = me
   const [activeCall, setActiveCall]         = useState(null);
   const [followupFor, setFollowupFor]       = useState(null);
   const [showStatusMenu, setShowStatusMenu] = useState(false);
@@ -273,15 +285,27 @@ export default function SalesEngine() {
 
   // ── Queries ──────────────────────────────────────────────────────────────
 
+  // Owner param for API calls
+  const ownerParam = useMemo(() => {
+    if (viewOwnerId === 'all') return 'all';
+    if (viewOwnerId) return String(viewOwnerId);
+    return undefined; // default = me (server-side)
+  }, [viewOwnerId]);
+
+  const { data: teamMembers = [] } = useQuery({
+    queryKey: ['team'],
+    queryFn: () => teamApi.list().then(r => r.data),
+  });
+
   const { data: stats } = useQuery({
-    queryKey: ['sales-stats'],
-    queryFn: salesApi.stats,
+    queryKey: ['sales-stats', ownerParam],
+    queryFn: () => salesApi.stats(ownerParam ? { owner_id: ownerParam } : {}),
     refetchInterval: 30000,
   });
 
   const { data: chartData } = useQuery({
-    queryKey: ['sales-chart'],
-    queryFn: () => salesApi.chart(14),
+    queryKey: ['sales-chart', ownerParam],
+    queryFn: () => salesApi.chart(14, ownerParam ? { owner_id: ownerParam } : {}),
   });
 
   const { data: recentCalls = [] } = useQuery({
@@ -292,15 +316,16 @@ export default function SalesEngine() {
   const isKundenTab = tab === 'kunden';
 
   const leadsParams = useMemo(() => {
-    if (isKundenTab) return null; // handled by separate query
+    if (isKundenTab) return null;
     const p = {};
+    if (ownerParam) p.owner_id = ownerParam;
     if (tab === 'due') p.due_today = '1';
     else if (tab === 'tomorrow') p.due_tomorrow = '1';
     else if (tab === 'week') p.due_week = '1';
     else if (tab !== 'all') p.status = tab;
     if (search) p.search = search;
     return p;
-  }, [tab, search, isKundenTab]);
+  }, [tab, search, isKundenTab, ownerParam]);
 
   const { data: leads = [], isLoading: leadsLoading } = useQuery({
     queryKey: ['sales-leads', leadsParams],
@@ -494,6 +519,94 @@ export default function SalesEngine() {
   const selWS   = WEBSITE_STATUS_CFG[selectedLead?.website_status];
   const isMobile = useMobile();
 
+  // Viewing another user's pipeline?
+  const viewingOther = viewOwnerId && viewOwnerId !== 'all' && viewOwnerId !== user?.id;
+  const viewingAll = viewOwnerId === 'all';
+  const viewedMember = viewingOther ? teamMembers.find(m => m.id === viewOwnerId) : null;
+
+  function getInitials(name, email) {
+    if (name) {
+      const parts = name.trim().split(/\s+/);
+      return parts.length > 1 ? (parts[0][0] + parts[1][0]).toUpperCase() : parts[0].slice(0, 2).toUpperCase();
+    }
+    return (email || '?')[0].toUpperCase();
+  }
+
+  function renderAvatarSwitcher(compact = false) {
+    if (teamMembers.length <= 1) return null;
+    const size = compact ? 24 : 28;
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: compact ? 4 : 6, padding: compact ? '0 0 8px' : '0 0 10px' }}>
+        <span style={{ fontSize: 10.5, fontWeight: 600, color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.5px', marginRight: 2 }}>
+          Pipeline
+        </span>
+        {/* "Ich" avatar */}
+        {(() => {
+          const isActive = !viewOwnerId;
+          return (
+            <button
+              key="me"
+              onClick={() => { setViewOwnerId(null); setSelectedLeadId(null); }}
+              title="Meine Pipeline"
+              style={{
+                width: size, height: size, borderRadius: '50%', border: 'none', cursor: 'pointer',
+                background: isActive ? c.blue : (user?.color || '#6366f1'),
+                color: '#fff', fontSize: compact ? 10 : 11, fontWeight: 600,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                outline: isActive ? `2px solid ${c.blue}` : '2px solid transparent',
+                outlineOffset: 2, transition: 'all 0.15s',
+                opacity: isActive ? 1 : 0.6,
+              }}
+            >
+              {getInitials(user?.name, user?.email)}
+            </button>
+          );
+        })()}
+        {/* Team members */}
+        {teamMembers
+          .filter(m => m.id !== user?.id)
+          .map(m => {
+            const isActive = viewOwnerId === m.id;
+            return (
+              <button
+                key={m.id}
+                onClick={() => { setViewOwnerId(m.id); setSelectedLeadId(null); }}
+                title={`${m.name || m.email}'s Pipeline`}
+                style={{
+                  width: size, height: size, borderRadius: '50%', border: 'none', cursor: 'pointer',
+                  background: isActive ? c.blue : (m.color || '#8B5CF6'),
+                  color: '#fff', fontSize: compact ? 10 : 11, fontWeight: 600,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  outline: isActive ? `2px solid ${c.blue}` : '2px solid transparent',
+                  outlineOffset: 2, transition: 'all 0.15s',
+                  opacity: isActive ? 1 : 0.6,
+                }}
+              >
+                {getInitials(m.name, m.email)}
+              </button>
+            );
+          })}
+        {/* "Alle" button */}
+        <button
+          onClick={() => { setViewOwnerId('all'); setSelectedLeadId(null); }}
+          title="Alle Pipelines"
+          style={{
+            width: size, height: size, borderRadius: '50%', border: 'none', cursor: 'pointer',
+            background: viewingAll ? c.blue : c.cardSecondary,
+            color: viewingAll ? '#fff' : c.textSecondary,
+            fontSize: compact ? 10 : 11, fontWeight: 600,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            outline: viewingAll ? `2px solid ${c.blue}` : '2px solid transparent',
+            outlineOffset: 2, transition: 'all 0.15s',
+            opacity: viewingAll ? 1 : 0.6,
+          }}
+        >
+          <Users size={compact ? 11 : 13} />
+        </button>
+      </div>
+    );
+  }
+
   // ── Tab renderer (shared) ──────────────────────────────────────────────────
 
   function renderGroupedTabs(compact = false) {
@@ -669,6 +782,11 @@ export default function SalesEngine() {
                   );
                 })}
               </div>
+            </div>
+
+            {/* Avatar Switcher (Mobile) */}
+            <div style={{ padding: '0 0 4px' }}>
+              {renderAvatarSwitcher(true)}
             </div>
 
             {/* Motivation Banner */}
@@ -1109,6 +1227,48 @@ export default function SalesEngine() {
         }}>
           {/* List header */}
           <div style={{ padding: '12px 14px 0', borderBottom: `1px solid ${c.borderSubtle}`, flexShrink: 0 }}>
+            {/* Avatar Switcher */}
+            {renderAvatarSwitcher(false)}
+            {/* Viewing-other banner */}
+            {viewingOther && viewedMember && (
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', marginBottom: 8,
+                borderRadius: 8, background: `${viewedMember.color || c.blue}12`,
+                border: `1px solid ${viewedMember.color || c.blue}30`,
+              }}>
+                <div style={{
+                  width: 18, height: 18, borderRadius: '50%', fontSize: 9, fontWeight: 600,
+                  background: viewedMember.color || c.blue, color: '#fff',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  {getInitials(viewedMember.name, viewedMember.email)}
+                </div>
+                <span style={{ fontSize: 11.5, fontWeight: 600, color: c.text, flex: 1 }}>
+                  {viewedMember.name || viewedMember.email}'s Pipeline
+                </span>
+                <button
+                  onClick={() => { setViewOwnerId(null); setSelectedLeadId(null); }}
+                  style={{ fontSize: 10.5, fontWeight: 600, color: c.blue, background: 'none', border: 'none', cursor: 'pointer' }}
+                >
+                  Zurück
+                </button>
+              </div>
+            )}
+            {viewingAll && (
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', marginBottom: 8,
+                borderRadius: 8, background: 'rgba(0,113,227,0.06)', border: '1px solid rgba(0,113,227,0.15)',
+              }}>
+                <Users size={13} color={c.blue} />
+                <span style={{ fontSize: 11.5, fontWeight: 600, color: c.text, flex: 1 }}>Alle Pipelines</span>
+                <button
+                  onClick={() => { setViewOwnerId(null); setSelectedLeadId(null); }}
+                  style={{ fontSize: 10.5, fontWeight: 600, color: c.blue, background: 'none', border: 'none', cursor: 'pointer' }}
+                >
+                  Zurück
+                </button>
+              </div>
+            )}
             {/* Grouped Tabs */}
             <div style={{ marginBottom: 10, overflowX: 'auto', scrollbarWidth: 'none' }}>
               {renderGroupedTabs(false)}
@@ -1158,6 +1318,7 @@ export default function SalesEngine() {
                   isSelected={lead.id === selectedLeadId}
                   onClick={() => setSelectedLeadId(lead.id === selectedLeadId ? null : lead.id)}
                   onCall={handleCall}
+                  showOwner={viewingAll}
                 />
               ))
             )}
