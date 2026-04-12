@@ -33,6 +33,36 @@ function weekEndStr() {
   return sun.toISOString().slice(0, 10);
 }
 
+const MAX_LEADS_PER_DAY = 20;
+
+// Find the next day (starting today) that has fewer than 20 leads scheduled
+async function getNextAvailableDay(workspaceUserId, ownerId) {
+  // Count leads per scheduled day for this owner
+  const rows = await getAll(
+    `SELECT next_followup_date::text AS day, COUNT(*)::int AS cnt
+     FROM sales_leads
+     WHERE user_id = ? AND owner_id = ?
+       AND next_followup_date >= CURRENT_DATE
+       AND status NOT IN ('verloren', 'kein_interesse', 'gewonnen', 'abgeschlossen')
+     GROUP BY next_followup_date
+     ORDER BY next_followup_date`,
+    [workspaceUserId, ownerId]
+  );
+
+  const counts = {};
+  for (const r of rows) counts[r.day] = r.cnt;
+
+  // Walk forward from today until we find a slot
+  const d = new Date();
+  for (let i = 0; i < 365; i++) {
+    const key = d.toISOString().slice(0, 10);
+    if ((counts[key] || 0) < MAX_LEADS_PER_DAY) return key;
+    d.setDate(d.getDate() + 1);
+  }
+  // Fallback: today
+  return todayStr();
+}
+
 function motivation(todayCalls, todayReached, todayClosings, targets) {
   const { daily_calls, daily_connects, daily_closings } = targets;
   if (todayClosings >= daily_closings && todayCalls >= daily_calls) {
@@ -184,6 +214,9 @@ router.post('/leads', async (req, res) => {
       if (!client) return res.status(404).json({ error: 'Kunde nicht gefunden' });
     }
 
+    // Auto-schedule: if no date given, assign to next available day (max 20/day)
+    const scheduledDate = next_followup_date || await getNextAvailableDay(req.workspaceUserId, req.userId);
+
     const result = await run(
       `INSERT INTO sales_leads
          (user_id, owner_id, client_id, company_name, contact_person, phone, email,
@@ -196,7 +229,7 @@ router.post('/leads', async (req, res) => {
         company_name || null, contact_person || null, phone || null, email || null,
         branch || null, city || null, website_status || null, domain || null,
         status || 'neu', notes || '', priority ?? 0,
-        next_followup_date || null, next_followup_note || '', deal_value || null,
+        scheduledDate, next_followup_note || '', deal_value || null,
       ]
     );
 
@@ -237,6 +270,9 @@ router.post('/leads/import', async (req, res) => {
       );
       if (dup) { skipped++; continue; }
 
+      // Auto-schedule if no date given
+      const scheduledDate = next_followup_date || await getNextAvailableDay(req.workspaceUserId, req.userId);
+
       await run(
         `INSERT INTO sales_leads
            (user_id, owner_id, company_name, contact_person, phone, email, branch, city,
@@ -247,7 +283,7 @@ router.post('/leads/import', async (req, res) => {
           company_name, contact_person || null, phone || null, email || null,
           branch || null, city || null, website_status || null, domain || null,
           status || 'neu', notes || '', priority ?? 0,
-          next_followup_date || null, deal_value || null,
+          scheduledDate, deal_value || null,
         ]
       );
       imported++;

@@ -95,6 +95,7 @@ const TAB_GROUPS = [
   {
     label: 'Übersicht',
     tabs: [
+      { key: 'neu',       label: 'Neu' },
       { key: 'all',       label: 'Alle' },
     ],
   },

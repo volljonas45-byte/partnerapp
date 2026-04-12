@@ -92,7 +92,7 @@ export default function ScreenshotImportModal({ onClose, onCreate, isCreating })
       domain:         extracted.domain || '',
       website_status: extracted.website_status || null,
       notes:          extracted.address ? `Adresse: ${extracted.address}` : '',
-      status:         'anrufen',
+      status:         'neu',
     };
     onCreate(lead);
   }
