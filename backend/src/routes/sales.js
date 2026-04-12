@@ -68,14 +68,20 @@ router.get('/leads', async (req, res) => {
     const params = [req.workspaceUserId];
 
     if (status) {
-      sql += ' AND sl.status = ?';
-      params.push(status);
-    }
-
-    if (due_today === '1') {
+      // "verloren" tab shows both verloren and kein_interesse
+      if (status === 'verloren') {
+        sql += " AND sl.status IN ('verloren', 'kein_interesse')";
+      } else {
+        sql += ' AND sl.status = ?';
+        params.push(status);
+      }
+    } else if (due_today === '1') {
       sql += ' AND sl.next_followup_date IS NOT NULL AND sl.next_followup_date <= ?';
       params.push(todayStr());
       sql += " AND sl.status NOT IN ('gewonnen', 'abgeschlossen', 'verloren', 'kein_interesse')";
+    } else {
+      // "Alle" tab: hide archived/terminal leads
+      sql += " AND sl.status NOT IN ('verloren', 'kein_interesse')";
     }
 
     if (search) {

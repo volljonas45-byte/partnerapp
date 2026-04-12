@@ -412,7 +412,6 @@ export default function SalesEngine() {
     const archiveStatuses = ['verloren', 'spaeter'];
     if (archiveStatuses.includes(status)) {
       setSelectedLeadId(null);
-      setTab(status);
       toast.success(status === 'verloren' ? 'Lead als Verloren markiert' : 'Lead auf Später verschoben');
     } else {
       toast.success('Status aktualisiert');
