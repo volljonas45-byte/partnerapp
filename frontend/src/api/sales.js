@@ -10,6 +10,9 @@ export const salesApi = {
   importLeads:    (leads)       => api.post('/api/sales/leads/import', { leads }).then(r => r.data),
   convertToClient:(id)          => api.post(`/api/sales/leads/${id}/convert`).then(r => r.data),
 
+  // Clients (for Kunden tab)
+  listSalesClients: (params = {}) => api.get('/api/sales/clients', { params }).then(r => r.data),
+
   // Calls
   listCalls:      (params = {}) => api.get('/api/sales/calls', { params }).then(r => r.data),
   logCall:        (data)        => api.post('/api/sales/calls', data).then(r => r.data),

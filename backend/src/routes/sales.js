@@ -11,12 +11,26 @@ function todayStr() {
   return new Date().toISOString().slice(0, 10);
 }
 
+function tomorrowStr() {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  return d.toISOString().slice(0, 10);
+}
+
 function weekStartStr() {
   const now = new Date();
   const day = now.getDay() || 7;
   const mon = new Date(now);
   mon.setDate(now.getDate() - day + 1);
   return mon.toISOString().slice(0, 10);
+}
+
+function weekEndStr() {
+  const now = new Date();
+  const day = now.getDay() || 7;
+  const sun = new Date(now);
+  sun.setDate(now.getDate() + (7 - day));
+  return sun.toISOString().slice(0, 10);
 }
 
 function motivation(todayCalls, todayReached, todayClosings, targets) {
@@ -63,9 +77,10 @@ const LEAD_SELECT = `
 // GET /api/sales/leads
 router.get('/leads', async (req, res) => {
   try {
-    const { status, due_today, search } = req.query;
+    const { status, due_today, due_tomorrow, due_week, search } = req.query;
     let sql = LEAD_SELECT + ' WHERE sl.user_id = ?';
     const params = [req.workspaceUserId];
+    const TERMINAL = "('gewonnen', 'abgeschlossen', 'verloren', 'kein_interesse')";
 
     if (status) {
       // "verloren" tab shows both verloren and kein_interesse
@@ -78,7 +93,15 @@ router.get('/leads', async (req, res) => {
     } else if (due_today === '1') {
       sql += ' AND sl.next_followup_date IS NOT NULL AND sl.next_followup_date <= ?';
       params.push(todayStr());
-      sql += " AND sl.status NOT IN ('gewonnen', 'abgeschlossen', 'verloren', 'kein_interesse')";
+      sql += ` AND sl.status NOT IN ${TERMINAL}`;
+    } else if (due_tomorrow === '1') {
+      sql += ' AND sl.next_followup_date = ?';
+      params.push(tomorrowStr());
+      sql += ` AND sl.status NOT IN ${TERMINAL}`;
+    } else if (due_week === '1') {
+      sql += ' AND sl.next_followup_date IS NOT NULL AND sl.next_followup_date >= ? AND sl.next_followup_date <= ?';
+      params.push(weekStartStr(), weekEndStr());
+      sql += ` AND sl.status NOT IN ${TERMINAL}`;
     } else {
       // "Alle" tab: hide archived/terminal leads
       sql += " AND sl.status NOT IN ('verloren', 'kein_interesse')";
@@ -607,6 +630,44 @@ router.put('/targets', async (req, res) => {
   } catch (err) {
     console.error('[sales/targets PUT]', err);
     res.status(500).json({ error: 'Fehler beim Aktualisieren der Ziele' });
+  }
+});
+
+// ── CLIENTS (for Sales Engine Kunden tab) ───────────────────────────────────
+
+router.get('/clients', async (req, res) => {
+  try {
+    const { search } = req.query;
+    let sql = `
+      SELECT
+        c.*,
+        (SELECT MAX(sc.started_at)
+         FROM sales_calls sc WHERE sc.client_id = c.id AND sc.user_id = c.user_id
+        ) AS last_call_at,
+        (SELECT COUNT(*)
+         FROM sales_calls sc WHERE sc.client_id = c.id AND sc.user_id = c.user_id
+        )::int AS total_calls,
+        (SELECT COUNT(*)
+         FROM projects p WHERE p.client_id = c.id AND p.user_id = c.user_id AND p.status != 'completed'
+        )::int AS active_projects
+      FROM clients c
+      WHERE c.user_id = ?
+    `;
+    const params = [req.workspaceUserId];
+
+    if (search) {
+      sql += ` AND (c.company_name ILIKE ? OR c.contact_person ILIKE ? OR c.phone ILIKE ?)`;
+      const q = `%${search}%`;
+      params.push(q, q, q);
+    }
+
+    sql += ' ORDER BY last_call_at DESC NULLS LAST, c.company_name ASC';
+
+    const rows = await getAll(sql, params);
+    res.json(rows);
+  } catch (err) {
+    console.error('[sales/clients GET]', err);
+    res.status(500).json({ error: 'Fehler beim Laden der Kunden' });
   }
 });
 

@@ -6,7 +6,7 @@ import {
   Phone, Search, Flame, Settings, AlertCircle, CheckCircle2, Plus, Clock,
   PhoneCall, FileSpreadsheet, Building2, Mail, Globe, MapPin, ExternalLink,
   ChevronDown, CalendarDays, Euro, UserCheck, ArrowRight, MousePointerClick,
-  Sparkles, X, ChevronRight,
+  Sparkles, X, ChevronRight, Users,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { salesApi } from '../api/sales';
@@ -80,16 +80,38 @@ const PRIORITY_CFG = {
   2: { color: '#FF3B30', label: 'Dringend', dot: '#FF3B30' },
 };
 
-const TABS = [
-  { key: 'due',          label: 'Fällig heute' },
-  { key: 'all',          label: 'Alle' },
-  { key: 'anrufen',      label: 'Anrufen' },
-  { key: 'follow_up',    label: 'Follow Up' },
-  { key: 'interessiert', label: 'Interessiert' },
-  { key: 'demo',         label: 'Demo' },
-  { key: 'spaeter',      label: 'Später' },
-  { key: 'verloren',     label: 'Verloren' },
+const TAB_GROUPS = [
+  {
+    label: 'Zeitraum',
+    tabs: [
+      { key: 'due',       label: 'Heute' },
+      { key: 'tomorrow',  label: 'Morgen' },
+      { key: 'week',      label: 'Diese Woche' },
+    ],
+  },
+  {
+    label: 'Übersicht',
+    tabs: [
+      { key: 'all',       label: 'Alle' },
+    ],
+  },
+  {
+    label: 'Archiv',
+    tabs: [
+      { key: 'verloren',  label: 'Verloren' },
+      { key: 'spaeter',   label: 'Später' },
+    ],
+  },
+  {
+    label: 'CRM',
+    tabs: [
+      { key: 'kunden',    label: 'Kunden' },
+    ],
+  },
 ];
+
+// Flat list for easy lookup
+const ALL_TABS = TAB_GROUPS.flatMap(g => g.tabs);
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
@@ -267,17 +289,29 @@ export default function SalesEngine() {
     queryFn: () => salesApi.listCalls({ limit: 8 }),
   });
 
+  const isKundenTab = tab === 'kunden';
+
   const leadsParams = useMemo(() => {
+    if (isKundenTab) return null; // handled by separate query
     const p = {};
     if (tab === 'due') p.due_today = '1';
+    else if (tab === 'tomorrow') p.due_tomorrow = '1';
+    else if (tab === 'week') p.due_week = '1';
     else if (tab !== 'all') p.status = tab;
     if (search) p.search = search;
     return p;
-  }, [tab, search]);
+  }, [tab, search, isKundenTab]);
 
   const { data: leads = [], isLoading: leadsLoading } = useQuery({
     queryKey: ['sales-leads', leadsParams],
     queryFn: () => salesApi.listLeads(leadsParams),
+    enabled: !isKundenTab,
+  });
+
+  const { data: salesClients = [], isLoading: clientsLoading } = useQuery({
+    queryKey: ['sales-clients', search],
+    queryFn: () => salesApi.listSalesClients(search ? { search } : {}),
+    enabled: isKundenTab,
   });
 
   const { data: selectedLead } = useQuery({
@@ -418,6 +452,30 @@ export default function SalesEngine() {
     }
   }
 
+  async function handleClientCall(client) {
+    try {
+      const call = await logCallMut.mutateAsync({ client_id: client.id });
+      window.open('tel:' + (client.phone || ''), '_self');
+      setActiveCall({ callId: call.id, clientName: client.company_name, phone: client.phone });
+    } catch { toast.error('Fehler beim Starten des Anrufs'); }
+  }
+
+  // Unified list data for rendering
+  const listItems = isKundenTab ? salesClients : leads;
+  const listLoading = isKundenTab ? clientsLoading : leadsLoading;
+
+  const emptyMessage = useMemo(() => {
+    switch (tab) {
+      case 'due':      return 'Keine Follow-ups heute fällig';
+      case 'tomorrow': return 'Keine Follow-ups morgen fällig';
+      case 'week':     return 'Keine Follow-ups diese Woche';
+      case 'kunden':   return 'Noch keine Kunden angelegt';
+      case 'verloren': return 'Keine verlorenen Leads';
+      case 'spaeter':  return 'Keine Leads auf Später';
+      default:         return 'Leads anlegen oder per Excel importieren';
+    }
+  }, [tab]);
+
   // ── Derived data ──────────────────────────────────────────────────────────
 
   const chartDays = useMemo(() => {
@@ -435,6 +493,121 @@ export default function SalesEngine() {
   const fwInfo  = followupInfo(selectedLead?.next_followup_date);
   const selWS   = WEBSITE_STATUS_CFG[selectedLead?.website_status];
   const isMobile = useMobile();
+
+  // ── Tab renderer (shared) ──────────────────────────────────────────────────
+
+  function renderGroupedTabs(compact = false) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 0, overflowX: 'auto', scrollbarWidth: 'none' }}>
+        {TAB_GROUPS.map((group, gi) => (
+          <div key={group.label} style={{ display: 'flex', alignItems: 'center' }}>
+            {gi > 0 && (
+              <div style={{
+                width: 1, height: 16, background: c.border, margin: '0 6px', flexShrink: 0, opacity: 0.5,
+              }} />
+            )}
+            {group.tabs.map(tb => {
+              const isActive = tab === tb.key;
+              return (
+                <button
+                  key={tb.key}
+                  onClick={() => { setTab(tb.key); setSelectedLeadId(null); }}
+                  style={{
+                    padding: compact ? '5px 8px' : '6px 10px',
+                    fontSize: compact ? 11.5 : 12,
+                    fontWeight: isActive ? 600 : 500,
+                    color: isActive ? c.text : c.textSecondary,
+                    background: 'none', border: 'none',
+                    borderBottom: isActive ? `2px solid ${c.blue}` : '2px solid transparent',
+                    cursor: 'pointer', whiteSpace: 'nowrap',
+                    transition: 'color 0.15s',
+                  }}
+                >
+                  {tb.key === 'kunden' && <Users size={compact ? 11 : 12} style={{ marginRight: 3, verticalAlign: '-1px' }} />}
+                  {tb.label}
+                </button>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  function ClientRow({ client, onClick, onCall }) {
+    return (
+      <div
+        onClick={onClick}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px',
+          borderBottom: `1px solid ${c.borderSubtle}`, cursor: 'pointer',
+          borderLeft: '3px solid transparent',
+          transition: 'background 0.1s',
+        }}
+        onMouseEnter={e => { e.currentTarget.style.background = c.cardSecondary; }}
+        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+      >
+        {/* Icon */}
+        <div style={{
+          width: 28, height: 28, borderRadius: 8, flexShrink: 0,
+          background: 'rgba(0,113,227,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <Building2 size={13} color="#0071E3" />
+        </div>
+
+        {/* Text */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: c.text, letterSpacing: '-0.1px', marginBottom: 3 }}>
+            {client.company_name}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'nowrap' }}>
+            {client.contact_person && (
+              <span style={{ fontSize: 10.5, color: c.textTertiary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {client.contact_person}
+              </span>
+            )}
+            {client.active_projects > 0 && (
+              <span style={{
+                padding: '1px 6px', borderRadius: 99, fontSize: 10, fontWeight: 600,
+                background: 'rgba(52,199,89,0.1)', color: '#34C759',
+              }}>
+                {client.active_projects} Projekt{client.active_projects !== 1 ? 'e' : ''}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Right side */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3, flexShrink: 0 }}>
+          {client.last_call_at ? (
+            <span style={{ fontSize: 10, color: c.textTertiary }}>{relTime(client.last_call_at)}</span>
+          ) : <span style={{ fontSize: 10, color: c.border }}>—</span>}
+          <span style={{ fontSize: 10, color: c.textTertiary }}>
+            {client.total_calls ? `${client.total_calls}x angerufen` : 'noch kein Anruf'}
+          </span>
+        </div>
+
+        {/* Call button */}
+        <button
+          onClick={e => { e.stopPropagation(); onCall(client); }}
+          disabled={!client.phone}
+          title={client.phone || 'Keine Nummer'}
+          style={{
+            width: 30, height: 30, borderRadius: 8, border: 'none', flexShrink: 0,
+            background: client.phone ? 'rgba(52,199,89,0.12)' : c.inputBg,
+            color: client.phone ? '#34C759' : c.textTertiary,
+            cursor: client.phone ? 'pointer' : 'not-allowed',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            transition: 'background 0.15s',
+          }}
+          onMouseEnter={e => { if (client.phone) e.currentTarget.style.background = 'rgba(52,199,89,0.24)'; }}
+          onMouseLeave={e => { if (client.phone) e.currentTarget.style.background = 'rgba(52,199,89,0.12)'; }}
+        >
+          <Phone size={13} />
+        </button>
+      </div>
+    );
+  }
 
   // ── Mobile Render ─────────────────────────────────────────────────────────
 
@@ -511,17 +684,8 @@ export default function SalesEngine() {
             )}
 
             {/* Tabs */}
-            <div style={{ display: 'flex', overflowX: 'auto', gap: 0, scrollbarWidth: 'none', margin: '0 -16px', padding: '0 16px' }}>
-              {TABS.map(tb => (
-                <button key={tb.key} onClick={() => setTab(tb.key)} style={{
-                  padding: '8px 12px', fontSize: 12.5, fontWeight: tab === tb.key ? 600 : 500,
-                  color: tab === tb.key ? c.text : c.textSecondary, background: 'none', border: 'none',
-                  borderBottom: tab === tb.key ? `2px solid ${c.blue}` : '2px solid transparent',
-                  cursor: 'pointer', whiteSpace: 'nowrap',
-                }}>
-                  {tb.label}
-                </button>
-              ))}
+            <div style={{ margin: '0 -16px', padding: '0 16px', overflowX: 'auto', scrollbarWidth: 'none' }}>
+              {renderGroupedTabs(true)}
             </div>
           </div>
         </div>
@@ -538,21 +702,69 @@ export default function SalesEngine() {
           </div>
         </div>
 
-        {/* Lead Count */}
+        {/* Count */}
         <div style={{ padding: '6px 16px', fontSize: 11, color: c.textTertiary }}>
-          {leadsLoading ? 'Laden...' : `${leads.length} Lead${leads.length !== 1 ? 's' : ''}`}
+          {listLoading ? 'Laden...' : `${listItems.length} ${isKundenTab ? 'Kunden' : `Lead${listItems.length !== 1 ? 's' : ''}`}`}
         </div>
 
-        {/* Lead List */}
+        {/* List */}
         <div style={{ flex: 1 }}>
-          {!leadsLoading && leads.length === 0 ? (
+          {!listLoading && listItems.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '60px 24px' }}>
-              <div style={{ fontSize: 36, marginBottom: 10 }}>📭</div>
-              <div style={{ fontSize: 15, fontWeight: 600, color: '#1D1D1F' }}>Keine Leads</div>
-              <div style={{ fontSize: 13, color: '#86868B', marginTop: 4 }}>
-                {tab === 'due' ? 'Keine Follow-ups heute fällig' : 'Leads anlegen oder per Excel importieren'}
-              </div>
+              <div style={{ fontSize: 36, marginBottom: 10 }}>{isKundenTab ? '👥' : '📭'}</div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: c.text }}>{isKundenTab ? 'Keine Kunden' : 'Keine Leads'}</div>
+              <div style={{ fontSize: 13, color: c.textSecondary, marginTop: 4 }}>{emptyMessage}</div>
             </div>
+          ) : isKundenTab ? (
+            salesClients.map(client => {
+              return (
+                <div
+                  key={client.id}
+                  onClick={() => handleClientCall(client)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 12,
+                    padding: '13px 16px', background: c.card,
+                    borderBottom: `1px solid ${c.borderSubtle}`, cursor: 'pointer',
+                  }}
+                >
+                  <div style={{
+                    width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+                    background: 'rgba(0,113,227,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <Building2 size={14} color="#0071E3" />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: c.text, marginBottom: 4 }}>{client.company_name}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
+                      {client.contact_person && <span style={{ fontSize: 11, color: c.textTertiary }}>{client.contact_person}</span>}
+                      {client.active_projects > 0 && (
+                        <span style={{ padding: '2px 6px', borderRadius: 99, fontSize: 10, fontWeight: 600, background: 'rgba(52,199,89,0.1)', color: '#34C759' }}>
+                          {client.active_projects} Projekt{client.active_projects !== 1 ? 'e' : ''}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
+                    <span style={{ fontSize: 10, color: c.textTertiary }}>
+                      {client.total_calls ? `${client.total_calls}x angerufen` : 'kein Anruf'}
+                    </span>
+                    <button
+                      onClick={e => { e.stopPropagation(); handleClientCall(client); }}
+                      disabled={!client.phone}
+                      style={{
+                        width: 36, height: 36, borderRadius: 10, border: 'none', flexShrink: 0,
+                        background: client.phone ? 'rgba(52,199,89,0.12)' : 'rgba(0,0,0,0.05)',
+                        color: client.phone ? '#34C759' : '#C7C7CC',
+                        cursor: client.phone ? 'pointer' : 'not-allowed',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}
+                    >
+                      <Phone size={15} />
+                    </button>
+                  </div>
+                </div>
+              );
+            })
           ) : (
             leads.map(lead => {
               const ls = LEAD_STATUSES[lead.status] || LEAD_STATUSES.neu;
@@ -887,7 +1099,7 @@ export default function SalesEngine() {
       {/* ── 3-Panel Grid ── */}
       <div style={{
         flex: 1, minHeight: 0,
-        display: 'grid', gridTemplateColumns: '380px 1fr 300px', gap: 14,
+        display: 'grid', gridTemplateColumns: '420px 1fr 260px', gap: 14,
       }}>
 
         {/* ════ LEFT: Lead List ════ */}
@@ -897,21 +1109,9 @@ export default function SalesEngine() {
         }}>
           {/* List header */}
           <div style={{ padding: '12px 14px 0', borderBottom: `1px solid ${c.borderSubtle}`, flexShrink: 0 }}>
-            {/* Tabs */}
-            <div style={{ display: 'flex', gap: 0, overflowX: 'auto', marginBottom: 10 }}>
-              {TABS.map(t => (
-                <button
-                  key={t.key} onClick={() => setTab(t.key)}
-                  style={{
-                    padding: '6px 10px', fontSize: 12, fontWeight: tab === t.key ? 600 : 500,
-                    color: tab === t.key ? c.text : c.textSecondary, background: 'none', border: 'none',
-                    borderBottom: tab === t.key ? `2px solid ${c.blue}` : '2px solid transparent',
-                    cursor: 'pointer', transition: 'color 0.15s', whiteSpace: 'nowrap',
-                  }}
-                >
-                  {t.label}
-                </button>
-              ))}
+            {/* Grouped Tabs */}
+            <div style={{ marginBottom: 10, overflowX: 'auto', scrollbarWidth: 'none' }}>
+              {renderGroupedTabs(false)}
             </div>
             {/* Search */}
             <div style={{ position: 'relative', marginBottom: 10 }}>
@@ -928,21 +1128,28 @@ export default function SalesEngine() {
             </div>
           </div>
 
-          {/* Lead count */}
+          {/* Count */}
           <div style={{ padding: '6px 14px', fontSize: 11, color: c.textTertiary, flexShrink: 0, borderBottom: `1px solid ${c.borderSubtle}` }}>
-            {leadsLoading ? 'Laden...' : `${leads.length} Lead${leads.length !== 1 ? 's' : ''}`}
+            {listLoading ? 'Laden...' : `${listItems.length} ${isKundenTab ? 'Kunden' : `Lead${listItems.length !== 1 ? 's' : ''}`}`}
           </div>
 
           {/* List */}
           <div style={{ flex: 1, overflowY: 'auto' }}>
-            {!leadsLoading && leads.length === 0 ? (
+            {!listLoading && listItems.length === 0 ? (
               <div style={{ padding: '40px 0', textAlign: 'center' }}>
-                <div style={{ fontSize: 26, marginBottom: 6 }}>📭</div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: c.text }}>Keine Leads</div>
-                <div style={{ fontSize: 12, color: c.textSecondary, marginTop: 2 }}>
-                  {tab === 'due' ? 'Keine Follow-ups heute fällig' : 'Leads anlegen oder per Excel importieren'}
-                </div>
+                <div style={{ fontSize: 26, marginBottom: 6 }}>{isKundenTab ? '👥' : '📭'}</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: c.text }}>{isKundenTab ? 'Keine Kunden' : 'Keine Leads'}</div>
+                <div style={{ fontSize: 12, color: c.textSecondary, marginTop: 2 }}>{emptyMessage}</div>
               </div>
+            ) : isKundenTab ? (
+              salesClients.map(client => (
+                <ClientRow
+                  key={client.id}
+                  client={client}
+                  onClick={() => handleClientCall(client)}
+                  onCall={handleClientCall}
+                />
+              ))
             ) : (
               leads.map(lead => (
                 <LeadRow
