@@ -247,11 +247,16 @@ router.delete('/:id', async (req, res) => {
   try {
     const project = await getOne('SELECT id FROM projects WHERE id = ? AND user_id = ?', [req.params.id, req.workspaceUserId]);
     if (!project) return res.status(404).json({ error: 'Projekt nicht gefunden' });
+
+    // Delete intake_forms (no CASCADE on this FK)
+    await run('DELETE FROM intake_forms WHERE project_id = ?', [req.params.id]);
+
+    // Rest has ON DELETE CASCADE, so deleting the project handles it
     await run('DELETE FROM projects WHERE id = ? AND user_id = ?', [req.params.id, req.workspaceUserId]);
     res.json({ success: true });
   } catch (err) {
     console.error('[projects DELETE /:id]', err);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Fehler beim Löschen des Projekts' });
   }
 });
 

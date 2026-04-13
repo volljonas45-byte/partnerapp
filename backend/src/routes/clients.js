@@ -206,25 +206,49 @@ router.delete('/:id', async (req, res) => {
       'SELECT * FROM clients WHERE id = ? AND user_id = ?',
       [req.params.id, req.workspaceUserId]
     );
+    if (!client) return res.status(404).json({ error: 'Kunde nicht gefunden' });
 
-    if (!client) return res.status(404).json({ error: 'Client not found' });
+    const cid = req.params.id;
+    const uid = req.workspaceUserId;
 
-    const invoiceCount = await getOne(
-      'SELECT COUNT(*) as count FROM invoices WHERE client_id = ? AND user_id = ?',
-      [req.params.id, req.workspaceUserId]
+    // Delete all related records first (no CASCADE on these FKs)
+    // Invoice items → invoices
+    await run(
+      `DELETE FROM invoice_items WHERE invoice_id IN (SELECT id FROM invoices WHERE client_id = ? AND user_id = ?)`,
+      [cid, uid]
     );
+    await run(
+      `DELETE FROM invoice_payments WHERE invoice_id IN (SELECT id FROM invoices WHERE client_id = ? AND user_id = ?)`,
+      [cid, uid]
+    );
+    await run(
+      `DELETE FROM invoice_reminders WHERE invoice_id IN (SELECT id FROM invoices WHERE client_id = ? AND user_id = ?)`,
+      [cid, uid]
+    );
+    await run('DELETE FROM invoices WHERE client_id = ? AND user_id = ?', [cid, uid]);
 
-    if (parseInt(invoiceCount.count) > 0) {
-      return res.status(409).json({
-        error: `Cannot delete: client has ${invoiceCount.count} invoice(s)`,
-      });
-    }
+    // Quote items → quotes
+    await run(
+      `DELETE FROM quote_items WHERE quote_id IN (SELECT id FROM quotes WHERE client_id = ? AND user_id = ?)`,
+      [cid, uid]
+    );
+    await run('DELETE FROM quotes WHERE client_id = ? AND user_id = ?', [cid, uid]);
 
-    await run('DELETE FROM clients WHERE id = ? AND user_id = ?', [req.params.id, req.workspaceUserId]);
+    // Intake forms
+    await run('DELETE FROM intake_forms WHERE client_id = ?', [cid]);
+
+    // Sales leads linked to this client
+    await run('DELETE FROM sales_leads WHERE client_id = ? AND user_id = ?', [cid, uid]);
+
+    // Client legal (has CASCADE but be safe)
+    await run('DELETE FROM client_legal WHERE client_id = ?', [cid]);
+
+    // Finally delete the client
+    await run('DELETE FROM clients WHERE id = ? AND user_id = ?', [cid, uid]);
     res.json({ success: true });
   } catch (err) {
     console.error('[clients DELETE /:id]', err);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Fehler beim Löschen des Kunden' });
   }
 });
 
