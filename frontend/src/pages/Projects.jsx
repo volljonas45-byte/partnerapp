@@ -256,12 +256,12 @@ function ProjectCard({ project, areaColor, onDelete }) {
             onClick={e => { e.stopPropagation(); onDelete(project.id); }}
             style={{
               background: 'none', border: 'none', cursor: 'pointer',
-              color: hovered ? '#C7C7CC' : 'transparent',
+              color: '#C7C7CC',
               padding: '2px', flexShrink: 0,
               transition: 'color 0.15s',
             }}
             onMouseEnter={e => { e.stopPropagation(); e.currentTarget.style.color = '#FF3B30'; }}
-            onMouseLeave={e => { e.stopPropagation(); e.currentTarget.style.color = hovered ? '#C7C7CC' : 'transparent'; }}
+            onMouseLeave={e => { e.stopPropagation(); e.currentTarget.style.color = '#C7C7CC'; }}
           >
             <Trash2 size={13} />
           </button>
