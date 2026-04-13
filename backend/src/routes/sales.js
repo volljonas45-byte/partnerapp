@@ -37,16 +37,16 @@ const MAX_LEADS_PER_DAY = 20;
 
 // Find the next day (starting today) that has fewer than 20 leads scheduled
 async function getNextAvailableDay(workspaceUserId, ownerId) {
-  // Count leads per scheduled day for this owner
+  // Count leads per scheduled day for this owner (next_followup_date is TEXT 'YYYY-MM-DD')
   const rows = await getAll(
-    `SELECT next_followup_date::text AS day, COUNT(*)::int AS cnt
+    `SELECT next_followup_date AS day, COUNT(*)::int AS cnt
      FROM sales_leads
      WHERE user_id = ? AND owner_id = ?
-       AND next_followup_date >= CURRENT_DATE
+       AND next_followup_date >= ?
        AND status NOT IN ('verloren', 'kein_interesse', 'gewonnen', 'abgeschlossen')
      GROUP BY next_followup_date
      ORDER BY next_followup_date`,
-    [workspaceUserId, ownerId]
+    [workspaceUserId, ownerId, todayStr()]
   );
 
   const counts = {};
