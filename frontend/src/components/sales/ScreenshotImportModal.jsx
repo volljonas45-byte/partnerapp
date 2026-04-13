@@ -81,7 +81,6 @@ export default function ScreenshotImportModal({ onClose, onCreate, isCreating })
 
   function handleCreate() {
     if (!extracted?.company_name) return;
-    // Map to lead format (strip address, keep relevant fields)
     const lead = {
       company_name:   extracted.company_name,
       contact_person: extracted.contact_person || '',
@@ -91,7 +90,7 @@ export default function ScreenshotImportModal({ onClose, onCreate, isCreating })
       city:           extracted.city || '',
       domain:         extracted.domain || '',
       website_status: extracted.website_status || null,
-      notes:          extracted.address ? `Adresse: ${extracted.address}` : '',
+      address:        extracted.address || '',
       status:         'neu',
     };
     onCreate(lead);

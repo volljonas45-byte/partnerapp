@@ -397,6 +397,15 @@ export default function SalesLeadDetail() {
                   </div>
                 </>
               )}
+              <div>
+                <label style={labelStyle}>Adresse</label>
+                <input
+                  defaultValue={lead.address || ''}
+                  onBlur={e => { if (e.target.value !== (lead.address || '')) updateLeadMut.mutate({ address: e.target.value }); }}
+                  placeholder="Straße, PLZ Ort"
+                  style={selectStyle}
+                />
+              </div>
             </div>
           </div>
 

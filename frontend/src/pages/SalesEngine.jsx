@@ -1696,6 +1696,17 @@ export default function SalesEngine() {
                         />
                       </div>
                     )}
+
+                    <div>
+                      <label style={{ fontSize: 11, fontWeight: 600, color: c.textTertiary, display: 'block', marginBottom: 4 }}>Adresse</label>
+                      <input
+                        key={`addr-${selectedLeadId}`}
+                        defaultValue={selectedLead.address || ''}
+                        onBlur={e => { if (e.target.value !== (selectedLead.address || '')) updateLeadMut.mutate({ id: selectedLeadId, data: { address: e.target.value } }); }}
+                        placeholder="Straße, PLZ Ort"
+                        style={{ width: '100%', padding: '7px 8px', borderRadius: 8, fontSize: 12.5, border: `1.5px solid ${c.border}`, outline: 'none', boxSizing: 'border-box', background: c.cardSecondary, color: c.text }}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>

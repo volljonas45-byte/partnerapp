@@ -13,7 +13,7 @@ const WEBSITE_STATUSES = [
 export default function CreateLeadModal({ onClose, onCreate, isCreating }) {
   const [form, setForm] = useState({
     company_name: '', contact_person: '', phone: '', email: '',
-    branch: '', city: '', website_status: '', domain: '',
+    branch: '', city: '', website_status: '', domain: '', address: '',
     status: 'neu', priority: 0, notes: '',
   });
 
@@ -96,6 +96,12 @@ export default function CreateLeadModal({ onClose, onCreate, isCreating }) {
                 <label style={labelStyle}>Domain</label>
                 <input value={form.domain} onChange={e => set('domain', e.target.value)} placeholder="firma.de" style={inputStyle} />
               </div>
+            </div>
+
+            {/* Address */}
+            <div>
+              <label style={labelStyle}>Adresse</label>
+              <input value={form.address} onChange={e => set('address', e.target.value)} placeholder="Musterstraße 1, 70173 Stuttgart" style={inputStyle} />
             </div>
 
             {/* Website Status */}

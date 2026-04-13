@@ -190,7 +190,7 @@ router.post('/leads', async (req, res) => {
   try {
     const {
       client_id, company_name, contact_person, phone, email,
-      branch, city, website_status, domain,
+      branch, city, website_status, domain, address,
       status, notes, priority, next_followup_date, next_followup_note, deal_value,
     } = req.body;
 
@@ -220,14 +220,14 @@ router.post('/leads', async (req, res) => {
     const result = await run(
       `INSERT INTO sales_leads
          (user_id, owner_id, client_id, company_name, contact_person, phone, email,
-          branch, city, website_status, domain,
+          branch, city, website_status, domain, address,
           status, notes, priority, next_followup_date, next_followup_note, deal_value)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`,
       [
         req.workspaceUserId, req.userId,
         client_id || null,
         company_name || null, contact_person || null, phone || null, email || null,
-        branch || null, city || null, website_status || null, domain || null,
+        branch || null, city || null, website_status || null, domain || null, address || null,
         status || 'neu', notes || '', priority ?? 0,
         scheduledDate, next_followup_note || '', deal_value || null,
       ]
@@ -257,7 +257,7 @@ router.post('/leads/import', async (req, res) => {
 
     for (const lead of leads) {
       const { company_name, contact_person, phone, email, branch, city,
-              website_status, domain, status, notes, priority,
+              website_status, domain, address, status, notes, priority,
               next_followup_date, deal_value } = lead;
 
       if (!company_name) { skipped++; continue; }
@@ -276,13 +276,13 @@ router.post('/leads/import', async (req, res) => {
       await run(
         `INSERT INTO sales_leads
            (user_id, owner_id, company_name, contact_person, phone, email, branch, city,
-            website_status, domain, status, notes, priority, next_followup_date, deal_value)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            website_status, domain, address, status, notes, priority, next_followup_date, deal_value)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           req.workspaceUserId, req.userId,
           company_name, contact_person || null, phone || null, email || null,
           branch || null, city || null, website_status || null, domain || null,
-          status || 'neu', notes || '', priority ?? 0,
+          address || null, status || 'neu', notes || '', priority ?? 0,
           scheduledDate, deal_value || null,
         ]
       );
@@ -357,7 +357,7 @@ router.put('/leads/:id', async (req, res) => {
     const {
       status, notes, priority, next_followup_date, next_followup_note, deal_value,
       company_name, contact_person, phone, email, branch, city, website_status, domain,
-      owner_id,
+      address, owner_id,
     } = req.body;
 
     const updates = [];
@@ -381,6 +381,7 @@ router.put('/leads/:id', async (req, res) => {
     if (city            !== undefined) { updates.push('city = ?');                 params.push(city); }
     if (website_status  !== undefined) { updates.push('website_status = ?');       params.push(website_status); }
     if (domain          !== undefined) { updates.push('domain = ?');               params.push(domain); }
+    if (address         !== undefined) { updates.push('address = ?');              params.push(address); }
     if (owner_id        !== undefined) { updates.push('owner_id = ?');             params.push(owner_id); }
 
     if (updates.length === 0) return res.json(lead);
