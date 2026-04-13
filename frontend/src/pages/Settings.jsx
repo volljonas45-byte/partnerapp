@@ -563,7 +563,7 @@ export default function Settings() {
 
   return (
     <div style={{ height: '100%', overflowY: 'auto', overflowX: 'hidden', background: c.bg }}>
-      <div style={{ maxWidth: '860px', margin: '0 auto', padding: 'clamp(16px, 4vw, 32px)', paddingBottom: 64, boxSizing: 'border-box' }}>
+      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: 'clamp(16px, 4vw, 32px)', paddingBottom: 64, boxSizing: 'border-box' }}>
 
         {/* Header */}
         <div style={{ marginBottom: '28px' }}>
