@@ -10,7 +10,7 @@ const LEGAL_FORMS = [
   'GbR', 'UG (haftungsbeschränkt)', 'GmbH', 'AG',
 ];
 
-/** Ensure a settings row exists for this user, then return it. */
+/** Ensure a settings row exists for a user, then return it. */
 async function ensureSettings(userId) {
   const existing = await getOne('SELECT id FROM settings WHERE user_id = ?', [userId]);
   if (!existing) await run('INSERT INTO settings (user_id) VALUES (?)', [userId]);
@@ -19,10 +19,24 @@ async function ensureSettings(userId) {
 
 /**
  * GET /api/settings
+ * Returns workspace-shared settings + user's own geschaeftsfuehrer
  */
 router.get('/', async (req, res) => {
   try {
-    res.json(await ensureSettings(req.userId));
+    // Shared settings from workspace admin
+    const shared = await ensureSettings(req.workspaceUserId);
+
+    // If user is the admin, just return as-is
+    if (req.userId === req.workspaceUserId) {
+      return res.json(shared);
+    }
+
+    // For team members: load own geschaeftsfuehrer
+    const own = await ensureSettings(req.userId);
+    res.json({
+      ...shared,
+      geschaeftsfuehrer: own.geschaeftsfuehrer || '',
+    });
   } catch (err) {
     console.error('[settings GET /]', err);
     res.status(500).json({ error: 'Internal server error' });
@@ -31,7 +45,7 @@ router.get('/', async (req, res) => {
 
 /**
  * PUT /api/settings
- * Updates all company, banking, invoice, and branding fields.
+ * Shared fields → workspace admin row, geschaeftsfuehrer → user's own row
  */
 router.put('/', async (req, res) => {
   try {
@@ -47,8 +61,8 @@ router.put('/', async (req, res) => {
       email_alias, email_signature,
     } = req.body;
 
-    await ensureSettings(req.userId);
-
+    // Update shared settings on workspace admin row
+    await ensureSettings(req.workspaceUserId);
     await run(`
       UPDATE settings SET
         company_name      = ?,
@@ -66,7 +80,6 @@ router.put('/', async (req, res) => {
         invoice_prefix    = ?,
         quote_prefix      = ?,
         legal_form        = ?,
-        geschaeftsfuehrer = ?,
         handelsregister   = ?,
         registergericht   = ?,
         kleinunternehmer  = ?,
@@ -92,7 +105,6 @@ router.put('/', async (req, res) => {
       invoice_prefix    || 'RE',
       quote_prefix      || 'AN',
       LEGAL_FORMS.includes(legal_form) ? legal_form : 'Einzelunternehmen',
-      geschaeftsfuehrer || '',
       handelsregister   || '',
       registergericht   || '',
       kleinunternehmer  ? 1 : 0,
@@ -101,10 +113,23 @@ router.put('/', async (req, res) => {
       default_payment_days != null ? parseInt(default_payment_days) || 30 : 30,
       email_alias     || '',
       email_signature || '',
-      req.userId,
+      req.workspaceUserId,
     ]);
 
-    res.json(await getOne('SELECT * FROM settings WHERE user_id = ?', [req.userId]));
+    // Update geschaeftsfuehrer on user's own row (personal, not synced)
+    await ensureSettings(req.userId);
+    await run(
+      'UPDATE settings SET geschaeftsfuehrer = ? WHERE user_id = ?',
+      [geschaeftsfuehrer || '', req.userId]
+    );
+
+    // Return merged result
+    const shared = await getOne('SELECT * FROM settings WHERE user_id = ?', [req.workspaceUserId]);
+    if (req.userId !== req.workspaceUserId) {
+      const own = await getOne('SELECT geschaeftsfuehrer FROM settings WHERE user_id = ?', [req.userId]);
+      shared.geschaeftsfuehrer = own?.geschaeftsfuehrer || '';
+    }
+    res.json(shared);
   } catch (err) {
     console.error('[settings PUT /]', err);
     res.status(500).json({ error: 'Internal server error' });
@@ -113,7 +138,7 @@ router.put('/', async (req, res) => {
 
 /**
  * POST /api/settings/logo
- * Saves company logo as base64 data URL.
+ * Saves company logo (shared across workspace)
  */
 router.post('/logo', async (req, res) => {
   try {
@@ -122,8 +147,8 @@ router.post('/logo', async (req, res) => {
     if (!logo_base64.startsWith('data:image/')) return res.status(400).json({ error: 'Ungültiges Bildformat' });
     if (logo_base64.length > 2_800_000) return res.status(413).json({ error: 'Logo muss kleiner als 2 MB sein' });
 
-    await ensureSettings(req.userId);
-    await run('UPDATE settings SET logo_base64 = ? WHERE user_id = ?', [logo_base64, req.userId]);
+    await ensureSettings(req.workspaceUserId);
+    await run('UPDATE settings SET logo_base64 = ? WHERE user_id = ?', [logo_base64, req.workspaceUserId]);
     res.json({ success: true });
   } catch (err) {
     console.error('[settings POST /logo]', err);
@@ -136,7 +161,7 @@ router.post('/logo', async (req, res) => {
  */
 router.delete('/logo', async (req, res) => {
   try {
-    await run('UPDATE settings SET logo_base64 = NULL WHERE user_id = ?', [req.userId]);
+    await run('UPDATE settings SET logo_base64 = NULL WHERE user_id = ?', [req.workspaceUserId]);
     res.json({ success: true });
   } catch (err) {
     console.error('[settings DELETE /logo]', err);

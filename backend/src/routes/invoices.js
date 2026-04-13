@@ -200,7 +200,7 @@ router.post('/', async (req, res) => {
     const client = await getOne('SELECT id FROM clients WHERE id = ? AND user_id = ?', [client_id, req.workspaceUserId]);
     if (!client) return res.status(404).json({ error: 'Kunde nicht gefunden' });
 
-    const settings = await getOne('SELECT invoice_prefix FROM settings WHERE user_id = ?', [req.userId]);
+    const settings = await getOne('SELECT invoice_prefix FROM settings WHERE user_id = ?', [req.workspaceUserId]);
     const prefix   = settings?.invoice_prefix || 'RE';
     const number   = await generateInvoiceNumber(req.workspaceUserId, prefix);
     const { subtotal, tax_total, total } = calcTotals(items);
@@ -359,7 +359,7 @@ router.post('/:id/duplicate', async (req, res) => {
     if (!original || original.user_id !== req.workspaceUserId)
       return res.status(404).json({ error: 'Rechnung nicht gefunden' });
 
-    const settings = await getOne('SELECT invoice_prefix FROM settings WHERE user_id = ?', [req.userId]);
+    const settings = await getOne('SELECT invoice_prefix FROM settings WHERE user_id = ?', [req.workspaceUserId]);
     const prefix   = settings?.invoice_prefix || 'RE';
     const number   = await generateInvoiceNumber(req.workspaceUserId, prefix);
     const today    = new Date().toISOString().split('T')[0];
@@ -427,7 +427,7 @@ router.post('/:id/storno', async (req, res) => {
     if (original.storno_of_id)
       return res.status(409).json({ error: 'Stornorechnung kann nicht erneut storniert werden' });
 
-    const settings  = await getOne('SELECT storno_prefix, invoice_prefix FROM settings WHERE user_id = ?', [req.userId]);
+    const settings  = await getOne('SELECT storno_prefix, invoice_prefix FROM settings WHERE user_id = ?', [req.workspaceUserId]);
     const prefix    = settings?.storno_prefix || 'ST';
     const number    = await generateInvoiceNumber(req.workspaceUserId, prefix);
     const today     = new Date().toISOString().split('T')[0];
@@ -648,7 +648,9 @@ router.post('/:id/send', async (req, res) => {
     if (!recipient) return res.status(422).json({ error: 'Kunde hat keine E-Mail-Adresse' });
 
     const items    = await getAll('SELECT * FROM invoice_items WHERE invoice_id = ? ORDER BY id ASC', [req.params.id]);
-    const settings = await getOne('SELECT * FROM settings WHERE user_id = ?', [req.userId]);
+    const shared   = await getOne('SELECT * FROM settings WHERE user_id = ?', [req.workspaceUserId]);
+    const own      = await getOne('SELECT geschaeftsfuehrer FROM settings WHERE user_id = ?', [req.userId]);
+    const settings = { ...shared, geschaeftsfuehrer: own?.geschaeftsfuehrer || shared?.geschaeftsfuehrer || '' };
 
     const pdfBytes = await generateInvoicePDF({ ...invoice, items }, settings);
 
@@ -705,7 +707,9 @@ router.get('/:id/pdf', async (req, res) => {
     if (!invoice) return res.status(404).json({ error: 'Rechnung nicht gefunden' });
 
     const items    = await getAll('SELECT * FROM invoice_items WHERE invoice_id = ? ORDER BY id ASC', [req.params.id]);
-    const settings = await getOne('SELECT * FROM settings WHERE user_id = ?', [req.userId]);
+    const shared   = await getOne('SELECT * FROM settings WHERE user_id = ?', [req.workspaceUserId]);
+    const own      = await getOne('SELECT geschaeftsfuehrer FROM settings WHERE user_id = ?', [req.userId]);
+    const settings = { ...shared, geschaeftsfuehrer: own?.geschaeftsfuehrer || shared?.geschaeftsfuehrer || '' };
 
     const pdfBytes = await generateInvoicePDF({ ...invoice, items }, settings);
 
