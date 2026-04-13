@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowLeft, Plus, ChevronDown, ChevronRight,
-  Check, X, Calendar, UserCircle,
+  Check, X, Calendar, UserCircle, Trash2,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { projectsApi } from '../api/projects';
@@ -717,13 +717,34 @@ export default function ProjectDetailGeneral() {
 
       <div style={{ maxWidth: '900px', margin: '0 auto', padding: '28px 28px 56px' }}>
 
-        {/* Back button */}
-        <button
-          onClick={() => navigate('/projects')}
-          style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '13px', fontWeight: '500', color: '#0071E3', background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginBottom: '20px', letterSpacing: '-0.01em' }}
-        >
-          <ArrowLeft size={14} /> Projekte
-        </button>
+        {/* Back + Delete */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+          <button
+            onClick={() => navigate('/projects')}
+            style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '13px', fontWeight: '500', color: '#0071E3', background: 'none', border: 'none', cursor: 'pointer', padding: 0, letterSpacing: '-0.01em' }}
+          >
+            <ArrowLeft size={14} /> Projekte
+          </button>
+          <button
+            onClick={async () => {
+              const ok = await confirm('Projekt und alle Aufgaben unwiderruflich löschen?', { title: 'Projekt löschen' });
+              if (ok) {
+                await projectsApi.delete(id);
+                navigate('/projects');
+              }
+            }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '5px', padding: '6px 12px',
+              borderRadius: '8px', border: '1px solid rgba(0,0,0,0.1)',
+              background: 'transparent', color: '#C7C7CC', fontSize: '12px', fontWeight: '500',
+              cursor: 'pointer', transition: 'all 0.12s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,59,48,0.06)'; e.currentTarget.style.color = '#FF3B30'; e.currentTarget.style.borderColor = 'rgba(255,59,48,0.3)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#C7C7CC'; e.currentTarget.style.borderColor = 'rgba(0,0,0,0.1)'; }}
+          >
+            <Trash2 size={13} /> Löschen
+          </button>
+        </div>
 
         {/* ── Header card ── */}
         <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid rgba(0,0,0,0.07)', boxShadow: '0 2px 16px rgba(0,0,0,0.06)', marginBottom: '16px', overflow: 'hidden' }}>
