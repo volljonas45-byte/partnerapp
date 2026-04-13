@@ -594,6 +594,26 @@ export default function ProjectDetail() {
         >
           <Pencil size={13} /> Bearbeiten
         </button>
+        <button
+          onClick={async () => {
+            const ok = await confirm('Projekt und alle Aufgaben unwiderruflich löschen?', { title: 'Projekt löschen' });
+            if (ok) {
+              await projectsApi.delete(id);
+              navigate('/websites');
+            }
+          }}
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '7px 8px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.1)',
+            background: 'transparent', color: '#C7C7CC', cursor: 'pointer',
+            transition: 'all 0.12s',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,59,48,0.06)'; e.currentTarget.style.color = '#FF3B30'; e.currentTarget.style.borderColor = 'rgba(255,59,48,0.3)'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#C7C7CC'; e.currentTarget.style.borderColor = 'rgba(0,0,0,0.1)'; }}
+          title="Projekt löschen"
+        >
+          <Trash2 size={14} />
+        </button>
       </div>
 
       {/* ── TAB BAR ──────────────────────────────────────────────────────────── */}
