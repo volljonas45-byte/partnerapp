@@ -802,7 +802,9 @@ router.get('/stats/analytics', async (req, res) => {
     const cp2 = callPerf || {};
     const totalCalls = cp2.total_calls || 0;
     const connectRate = totalCalls > 0 ? Math.round((cp2.reached || 0) / totalCalls * 1000) / 10 : 0;
-    const avgPerDay = period > 0 ? Math.round(totalCalls / period * 10) / 10 : 0;
+    // Nur Werktage (Mo-Fr) für Durchschnitt zählen — Wochenende wird nicht telefoniert
+    const workdays = Math.round(period * 5 / 7);
+    const avgPerDay = workdays > 0 ? Math.round(totalCalls / workdays * 10) / 10 : 0;
 
     // Enrich team with call stats
     const teamData = [];
