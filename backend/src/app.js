@@ -25,6 +25,10 @@ const webhookRoutes  = require('./routes/webhook');
 
 const app = express();
 
+// Trust Render's reverse proxy so express-rate-limit gets the real client IP
+// (without this, all requests appear to come from the same IP → authLimiter blocks everyone)
+app.set('trust proxy', 1);
+
 // ─── SECURITY HEADERS ─────────────────────────────────────────────────────────
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' }, // allow fonts/images from frontend
@@ -63,7 +67,7 @@ const apiLimiter = rateLimit({
 });
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 20,
+  max: 50,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Zu viele Login-Versuche, bitte warte kurz.' },
