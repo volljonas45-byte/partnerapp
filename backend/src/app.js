@@ -30,6 +30,11 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' }, // allow fonts/images from frontend
 }));
 
+// Health check — before rate limiter so UptimeRobot/Render never gets a 429
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 // ─── MIDDLEWARE ───────────────────────────────────────────────────────────────
 const allowedOrigins = [
   ...(process.env.FRONTEND_URL || '').split(',').map(o => o.trim()).filter(Boolean),
@@ -91,10 +96,6 @@ app.use('/api/calendar', calendarRoutes);
 app.use('/api/sales',    salesRoutes);
 app.use('/api/webhook',  webhookRoutes);
 
-// Health check
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
 
 // 404 handler for unknown API routes
 app.use('/api/*', (req, res) => {
