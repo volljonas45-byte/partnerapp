@@ -387,6 +387,7 @@ export default function SalesAnalytics() {
               background: c.inputBg, borderRadius: 10, padding: 3,
             }}>
               {[
+                { value: 7, label: '7T' },
                 { value: 30, label: '30T' },
                 { value: 60, label: '60T' },
                 { value: 90, label: '90T' },
