@@ -33,7 +33,7 @@ export default function CallInProgressSheet({ callId, clientName, phone, onEnd, 
 
   return (
     <div style={{
-      position: 'fixed', inset: 0, zIndex: 40,
+      position: 'fixed', inset: 0, zIndex: 200,
       display: 'flex', flexDirection: 'column', justifyContent: 'flex-end',
     }}>
       {/* Backdrop */}
@@ -45,7 +45,7 @@ export default function CallInProgressSheet({ callId, clientName, phone, onEnd, 
       {/* Sheet */}
       <div style={{
         position: 'relative', zIndex: 1,
-        background: '#fff', borderRadius: '20px 20px 0 0', padding: '24px 24px 32px',
+        background: '#fff', borderRadius: '20px 20px 0 0', padding: '24px 24px calc(32px + env(safe-area-inset-bottom))',
         boxShadow: '0 -8px 40px rgba(0,0,0,0.15)',
         animation: 'slideUp 0.25s cubic-bezier(0.34,1.38,0.64,1) both',
       }}>
