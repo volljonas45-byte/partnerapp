@@ -189,13 +189,18 @@ function ServiceTemplates() {
 function PersonalSettings() {
   const { user, refreshUser } = useAuth();
   const avatarRef = useRef();
+  const qc = useQueryClient();
 
   const [name, setName]           = useState('');
   const [color, setColor]         = useState('#6366f1');
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [removeAvatar, setRemoveAvatar]   = useState(false);
+  const [fullName, setFullName]   = useState('');
 
   const [pwForm, setPwForm] = useState({ current: '', next: '', confirm: '' });
+
+  // Load geschaeftsfuehrer from settings
+  const { data: settings } = useQuery({ queryKey: ['settings'], queryFn: () => settingsApi.get().then(r => r.data) });
 
   useEffect(() => {
     if (user) {
@@ -204,6 +209,10 @@ function PersonalSettings() {
       setAvatarPreview(user.avatar_base64 || null);
     }
   }, [user]);
+
+  useEffect(() => {
+    if (settings) setFullName(settings.geschaeftsfuehrer || '');
+  }, [settings]);
 
   const profileMutation = useMutation({
     mutationFn: (data) => authApi.updateProfile(data),
@@ -227,12 +236,21 @@ function PersonalSettings() {
     reader.readAsDataURL(file);
   };
 
+  const fullNameMutation = useMutation({
+    mutationFn: (gf) => settingsApi.update({ ...settings, geschaeftsfuehrer: gf }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['settings'] }),
+  });
+
   const handleProfileSave = e => {
     e.preventDefault();
     const data = { name, color };
     if (removeAvatar) data.avatar_base64 = null;
     else if (avatarPreview && avatarPreview !== user?.avatar_base64) data.avatar_base64 = avatarPreview;
     profileMutation.mutate(data);
+    // Save full name for documents separately
+    if (fullName !== (settings?.geschaeftsfuehrer || '')) {
+      fullNameMutation.mutate(fullName);
+    }
   };
 
   const handlePasswordSave = e => {
@@ -285,7 +303,12 @@ function PersonalSettings() {
           <h2 className="text-sm font-semibold text-gray-700">Angaben</h2>
           <div>
             <label className="label">Anzeigename</label>
-            <input className="input" placeholder="Max Mustermann" value={name} onChange={e => setName(e.target.value)} />
+            <input className="input" placeholder="Max" value={name} onChange={e => setName(e.target.value)} />
+          </div>
+          <div>
+            <label className="label">Voller Name (erscheint auf Rechnungen & Angeboten)</label>
+            <input className="input" placeholder="Max Mustermann" value={fullName} onChange={e => setFullName(e.target.value)} />
+            <p className="text-xs text-gray-400 mt-1">Vor- und Nachname — wird als Geschäftsführer/Verantwortlicher auf Dokumenten angezeigt</p>
           </div>
           <div>
             <label className="label">E-Mail</label>
@@ -549,7 +572,7 @@ export default function Settings() {
         </div>
 
         {/* Tabs */}
-        <div style={{ display: 'flex', gap: '4px', background: c.inputBg, borderRadius: '12px', padding: '4px', marginBottom: '24px', width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', background: c.inputBg, borderRadius: '12px', padding: '4px', marginBottom: '24px', width: '100%' }}>
           {TABS.map(tab => {
             const Icon = tab.icon;
             const active = activeTab === tab.id;
