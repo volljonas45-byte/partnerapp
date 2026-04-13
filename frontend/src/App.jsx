@@ -42,6 +42,7 @@ import CalendarPage             from './pages/Calendar';
 import Timeline                from './pages/Timeline';
 import WorkOverview            from './pages/WorkOverview';
 import SalesEngine             from './pages/SalesEngine';
+import SalesAnalytics          from './pages/SalesAnalytics';
 import SalesLeadDetail         from './pages/SalesLeadDetail';
 
 function ProtectedRoute({ children }) {
@@ -104,8 +105,9 @@ function AppRoutes() {
       <Route path="/calendar"        element={<ProtectedRoute><CalendarPage /></ProtectedRoute>} />
       <Route path="/timeline"       element={<ProtectedRoute><Timeline /></ProtectedRoute>} />
       <Route path="/work"           element={<ProtectedRoute><WorkOverview /></ProtectedRoute>} />
-      <Route path="/sales"          element={<ProtectedRoute><SalesEngine /></ProtectedRoute>} />
-      <Route path="/sales/leads/:id" element={<ProtectedRoute><SalesLeadDetail /></ProtectedRoute>} />
+      <Route path="/sales"            element={<ProtectedRoute><SalesEngine /></ProtectedRoute>} />
+      <Route path="/sales/analytics"  element={<ProtectedRoute><SalesAnalytics /></ProtectedRoute>} />
+      <Route path="/sales/leads/:id"  element={<ProtectedRoute><SalesLeadDetail /></ProtectedRoute>} />
       <Route path="/wizard"              element={<ProtectedRoute><Wizard /></ProtectedRoute>} />
       <Route path="/wizard/branding"     element={<ProtectedRoute><BrandingWizard /></ProtectedRoute>} />
       <Route path="/wizard/social-media" element={<ProtectedRoute><SocialMediaWizard /></ProtectedRoute>} />

@@ -7,3 +7,5 @@ dist/
 .claude/
 *.bat
 *.vbs
+
+.vercel

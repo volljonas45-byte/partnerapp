@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Users, FileText, ClipboardList, Settings, LogOut,
   Zap, Layers, ClipboardCheck, PackageCheck,
-  UserCog, Clock, BarChart2, CalendarDays, Plus, CalendarRange, FolderKanban, Flame,
+  UserCog, Clock, BarChart2, CalendarDays, Plus, CalendarRange, FolderKanban, Flame, BarChart3,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
@@ -36,7 +36,8 @@ export default function Sidebar() {
     {
       label: 'Vertrieb',
       items: [
-        { to: '/sales', icon: Flame, label: 'Sales Engine' },
+        { to: '/sales',           icon: Flame,     label: 'Sales Engine' },
+        { to: '/sales/analytics', icon: BarChart3,  label: 'Auswertung'  },
       ],
     },
     {
@@ -136,7 +137,7 @@ export default function Sidebar() {
             )}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               {group.items.map(({ to, icon: Icon, label }) => (
-                <NavLink key={to} to={to} end={to === '/'} style={{ textDecoration: 'none' }}>
+                <NavLink key={to} to={to} end={to === '/' || to === '/sales'} style={{ textDecoration: 'none' }}>
                   {({ isActive }) => (
                     <div style={{
                       position: 'relative',

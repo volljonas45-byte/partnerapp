@@ -670,6 +670,218 @@ router.get('/stats/chart', async (req, res) => {
   }
 });
 
+// ── ANALYTICS ────────────────────────────────────────────────────────────────
+
+router.get('/stats/analytics', async (req, res) => {
+  try {
+    const period = parseInt(req.query.period, 10) || 30;
+    const wsId = req.workspaceUserId;
+    const ownerId = req.query.owner_id === 'all' ? null
+      : (req.query.owner_id ? parseInt(req.query.owner_id, 10) : req.userId);
+    const today = todayStr();
+
+    const lf = ownerId ? 'sl.user_id = ? AND sl.owner_id = ?' : 'sl.user_id = ?';
+    const lp = ownerId ? [wsId, ownerId] : [wsId];
+    const cf = ownerId ? 'sc.user_id = ? AND sc.owner_id = ?' : 'sc.user_id = ?';
+    const cp = ownerId ? [wsId, ownerId] : [wsId];
+
+    const [
+      funnel, conversion, callPerf, callsByDow, callsByHour,
+      dailyCalls, dailyClosings, dailyCreated, responseTime,
+      overdue, stale, lossByBranch, team, followupCompl,
+    ] = await Promise.all([
+      // 1 — Pipeline funnel
+      getAll(`SELECT sl.status, COUNT(*)::int AS count FROM sales_leads sl WHERE ${lf} GROUP BY sl.status`, lp),
+
+      // 2 — Conversion metrics
+      getOne(`SELECT
+        COUNT(*)::int AS total_leads,
+        COUNT(*) FILTER (WHERE sl.status IN ('demo','gewonnen','abgeschlossen'))::int AS reached_demo,
+        COUNT(*) FILTER (WHERE sl.status IN ('gewonnen','abgeschlossen'))::int AS won,
+        COUNT(*) FILTER (WHERE sl.status IN ('verloren','kein_interesse'))::int AS lost,
+        COALESCE(SUM(sl.deal_value) FILTER (WHERE sl.status IN ('gewonnen','abgeschlossen')), 0)::real AS revenue_won,
+        COALESCE(AVG(sl.deal_value) FILTER (WHERE sl.status IN ('gewonnen','abgeschlossen')), 0)::real AS avg_deal_value,
+        COALESCE(SUM(sl.deal_value) FILTER (WHERE sl.status NOT IN ('gewonnen','abgeschlossen','verloren','kein_interesse')), 0)::real AS pipeline_value
+      FROM sales_leads sl WHERE ${lf}`, lp),
+
+      // 3 — Call performance (period)
+      getOne(`SELECT
+        COUNT(*)::int AS total_calls,
+        COUNT(*) FILTER (WHERE sc.outcome = 'reached')::int AS reached,
+        COUNT(*) FILTER (WHERE sc.outcome = 'not_reached')::int AS not_reached,
+        COALESCE(AVG(sc.duration_sec) FILTER (WHERE sc.duration_sec > 0), 0)::real AS avg_duration_sec
+      FROM sales_calls sc WHERE ${cf} AND sc.started_at >= NOW() - INTERVAL '1 day' * ?`, [...cp, period]),
+
+      // 4 — Calls by day of week
+      getAll(`SELECT EXTRACT(DOW FROM sc.started_at)::int AS dow, COUNT(*)::int AS calls,
+        COUNT(*) FILTER (WHERE sc.outcome = 'reached')::int AS reached
+      FROM sales_calls sc WHERE ${cf} AND sc.started_at >= NOW() - INTERVAL '1 day' * ?
+      GROUP BY dow ORDER BY dow`, [...cp, period]),
+
+      // 5 — Calls by hour
+      getAll(`SELECT EXTRACT(HOUR FROM sc.started_at)::int AS hour, COUNT(*)::int AS calls,
+        COUNT(*) FILTER (WHERE sc.outcome = 'reached')::int AS reached
+      FROM sales_calls sc WHERE ${cf} AND sc.started_at >= NOW() - INTERVAL '1 day' * ?
+      GROUP BY hour ORDER BY hour`, [...cp, period]),
+
+      // 6 — Daily calls trend
+      getAll(`SELECT sc.started_at::date AS date, COUNT(*)::int AS calls,
+        COUNT(*) FILTER (WHERE sc.outcome = 'reached')::int AS reached
+      FROM sales_calls sc WHERE ${cf} AND sc.started_at >= NOW() - INTERVAL '1 day' * ?
+      GROUP BY sc.started_at::date ORDER BY date ASC`, [...cp, period]),
+
+      // 7 — Daily closings trend
+      getAll(`SELECT sl.won_at::date AS date, COUNT(*)::int AS closings,
+        COALESCE(SUM(sl.deal_value), 0)::real AS revenue
+      FROM sales_leads sl WHERE ${lf} AND sl.won_at IS NOT NULL AND sl.won_at >= NOW() - INTERVAL '1 day' * ?
+      GROUP BY sl.won_at::date ORDER BY date ASC`, [...lp, period]),
+
+      // 8 — Daily leads created
+      getAll(`SELECT sl.created_at::date AS date, COUNT(*)::int AS created
+      FROM sales_leads sl WHERE ${lf} AND sl.created_at >= NOW() - INTERVAL '1 day' * ?
+      GROUP BY sl.created_at::date ORDER BY date ASC`, [...lp, period]),
+
+      // 9 — Avg response time (hours to first call)
+      getOne(`SELECT COALESCE(AVG(EXTRACT(EPOCH FROM (fc.first_call - sl.created_at)) / 3600), 0)::real AS avg_hours
+      FROM sales_leads sl
+      INNER JOIN (SELECT lead_id, MIN(started_at) AS first_call FROM sales_calls WHERE ${cf.replace(/sc\./g, '')} GROUP BY lead_id) fc ON fc.lead_id = sl.id
+      WHERE ${lf} AND sl.created_at >= NOW() - INTERVAL '1 day' * ?`, [...cp, ...lp, period]),
+
+      // 10 — Overdue follow-ups
+      getAll(`SELECT sl.id, sl.company_name, sl.status, sl.next_followup_date,
+        u.name AS owner_name, u.color AS owner_color
+      FROM sales_leads sl LEFT JOIN users u ON u.id = sl.owner_id
+      WHERE ${lf} AND sl.next_followup_date IS NOT NULL AND sl.next_followup_date < ?
+        AND sl.status NOT IN ('gewonnen','abgeschlossen','verloren','kein_interesse')
+      ORDER BY sl.next_followup_date ASC LIMIT 20`, [...lp, today]),
+
+      // 11 — Stale leads (no call in 7+ days)
+      getAll(`SELECT sl.id, sl.company_name, sl.status,
+        u.name AS owner_name, u.color AS owner_color,
+        EXTRACT(DAY FROM (NOW() - COALESCE(MAX(sc.started_at), sl.created_at)))::int AS days_inactive
+      FROM sales_leads sl
+      LEFT JOIN sales_calls sc ON sc.lead_id = sl.id AND sc.user_id = sl.user_id
+      LEFT JOIN users u ON u.id = sl.owner_id
+      WHERE ${lf} AND sl.status NOT IN ('gewonnen','abgeschlossen','verloren','kein_interesse')
+      GROUP BY sl.id, sl.company_name, sl.status, sl.created_at, sl.owner_id, u.name, u.color
+      HAVING EXTRACT(DAY FROM (NOW() - COALESCE(MAX(sc.started_at), sl.created_at))) > 7
+      ORDER BY days_inactive DESC LIMIT 20`, lp),
+
+      // 12 — Loss analysis by branch
+      getAll(`SELECT COALESCE(sl.branch, 'Unbekannt') AS branch,
+        COUNT(*)::int AS total,
+        COUNT(*) FILTER (WHERE sl.status IN ('verloren','kein_interesse'))::int AS lost,
+        COUNT(*) FILTER (WHERE sl.status IN ('gewonnen','abgeschlossen'))::int AS won
+      FROM sales_leads sl WHERE ${lf}
+      GROUP BY COALESCE(sl.branch, 'Unbekannt') HAVING COUNT(*) >= 2
+      ORDER BY COUNT(*) FILTER (WHERE sl.status IN ('verloren','kein_interesse'))::float / NULLIF(COUNT(*), 0) DESC NULLS LAST
+      LIMIT 15`, lp),
+
+      // 13 — Team comparison (only when all)
+      !ownerId ? getAll(`SELECT sl.owner_id, u.name AS owner_name, u.color AS owner_color,
+        COUNT(*)::int AS total_leads,
+        COUNT(*) FILTER (WHERE sl.status IN ('gewonnen','abgeschlossen'))::int AS won,
+        COUNT(*) FILTER (WHERE sl.status IN ('verloren','kein_interesse'))::int AS lost,
+        COALESCE(SUM(sl.deal_value) FILTER (WHERE sl.status IN ('gewonnen','abgeschlossen')), 0)::real AS revenue
+      FROM sales_leads sl JOIN users u ON u.id = sl.owner_id
+      WHERE sl.user_id = ? GROUP BY sl.owner_id, u.name, u.color ORDER BY revenue DESC`, [wsId]) : Promise.resolve([]),
+
+      // 14 — Follow-up compliance
+      getOne(`SELECT
+        COUNT(*) FILTER (WHERE sc.created_followup = true)::int AS followups_created,
+        COUNT(DISTINCT sc.lead_id) FILTER (WHERE sc.lead_id IS NOT NULL)::int AS leads_called
+      FROM sales_calls sc WHERE ${cf} AND sc.started_at >= NOW() - INTERVAL '1 day' * ?`, [...cp, period]),
+    ]);
+
+    // Compute derived metrics
+    const c = conversion || {};
+    const totalLeads = c.total_leads || 0;
+    const convRate = totalLeads > 0 ? Math.round((c.won || 0) / totalLeads * 1000) / 10 : 0;
+    const demoRate = totalLeads > 0 ? Math.round((c.reached_demo || 0) / totalLeads * 1000) / 10 : 0;
+    const lossRate = totalLeads > 0 ? Math.round((c.lost || 0) / totalLeads * 1000) / 10 : 0;
+    const cp2 = callPerf || {};
+    const totalCalls = cp2.total_calls || 0;
+    const connectRate = totalCalls > 0 ? Math.round((cp2.reached || 0) / totalCalls * 1000) / 10 : 0;
+    const avgPerDay = period > 0 ? Math.round(totalCalls / period * 10) / 10 : 0;
+
+    // Enrich team with call stats
+    const teamData = [];
+    for (const t of (team || [])) {
+      const tc = await getOne(`SELECT COUNT(*)::int AS calls,
+        COUNT(*) FILTER (WHERE outcome = 'reached')::int AS reached
+      FROM sales_calls WHERE user_id = ? AND owner_id = ? AND started_at >= NOW() - INTERVAL '1 day' * ?`,
+        [wsId, t.owner_id, period]);
+      teamData.push({
+        ...t,
+        calls_period: tc?.calls || 0,
+        reached_period: tc?.reached || 0,
+        connect_rate: tc?.calls > 0 ? Math.round((tc.reached || 0) / tc.calls * 1000) / 10 : 0,
+      });
+    }
+
+    // DOW labels
+    const DOW_LABELS = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+    const dowFull = Array.from({ length: 7 }, (_, i) => {
+      const found = (callsByDow || []).find(r => r.dow === i);
+      return { dow: i, label: DOW_LABELS[i], calls: found?.calls || 0, reached: found?.reached || 0 };
+    });
+
+    res.json({
+      period,
+      pipeline: {
+        funnel: funnel || [],
+        total_leads: totalLeads,
+        reached_demo: c.reached_demo || 0,
+        won: c.won || 0,
+        lost: c.lost || 0,
+        conversion_rate: convRate,
+        demo_rate: demoRate,
+        loss_rate: lossRate,
+      },
+      revenue: {
+        total_won: c.revenue_won || 0,
+        avg_deal_value: Math.round((c.avg_deal_value || 0) * 100) / 100,
+        pipeline_value: c.pipeline_value || 0,
+      },
+      calls: {
+        total: totalCalls,
+        reached: cp2.reached || 0,
+        not_reached: cp2.not_reached || 0,
+        connect_rate: connectRate,
+        avg_per_day: avgPerDay,
+        avg_duration_sec: Math.round(cp2.avg_duration_sec || 0),
+        by_dow: dowFull,
+        by_hour: callsByHour || [],
+      },
+      productivity: {
+        avg_hours_to_first_call: Math.round((responseTime?.avg_hours || 0) * 10) / 10,
+        followups_created: followupCompl?.followups_created || 0,
+        leads_called: followupCompl?.leads_called || 0,
+      },
+      trends: {
+        daily_calls: dailyCalls || [],
+        daily_closings: dailyClosings || [],
+        daily_leads_created: dailyCreated || [],
+      },
+      problems: {
+        overdue_followups: (overdue || []).map(o => ({
+          ...o,
+          days_overdue: Math.max(0, Math.floor((new Date(today) - new Date(o.next_followup_date)) / 86400000)),
+        })),
+        stale_leads: stale || [],
+        loss_by_branch: (lossByBranch || []).map(b => ({
+          ...b,
+          loss_rate: b.total > 0 ? Math.round(b.lost / b.total * 1000) / 10 : 0,
+        })),
+      },
+      team: teamData,
+    });
+  } catch (err) {
+    console.error('[sales/stats/analytics GET]', err);
+    res.status(500).json({ error: 'Fehler beim Laden der Analyse' });
+  }
+});
+
 // ── TARGETS ──────────────────────────────────────────────────────────────────
 
 router.get('/targets', async (req, res) => {
