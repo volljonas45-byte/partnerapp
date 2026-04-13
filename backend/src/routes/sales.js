@@ -757,8 +757,9 @@ router.post('/screenshot-import', async (req, res) => {
       return res.status(400).json({ error: 'Kein Bild übergeben' });
     }
 
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
+    // Support multiple API keys (comma-separated) for rate limit rotation
+    const allKeys = (process.env.GEMINI_API_KEY || '').split(',').map(k => k.trim()).filter(Boolean);
+    if (allKeys.length === 0) {
       return res.status(500).json({ error: 'GEMINI_API_KEY nicht konfiguriert' });
     }
 
@@ -799,25 +800,27 @@ Wenn ein Feld nicht erkennbar ist, setze null. Telefonnummer immer mit Vorwahl.`
       }
     };
 
-    // Fallback chain: try multiple models in case one hits rate limits
+    // Fallback chain: try multiple keys × models for max availability
     const models = ['gemini-2.5-flash-lite', 'gemini-2.0-flash-lite', 'gemini-2.0-flash'];
-    let geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${models[0]}:generateContent?key=${apiKey}`;
     const fetchOpts = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     };
 
-    // Try each model until one works (rate limit fallback)
+    // Try each key with each model until one works
     let response;
-    for (let i = 0; i < models.length; i++) {
-      geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${models[i]}:generateContent?key=${apiKey}`;
-      response = await fetch(geminiUrl, fetchOpts);
-      if (response.status === 429 && i < models.length - 1) {
-        console.log(`[screenshot-import] ${models[i]} rate limited, trying ${models[i + 1]}`);
-        continue;
+    outer:
+    for (const key of allKeys) {
+      for (const model of models) {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+        response = await fetch(url, fetchOpts);
+        if (response.status === 429) {
+          console.log(`[screenshot-import] ${model} (key ...${key.slice(-6)}) rate limited`);
+          continue;
+        }
+        break outer;
       }
-      break;
     }
 
     if (response.status === 429) {
