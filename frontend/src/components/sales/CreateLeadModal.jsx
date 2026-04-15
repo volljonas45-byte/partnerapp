@@ -31,21 +31,21 @@ export default function CreateLeadModal({ onClose, onCreate, isCreating }) {
       onClick={onClose}
     >
       <div
-        style={{ background: '#fff', borderRadius: 20, width: '100%', maxWidth: 500, maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 32px 80px rgba(0,0,0,0.2)', overflow: 'hidden' }}
+        style={{ background: 'var(--color-card)', borderRadius: 20, width: '100%', maxWidth: 500, maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 32px 80px rgba(0,0,0,0.2)', overflow: 'hidden' }}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid var(--color-border-subtle)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(0,113,227,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <UserPlus size={17} color="#0071E3" />
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(0,122,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <UserPlus size={17} color="#007AFF" />
             </div>
             <div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: '#1D1D1F' }}>Neuer Lead</div>
-              <div style={{ fontSize: 11.5, color: '#86868B' }}>Eigenständiger Lead ohne Kundenkonto</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-text)' }}>Neuer Lead</div>
+              <div style={{ fontSize: 11.5, color: 'var(--color-text-secondary)' }}>Eigenständiger Lead ohne Kundenkonto</div>
             </div>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#86868B', padding: 4 }}><X size={18} /></button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)', padding: 4 }}><X size={18} /></button>
         </div>
 
         {/* Form */}
@@ -147,8 +147,8 @@ export default function CreateLeadModal({ onClose, onCreate, isCreating }) {
         </form>
 
         {/* Footer */}
-        <div style={{ padding: '16px 24px', borderTop: '1px solid rgba(0,0,0,0.06)', display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-          <button onClick={onClose} style={{ padding: '10px 18px', borderRadius: 10, fontSize: 13.5, fontWeight: 600, background: 'rgba(0,0,0,0.05)', color: '#636366', border: 'none', cursor: 'pointer' }}>
+        <div style={{ padding: '16px 24px', borderTop: '1px solid var(--color-border-subtle)', display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+          <button onClick={onClose} style={{ padding: '10px 18px', borderRadius: 10, fontSize: 13.5, fontWeight: 600, background: 'var(--color-border-subtle)', color: 'var(--color-text-tertiary)', border: 'none', cursor: 'pointer' }}>
             Abbrechen
           </button>
           <button
@@ -156,8 +156,8 @@ export default function CreateLeadModal({ onClose, onCreate, isCreating }) {
             disabled={!form.company_name.trim() || isCreating}
             style={{
               padding: '10px 22px', borderRadius: 10, fontSize: 13.5, fontWeight: 600,
-              background: form.company_name.trim() ? '#0071E3' : '#E5E5EA',
-              color: form.company_name.trim() ? '#fff' : '#AEAEB2', border: 'none',
+              background: form.company_name.trim() ? 'var(--color-blue)' : 'var(--color-border)',
+              color: form.company_name.trim() ? '#fff' : 'var(--color-text-tertiary)', border: 'none',
               cursor: form.company_name.trim() ? 'pointer' : 'not-allowed', opacity: isCreating ? 0.7 : 1,
             }}
           >
@@ -169,9 +169,9 @@ export default function CreateLeadModal({ onClose, onCreate, isCreating }) {
   );
 }
 
-const labelStyle = { fontSize: 11.5, fontWeight: 600, color: '#86868B', display: 'block', marginBottom: 5 };
+const labelStyle = { fontSize: 11.5, fontWeight: 600, color: 'var(--color-text-secondary)', display: 'block', marginBottom: 5 };
 const inputStyle  = {
   width: '100%', padding: '9px 11px', borderRadius: 9, fontSize: 13.5,
   border: '1.5px solid #E5E5EA', outline: 'none', boxSizing: 'border-box',
-  background: '#fff', color: '#1D1D1F',
+  background: 'var(--color-card)', color: 'var(--color-text)',
 };

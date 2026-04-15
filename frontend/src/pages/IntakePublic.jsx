@@ -44,8 +44,8 @@ function MultiSelectField({ field, value = [], onChange }) {
                 display: 'flex', alignItems: 'center', gap: '10px',
                 padding: '10px 12px',
                 borderRadius: '10px',
-                border: `1.5px solid ${checked ? '#0071E3' : '#E5E5EA'}`,
-                background: checked ? 'rgba(0,113,227,0.05)' : '#FAFAFA',
+                border: `1.5px solid ${checked ? 'var(--color-blue)' : 'var(--color-border)'}`,
+                background: checked ? 'rgba(0,122,255,0.05)' : 'var(--color-card-secondary)',
                 cursor: 'pointer',
                 transition: 'all 0.15s',
                 userSelect: 'none',
@@ -55,8 +55,8 @@ function MultiSelectField({ field, value = [], onChange }) {
               <div style={{
                 width: '18px', height: '18px',
                 borderRadius: '5px',
-                border: `2px solid ${checked ? '#0071E3' : '#C7C7CC'}`,
-                background: checked ? '#0071E3' : '#fff',
+                border: `2px solid ${checked ? 'var(--color-blue)' : 'var(--color-text-tertiary)'}`,
+                background: checked ? 'var(--color-blue)' : '#fff',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 flexShrink: 0, transition: 'all 0.15s',
               }}>
@@ -73,7 +73,7 @@ function MultiSelectField({ field, value = [], onChange }) {
               />
               <span style={{
                 fontSize: '13px',
-                color: checked ? '#0071E3' : '#3C3C43',
+                color: checked ? 'var(--color-blue)' : 'var(--color-text-secondary)',
                 fontWeight: checked ? 500 : 400,
                 lineHeight: 1.3,
               }}>
@@ -92,7 +92,7 @@ function MultiSelectField({ field, value = [], onChange }) {
               display: 'flex', alignItems: 'center', gap: '5px',
               padding: '5px 12px',
               borderRadius: '99px',
-              background: '#0071E3',
+              background: 'var(--color-blue)',
               color: '#fff',
               fontSize: '13px', fontWeight: 500,
             }}>
@@ -120,7 +120,7 @@ function MultiSelectField({ field, value = [], onChange }) {
             borderRadius: '99px',
             border: '1.5px dashed #C7C7CC',
             background: 'transparent',
-            color: '#8E8E93', fontSize: '13px', fontWeight: 500,
+            color: 'var(--color-text-secondary)', fontSize: '13px', fontWeight: 500,
             cursor: 'pointer',
           }}
         >
@@ -139,14 +139,14 @@ function MultiSelectField({ field, value = [], onChange }) {
             }}
             style={{
               padding: '8px 12px', borderRadius: '10px',
-              border: '1.5px solid #0071E3', fontSize: '13px',
+              border: '1.5px solid #007AFF', fontSize: '13px',
               outline: 'none', fontFamily: 'inherit', flex: 1, maxWidth: '260px',
             }}
           />
           <button type="button" onClick={addCustom}
             style={{
               padding: '8px 16px', borderRadius: '10px',
-              border: 'none', background: '#0071E3', color: '#fff',
+              border: 'none', background: 'var(--color-blue)', color: '#fff',
               fontSize: '13px', fontWeight: 600, cursor: 'pointer',
             }}
           >
@@ -155,8 +155,8 @@ function MultiSelectField({ field, value = [], onChange }) {
           <button type="button" onClick={() => { setShowCustom(false); setCustomInput(''); }}
             style={{
               padding: '8px', borderRadius: '10px',
-              border: '1.5px solid #E5E5EA', background: '#fff',
-              color: '#8E8E93', cursor: 'pointer', display: 'flex',
+              border: '1.5px solid #E5E5EA', background: 'var(--color-card)',
+              color: 'var(--color-text-secondary)', cursor: 'pointer', display: 'flex',
             }}
           >
             <X size={15} />
@@ -176,7 +176,7 @@ function CompanyAvatar({ name, size = 48 }) {
 
   // Deterministische Farbe aus Firmennamen
   const colors = [
-    ['#0071E3', '#E8F1FF'],
+    ['var(--color-blue)', '#E8F1FF'],
     ['#34C759', '#F0FFF4'],
     ['#FF9500', '#FFF4E5'],
     ['#BF5AF2', '#F5EEFF'],
@@ -241,7 +241,7 @@ export default function IntakePublic() {
       }}>
         <div style={{
           width: '28px', height: '28px',
-          border: '2px solid #0071E3', borderTopColor: 'transparent',
+          border: '2px solid #007AFF', borderTopColor: 'transparent',
           borderRadius: '50%', animation: 'spin 0.7s linear infinite',
         }} />
       </div>
@@ -265,10 +265,10 @@ export default function IntakePublic() {
           }}>
             <AlertCircle size={26} color="#FF3B30" />
           </div>
-          <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#1D1D1F', margin: '0 0 8px' }}>
+          <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--color-text)', margin: '0 0 8px' }}>
             Formular nicht gefunden
           </h2>
-          <p style={{ fontSize: '14px', color: '#8E8E93', lineHeight: 1.6 }}>
+          <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)', lineHeight: 1.6 }}>
             Dieser Link ist ungültig oder abgelaufen. Bitte wende dich an deinen Ansprechpartner.
           </p>
         </div>
@@ -296,10 +296,10 @@ export default function IntakePublic() {
           }}>
             <CheckCircle2 size={40} color="#34C759" />
           </div>
-          <h2 style={{ fontSize: '24px', fontWeight: 700, color: '#1D1D1F', margin: '0 0 8px' }}>
+          <h2 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-text)', margin: '0 0 8px' }}>
             Vielen Dank!
           </h2>
-          <p style={{ fontSize: '15px', color: '#6E6E73', lineHeight: 1.6 }}>
+          <p style={{ fontSize: '15px', color: 'var(--color-text-tertiary)', lineHeight: 1.6 }}>
             Deine Angaben wurden erfolgreich übermittelt. Wir melden uns bald bei dir.
           </p>
         </div>
@@ -322,7 +322,7 @@ export default function IntakePublic() {
 
       {/* ── Header ── */}
       <div style={{
-        background: '#fff',
+        background: 'var(--color-card)',
         borderBottom: '1px solid #F2F2F7',
         padding: '18px 24px',
       }}>
@@ -336,16 +336,16 @@ export default function IntakePublic() {
           ) : (
             <div style={{
               width: '30px', height: '30px',
-              background: 'linear-gradient(145deg, #0A84FF, #0071E3)',
+              background: 'linear-gradient(145deg, #0A84FF, #007AFF)',
               borderRadius: '8px',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 2px 8px rgba(0,113,227,0.35)',
+              boxShadow: '0 2px 8px rgba(0,122,255,0.35)',
               flexShrink: 0,
             }}>
               <Zap size={14} color="#fff" strokeWidth={2.5} />
             </div>
           )}
-          <span style={{ fontSize: '15px', fontWeight: 700, color: '#1D1D1F', letterSpacing: '-0.02em' }}>
+          <span style={{ fontSize: '15px', fontWeight: 700, color: 'var(--color-text)', letterSpacing: '-0.02em' }}>
             {agencyName}
           </span>
         </div>
@@ -356,10 +356,10 @@ export default function IntakePublic() {
 
         {/* Intro */}
         <div style={{ marginBottom: '28px' }}>
-          <h1 style={{ fontSize: '22px', fontWeight: 700, color: '#1D1D1F', margin: '0 0 8px' }}>
+          <h1 style={{ fontSize: '22px', fontWeight: 700, color: 'var(--color-text)', margin: '0 0 8px' }}>
             Dein Website-Briefing
           </h1>
-          <p style={{ fontSize: '14px', color: '#6E6E73', lineHeight: 1.6, margin: 0 }}>
+          <p style={{ fontSize: '14px', color: 'var(--color-text-tertiary)', lineHeight: 1.6, margin: 0 }}>
             Damit wir deine neue Website optimal gestalten können, bitten wir dich,
             die folgenden Fragen zu beantworten. Es dauert nur wenige Minuten.
           </p>
@@ -371,23 +371,23 @@ export default function IntakePublic() {
               <div
                 key={f.id}
                 style={{
-                  background: '#fff',
+                  background: 'var(--color-card)',
                   borderRadius: '16px',
                   border: '1px solid #F2F2F7',
                   padding: '20px 22px',
-                  boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+                  boxShadow: '0 1px 4px var(--color-border-subtle)',
                 }}
               >
                 <label style={{
                   display: 'block',
-                  fontSize: '15px', fontWeight: 600, color: '#1D1D1F',
+                  fontSize: '15px', fontWeight: 600, color: 'var(--color-text)',
                   marginBottom: '4px',
                 }}>
                   {f.label}
                   {f.required && <span style={{ color: '#FF3B30', marginLeft: '3px' }}>*</span>}
                 </label>
                 {f.placeholder && f.type !== 'multiselect' && f.type !== 'date' && (
-                  <p style={{ fontSize: '12px', color: '#8E8E93', margin: '0 0 12px', lineHeight: 1.5 }}>
+                  <p style={{ fontSize: '12px', color: 'var(--color-text-secondary)', margin: '0 0 12px', lineHeight: 1.5 }}>
                     {f.placeholder}
                   </p>
                 )}
@@ -406,11 +406,11 @@ export default function IntakePublic() {
                       padding: '10px 13px',
                       border: '1.5px solid #E5E5EA', borderRadius: '10px',
                       fontSize: '14px', outline: 'none', resize: 'vertical',
-                      fontFamily: 'inherit', lineHeight: 1.55, color: '#1D1D1F',
+                      fontFamily: 'inherit', lineHeight: 1.55, color: 'var(--color-text)',
                       transition: 'border-color 0.15s',
                     }}
-                    onFocus={e => e.target.style.borderColor = '#0071E3'}
-                    onBlur={e => e.target.style.borderColor = '#E5E5EA'}
+                    onFocus={e => e.target.style.borderColor = 'var(--color-blue)'}
+                    onBlur={e => e.target.style.borderColor = 'var(--color-border)'}
                   />
                 )}
 
@@ -427,11 +427,11 @@ export default function IntakePublic() {
                       padding: '10px 13px',
                       border: '1.5px solid #E5E5EA', borderRadius: '10px',
                       fontSize: '14px', outline: 'none',
-                      fontFamily: 'inherit', color: '#1D1D1F',
+                      fontFamily: 'inherit', color: 'var(--color-text)',
                       transition: 'border-color 0.15s',
                     }}
-                    onFocus={e => e.target.style.borderColor = '#0071E3'}
-                    onBlur={e => e.target.style.borderColor = '#E5E5EA'}
+                    onFocus={e => e.target.style.borderColor = 'var(--color-blue)'}
+                    onBlur={e => e.target.style.borderColor = 'var(--color-border)'}
                   />
                 )}
 
@@ -449,11 +449,11 @@ export default function IntakePublic() {
                         padding: '10px 13px 10px 36px',
                         border: '1.5px solid #E5E5EA', borderRadius: '10px',
                         fontSize: '14px', outline: 'none',
-                        fontFamily: 'inherit', color: '#1D1D1F',
+                        fontFamily: 'inherit', color: 'var(--color-text)',
                         transition: 'border-color 0.15s', cursor: 'pointer',
                       }}
-                      onFocus={e => e.target.style.borderColor = '#0071E3'}
-                      onBlur={e => e.target.style.borderColor = '#E5E5EA'}
+                      onFocus={e => e.target.style.borderColor = 'var(--color-blue)'}
+                      onBlur={e => e.target.style.borderColor = 'var(--color-border)'}
                     />
                   </div>
                 )}
@@ -478,8 +478,8 @@ export default function IntakePublic() {
                 padding: '14px',
                 borderRadius: '14px',
                 border: 'none',
-                background: canSubmit ? '#0071E3' : '#E5E5EA',
-                color: canSubmit ? '#fff' : '#8E8E93',
+                background: canSubmit ? 'var(--color-blue)' : 'var(--color-border)',
+                color: canSubmit ? '#fff' : 'var(--color-text-secondary)',
                 fontSize: '15px', fontWeight: 600,
                 cursor: canSubmit && !submitMutation.isPending ? 'pointer' : 'not-allowed',
                 transition: 'background 0.2s, color 0.2s',
@@ -490,7 +490,7 @@ export default function IntakePublic() {
             </button>
 
             {!canSubmit && (
-              <p style={{ textAlign: 'center', fontSize: '12px', color: '#8E8E93', margin: '-8px 0 0' }}>
+              <p style={{ textAlign: 'center', fontSize: '12px', color: 'var(--color-text-secondary)', margin: '-8px 0 0' }}>
                 Bitte fülle alle Pflichtfelder aus (markiert mit *)
               </p>
             )}

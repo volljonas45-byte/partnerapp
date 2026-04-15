@@ -9,8 +9,7 @@ import { useTheme } from '../context/ThemeContext';
 export default function Login() {
   const navigate = useNavigate();
   const { login, isAuthenticated } = useAuth();
-
-  const { c } = useTheme();
+  const { c, isDark } = useTheme();
   const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail]           = useState('');
   const [password, setPassword]     = useState('');
@@ -47,36 +46,38 @@ export default function Login() {
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      padding: '24px',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif',
+      padding: 24,
+      transition: 'background 0.3s cubic-bezier(0.22,1,0.36,1)',
     }}>
-      <div style={{ width: '100%', maxWidth: '360px' }}>
+      <div style={{
+        width: '100%', maxWidth: 360,
+        animation: 'fadeIn 0.5s cubic-bezier(0.22,1,0.36,1) both',
+      }}>
 
         {/* App icon + name */}
         <div style={{
           display: 'flex', flexDirection: 'column',
-          alignItems: 'center', marginBottom: '32px',
+          alignItems: 'center', marginBottom: 36,
         }}>
           <div style={{
-            width: '64px', height: '64px',
-            background: 'linear-gradient(145deg, #0A84FF, #0071E3)',
-            borderRadius: '18px',
+            width: 56, height: 56,
+            background: `linear-gradient(135deg, ${c.blue}, ${isDark ? '#0064D1' : '#0055B8'})`,
+            borderRadius: 14,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 8px 24px rgba(0,113,227,0.30)',
-            marginBottom: '14px',
+            marginBottom: 16,
           }}>
-            <Zap size={28} color="#fff" strokeWidth={2.5} />
+            <Zap size={24} color="#fff" strokeWidth={2.5} />
           </div>
           <h1 style={{
-            fontSize: '26px', fontWeight: '700',
-            color: '#1D1D1F', letterSpacing: '-0.025em',
-            margin: 0,
+            fontSize: 24, fontWeight: 700,
+            color: c.text, letterSpacing: '-0.032em',
+            margin: 0, lineHeight: 1.15,
           }}>
             Vecturo
           </h1>
           <p style={{
-            fontSize: '14px', color: '#86868B',
-            marginTop: '4px', letterSpacing: '-0.01em',
+            fontSize: 15, color: c.textSecondary,
+            marginTop: 6, letterSpacing: '-0.009em',
           }}>
             {isRegister ? 'Konto erstellen' : 'Mit deinem Konto anmelden'}
           </p>
@@ -84,19 +85,22 @@ export default function Login() {
 
         {/* Form card */}
         <div style={{
-          background: '#FFFFFF',
-          borderRadius: '20px',
+          background: c.card,
+          borderRadius: 16,
           padding: '28px 24px',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 12px 40px rgba(0,0,0,0.08)',
+          border: `0.5px solid ${c.borderSubtle}`,
+          boxShadow: isDark
+            ? '0 0 0 0.5px rgba(255,255,255,0.04), 0 1px 3px rgba(0,0,0,0.2), 0 12px 40px rgba(0,0,0,0.35)'
+            : '0 0 0 0.5px var(--color-border-subtle), 0 1px 3px var(--color-border-subtle), 0 12px 40px var(--color-border-subtle)',
         }}>
           <form onSubmit={handleSubmit}>
-            <div style={{ marginBottom: '12px' }}>
+            <div style={{ marginBottom: 16 }}>
               <label style={{
                 display: 'block',
-                fontSize: '13px', fontWeight: '500',
-                color: '#6E6E73',
-                marginBottom: '6px',
-                letterSpacing: '-0.01em',
+                fontSize: 13, fontWeight: 500,
+                color: c.textSecondary,
+                marginBottom: 6,
+                letterSpacing: '-0.006em',
               }}>
                 E-Mail
               </label>
@@ -111,13 +115,13 @@ export default function Login() {
               />
             </div>
 
-            <div style={{ marginBottom: '20px' }}>
+            <div style={{ marginBottom: 24 }}>
               <label style={{
                 display: 'block',
-                fontSize: '13px', fontWeight: '500',
-                color: '#6E6E73',
-                marginBottom: '6px',
-                letterSpacing: '-0.01em',
+                fontSize: 13, fontWeight: 500,
+                color: c.textSecondary,
+                marginBottom: 6,
+                letterSpacing: '-0.006em',
               }}>
                 Passwort
               </label>
@@ -137,24 +141,26 @@ export default function Login() {
               disabled={loading}
               style={{
                 width: '100%',
-                padding: '12px',
-                fontSize: '15px', fontWeight: '500',
-                background: loading ? 'rgba(0,113,227,0.5)' : '#0071E3',
+                padding: '10px 20px',
+                fontSize: 15, fontWeight: 500,
+                letterSpacing: '-0.009em',
+                background: c.blue,
                 color: '#fff',
                 border: 'none',
-                borderRadius: '12px',
+                borderRadius: 10,
                 cursor: loading ? 'not-allowed' : 'pointer',
-                transition: 'background 0.15s ease, transform 0.1s ease',
-                letterSpacing: '-0.01em',
+                opacity: loading ? 0.5 : 1,
+                transition: 'filter 0.15s cubic-bezier(0.22,1,0.36,1), transform 0.1s cubic-bezier(0.22,1,0.36,1), opacity 0.15s',
                 fontFamily: 'inherit',
+                minHeight: 44,
               }}
-              onMouseEnter={e => { if (!loading) e.currentTarget.style.background = '#0077ED'; }}
-              onMouseLeave={e => { if (!loading) e.currentTarget.style.background = '#0071E3'; }}
+              onMouseEnter={e => { if (!loading) e.currentTarget.style.filter = 'brightness(1.08)'; }}
+              onMouseLeave={e => { e.currentTarget.style.filter = 'brightness(1)'; e.currentTarget.style.transform = 'scale(1)'; }}
               onMouseDown={e => { if (!loading) e.currentTarget.style.transform = 'scale(0.98)'; }}
               onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
             >
               {loading
-                ? 'Bitte warten…'
+                ? 'Wird geladen...'
                 : isRegister ? 'Konto erstellen' : 'Anmelden'}
             </button>
           </form>

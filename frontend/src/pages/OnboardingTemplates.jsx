@@ -109,7 +109,7 @@ export default function OnboardingTemplates() {
             >
               <div
                 className="w-3 h-3 rounded-full mr-4 shrink-0"
-                style={{ backgroundColor: t.brand_color || '#111827' }}
+                style={{ backgroundColor: t.brand_color || 'var(--color-text)' }}
               />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900">{t.name}</p>

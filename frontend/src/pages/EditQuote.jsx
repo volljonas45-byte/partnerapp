@@ -14,8 +14,8 @@ const EMPTY_ITEM = { title: '', description: '', quantity: 1, unit_price: 0, tax
 const CYCLES = ['once', 'yearly', 'monthly'];
 const CYCLE_LABEL = { once: 'Einmalig', yearly: 'Jährlich', monthly: 'Monatlich' };
 const CYCLE_STYLE = {
-  once:    { background: '#F2F2F7', color: '#636366' },
-  yearly:  { background: '#EBF4FF', color: '#0071E3' },
+  once:    { background: 'var(--color-card-secondary)', color: 'var(--color-text-tertiary)' },
+  yearly:  { background: '#EBF4FF', color: 'var(--color-blue)' },
   monthly: { background: '#F3EEFF', color: '#7C3AED' },
 };
 const VAT_RATES  = [0, 7, 19];
@@ -220,7 +220,7 @@ export default function EditQuote() {
                     value={item.unit_price === 0 ? '' : item.unit_price}
                     onChange={e => updateItem(idx, 'unit_price', e.target.value)}
                   />
-                  <span style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', fontSize: '12px', color: '#8E8E93', pointerEvents: 'none' }}>€</span>
+                  <span style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', fontSize: '12px', color: 'var(--color-text-secondary)', pointerEvents: 'none' }}>€</span>
                 </div>
               </div>
               <div className="col-span-2 pt-0.5">
@@ -262,11 +262,11 @@ export default function EditQuote() {
             });
             return (
               <div style={{ background: '#F0F6FF', border: '1px solid #C5DCFF', borderRadius: '10px', padding: '12px 16px', marginTop: '4px' }}>
-                <p style={{ fontSize: '11px', fontWeight: 700, color: '#0071E3', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Kostenüberblick</p>
+                <p style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-blue)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Kostenüberblick</p>
                 {['once','yearly','monthly'].filter(c => sums[c]).map(c => (
                   <div key={c} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12.5px', marginBottom: '3px' }}>
-                    <span style={{ color: '#636366' }}>{CYCLE_LABEL[c]}</span>
-                    <span style={{ fontWeight: 600, color: '#1D1D1F' }}>
+                    <span style={{ color: 'var(--color-text-tertiary)' }}>{CYCLE_LABEL[c]}</span>
+                    <span style={{ fontWeight: 600, color: 'var(--color-text)' }}>
                       {sums[c].toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
                     </span>
                   </div>

@@ -16,16 +16,16 @@ const PRIORITY_CONFIG = {
   urgent: { label: 'Dringend', color: '#EF4444' },
   high:   { label: 'Hoch',     color: '#F97316' },
   medium: { label: 'Mittel',   color: '#EAB308' },
-  low:    { label: 'Niedrig',  color: '#6B7280' },
-  none:   { label: 'Keine',    color: '#D1D5DB' },
+  low:    { label: 'Niedrig',  color: 'var(--color-text-tertiary)' },
+  none:   { label: 'Keine',    color: 'var(--color-border)' },
 };
 
 const STATUS_CONFIG = {
-  planned:            { label: 'Geplant',          color: '#86868B', bg: 'rgba(118,118,128,0.1)' },
-  active:             { label: 'Aktiv',            color: '#0071E3', bg: 'rgba(0,113,227,0.1)'   },
+  planned:            { label: 'Geplant',          color: 'var(--color-text-secondary)', bg: 'rgba(118,118,128,0.1)' },
+  active:             { label: 'Aktiv',            color: 'var(--color-blue)', bg: 'rgba(0,122,255,0.1)'   },
   completed:          { label: 'Abgeschlossen',    color: '#34C759', bg: 'rgba(52,199,89,0.1)'   },
   waiting_for_client: { label: 'Wartet auf Kunde', color: '#FF9500', bg: 'rgba(255,149,0,0.1)'   },
-  deferred:           { label: 'Verschoben',       color: '#94A3B8', bg: 'rgba(148,163,184,0.1)' },
+  deferred:           { label: 'Verschoben',       color: 'var(--color-text-tertiary)', bg: 'rgba(148,163,184,0.1)' },
   on_hold:            { label: 'Pausiert',         color: '#FF9500', bg: 'rgba(255,149,0,0.1)'   },
 };
 
@@ -90,9 +90,9 @@ function TaskStatusIcon({ status, size = 18 }) {
   if (status === 'doing') {
     return (
       <svg width={size} height={size} viewBox="0 0 18 18" fill="none">
-        <circle cx="9" cy="9" r="8.5" stroke="#0071E3" strokeWidth="1.5" />
-        <path d="M9 0.5 A8.5 8.5 0 0 1 17.5 9" stroke="#0071E3" strokeWidth="1.5" strokeLinecap="round" fill="none" />
-        <circle cx="9" cy="9" r="3" fill="#0071E3" />
+        <circle cx="9" cy="9" r="8.5" stroke="#007AFF" strokeWidth="1.5" />
+        <path d="M9 0.5 A8.5 8.5 0 0 1 17.5 9" stroke="#007AFF" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+        <circle cx="9" cy="9" r="3" fill="#007AFF" />
       </svg>
     );
   }
@@ -132,13 +132,13 @@ function AssigneePicker({ value, members, onChange, size = 20 }) {
       {open && (
         <div style={{
           position: 'absolute', right: 0, bottom: '110%', zIndex: 200,
-          background: '#fff', borderRadius: '12px',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.14)', border: '1px solid rgba(0,0,0,0.07)',
+          background: 'var(--color-card)', borderRadius: '12px',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.14)', border: '1px solid var(--color-border-subtle)',
           padding: '4px', minWidth: '164px',
         }}>
           <button
             onClick={() => { onChange(null); setOpen(false); }}
-            style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 10px', background: 'none', border: 'none', cursor: 'pointer', borderRadius: '8px', fontSize: '13px', color: '#6E6E73' }}
+            style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 10px', background: 'none', border: 'none', cursor: 'pointer', borderRadius: '8px', fontSize: '13px', color: 'var(--color-text-tertiary)' }}
           >
             <UserCircle size={16} /> Niemand
           </button>
@@ -146,7 +146,7 @@ function AssigneePicker({ value, members, onChange, size = 20 }) {
             <button
               key={m.id}
               onClick={() => { onChange(m.id); setOpen(false); }}
-              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 10px', background: value === m.id ? '#F0F0F5' : 'none', border: 'none', cursor: 'pointer', borderRadius: '8px', fontSize: '13px', color: '#1D1D1F' }}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 10px', background: value === m.id ? 'var(--color-card-secondary)' : 'none', border: 'none', cursor: 'pointer', borderRadius: '8px', fontSize: '13px', color: 'var(--color-text)' }}
             >
               <MemberAvatar member={m} size={18} /> {m.name || m.email}
             </button>
@@ -174,8 +174,8 @@ function InlineTaskInput({ onAdd, onCancel, members = [], section }) {
     <div style={{
       display: 'flex', alignItems: 'center', gap: '8px',
       padding: '8px 12px', margin: '4px 0',
-      background: 'rgba(0,113,227,0.04)', borderRadius: '8px',
-      border: '1px solid rgba(0,113,227,0.15)',
+      background: 'rgba(0,122,255,0.04)', borderRadius: '8px',
+      border: '1px solid rgba(0,122,255,0.15)',
     }}>
       <TaskStatusIcon status="todo" size={16} />
       <input
@@ -185,7 +185,7 @@ function InlineTaskInput({ onAdd, onCancel, members = [], section }) {
         onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); submit(); } if (e.key === 'Escape') onCancel(); }}
         onBlur={() => { if (!submitted.current) onCancel(); }}
         placeholder="Aufgabe eingeben…"
-        style={{ flex: 1, fontSize: '14px', color: '#1D1D1F', background: 'none', border: 'none', outline: 'none', letterSpacing: '-0.01em' }}
+        style={{ flex: 1, fontSize: '14px', color: 'var(--color-text)', background: 'none', border: 'none', outline: 'none', letterSpacing: '-0.01em' }}
       />
       {members.length > 0 && (
         <AssigneePicker
@@ -198,14 +198,14 @@ function InlineTaskInput({ onAdd, onCancel, members = [], section }) {
       <button
         onMouseDown={e => e.preventDefault()}
         onClick={submit}
-        style={{ fontSize: '12px', fontWeight: '600', color: title.trim() ? '#0071E3' : '#C7C7CC', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 6px' }}
+        style={{ fontSize: '12px', fontWeight: '600', color: title.trim() ? 'var(--color-blue)' : 'var(--color-text-tertiary)', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 6px' }}
       >
         Speichern
       </button>
       <button
         onMouseDown={e => e.preventDefault()}
         onClick={onCancel}
-        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#C7C7CC', display: 'flex', alignItems: 'center' }}
+        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-tertiary)', display: 'flex', alignItems: 'center' }}
       >
         <X size={14} />
       </button>
@@ -263,12 +263,12 @@ function TaskRow({ task, members, onCycle, onDelete, onUpdate }) {
           onChange={e => setEditTitle(e.target.value)}
           onBlur={saveTitle}
           onKeyDown={e => { if (e.key === 'Enter') saveTitle(); if (e.key === 'Escape') setEditingTitle(false); }}
-          style={{ flex: 1, fontSize: '14px', color: '#1D1D1F', background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,113,227,0.3)', borderRadius: '6px', padding: '2px 6px', outline: 'none', letterSpacing: '-0.01em', fontFamily: 'inherit' }}
+          style={{ flex: 1, fontSize: '14px', color: 'var(--color-text)', background: 'var(--color-border-subtle)', border: '1px solid rgba(0,122,255,0.3)', borderRadius: '6px', padding: '2px 6px', outline: 'none', letterSpacing: '-0.01em', fontFamily: 'inherit' }}
         />
       ) : (
         <span
           onDoubleClick={() => { setEditTitle(task.title); setEditingTitle(true); }}
-          style={{ flex: 1, fontSize: '14px', color: done ? '#B0B0B8' : '#1D1D1F', textDecoration: done ? 'line-through' : 'none', letterSpacing: '-0.01em', cursor: 'default', userSelect: 'none' }}
+          style={{ flex: 1, fontSize: '14px', color: done ? 'var(--color-text-tertiary)' : 'var(--color-text)', textDecoration: done ? 'line-through' : 'none', letterSpacing: '-0.01em', cursor: 'default', userSelect: 'none' }}
         >
           {task.title}
         </span>
@@ -284,14 +284,14 @@ function TaskRow({ task, members, onCycle, onDelete, onUpdate }) {
 
       {/* Due date */}
       {task.due_date && (
-        <span style={{ fontSize: '11px', color: overdue ? '#EF4444' : '#86868B', letterSpacing: '-0.01em', flexShrink: 0, fontWeight: overdue ? '600' : '400' }}>
+        <span style={{ fontSize: '11px', color: overdue ? '#EF4444' : 'var(--color-text-secondary)', letterSpacing: '-0.01em', flexShrink: 0, fontWeight: overdue ? '600' : '400' }}>
           {fmtShortDate(task.due_date)}
         </span>
       )}
 
       {/* Doing badge */}
       {task.status === 'doing' && (
-        <span style={{ fontSize: '10px', fontWeight: '600', color: '#0071E3', background: 'rgba(0,113,227,0.1)', padding: '2px 7px', borderRadius: '99px', flexShrink: 0, letterSpacing: '-0.01em' }}>
+        <span style={{ fontSize: '10px', fontWeight: '600', color: 'var(--color-blue)', background: 'rgba(0,122,255,0.1)', padding: '2px 7px', borderRadius: '99px', flexShrink: 0, letterSpacing: '-0.01em' }}>
           In Bearbeitung
         </span>
       )}
@@ -303,9 +303,9 @@ function TaskRow({ task, members, onCycle, onDelete, onUpdate }) {
       {hov && (
         <button
           onClick={() => onDelete(task.id)}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#C7C7CC', padding: '2px', flexShrink: 0, lineHeight: 0 }}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-tertiary)', padding: '2px', flexShrink: 0, lineHeight: 0 }}
           onMouseEnter={e => e.currentTarget.style.color = '#EF4444'}
-          onMouseLeave={e => e.currentTarget.style.color = '#C7C7CC'}
+          onMouseLeave={e => e.currentTarget.style.color = 'var(--color-text-tertiary)'}
         >
           <X size={13} />
         </button>
@@ -328,12 +328,12 @@ function SectionBlock({ name, tasks, members, onCycle, onDelete, onUpdate, onAdd
       <div style={{
         display: 'flex', alignItems: 'center', gap: '6px',
         padding: '8px 4px 6px',
-        borderBottom: '1px solid rgba(0,0,0,0.05)',
+        borderBottom: '1px solid var(--color-border-subtle)',
         marginBottom: '2px',
       }}>
         <button
           onClick={() => setCollapsed(c => !c)}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 0, color: '#86868B', flexShrink: 0 }}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 0, color: 'var(--color-text-secondary)', flexShrink: 0 }}
         >
           {collapsed
             ? <ChevronRight size={14} />
@@ -347,20 +347,20 @@ function SectionBlock({ name, tasks, members, onCycle, onDelete, onUpdate, onAdd
             onChange={e => setSectionName(e.target.value)}
             onBlur={() => setEditingName(false)}
             onKeyDown={e => { if (e.key === 'Enter' || e.key === 'Escape') setEditingName(false); }}
-            style={{ fontSize: '12px', fontWeight: '600', color: '#1D1D1F', background: 'rgba(0,0,0,0.05)', border: '1px solid rgba(0,113,227,0.3)', borderRadius: '5px', padding: '2px 6px', outline: 'none', letterSpacing: '-0.01em', fontFamily: 'inherit' }}
+            style={{ fontSize: '12px', fontWeight: '600', color: 'var(--color-text)', background: 'var(--color-border-subtle)', border: '1px solid rgba(0,122,255,0.3)', borderRadius: '5px', padding: '2px 6px', outline: 'none', letterSpacing: '-0.01em', fontFamily: 'inherit' }}
           />
         ) : (
           <span
             onClick={() => setEditingName(true)}
-            style={{ fontSize: '12px', fontWeight: '600', color: '#6E6E73', letterSpacing: '-0.01em', cursor: 'pointer', textTransform: 'uppercase' }}
+            style={{ fontSize: '12px', fontWeight: '600', color: 'var(--color-text-tertiary)', letterSpacing: '-0.01em', cursor: 'pointer', textTransform: 'uppercase' }}
           >
             {sectionName}
           </span>
         )}
 
         <span style={{
-          fontSize: '11px', fontWeight: '500', color: '#86868B',
-          background: 'rgba(0,0,0,0.06)', borderRadius: '99px',
+          fontSize: '11px', fontWeight: '500', color: 'var(--color-text-secondary)',
+          background: 'var(--color-border-subtle)', borderRadius: '99px',
           padding: '1px 7px', marginLeft: '2px',
         }}>
           {tasks.length}
@@ -368,7 +368,7 @@ function SectionBlock({ name, tasks, members, onCycle, onDelete, onUpdate, onAdd
 
         <button
           onClick={() => setAdding(true)}
-          style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '3px', fontSize: '11px', fontWeight: '600', color: '#0071E3', background: 'rgba(0,113,227,0.07)', border: 'none', cursor: 'pointer', padding: '3px 9px', borderRadius: '6px', letterSpacing: '-0.01em' }}
+          style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '3px', fontSize: '11px', fontWeight: '600', color: 'var(--color-blue)', background: 'rgba(0,122,255,0.07)', border: 'none', cursor: 'pointer', padding: '3px 9px', borderRadius: '6px', letterSpacing: '-0.01em' }}
         >
           <Plus size={11} /> Aufgabe
         </button>
@@ -398,7 +398,7 @@ function SectionBlock({ name, tasks, members, onCycle, onDelete, onUpdate, onAdd
           {!adding && (
             <button
               onClick={() => setAdding(true)}
-              style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '13px', color: '#B0B0B8', background: 'none', border: 'none', cursor: 'pointer', padding: '7px 4px', letterSpacing: '-0.01em' }}
+              style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '13px', color: 'var(--color-text-tertiary)', background: 'none', border: 'none', cursor: 'pointer', padding: '7px 4px', letterSpacing: '-0.01em' }}
             >
               <Plus size={13} /> Aufgabe hinzufügen
             </button>
@@ -423,9 +423,9 @@ function BoardCard({ task, members, onCycle, onDelete }) {
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}
       style={{
-        background: '#fff', borderRadius: '10px',
-        border: '1px solid rgba(0,0,0,0.07)',
-        boxShadow: hov ? '0 4px 14px rgba(0,0,0,0.09)' : '0 1px 4px rgba(0,0,0,0.05)',
+        background: 'var(--color-card)', borderRadius: '10px',
+        border: '1px solid var(--color-border-subtle)',
+        boxShadow: hov ? '0 4px 14px var(--color-border-subtle)' : '0 1px 4px var(--color-border-subtle)',
         padding: '11px 13px', marginBottom: '8px',
         transition: 'box-shadow 0.15s',
         cursor: 'default',
@@ -438,15 +438,15 @@ function BoardCard({ task, members, onCycle, onDelete }) {
         >
           <TaskStatusIcon status={task.status || 'todo'} size={15} />
         </button>
-        <span style={{ flex: 1, fontSize: '13px', color: task.status === 'done' ? '#B0B0B8' : '#1D1D1F', textDecoration: task.status === 'done' ? 'line-through' : 'none', lineHeight: 1.45, letterSpacing: '-0.01em' }}>
+        <span style={{ flex: 1, fontSize: '13px', color: task.status === 'done' ? 'var(--color-text-tertiary)' : 'var(--color-text)', textDecoration: task.status === 'done' ? 'line-through' : 'none', lineHeight: 1.45, letterSpacing: '-0.01em' }}>
           {task.title}
         </span>
         {hov && (
           <button
             onClick={() => onDelete(task.id)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#C7C7CC', padding: 0, lineHeight: 0, flexShrink: 0 }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-tertiary)', padding: 0, lineHeight: 0, flexShrink: 0 }}
             onMouseEnter={e => e.currentTarget.style.color = '#EF4444'}
-            onMouseLeave={e => e.currentTarget.style.color = '#C7C7CC'}
+            onMouseLeave={e => e.currentTarget.style.color = 'var(--color-text-tertiary)'}
           >
             <X size={12} />
           </button>
@@ -457,7 +457,7 @@ function BoardCard({ task, members, onCycle, onDelete }) {
           <div title={priority.label} style={{ width: '6px', height: '6px', borderRadius: '50%', background: priority.color }} />
         )}
         {task.due_date && (
-          <span style={{ fontSize: '11px', color: overdue ? '#EF4444' : '#86868B', fontWeight: overdue ? '600' : '400' }}>
+          <span style={{ fontSize: '11px', color: overdue ? '#EF4444' : 'var(--color-text-secondary)', fontWeight: overdue ? '600' : '400' }}>
             {fmtShortDate(task.due_date)}
           </span>
         )}
@@ -474,8 +474,8 @@ function BoardView({ tasks, members, onCycle, onDelete, onAddTask }) {
   const [addingCol, setAddingCol] = useState(null);
 
   const COLUMNS = [
-    { key: 'todo',  label: 'Offen',          color: '#86868B', bg: 'rgba(118,118,128,0.08)' },
-    { key: 'doing', label: 'In Bearbeitung',  color: '#0071E3', bg: 'rgba(0,113,227,0.06)'   },
+    { key: 'todo',  label: 'Offen',          color: 'var(--color-text-secondary)', bg: 'rgba(118,118,128,0.08)' },
+    { key: 'doing', label: 'In Bearbeitung',  color: 'var(--color-blue)', bg: 'rgba(0,122,255,0.06)'   },
     { key: 'done',  label: 'Erledigt',        color: '#34C759', bg: 'rgba(52,199,89,0.06)'   },
   ];
 
@@ -490,13 +490,13 @@ function BoardView({ tasks, members, onCycle, onDelete, onAddTask }) {
               flex: '1 1 0', minWidth: '220px',
               background: col.bg,
               borderRadius: '12px',
-              border: '1px solid rgba(0,0,0,0.06)',
+              border: '1px solid var(--color-border-subtle)',
               overflow: 'hidden',
             }}
           >
             {/* Column header */}
             <div style={{ borderTop: `3px solid ${col.color}`, padding: '12px 14px 10px', display: 'flex', alignItems: 'center', gap: '7px' }}>
-              <span style={{ fontSize: '13px', fontWeight: '700', color: '#1D1D1F', letterSpacing: '-0.02em' }}>{col.label}</span>
+              <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--color-text)', letterSpacing: '-0.02em' }}>{col.label}</span>
               <span style={{ fontSize: '11px', fontWeight: '600', color: col.color, background: `${col.color}18`, padding: '1px 7px', borderRadius: '99px' }}>
                 {colTasks.length}
               </span>
@@ -517,7 +517,7 @@ function BoardView({ tasks, members, onCycle, onDelete, onAddTask }) {
               ) : (
                 <button
                   onClick={() => setAddingCol(col.key)}
-                  style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: '#B0B0B8', background: 'none', border: 'none', cursor: 'pointer', padding: '5px 2px', letterSpacing: '-0.01em', width: '100%' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: 'var(--color-text-tertiary)', background: 'none', border: 'none', cursor: 'pointer', padding: '5px 2px', letterSpacing: '-0.01em', width: '100%' }}
                 >
                   <Plus size={13} /> Aufgabe hinzufügen
                 </button>
@@ -562,8 +562,8 @@ function StatusDropdown({ value, onChange }) {
       {open && (
         <div style={{
           position: 'absolute', top: 'calc(100% + 6px)', left: 0, zIndex: 300,
-          background: '#fff', borderRadius: '14px',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.14)', border: '1px solid rgba(0,0,0,0.07)',
+          background: 'var(--color-card)', borderRadius: '14px',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.14)', border: '1px solid var(--color-border-subtle)',
           padding: '4px', minWidth: '188px',
         }}>
           {Object.entries(STATUS_CONFIG).map(([key, s]) => (
@@ -573,12 +573,12 @@ function StatusDropdown({ value, onChange }) {
               style={{
                 display: 'flex', alignItems: 'center', gap: '9px', width: '100%',
                 padding: '9px 12px', fontSize: '13px',
-                color: value === key ? s.color : '#1D1D1F',
+                color: value === key ? s.color : 'var(--color-text)',
                 background: 'none', border: 'none', borderRadius: '10px',
                 cursor: 'pointer', fontWeight: value === key ? '600' : '400',
                 letterSpacing: '-0.01em',
               }}
-              onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.04)'}
+              onMouseEnter={e => e.currentTarget.style.background = 'var(--color-border-subtle)'}
               onMouseLeave={e => e.currentTarget.style.background = 'none'}
             >
               <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: s.color, flexShrink: 0 }} />
@@ -702,7 +702,7 @@ export default function ProjectDetailGeneral() {
   if (isLoading || !project) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', background: '#F5F5F7' }}>
-        <div style={{ width: '24px', height: '24px', borderRadius: '50%', border: '2.5px solid #0071E3', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
+        <div style={{ width: '24px', height: '24px', borderRadius: '50%', border: '2.5px solid #007AFF', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
       </div>
     );
   }
@@ -721,7 +721,7 @@ export default function ProjectDetailGeneral() {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
           <button
             onClick={() => navigate('/projects')}
-            style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '13px', fontWeight: '500', color: '#0071E3', background: 'none', border: 'none', cursor: 'pointer', padding: 0, letterSpacing: '-0.01em' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '13px', fontWeight: '500', color: 'var(--color-blue)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, letterSpacing: '-0.01em' }}
           >
             <ArrowLeft size={14} /> Projekte
           </button>
@@ -736,22 +736,22 @@ export default function ProjectDetailGeneral() {
             style={{
               display: 'flex', alignItems: 'center', gap: '5px', padding: '6px 12px',
               borderRadius: '8px', border: '1px solid rgba(0,0,0,0.1)',
-              background: 'transparent', color: '#C7C7CC', fontSize: '12px', fontWeight: '500',
+              background: 'transparent', color: 'var(--color-text-tertiary)', fontSize: '12px', fontWeight: '500',
               cursor: 'pointer', transition: 'all 0.12s',
             }}
             onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,59,48,0.06)'; e.currentTarget.style.color = '#FF3B30'; e.currentTarget.style.borderColor = 'rgba(255,59,48,0.3)'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#C7C7CC'; e.currentTarget.style.borderColor = 'rgba(0,0,0,0.1)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-text-tertiary)'; e.currentTarget.style.borderColor = 'rgba(0,0,0,0.1)'; }}
           >
             <Trash2 size={13} /> Löschen
           </button>
         </div>
 
         {/* ── Header card ── */}
-        <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid rgba(0,0,0,0.07)', boxShadow: '0 2px 16px rgba(0,0,0,0.06)', marginBottom: '16px', overflow: 'hidden' }}>
+        <div style={{ background: 'var(--color-card)', borderRadius: '16px', border: '1px solid var(--color-border-subtle)', boxShadow: '0 2px 16px var(--color-border-subtle)', marginBottom: '16px', overflow: 'hidden' }}>
 
           {/* Progress bar strip */}
-          <div style={{ height: '3px', background: 'rgba(0,0,0,0.06)' }}>
-            <div style={{ height: '100%', width: `${pct}%`, background: pct === 100 ? '#34C759' : '#0071E3', transition: 'width 0.5s ease' }} />
+          <div style={{ height: '3px', background: 'var(--color-border-subtle)' }}>
+            <div style={{ height: '100%', width: `${pct}%`, background: pct === 100 ? '#34C759' : 'var(--color-blue)', transition: 'width 0.5s ease' }} />
           </div>
 
           <div style={{ padding: '22px 24px 20px' }}>
@@ -765,12 +765,12 @@ export default function ProjectDetailGeneral() {
                   onChange={e => setEditName(e.target.value)}
                   onBlur={saveName}
                   onKeyDown={e => { if (e.key === 'Enter') saveName(); if (e.key === 'Escape') setEditingName(false); }}
-                  style={{ fontSize: '26px', fontWeight: '700', color: '#1D1D1F', letterSpacing: '-0.035em', background: 'rgba(0,0,0,0.04)', border: 'none', borderRadius: '10px', padding: '4px 10px', outline: 'none', fontFamily: 'inherit', width: '100%', boxSizing: 'border-box' }}
+                  style={{ fontSize: '26px', fontWeight: '700', color: 'var(--color-text)', letterSpacing: '-0.035em', background: 'var(--color-border-subtle)', border: 'none', borderRadius: '10px', padding: '4px 10px', outline: 'none', fontFamily: 'inherit', width: '100%', boxSizing: 'border-box' }}
                 />
               ) : (
                 <h1
                   onClick={() => { setEditName(project.name); setEditingName(true); }}
-                  style={{ fontSize: '26px', fontWeight: '700', color: '#1D1D1F', letterSpacing: '-0.035em', margin: 0, cursor: 'text', lineHeight: 1.2 }}
+                  style={{ fontSize: '26px', fontWeight: '700', color: 'var(--color-text)', letterSpacing: '-0.035em', margin: 0, cursor: 'text', lineHeight: 1.2 }}
                   title="Klicken zum Bearbeiten"
                 >
                   {project.name}
@@ -787,12 +787,12 @@ export default function ProjectDetailGeneral() {
 
               {/* Start → End date */}
               {(project.start_date || project.deadline) && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#6E6E73', letterSpacing: '-0.01em' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--color-text-tertiary)', letterSpacing: '-0.01em' }}>
                   <Calendar size={13} color="#86868B" />
                   {project.start_date && <span>{fmtDate(project.start_date)}</span>}
-                  {project.start_date && project.deadline && <span style={{ color: '#C7C7CC' }}>→</span>}
+                  {project.start_date && project.deadline && <span style={{ color: 'var(--color-text-tertiary)' }}>→</span>}
                   {project.deadline && (
-                    <span style={{ color: deadlineOverdue ? '#EF4444' : '#1D1D1F', fontWeight: deadlineOverdue ? '600' : '400' }}>
+                    <span style={{ color: deadlineOverdue ? '#EF4444' : 'var(--color-text)', fontWeight: deadlineOverdue ? '600' : '400' }}>
                       {fmtDate(project.deadline)}
                     </span>
                   )}
@@ -804,10 +804,10 @@ export default function ProjectDetailGeneral() {
             {totalTasks > 0 && (
               <div style={{ marginBottom: '16px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '7px' }}>
-                  <span style={{ fontSize: '13px', fontWeight: '600', color: pct === 100 ? '#34C759' : '#1D1D1F', letterSpacing: '-0.01em' }}>
+                  <span style={{ fontSize: '13px', fontWeight: '600', color: pct === 100 ? '#34C759' : 'var(--color-text)', letterSpacing: '-0.01em' }}>
                     {pct}% abgeschlossen
                   </span>
-                  <span style={{ fontSize: '12px', color: '#86868B', letterSpacing: '-0.01em' }}>
+                  <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)', letterSpacing: '-0.01em' }}>
                     {daysLeft !== null
                       ? daysLeft < 0
                         ? `${Math.abs(daysLeft)} Tage überfällig`
@@ -817,8 +817,8 @@ export default function ProjectDetailGeneral() {
                       : `${doneTasks} / ${totalTasks} Aufgaben`}
                   </span>
                 </div>
-                <div style={{ height: '7px', background: 'rgba(0,0,0,0.07)', borderRadius: '99px', overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: `${pct}%`, background: pct === 100 ? '#34C759' : '#0071E3', borderRadius: '99px', transition: 'width 0.5s ease' }} />
+                <div style={{ height: '7px', background: 'var(--color-border-subtle)', borderRadius: '99px', overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: `${pct}%`, background: pct === 100 ? '#34C759' : 'var(--color-blue)', borderRadius: '99px', transition: 'width 0.5s ease' }} />
                 </div>
               </div>
             )}
@@ -832,11 +832,11 @@ export default function ProjectDetailGeneral() {
                   </div>
                 ))}
                 {members.length > 6 && (
-                  <div style={{ marginLeft: '-6px', zIndex: 1, width: '28px', height: '28px', borderRadius: '50%', background: '#E5E5EA', border: '2px solid #fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: '700', color: '#6E6E73' }}>
+                  <div style={{ marginLeft: '-6px', zIndex: 1, width: '28px', height: '28px', borderRadius: '50%', background: 'var(--color-border)', border: '2px solid #fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: '700', color: 'var(--color-text-tertiary)' }}>
                     +{members.length - 6}
                   </div>
                 )}
-                <button style={{ marginLeft: '8px', width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(0,0,0,0.05)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <button style={{ marginLeft: '8px', width: '28px', height: '28px', borderRadius: '50%', background: 'var(--color-border-subtle)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <Plus size={13} color="#6E6E73" />
                 </button>
               </div>
@@ -845,15 +845,15 @@ export default function ProjectDetailGeneral() {
         </div>
 
         {/* ── Tasks card ── */}
-        <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid rgba(0,0,0,0.07)', boxShadow: '0 2px 16px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
+        <div style={{ background: 'var(--color-card)', borderRadius: '16px', border: '1px solid var(--color-border-subtle)', boxShadow: '0 2px 16px var(--color-border-subtle)', overflow: 'hidden' }}>
 
           {/* Card header with view toggle */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px 14px', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
-            <span style={{ fontSize: '15px', fontWeight: '700', color: '#1D1D1F', letterSpacing: '-0.02em' }}>Aufgaben</span>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px 14px', borderBottom: '1px solid var(--color-border-subtle)' }}>
+            <span style={{ fontSize: '15px', fontWeight: '700', color: 'var(--color-text)', letterSpacing: '-0.02em' }}>Aufgaben</span>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               {/* View toggle */}
-              <div style={{ display: 'flex', background: 'rgba(0,0,0,0.05)', borderRadius: '8px', padding: '2px', gap: '2px' }}>
+              <div style={{ display: 'flex', background: 'var(--color-border-subtle)', borderRadius: '8px', padding: '2px', gap: '2px' }}>
                 {['list', 'board'].map(v => (
                   <button
                     key={v}
@@ -862,7 +862,7 @@ export default function ProjectDetailGeneral() {
                       fontSize: '12px', fontWeight: '600',
                       padding: '4px 12px', borderRadius: '6px', border: 'none', cursor: 'pointer',
                       background: view === v ? '#fff' : 'transparent',
-                      color: view === v ? '#1D1D1F' : '#86868B',
+                      color: view === v ? 'var(--color-text)' : 'var(--color-text-secondary)',
                       boxShadow: view === v ? '0 1px 4px rgba(0,0,0,0.1)' : 'none',
                       transition: 'background 0.15s, color 0.15s',
                       letterSpacing: '-0.01em',
@@ -895,7 +895,7 @@ export default function ProjectDetailGeneral() {
 
                 {/* New section */}
                 {addingSection ? (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 4px', borderTop: '1px solid rgba(0,0,0,0.05)', marginTop: '6px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 4px', borderTop: '1px solid var(--color-border-subtle)', marginTop: '6px' }}>
                     <input
                       autoFocus
                       value={newSectionName}
@@ -910,14 +910,14 @@ export default function ProjectDetailGeneral() {
                       }}
                       onBlur={() => { setAddingSection(false); setNewSectionName(''); }}
                       placeholder="Abschnittsname…"
-                      style={{ fontSize: '13px', fontWeight: '600', color: '#1D1D1F', background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,113,227,0.3)', borderRadius: '6px', padding: '4px 8px', outline: 'none', letterSpacing: '-0.01em', fontFamily: 'inherit' }}
+                      style={{ fontSize: '13px', fontWeight: '600', color: 'var(--color-text)', background: 'var(--color-border-subtle)', border: '1px solid rgba(0,122,255,0.3)', borderRadius: '6px', padding: '4px 8px', outline: 'none', letterSpacing: '-0.01em', fontFamily: 'inherit' }}
                     />
-                    <span style={{ fontSize: '12px', color: '#86868B' }}>Enter zum Speichern</span>
+                    <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>Enter zum Speichern</span>
                   </div>
                 ) : (
                   <button
                     onClick={() => setAddingSection(true)}
-                    style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', fontWeight: '600', color: '#86868B', background: 'none', border: 'none', cursor: 'pointer', padding: '10px 4px', marginTop: '4px', letterSpacing: '-0.01em', borderTop: '1px solid rgba(0,0,0,0.04)', width: '100%' }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', fontWeight: '600', color: 'var(--color-text-secondary)', background: 'none', border: 'none', cursor: 'pointer', padding: '10px 4px', marginTop: '4px', letterSpacing: '-0.01em', borderTop: '1px solid var(--color-border-subtle)', width: '100%' }}
                   >
                     <Plus size={13} /> Neuer Abschnitt
                   </button>

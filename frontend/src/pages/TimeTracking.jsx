@@ -83,7 +83,7 @@ function ProjectPicker({ value, onChange, projects, placeholder = 'Kein Projekt'
           display: 'flex', alignItems: 'center', gap: 6,
           padding: '7px 12px', borderRadius: 10, border: 'none',
           background: 'rgba(118,118,128,0.10)', cursor: 'pointer',
-          fontSize: 13, color: selected ? '#1D1D1F' : '#86868B',
+          fontSize: 13, color: selected ? c.text : c.textSecondary,
           whiteSpace: 'nowrap',
         }}
       >
@@ -158,13 +158,13 @@ function TimerBar({ activeTimer, projects, onStart, onStop }) {
       display: 'flex', alignItems: 'center', gap: 10,
       padding: '12px 20px', background: c.card,
       borderRadius: 16, marginBottom: 24,
-      boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.05)',
+      boxShadow: '0 1px 3px var(--color-border-subtle), 0 8px 24px var(--color-border-subtle)',
     }}>
       {/* Live clock */}
       {isRunning && (
         <div style={{
           fontVariantNumeric: 'tabular-nums', fontSize: 22, fontWeight: 600,
-          color: '#0071E3', letterSpacing: '-0.02em', minWidth: 90,
+          color: 'var(--color-blue)', letterSpacing: '-0.02em', minWidth: 90,
         }}>
           {fmtSec(elapsed)}
         </div>
@@ -228,10 +228,10 @@ function EntryRow({ entry, projects, onDelete, onEdit }) {
     <div
       style={{
         display: 'flex', alignItems: 'center', gap: 12,
-        padding: '10px 16px', borderBottom: '1px solid rgba(0,0,0,0.04)',
+        padding: '10px 16px', borderBottom: '1px solid var(--color-border-subtle)',
         transition: 'background 0.12s',
       }}
-      onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,113,227,0.02)'}
+      onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,122,255,0.02)'}
       onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
       className="group"
     >
@@ -241,7 +241,7 @@ function EntryRow({ entry, projects, onDelete, onEdit }) {
           {entry.description || <span style={{ color: c.textSecondary }}>Keine Beschreibung</span>}
         </div>
         {entry.project_name && (
-          <div style={{ fontSize: 12, color: '#0071E3', marginTop: 2 }}>{entry.project_name}</div>
+          <div style={{ fontSize: 12, color: 'var(--color-blue)', marginTop: 2 }}>{entry.project_name}</div>
         )}
       </div>
 
@@ -249,13 +249,13 @@ function EntryRow({ entry, projects, onDelete, onEdit }) {
       <div style={{ fontSize: 13, color: c.textTertiary, whiteSpace: 'nowrap' }}>
         {fmtTime(entry.start_time)}
         {entry.end_time ? ` – ${fmtTime(entry.end_time)}` : (
-          <span style={{ color: '#0071E3', fontWeight: 500 }}> – läuft ⏱</span>
+          <span style={{ color: 'var(--color-blue)', fontWeight: 500 }}> – läuft ⏱</span>
         )}
       </div>
 
       {/* Duration */}
       <div style={{
-        fontSize: 14, fontWeight: 500, color: isRunning ? '#0071E3' : '#1D1D1F',
+        fontSize: 14, fontWeight: 500, color: isRunning ? 'var(--color-blue)' : c.text,
         minWidth: 70, textAlign: 'right', fontVariantNumeric: 'tabular-nums',
       }}>
         {isRunning ? '–' : fmtSec(entry.duration)}
@@ -269,8 +269,8 @@ function EntryRow({ entry, projects, onDelete, onEdit }) {
         <button
           onClick={() => onEdit(entry)}
           style={{ padding: 6, border: 'none', background: 'none', cursor: 'pointer', borderRadius: 6, color: c.textSecondary }}
-          onMouseEnter={e => { e.currentTarget.style.background = '#F5F5F7'; e.currentTarget.style.color = '#1D1D1F'; }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#86868B'; }}
+          onMouseEnter={e => { e.currentTarget.style.background = '#F5F5F7'; e.currentTarget.style.color = c.text; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = c.textSecondary; }}
           title="Bearbeiten"
         >
           <Pencil size={13} />
@@ -279,7 +279,7 @@ function EntryRow({ entry, projects, onDelete, onEdit }) {
           onClick={() => onDelete(entry.id)}
           style={{ padding: 6, border: 'none', background: 'none', cursor: 'pointer', borderRadius: 6, color: c.textSecondary }}
           onMouseEnter={e => { e.currentTarget.style.background = '#FFF0EF'; e.currentTarget.style.color = '#FF3B30'; }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#86868B'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = c.textSecondary; }}
           title="Löschen"
         >
           <Trash2 size={13} />
@@ -324,7 +324,7 @@ function ManualEntryForm({ projects, onSave, onCancel, initial = null }) {
   return (
     <div style={{
       background: c.card, borderRadius: 16, padding: 20, marginBottom: 16,
-      boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.05)',
+      boxShadow: '0 1px 3px var(--color-border-subtle), 0 8px 24px var(--color-border-subtle)',
     }} className="animate-slide-up">
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 10 }}>
         <div>
@@ -377,7 +377,7 @@ function FahrtForm({ projects, onSave, onCancel, initial = null }) {
   return (
     <div style={{
       background: c.card, borderRadius: 16, padding: 20, marginBottom: 16,
-      boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.05)',
+      boxShadow: '0 1px 3px var(--color-border-subtle), 0 8px 24px var(--color-border-subtle)',
     }} className="animate-slide-up">
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 10 }}>
         <div>
@@ -569,9 +569,9 @@ export default function TimeTracking() {
           <h1 className="page-title">Zeiterfassung</h1>
           <p className="page-subtitle" style={{ display: 'flex', gap: 16, marginTop: 4 }}>
             <span>Heute: <strong>{fmtSecLong(summary?.today_sec)}</strong></span>
-            <span style={{ color: '#D2D2D7' }}>·</span>
+            <span style={{ color: 'var(--color-border)' }}>·</span>
             <span>Woche: <strong>{fmtSecLong(summary?.week_sec)}</strong></span>
-            <span style={{ color: '#D2D2D7' }}>·</span>
+            <span style={{ color: 'var(--color-border)' }}>·</span>
             <span>Monat: <strong>{fmtSecLong(summary?.month_sec)}</strong></span>
           </p>
         </div>
@@ -596,8 +596,8 @@ export default function TimeTracking() {
               padding: '7px 16px', borderRadius: 8, border: 'none', cursor: 'pointer',
               fontSize: 13, fontWeight: 500,
               background: tab === key ? '#fff' : 'transparent',
-              color: tab === key ? '#1D1D1F' : '#6E6E73',
-              boxShadow: tab === key ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
+              color: tab === key ? c.text : 'var(--color-text-tertiary)',
+              boxShadow: tab === key ? '0 1px 4px var(--color-border-subtle)' : 'none',
               transition: 'all 0.15s',
             }}
           >
@@ -619,8 +619,8 @@ export default function TimeTracking() {
                 background: 'transparent', cursor: 'pointer', fontSize: 13, color: c.textTertiary,
                 transition: 'all 0.15s',
               }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = '#0071E3'; e.currentTarget.style.color = '#0071E3'; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.15)'; e.currentTarget.style.color = '#6E6E73'; }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--color-blue)'; e.currentTarget.style.color = 'var(--color-blue)'; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.15)'; e.currentTarget.style.color = 'var(--color-text-tertiary)'; }}
             >
               <Plus size={14} /> Manuell eintragen
             </button>
@@ -647,7 +647,7 @@ export default function TimeTracking() {
           {loadingEntries ? (
             <div className="card p-0 overflow-hidden">
               {[...Array(4)].map((_, i) => (
-                <div key={i} style={{ display: 'flex', gap: 12, padding: '12px 16px', borderBottom: i < 3 ? '1px solid rgba(0,0,0,0.04)' : 'none' }}>
+                <div key={i} style={{ display: 'flex', gap: 12, padding: '12px 16px', borderBottom: i < 3 ? '1px solid var(--color-border-subtle)' : 'none' }}>
                   <div className="skeleton h-4" style={{ flex: 1 }} />
                   <div className="skeleton h-4" style={{ width: 80 }} />
                   <div className="skeleton h-4" style={{ width: 60 }} />
@@ -656,8 +656,8 @@ export default function TimeTracking() {
             </div>
           ) : entries.length === 0 ? (
             <div className="card" style={{ textAlign: 'center', padding: '48px 24px' }}>
-              <div style={{ width: 48, height: 48, background: 'rgba(0,113,227,0.08)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
-                <Clock size={22} color="#0071E3" />
+              <div style={{ width: 48, height: 48, background: 'rgba(0,122,255,0.08)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
+                <Clock size={22} color="#007AFF" />
               </div>
               <p style={{ fontWeight: 500, color: c.text, marginBottom: 4 }}>Noch keine Einträge</p>
               <p style={{ fontSize: 13, color: c.textSecondary, marginBottom: 20 }}>Starte den Timer oder trag Zeit manuell ein.</p>
@@ -681,7 +681,7 @@ export default function TimeTracking() {
                         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                         width: '100%', padding: '10px 16px',
                         background: 'rgba(118,118,128,0.04)', border: 'none', cursor: 'pointer',
-                        borderBottom: collapsed ? 'none' : '1px solid rgba(0,0,0,0.04)',
+                        borderBottom: collapsed ? 'none' : '1px solid var(--color-border-subtle)',
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -759,7 +759,7 @@ export default function TimeTracking() {
           {loadingFahrten ? (
             <div className="card p-0 overflow-hidden">
               {[...Array(3)].map((_, i) => (
-                <div key={i} style={{ display: 'flex', gap: 12, padding: '14px 16px', borderBottom: i < 2 ? '1px solid rgba(0,0,0,0.04)' : 'none' }}>
+                <div key={i} style={{ display: 'flex', gap: 12, padding: '14px 16px', borderBottom: i < 2 ? '1px solid var(--color-border-subtle)' : 'none' }}>
                   <div className="skeleton h-4" style={{ width: 80 }} />
                   <div className="skeleton h-4" style={{ flex: 1 }} />
                   <div className="skeleton h-4" style={{ width: 60 }} />
@@ -768,8 +768,8 @@ export default function TimeTracking() {
             </div>
           ) : fahrten.length === 0 ? (
             <div className="card" style={{ textAlign: 'center', padding: '48px 24px' }}>
-              <div style={{ width: 48, height: 48, background: 'rgba(0,113,227,0.08)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
-                <Car size={22} color="#0071E3" />
+              <div style={{ width: 48, height: 48, background: 'rgba(0,122,255,0.08)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
+                <Car size={22} color="#007AFF" />
               </div>
               <p style={{ fontWeight: 500, color: c.text, marginBottom: 4 }}>Keine Fahrten in diesem Monat</p>
               <p style={{ fontSize: 13, color: c.textSecondary, marginBottom: 20 }}>Trage deine erste Fahrt ein.</p>
@@ -791,9 +791,9 @@ export default function TimeTracking() {
                   {fahrten.map((f, i) => (
                     <tr
                       key={f.id}
-                      style={{ borderBottom: i < fahrten.length - 1 ? '1px solid rgba(0,0,0,0.04)' : 'none' }}
+                      style={{ borderBottom: i < fahrten.length - 1 ? '1px solid var(--color-border-subtle)' : 'none' }}
                       className="group"
-                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,113,227,0.02)'}
+                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,122,255,0.02)'}
                       onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                     >
                       <td className="table-cell" style={{ paddingLeft: 16, fontSize: 13, color: c.textTertiary, whiteSpace: 'nowrap' }}>
@@ -810,7 +810,7 @@ export default function TimeTracking() {
                         {f.distance_km > 0 ? `${Number(f.distance_km).toLocaleString('de-DE')} km` : '–'}
                       </td>
                       <td className="table-cell" style={{ fontSize: 13, color: c.textTertiary }}>{f.purpose || '–'}</td>
-                      <td className="table-cell" style={{ fontSize: 13, color: '#0071E3' }}>{f.project_name || <span style={{ color: '#D2D2D7' }}>–</span>}</td>
+                      <td className="table-cell" style={{ fontSize: 13, color: 'var(--color-blue)' }}>{f.project_name || <span style={{ color: 'var(--color-border)' }}>–</span>}</td>
                       <td className="table-cell" style={{ paddingRight: 12 }}>
                         <div style={{ display: 'flex', gap: 2, justifyContent: 'flex-end', opacity: 0, transition: 'opacity 0.15s' }}
                           className="group-hover:opacity-100"
@@ -819,8 +819,8 @@ export default function TimeTracking() {
                           <button
                             onClick={() => { setEditFahr(f); setShowFahrForm(false); }}
                             style={{ padding: 6, border: 'none', background: 'none', cursor: 'pointer', borderRadius: 6, color: c.textSecondary }}
-                            onMouseEnter={e => { e.currentTarget.style.background = '#F5F5F7'; e.currentTarget.style.color = '#1D1D1F'; }}
-                            onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#86868B'; }}
+                            onMouseEnter={e => { e.currentTarget.style.background = '#F5F5F7'; e.currentTarget.style.color = c.text; }}
+                            onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = c.textSecondary; }}
                           >
                             <Pencil size={13} />
                           </button>
@@ -828,7 +828,7 @@ export default function TimeTracking() {
                             onClick={() => handleDeleteFahr(f.id)}
                             style={{ padding: 6, border: 'none', background: 'none', cursor: 'pointer', borderRadius: 6, color: c.textSecondary }}
                             onMouseEnter={e => { e.currentTarget.style.background = '#FFF0EF'; e.currentTarget.style.color = '#FF3B30'; }}
-                            onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#86868B'; }}
+                            onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = c.textSecondary; }}
                           >
                             <Trash2 size={13} />
                           </button>

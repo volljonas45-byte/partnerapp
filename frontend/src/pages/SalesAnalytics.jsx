@@ -36,10 +36,10 @@ const STATUS_LABELS = {
 };
 
 const STATUS_COLORS = {
-  neu: '#86868B', anrufen: '#0071E3', follow_up: '#FF9500',
+  neu: 'var(--color-text-secondary)', anrufen: 'var(--color-blue)', follow_up: '#FF9500',
   interessiert: '#7C3AED', demo: '#34C759', gewonnen: '#00C853',
-  abgeschlossen: '#00C853', verloren: '#636366',
-  kein_interesse: '#FF3B30', spaeter: '#8E8E93',
+  abgeschlossen: '#00C853', verloren: 'var(--color-text-tertiary)',
+  kein_interesse: '#FF3B30', spaeter: 'var(--color-text-secondary)',
 };
 
 const PIPELINE_ORDER = ['neu','anrufen','follow_up','interessiert','demo','gewonnen','abgeschlossen','verloren','kein_interesse','spaeter'];
@@ -158,7 +158,7 @@ function getInitials(name, email) {
 }
 
 function avatarColor(str = '') {
-  const colors = ['#BF5AF2','#0071E3','#34C759','#FF9500','#FF3B30','#5AC8FA','#FF6961'];
+  const colors = ['#BF5AF2','var(--color-blue)','#34C759','#FF9500','#FF3B30','#5AC8FA','#FF6961'];
   let hash = 0;
   for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
   return colors[Math.abs(hash) % colors.length];
@@ -231,7 +231,7 @@ export default function SalesAnalytics() {
     return PIPELINE_ORDER.filter(s => map[s]).map(s => ({
       status: STATUS_LABELS[s] || s,
       count: map[s],
-      fill: STATUS_COLORS[s] || '#86868B',
+      fill: STATUS_COLORS[s] || c.textSecondary,
     }));
   }, [data]);
 

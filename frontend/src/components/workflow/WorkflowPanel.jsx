@@ -137,7 +137,7 @@ export default function WorkflowPanel({ projectId, projectName }) {
       <div style={{ display: 'flex', justifyContent: 'center', padding: '48px 0' }}>
         <div style={{
           width: '28px', height: '28px',
-          border: '2px solid #0071E3',
+          border: '2px solid #007AFF',
           borderTopColor: 'transparent',
           borderRadius: '50%',
           animation: 'spin 0.7s linear infinite',
@@ -160,14 +160,14 @@ export default function WorkflowPanel({ projectId, projectName }) {
 
       {/* ── Header: Stepper + Tools ── */}
       <div style={{
-        background: '#fff',
+        background: 'var(--color-card)',
         borderRadius: '16px',
         border: '1px solid #F2F2F7',
         padding: '20px',
       }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
           <div style={{ flex: 1 }}>
-            <h2 style={{ fontSize: '15px', fontWeight: 600, color: '#1D1D1F', margin: '0 0 16px' }}>
+            <h2 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--color-text)', margin: '0 0 16px' }}>
               Workflow
             </h2>
             <WorkflowStepper currentPhase={currentPhase} />
@@ -197,7 +197,7 @@ export default function WorkflowPanel({ projectId, projectName }) {
 
       {/* ── Reminders ── */}
       <div style={{
-        background: '#fff',
+        background: 'var(--color-card)',
         borderRadius: '16px',
         border: '1px solid #F2F2F7',
         padding: '18px',
@@ -205,7 +205,7 @@ export default function WorkflowPanel({ projectId, projectName }) {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Bell size={14} color="#BF5AF2" />
-            <span style={{ fontSize: '14px', fontWeight: 600, color: '#1D1D1F' }}>
+            <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--color-text)' }}>
               Erinnerungen
             </span>
             {openReminders.length > 0 && (
@@ -224,7 +224,7 @@ export default function WorkflowPanel({ projectId, projectName }) {
               padding: '4px 10px',
               borderRadius: '8px',
               border: 'none',
-              background: '#F2F2F7',
+              background: 'var(--color-card-secondary)',
               color: '#BF5AF2',
               fontSize: '12px',
               fontWeight: 600,
@@ -239,7 +239,7 @@ export default function WorkflowPanel({ projectId, projectName }) {
         {/* Add form */}
         {showReminderForm && (
           <div style={{
-            background: '#FAFAFA',
+            background: 'var(--color-card-secondary)',
             borderRadius: '12px',
             padding: '14px',
             marginBottom: '12px',
@@ -284,8 +284,8 @@ export default function WorkflowPanel({ projectId, projectName }) {
                     onClick={() => setShowReminderForm(false)}
                     style={{
                       flex: 1, padding: '9px', borderRadius: '10px',
-                      border: '1.5px solid #E5E5EA', background: '#fff',
-                      fontSize: '13px', cursor: 'pointer', color: '#6E6E73',
+                      border: '1.5px solid #E5E5EA', background: 'var(--color-card)',
+                      fontSize: '13px', cursor: 'pointer', color: 'var(--color-text-tertiary)',
                     }}
                   >
                     Abbrechen
@@ -309,7 +309,7 @@ export default function WorkflowPanel({ projectId, projectName }) {
 
         {/* Reminder list */}
         {openReminders.length === 0 ? (
-          <p style={{ fontSize: '13px', color: '#8E8E93', textAlign: 'center', padding: '12px 0' }}>
+          <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', textAlign: 'center', padding: '12px 0' }}>
             Keine offenen Erinnerungen
           </p>
         ) : (

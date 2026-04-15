@@ -35,7 +35,7 @@ export default function ReminderCard({ reminder, onDone, onDelete, onClick }) {
         <div style={{
           fontSize: '13px',
           fontWeight: 500,
-          color: '#1D1D1F',
+          color: 'var(--color-text)',
           whiteSpace: 'nowrap',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
@@ -45,7 +45,7 @@ export default function ReminderCard({ reminder, onDone, onDelete, onClick }) {
         <div style={{ fontSize: '11px', color: accent, marginTop: '1px', fontWeight: 500 }}>
           {dateLabel}
           {reminder.project_name && (
-            <span style={{ color: '#8E8E93', fontWeight: 400 }}>
+            <span style={{ color: 'var(--color-text-secondary)', fontWeight: 400 }}>
               {' · '}{reminder.project_name}
             </span>
           )}

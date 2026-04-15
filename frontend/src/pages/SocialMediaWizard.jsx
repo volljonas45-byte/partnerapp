@@ -79,7 +79,7 @@ const INITIAL = {
 
 function Label({ children, required }) {
   return (
-    <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, color: '#6E6E73', marginBottom: '5px' }}>
+    <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, color: 'var(--color-text-tertiary)', marginBottom: '5px' }}>
       {children}{required && <span style={{ color: '#FF3B30', marginLeft: '2px' }}>*</span>}
     </label>
   );
@@ -108,13 +108,13 @@ function TextInput({ value, onChange, placeholder, type = 'text' }) {
         borderRadius: '10px',
         fontSize: '14px',
         outline: 'none',
-        background: '#fff',
-        color: '#1D1D1F',
+        background: 'var(--color-card)',
+        color: 'var(--color-text)',
         fontFamily: 'inherit',
         transition: 'border-color 0.15s',
       }}
-      onFocus={e => e.target.style.borderColor = '#0071E3'}
-      onBlur={e => e.target.style.borderColor = '#E5E5EA'}
+      onFocus={e => e.target.style.borderColor = 'var(--color-blue)'}
+      onBlur={e => e.target.style.borderColor = 'var(--color-border)'}
     />
   );
 }
@@ -135,23 +135,23 @@ function BrancheSelect({ value, onChange }) {
   return (
     <div style={{ position: 'relative' }} onKeyDown={handleKeyDown}>
       <button type="button" onClick={() => { setOpen(o => !o); setSearch(''); }}
-        style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px', border: `1.5px solid ${open ? '#0071E3' : '#E5E5EA'}`, borderRadius: '10px', fontSize: '14px', background: '#fff', cursor: 'pointer', textAlign: 'left', color: value ? '#1D1D1F' : '#8E8E93', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'space-between', transition: 'border-color 0.15s' }}>
+        style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px', border: `1.5px solid ${open ? 'var(--color-blue)' : 'var(--color-border)'}`, borderRadius: '10px', fontSize: '14px', background: 'var(--color-card)', cursor: 'pointer', textAlign: 'left', color: value ? 'var(--color-text)' : 'var(--color-text-secondary)', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'space-between', transition: 'border-color 0.15s' }}>
         <span>{value || 'Branche wählen'}</span>
-        <span style={{ fontSize: '10px', color: '#8E8E93', marginLeft: '6px' }}>{open ? '▲' : '▼'}</span>
+        <span style={{ fontSize: '10px', color: 'var(--color-text-secondary)', marginLeft: '6px' }}>{open ? '▲' : '▼'}</span>
       </button>
       {open && (
         <>
           <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => { setOpen(false); setSearch(''); }} />
-          <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, background: '#fff', borderRadius: '12px', zIndex: 50, border: '1.5px solid #E5E5EA', boxShadow: '0 8px 32px rgba(0,0,0,0.12)', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, background: 'var(--color-card)', borderRadius: '12px', zIndex: 50, border: '1.5px solid #E5E5EA', boxShadow: '0 8px 32px rgba(0,0,0,0.12)', overflow: 'hidden' }}>
             <div style={{ padding: '8px 8px 4px' }}>
               <input autoFocus type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Suchen…"
-                style={{ width: '100%', boxSizing: 'border-box', padding: '7px 10px', border: '1.5px solid #E5E5EA', borderRadius: '8px', fontSize: '13px', outline: 'none', background: '#F5F5F7', fontFamily: 'inherit', color: '#1D1D1F' }}
-                onFocus={e => e.target.style.borderColor = '#0071E3'} onBlur={e => e.target.style.borderColor = '#E5E5EA'} />
+                style={{ width: '100%', boxSizing: 'border-box', padding: '7px 10px', border: '1.5px solid #E5E5EA', borderRadius: '8px', fontSize: '13px', outline: 'none', background: '#F5F5F7', fontFamily: 'inherit', color: 'var(--color-text)' }}
+                onFocus={e => e.target.style.borderColor = 'var(--color-blue)'} onBlur={e => e.target.style.borderColor = 'var(--color-border)'} />
             </div>
             <div style={{ maxHeight: '240px', overflowY: 'auto' }}>
               {filtered.map(industry => (
                 <button key={industry} type="button" onClick={() => select(industry)}
-                  style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', fontSize: '13px', border: 'none', background: industry === value ? 'rgba(0,113,227,0.07)' : 'transparent', color: industry === value ? '#0071E3' : '#1D1D1F', fontWeight: industry === value ? 600 : 400, cursor: 'pointer', fontFamily: 'inherit' }}
+                  style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', fontSize: '13px', border: 'none', background: industry === value ? 'rgba(0,122,255,0.07)' : 'transparent', color: industry === value ? 'var(--color-blue)' : 'var(--color-text)', fontWeight: industry === value ? 600 : 400, cursor: 'pointer', fontFamily: 'inherit' }}
                   onMouseEnter={e => { if (industry !== value) e.currentTarget.style.background = '#F5F5F7'; }}
                   onMouseLeave={e => { if (industry !== value) e.currentTarget.style.background = 'transparent'; }}>
                   {industry}
@@ -173,7 +173,7 @@ function MultiChipGroup({ options, value = [], onChange }) {
         const sel = value.includes(opt.value);
         return (
           <button key={opt.value} type="button" onClick={() => toggle(opt.value)}
-            style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 13px', borderRadius: '99px', border: `2px solid ${sel ? '#EC4899' : '#E5E5EA'}`, background: sel ? '#EC4899' : '#fff', color: sel ? '#fff' : '#3C3C43', fontSize: '13px', fontWeight: 500, cursor: 'pointer', transition: 'all 0.15s' }}>
+            style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 13px', borderRadius: '99px', border: `2px solid ${sel ? '#EC4899' : 'var(--color-border)'}`, background: sel ? '#EC4899' : '#fff', color: sel ? '#fff' : 'var(--color-text-secondary)', fontSize: '13px', fontWeight: 500, cursor: 'pointer', transition: 'all 0.15s' }}>
             {opt.label}
           </button>
         );
@@ -189,7 +189,7 @@ function ChipGroup({ options, value, onChange }) {
         const sel = value === opt.value;
         return (
           <button key={opt.value} type="button" onClick={() => onChange(opt.value)}
-            style={{ padding: '7px 14px', borderRadius: '99px', border: `2px solid ${sel ? '#EC4899' : '#E5E5EA'}`, background: sel ? '#EC4899' : '#fff', color: sel ? '#fff' : '#3C3C43', fontSize: '13px', fontWeight: 500, cursor: 'pointer', transition: 'all 0.15s' }}>
+            style={{ padding: '7px 14px', borderRadius: '99px', border: `2px solid ${sel ? '#EC4899' : 'var(--color-border)'}`, background: sel ? '#EC4899' : '#fff', color: sel ? '#fff' : 'var(--color-text-secondary)', fontSize: '13px', fontWeight: 500, cursor: 'pointer', transition: 'all 0.15s' }}>
             {opt.label}
           </button>
         );
@@ -200,9 +200,9 @@ function ChipGroup({ options, value, onChange }) {
 
 function SectionCard({ title, children }) {
   return (
-    <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #F2F2F7', padding: '20px', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+    <div style={{ background: 'var(--color-card)', borderRadius: '16px', border: '1px solid #F2F2F7', padding: '20px', boxShadow: '0 1px 4px var(--color-border-subtle)' }}>
       {title && (
-        <div style={{ fontSize: '11px', fontWeight: 600, color: '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '16px' }}>
+        <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '16px' }}>
           {title}
         </div>
       )}
@@ -301,38 +301,38 @@ export default function SocialMediaWizard() {
     <div style={{ minHeight: '100%', background: '#F5F5F7', display: 'flex', flexDirection: 'column' }}>
 
       {/* Top bar */}
-      <div style={{ background: '#fff', borderBottom: '1px solid #F2F2F7', padding: '16px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+      <div style={{ background: 'var(--color-card)', borderBottom: '1px solid #F2F2F7', padding: '16px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <Sparkles size={17} color="#EC4899" />
-          <span style={{ fontSize: '15px', fontWeight: 600, color: '#1D1D1F' }}>Social-Media-Projekt einrichten</span>
+          <span style={{ fontSize: '15px', fontWeight: 600, color: 'var(--color-text)' }}>Social-Media-Projekt einrichten</span>
         </div>
         <button onClick={() => navigate('/clients')}
-          style={{ width: '28px', height: '28px', borderRadius: '8px', background: '#F2F2F7', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#6E6E73' }}>
+          style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'var(--color-card-secondary)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--color-text-tertiary)' }}>
           <X size={15} />
         </button>
       </div>
 
       {/* Progress bar */}
-      <div style={{ height: '2px', background: '#F2F2F7', flexShrink: 0 }}>
+      <div style={{ height: '2px', background: 'var(--color-card-secondary)', flexShrink: 0 }}>
         <div style={{ height: '100%', width: `${progress}%`, background: '#EC4899', transition: 'width 0.4s ease' }} />
       </div>
 
       {/* Step indicators */}
-      <div style={{ background: '#fff', borderBottom: '1px solid #F2F2F7', padding: '12px 32px', flexShrink: 0 }}>
+      <div style={{ background: 'var(--color-card)', borderBottom: '1px solid #F2F2F7', padding: '12px 32px', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '4px', maxWidth: '600px', margin: '0 auto' }}>
           {STEPS.map((s, i) => {
             const Icon = s.icon;
             const done = i < step, active = i === step;
             return (
               <div key={s.key} style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: active ? 600 : 400, color: done ? '#34C759' : active ? '#EC4899' : '#C7C7CC' }}>
-                  <div style={{ width: '22px', height: '22px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: done ? '#34C759' : active ? '#EC4899' : '#F2F2F7', flexShrink: 0 }}>
-                    {done ? <Check size={11} color="#fff" strokeWidth={3} /> : <Icon size={11} color={active ? '#fff' : '#C7C7CC'} />}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: active ? 600 : 400, color: done ? '#34C759' : active ? '#EC4899' : 'var(--color-text-tertiary)' }}>
+                  <div style={{ width: '22px', height: '22px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: done ? '#34C759' : active ? '#EC4899' : 'var(--color-card-secondary)', flexShrink: 0 }}>
+                    {done ? <Check size={11} color="#fff" strokeWidth={3} /> : <Icon size={11} color={active ? '#fff' : 'var(--color-text-tertiary)'} />}
                   </div>
                   <span style={{ whiteSpace: 'nowrap' }}>{s.label}</span>
                 </div>
                 {i < STEPS.length - 1 && (
-                  <div style={{ flex: 1, height: '1px', margin: '0 8px', background: i < step ? '#34C759' : '#E5E5EA' }} />
+                  <div style={{ flex: 1, height: '1px', margin: '0 8px', background: i < step ? '#34C759' : 'var(--color-border)' }} />
                 )}
               </div>
             );
@@ -348,8 +348,8 @@ export default function SocialMediaWizard() {
           {step === 0 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
-                <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#1D1D1F', margin: 0 }}>Kundeninformationen</h2>
-                <p style={{ fontSize: '14px', color: '#8E8E93', marginTop: '4px' }}>Nur Name und E-Mail sind Pflicht — der Rest kann später ergänzt werden.</p>
+                <h2 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--color-text)', margin: 0 }}>Kundeninformationen</h2>
+                <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)', marginTop: '4px' }}>Nur Name und E-Mail sind Pflicht — der Rest kann später ergänzt werden.</p>
               </div>
               <SectionCard title="UNTERNEHMEN">
                 <Field label="Unternehmensname" required>
@@ -381,11 +381,11 @@ export default function SocialMediaWizard() {
           {step === 1 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
-                <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#1D1D1F', margin: 0 }}>Social Media Details</h2>
-                <p style={{ fontSize: '14px', color: '#8E8E93', marginTop: '4px' }}>Alles optional — kann im Projekt jederzeit ergänzt werden.</p>
+                <h2 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--color-text)', margin: 0 }}>Social Media Details</h2>
+                <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)', marginTop: '4px' }}>Alles optional — kann im Projekt jederzeit ergänzt werden.</p>
               </div>
               <SectionCard title="KANÄLE">
-                <p style={{ fontSize: '12px', color: '#8E8E93', margin: '-4px 0 4px' }}>Mehrfachauswahl möglich</p>
+                <p style={{ fontSize: '12px', color: 'var(--color-text-secondary)', margin: '-4px 0 4px' }}>Mehrfachauswahl möglich</p>
                 <MultiChipGroup options={KANAELE_OPTIONS} value={data.kanaele} onChange={set('kanaele')} />
               </SectionCard>
               <SectionCard title="HAUPTZIEL">
@@ -398,9 +398,9 @@ export default function SocialMediaWizard() {
                     onChange={e => set('first_notes')(e.target.value)}
                     placeholder="z.B. Posting-Frequenz, Zielgruppe, Tonalität, Beispielaccounts…"
                     rows={4}
-                    style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px', border: '1.5px solid #E5E5EA', borderRadius: '10px', fontSize: '14px', outline: 'none', resize: 'vertical', fontFamily: 'inherit', color: '#1D1D1F', lineHeight: 1.5 }}
-                    onFocus={e => e.target.style.borderColor = '#0071E3'}
-                    onBlur={e => e.target.style.borderColor = '#E5E5EA'}
+                    style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px', border: '1.5px solid #E5E5EA', borderRadius: '10px', fontSize: '14px', outline: 'none', resize: 'vertical', fontFamily: 'inherit', color: 'var(--color-text)', lineHeight: 1.5 }}
+                    onFocus={e => e.target.style.borderColor = 'var(--color-blue)'}
+                    onBlur={e => e.target.style.borderColor = 'var(--color-border)'}
                   />
                 </Field>
               </SectionCard>
@@ -411,8 +411,8 @@ export default function SocialMediaWizard() {
           {step === 2 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
-                <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#1D1D1F', margin: 0 }}>Projekt-Setup</h2>
-                <p style={{ fontSize: '14px', color: '#8E8E93', marginTop: '4px' }}>Alles optional — kann jederzeit angepasst werden.</p>
+                <h2 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--color-text)', margin: 0 }}>Projekt-Setup</h2>
+                <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)', marginTop: '4px' }}>Alles optional — kann jederzeit angepasst werden.</p>
               </div>
               <SectionCard title="PROJEKTNAME">
                 <Field label="Name des Projekts">
@@ -429,9 +429,9 @@ export default function SocialMediaWizard() {
                     onChange={e => set('notes')(e.target.value)}
                     placeholder="Besondere Anforderungen, Hinweise…"
                     rows={3}
-                    style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px', border: '1.5px solid #E5E5EA', borderRadius: '10px', fontSize: '14px', outline: 'none', resize: 'none', fontFamily: 'inherit', color: '#1D1D1F' }}
-                    onFocus={e => e.target.style.borderColor = '#0071E3'}
-                    onBlur={e => e.target.style.borderColor = '#E5E5EA'}
+                    style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px', border: '1.5px solid #E5E5EA', borderRadius: '10px', fontSize: '14px', outline: 'none', resize: 'none', fontFamily: 'inherit', color: 'var(--color-text)' }}
+                    onFocus={e => e.target.style.borderColor = 'var(--color-blue)'}
+                    onBlur={e => e.target.style.borderColor = 'var(--color-border)'}
                   />
                 </Field>
               </SectionCard>
@@ -443,9 +443,9 @@ export default function SocialMediaWizard() {
                       const active = data.assignee_id === m.id;
                       return (
                         <button key={m.id} type="button" onClick={() => set('assignee_id')(active ? null : m.id)}
-                          style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 14px', borderRadius: '99px', border: `2px solid ${active ? m.color || '#EC4899' : '#E5E7EB'}`, background: active ? (m.color || '#EC4899') + '18' : '#fff', cursor: 'pointer', transition: 'all 0.15s' }}>
+                          style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 14px', borderRadius: '99px', border: `2px solid ${active ? m.color || '#EC4899' : 'var(--color-border)'}`, background: active ? (m.color || '#EC4899') + '18' : '#fff', cursor: 'pointer', transition: 'all 0.15s' }}>
                           <div style={{ width: 26, height: 26, borderRadius: '50%', background: m.color || '#EC4899', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: '700', color: '#fff', flexShrink: 0 }}>{initials}</div>
-                          <span style={{ fontSize: '13px', fontWeight: active ? '600' : '400', color: '#1D1D1F' }}>{m.name || m.email}</span>
+                          <span style={{ fontSize: '13px', fontWeight: active ? '600' : '400', color: 'var(--color-text)' }}>{m.name || m.email}</span>
                         </button>
                       );
                     })}
@@ -467,8 +467,8 @@ export default function SocialMediaWizard() {
                       <div style={{ width: '16px', height: '16px', borderRadius: '50%', background: '#34C759', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                         <Check size={9} color="#fff" strokeWidth={3} />
                       </div>
-                      <span style={{ color: '#6E6E73' }}>{item.label}:</span>
-                      <span style={{ fontWeight: 600, color: '#1D1D1F' }}>{item.value}</span>
+                      <span style={{ color: 'var(--color-text-tertiary)' }}>{item.label}:</span>
+                      <span style={{ fontWeight: 600, color: 'var(--color-text)' }}>{item.value}</span>
                     </div>
                   ))}
                 </div>
@@ -480,22 +480,22 @@ export default function SocialMediaWizard() {
       </div>
 
       {/* Bottom nav */}
-      <div style={{ background: '#fff', borderTop: '1px solid #F2F2F7', paddingTop: 16, paddingLeft: isMobile ? 20 : 32, paddingRight: isMobile ? 20 : 32, paddingBottom: isMobile ? 'calc(env(safe-area-inset-bottom) + 86px)' : 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+      <div style={{ background: 'var(--color-card)', borderTop: '1px solid #F2F2F7', paddingTop: 16, paddingLeft: isMobile ? 20 : 32, paddingRight: isMobile ? 20 : 32, paddingBottom: isMobile ? 'calc(env(safe-area-inset-bottom) + 86px)' : 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
         <button type="button" onClick={() => setStep(s => Math.max(s - 1, 0))} disabled={step === 0}
-          style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '9px 16px', borderRadius: '10px', border: '1.5px solid #E5E5EA', background: '#fff', fontSize: '14px', fontWeight: 500, color: step === 0 ? '#C7C7CC' : '#3C3C43', cursor: step === 0 ? 'not-allowed' : 'pointer' }}>
+          style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '9px 16px', borderRadius: '10px', border: '1.5px solid #E5E5EA', background: 'var(--color-card)', fontSize: '14px', fontWeight: 500, color: step === 0 ? 'var(--color-text-tertiary)' : 'var(--color-text-secondary)', cursor: step === 0 ? 'not-allowed' : 'pointer' }}>
           <ChevronLeft size={16} /> Zurück
         </button>
 
-        <span style={{ fontSize: '12px', color: '#8E8E93' }}>Schritt {step + 1} von {STEPS.length}</span>
+        <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>Schritt {step + 1} von {STEPS.length}</span>
 
         {!isLastStep ? (
           <button type="button" onClick={next} disabled={!canNext()}
-            style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '9px 20px', borderRadius: '10px', border: 'none', background: canNext() ? '#EC4899' : '#E5E5EA', color: canNext() ? '#fff' : '#8E8E93', fontSize: '14px', fontWeight: 600, cursor: canNext() ? 'pointer' : 'not-allowed', transition: 'background 0.15s' }}>
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '9px 20px', borderRadius: '10px', border: 'none', background: canNext() ? '#EC4899' : 'var(--color-border)', color: canNext() ? '#fff' : 'var(--color-text-secondary)', fontSize: '14px', fontWeight: 600, cursor: canNext() ? 'pointer' : 'not-allowed', transition: 'background 0.15s' }}>
             Weiter <ChevronRight size={16} />
           </button>
         ) : (
           <button type="button" onClick={handleCreate} disabled={loading}
-            style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '9px 20px', borderRadius: '10px', border: 'none', background: loading ? '#E5E5EA' : '#EC4899', color: loading ? '#8E8E93' : '#fff', fontSize: '14px', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer' }}>
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '9px 20px', borderRadius: '10px', border: 'none', background: loading ? 'var(--color-border)' : '#EC4899', color: loading ? 'var(--color-text-secondary)' : '#fff', fontSize: '14px', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer' }}>
             {loading ? (
               <>
                 <div style={{ width: '14px', height: '14px', border: '2px solid rgba(255,255,255,0.4)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />

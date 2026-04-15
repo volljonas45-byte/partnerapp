@@ -151,7 +151,7 @@ function parseSheet(sheet) {
 
 // ── Sheet label helper ─────────────────────────────────────────────────────────
 const SHEET_COLORS = [
-  { bg: 'rgba(0,113,227,0.1)',  text: '#0071E3' },
+  { bg: 'rgba(0,122,255,0.1)',  text: 'var(--color-blue)' },
   { bg: 'rgba(52,199,89,0.1)', text: '#1A8F40' },
   { bg: 'rgba(255,149,0,0.1)', text: '#B35A00' },
   { bg: 'rgba(175,82,222,0.1)','text': '#7B2D9E' },
@@ -231,21 +231,21 @@ export default function ExcelImportModal({ onClose, onImport, isImporting }) {
       onClick={onClose}
     >
       <div
-        style={{ background: '#fff', borderRadius: 20, width: '100%', maxWidth: 560, maxHeight: '85vh', display: 'flex', flexDirection: 'column', boxShadow: '0 32px 80px rgba(0,0,0,0.2)', overflow: 'hidden' }}
+        style={{ background: 'var(--color-card)', borderRadius: 20, width: '100%', maxWidth: 560, maxHeight: '85vh', display: 'flex', flexDirection: 'column', boxShadow: '0 32px 80px rgba(0,0,0,0.2)', overflow: 'hidden' }}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid var(--color-border-subtle)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(52,199,89,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <FileSpreadsheet size={17} color="#34C759" />
             </div>
             <div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: '#1D1D1F' }}>Excel Import</div>
-              <div style={{ fontSize: 11.5, color: '#86868B' }}>Leads aus Tabelle importieren</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-text)' }}>Excel Import</div>
+              <div style={{ fontSize: 11.5, color: 'var(--color-text-secondary)' }}>Leads aus Tabelle importieren</div>
             </div>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#86868B', padding: 4 }}>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)', padding: 4 }}>
             <X size={18} />
           </button>
         </div>
@@ -258,32 +258,32 @@ export default function ExcelImportModal({ onClose, onImport, isImporting }) {
             <div>
               <div
                 onClick={() => fileRef.current?.click()}
-                onDragOver={e => { e.preventDefault(); e.currentTarget.style.borderColor = '#0071E3'; }}
-                onDragLeave={e => { e.currentTarget.style.borderColor = '#E5E5EA'; }}
-                onDrop={e => { e.preventDefault(); e.currentTarget.style.borderColor = '#E5E5EA'; handleFile(e.dataTransfer.files[0]); }}
+                onDragOver={e => { e.preventDefault(); e.currentTarget.style.borderColor = 'var(--color-blue)'; }}
+                onDragLeave={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; }}
+                onDrop={e => { e.preventDefault(); e.currentTarget.style.borderColor = 'var(--color-border)'; handleFile(e.dataTransfer.files[0]); }}
                 style={{
                   border: '2px dashed #E5E5EA', borderRadius: 14, padding: '48px 24px',
                   textAlign: 'center', cursor: 'pointer', transition: 'border-color 0.15s',
                 }}
-                onMouseEnter={e => e.currentTarget.style.borderColor = '#0071E3'}
-                onMouseLeave={e => e.currentTarget.style.borderColor = '#E5E5EA'}
+                onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--color-blue)'}
+                onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--color-border)'}
               >
                 <Upload size={32} color="#AEAEB2" style={{ marginBottom: 12 }} />
-                <div style={{ fontSize: 15, fontWeight: 600, color: '#1D1D1F', marginBottom: 4 }}>
+                <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--color-text)', marginBottom: 4 }}>
                   Excel-Datei hierher ziehen
                 </div>
-                <div style={{ fontSize: 13, color: '#86868B', marginBottom: 16 }}>oder klicken zum Auswählen (.xlsx, .xls)</div>
-                <div style={{ display: 'inline-block', padding: '8px 20px', borderRadius: 10, background: 'rgba(0,113,227,0.1)', color: '#0071E3', fontSize: 13, fontWeight: 600 }}>
+                <div style={{ fontSize: 13, color: 'var(--color-text-secondary)', marginBottom: 16 }}>oder klicken zum Auswählen (.xlsx, .xls)</div>
+                <div style={{ display: 'inline-block', padding: '8px 20px', borderRadius: 10, background: 'rgba(0,122,255,0.1)', color: 'var(--color-blue)', fontSize: 13, fontWeight: 600 }}>
                   Datei wählen
                 </div>
               </div>
               <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv" style={{ display: 'none' }} onChange={e => handleFile(e.target.files[0])} />
 
               <div style={{ marginTop: 20, padding: '14px 16px', background: '#F5F5F7', borderRadius: 12 }}>
-                <div style={{ fontSize: 12.5, fontWeight: 600, color: '#1D1D1F', marginBottom: 8 }}>Erkannte Spalten</div>
+                <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--color-text)', marginBottom: 8 }}>Erkannte Spalten</div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                   {['Unternehmensname', 'Branche', 'Stadt', 'Kontaktperson', 'E-Mail', 'Telefonnummer', 'Deal Status', 'Priorität', 'Nächstes Kontaktdatum', 'Website Status', 'Domain', 'Notizen'].map(c => (
-                    <span key={c} style={{ fontSize: 11, padding: '3px 8px', borderRadius: 6, background: '#E5E5EA', color: '#636366' }}>{c}</span>
+                    <span key={c} style={{ fontSize: 11, padding: '3px 8px', borderRadius: 6, background: 'var(--color-border)', color: 'var(--color-text-tertiary)' }}>{c}</span>
                   ))}
                 </div>
               </div>
@@ -294,12 +294,12 @@ export default function ExcelImportModal({ onClose, onImport, isImporting }) {
           {step === 'sheets' && (
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-                <Layers size={16} color="#0071E3" />
-                <span style={{ fontSize: 13.5, fontWeight: 600, color: '#1D1D1F' }}>
-                  {sheetNames.length} Blätter in <span style={{ color: '#0071E3' }}>{fileName}</span>
+                <Layers size={16} color="#007AFF" />
+                <span style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--color-text)' }}>
+                  {sheetNames.length} Blätter in <span style={{ color: 'var(--color-blue)' }}>{fileName}</span>
                 </span>
               </div>
-              <div style={{ fontSize: 13, color: '#86868B', marginBottom: 16 }}>
+              <div style={{ fontSize: 13, color: 'var(--color-text-secondary)', marginBottom: 16 }}>
                 Wähle welche Blätter importiert werden sollen:
               </div>
 
@@ -315,22 +315,22 @@ export default function ExcelImportModal({ onClose, onImport, isImporting }) {
                       style={{
                         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                         padding: '14px 16px', borderRadius: 12, cursor: 'pointer',
-                        border: `2px solid ${checked ? color.text : '#E5E5EA'}`,
+                        border: `2px solid ${checked ? color.text : 'var(--color-border)'}`,
                         background: checked ? color.bg : '#fff',
                         transition: 'all 0.12s',
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                         <div style={{
-                          width: 20, height: 20, borderRadius: 6, border: `2px solid ${checked ? color.text : '#C7C7CC'}`,
+                          width: 20, height: 20, borderRadius: 6, border: `2px solid ${checked ? color.text : 'var(--color-text-tertiary)'}`,
                           background: checked ? color.text : 'transparent',
                           display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                         }}>
                           {checked && <span style={{ color: '#fff', fontSize: 12, fontWeight: 700 }}>✓</span>}
                         </div>
                         <div>
-                          <div style={{ fontSize: 14, fontWeight: 600, color: '#1D1D1F' }}>{name}</div>
-                          <div style={{ fontSize: 12, color: '#86868B', marginTop: 2 }}>
+                          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text)' }}>{name}</div>
+                          <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginTop: 2 }}>
                             {sheetLeads.length} Leads gefunden
                           </div>
                         </div>
@@ -359,39 +359,39 @@ export default function ExcelImportModal({ onClose, onImport, isImporting }) {
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
                 <CheckCircle2 size={16} color="#34C759" />
-                <span style={{ fontSize: 13.5, fontWeight: 600, color: '#1D1D1F' }}>
-                  {leads.length} Leads gefunden in <span style={{ color: '#0071E3' }}>{fileName}</span>
+                <span style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--color-text)' }}>
+                  {leads.length} Leads gefunden in <span style={{ color: 'var(--color-blue)' }}>{fileName}</span>
                 </span>
               </div>
 
-              <div style={{ border: '1px solid rgba(0,0,0,0.06)', borderRadius: 12, overflow: 'hidden', marginBottom: 16 }}>
+              <div style={{ border: '1px solid var(--color-border-subtle)', borderRadius: 12, overflow: 'hidden', marginBottom: 16 }}>
                 <div style={{ overflowX: 'auto', maxHeight: 300, overflowY: 'auto' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                     <thead>
                       <tr style={{ background: '#F5F5F7', position: 'sticky', top: 0 }}>
                         {['Unternehmen', 'Branche', 'Stadt', 'Telefon', 'Status', 'Priorität'].map(h => (
-                          <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600, color: '#86868B', fontSize: 11, whiteSpace: 'nowrap' }}>{h}</th>
+                          <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600, color: 'var(--color-text-secondary)', fontSize: 11, whiteSpace: 'nowrap' }}>{h}</th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
                       {leads.slice(0, 50).map((l, i) => (
-                        <tr key={i} style={{ borderTop: '1px solid rgba(0,0,0,0.04)' }}>
-                          <td style={{ padding: '8px 12px', fontWeight: 600, color: '#1D1D1F', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{l.company_name}</td>
-                          <td style={{ padding: '8px 12px', color: '#86868B' }}>{l.branch || '—'}</td>
-                          <td style={{ padding: '8px 12px', color: '#86868B' }}>{l.city || '—'}</td>
-                          <td style={{ padding: '8px 12px', color: '#86868B' }}>{l.phone || '—'}</td>
+                        <tr key={i} style={{ borderTop: '1px solid var(--color-border-subtle)' }}>
+                          <td style={{ padding: '8px 12px', fontWeight: 600, color: 'var(--color-text)', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{l.company_name}</td>
+                          <td style={{ padding: '8px 12px', color: 'var(--color-text-secondary)' }}>{l.branch || '—'}</td>
+                          <td style={{ padding: '8px 12px', color: 'var(--color-text-secondary)' }}>{l.city || '—'}</td>
+                          <td style={{ padding: '8px 12px', color: 'var(--color-text-secondary)' }}>{l.phone || '—'}</td>
                           <td style={{ padding: '8px 12px' }}>
-                            <span style={{ fontSize: 10.5, padding: '2px 6px', borderRadius: 99, background: 'rgba(0,113,227,0.1)', color: '#0071E3', fontWeight: 600 }}>{l.status}</span>
+                            <span style={{ fontSize: 10.5, padding: '2px 6px', borderRadius: 99, background: 'rgba(0,122,255,0.1)', color: 'var(--color-blue)', fontWeight: 600 }}>{l.status}</span>
                           </td>
-                          <td style={{ padding: '8px 12px', color: '#86868B' }}>{['Normal', 'Hoch', 'Dringend'][l.priority ?? 0]}</td>
+                          <td style={{ padding: '8px 12px', color: 'var(--color-text-secondary)' }}>{['Normal', 'Hoch', 'Dringend'][l.priority ?? 0]}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
                 {leads.length > 50 && (
-                  <div style={{ padding: '8px 12px', background: '#F5F5F7', fontSize: 12, color: '#86868B', textAlign: 'center' }}>
+                  <div style={{ padding: '8px 12px', background: '#F5F5F7', fontSize: 12, color: 'var(--color-text-secondary)', textAlign: 'center' }}>
                     + {leads.length - 50} weitere Zeilen
                   </div>
                 )}
@@ -412,8 +412,8 @@ export default function ExcelImportModal({ onClose, onImport, isImporting }) {
               <div style={{ width: 60, height: 60, borderRadius: 99, background: 'rgba(52,199,89,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
                 <CheckCircle2 size={28} color="#34C759" />
               </div>
-              <div style={{ fontSize: 20, fontWeight: 700, color: '#1D1D1F', marginBottom: 6 }}>Import abgeschlossen</div>
-              <div style={{ fontSize: 14, color: '#86868B' }}>
+              <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-text)', marginBottom: 6 }}>Import abgeschlossen</div>
+              <div style={{ fontSize: 14, color: 'var(--color-text-secondary)' }}>
                 <span style={{ fontWeight: 700, color: '#34C759', fontSize: 18 }}>{result.imported}</span> Leads importiert
                 {result.skipped > 0 && <span>, {result.skipped} übersprungen (Duplikate)</span>}
               </div>
@@ -422,11 +422,11 @@ export default function ExcelImportModal({ onClose, onImport, isImporting }) {
         </div>
 
         {/* Footer */}
-        <div style={{ padding: '16px 24px', borderTop: '1px solid rgba(0,0,0,0.06)', display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+        <div style={{ padding: '16px 24px', borderTop: '1px solid var(--color-border-subtle)', display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
           {step === 'done' ? (
             <button
               onClick={onClose}
-              style={{ padding: '10px 24px', borderRadius: 10, fontSize: 14, fontWeight: 600, background: '#0071E3', color: '#fff', border: 'none', cursor: 'pointer' }}
+              style={{ padding: '10px 24px', borderRadius: 10, fontSize: 14, fontWeight: 600, background: 'var(--color-blue)', color: '#fff', border: 'none', cursor: 'pointer' }}
             >
               Fertig
             </button>
@@ -438,7 +438,7 @@ export default function ExcelImportModal({ onClose, onImport, isImporting }) {
                   else if (step === 'sheets') setStep('upload');
                   else onClose();
                 }}
-                style={{ padding: '10px 18px', borderRadius: 10, fontSize: 13.5, fontWeight: 600, background: 'rgba(0,0,0,0.05)', color: '#636366', border: 'none', cursor: 'pointer' }}
+                style={{ padding: '10px 18px', borderRadius: 10, fontSize: 13.5, fontWeight: 600, background: 'var(--color-border-subtle)', color: 'var(--color-text-tertiary)', border: 'none', cursor: 'pointer' }}
               >
                 {step === 'upload' ? 'Abbrechen' : 'Zurück'}
               </button>
@@ -450,8 +450,8 @@ export default function ExcelImportModal({ onClose, onImport, isImporting }) {
                   style={{
                     display: 'flex', alignItems: 'center', gap: 6, padding: '10px 20px', borderRadius: 10,
                     fontSize: 13.5, fontWeight: 600,
-                    background: selectedSheets.length > 0 ? '#0071E3' : '#E5E5EA',
-                    color: selectedSheets.length > 0 ? '#fff' : '#AEAEB2',
+                    background: selectedSheets.length > 0 ? 'var(--color-blue)' : 'var(--color-border)',
+                    color: selectedSheets.length > 0 ? '#fff' : 'var(--color-text-tertiary)',
                     border: 'none', cursor: selectedSheets.length > 0 ? 'pointer' : 'not-allowed',
                   }}
                 >
@@ -466,8 +466,8 @@ export default function ExcelImportModal({ onClose, onImport, isImporting }) {
                   style={{
                     display: 'flex', alignItems: 'center', gap: 6, padding: '10px 20px', borderRadius: 10,
                     fontSize: 13.5, fontWeight: 600,
-                    background: leads.length > 0 ? '#0071E3' : '#E5E5EA',
-                    color: leads.length > 0 ? '#fff' : '#AEAEB2', border: 'none',
+                    background: leads.length > 0 ? 'var(--color-blue)' : 'var(--color-border)',
+                    color: leads.length > 0 ? '#fff' : 'var(--color-text-tertiary)', border: 'none',
                     cursor: leads.length > 0 ? 'pointer' : 'not-allowed', opacity: isImporting ? 0.7 : 1,
                   }}
                 >

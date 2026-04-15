@@ -152,21 +152,21 @@ export default function IntakeFormSection({ projectId, projectName, briefingDone
       background: isSubmitted
         ? 'rgba(52,199,89,0.06)'
         : existingForm
-        ? 'rgba(0,113,227,0.05)'
-        : 'rgba(0,113,227,0.04)',
-      border: `1.5px solid ${isSubmitted ? 'rgba(52,199,89,0.25)' : 'rgba(0,113,227,0.15)'}`,
+        ? 'rgba(0,122,255,0.05)'
+        : 'rgba(0,122,255,0.04)',
+      border: `1.5px solid ${isSubmitted ? 'rgba(52,199,89,0.25)' : 'rgba(0,122,255,0.15)'}`,
     }}>
 
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
         {isSubmitted
           ? <CheckCircle2 size={15} color="#34C759" />
-          : <Send size={15} color="#0071E3" />
+          : <Send size={15} color="#007AFF" />
         }
         <span style={{
           fontSize: '13px',
           fontWeight: 600,
-          color: isSubmitted ? '#34C759' : '#0071E3',
+          color: isSubmitted ? '#34C759' : 'var(--color-blue)',
           flex: 1,
         }}>
           {isSubmitted ? 'Briefing eingereicht ✅' : 'Kunden-Briefing'}
@@ -185,7 +185,7 @@ export default function IntakeFormSection({ projectId, projectName, briefingDone
       {/* Noch kein Formular */}
       {!existingForm && (
         <div>
-          <p style={{ fontSize: '12px', color: '#6E6E73', marginBottom: '10px', lineHeight: 1.5 }}>
+          <p style={{ fontSize: '12px', color: 'var(--color-text-tertiary)', marginBottom: '10px', lineHeight: 1.5 }}>
             Sende dem Kunden ein Briefing-Formular um Ziel, Seiten, Features und Budget abzufragen.
           </p>
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
@@ -195,7 +195,7 @@ export default function IntakeFormSection({ projectId, projectName, briefingDone
               style={{
                 display: 'flex', alignItems: 'center', gap: '6px',
                 padding: '8px 14px', borderRadius: '10px',
-                border: 'none', background: '#0071E3', color: '#fff',
+                border: 'none', background: 'var(--color-blue)', color: '#fff',
                 fontSize: '13px', fontWeight: 600,
                 cursor: creating ? 'not-allowed' : 'pointer',
                 opacity: creating ? 0.7 : 1,
@@ -214,8 +214,8 @@ export default function IntakeFormSection({ projectId, projectName, briefingDone
                 style={{
                   display: 'flex', alignItems: 'center', gap: '6px',
                   padding: '8px 14px', borderRadius: '10px',
-                  border: '1.5px solid #E5E5EA', background: '#F9F9F9',
-                  color: '#6E6E73', fontSize: '13px', fontWeight: 500,
+                  border: '1.5px solid #E5E5EA', background: 'var(--color-card-secondary)',
+                  color: 'var(--color-text-tertiary)', fontSize: '13px', fontWeight: 500,
                   cursor: 'pointer',
                 }}
               >
@@ -234,18 +234,18 @@ export default function IntakeFormSection({ projectId, projectName, briefingDone
               Eingereicht am {new Date(existingForm.submitted_at).toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' })}
             </p>
           ) : (
-            <p style={{ fontSize: '12px', color: '#6E6E73', marginBottom: '8px' }}>
+            <p style={{ fontSize: '12px', color: 'var(--color-text-tertiary)', marginBottom: '8px' }}>
               Link an den Kunden senden — das Formular ist öffentlich aufrufbar.
             </p>
           )}
 
           <div style={{
             display: 'flex', alignItems: 'center', gap: '6px',
-            padding: '8px 10px', background: '#F9F9F9',
+            padding: '8px 10px', background: 'var(--color-card-secondary)',
             borderRadius: '8px', border: '1px solid #E5E5EA', marginBottom: '8px',
           }}>
             <span style={{
-              flex: 1, fontSize: '11px', color: '#6E6E73',
+              flex: 1, fontSize: '11px', color: 'var(--color-text-tertiary)',
               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
             }}>
               {formUrl}
@@ -254,8 +254,8 @@ export default function IntakeFormSection({ projectId, projectName, briefingDone
               onClick={handleCopy}
               style={{
                 padding: '3px 8px', borderRadius: '6px', border: 'none',
-                background: copied ? '#34C759' : '#E5E5EA',
-                color: copied ? '#fff' : '#3C3C43',
+                background: copied ? '#34C759' : 'var(--color-border)',
+                color: copied ? '#fff' : 'var(--color-text-secondary)',
                 fontSize: '11px', fontWeight: 600, cursor: 'pointer',
                 display: 'flex', alignItems: 'center', gap: '3px',
                 flexShrink: 0, transition: 'background 0.15s',
@@ -267,7 +267,7 @@ export default function IntakeFormSection({ projectId, projectName, briefingDone
               href={formUrl} target="_blank" rel="noreferrer"
               style={{
                 padding: '3px 8px', borderRadius: '6px',
-                background: '#F2F2F7', color: '#3C3C43',
+                background: 'var(--color-card-secondary)', color: 'var(--color-text-secondary)',
                 fontSize: '11px', fontWeight: 600, textDecoration: 'none',
                 display: 'flex', alignItems: 'center', gap: '3px', flexShrink: 0,
               }}
@@ -284,7 +284,7 @@ export default function IntakeFormSection({ projectId, projectName, briefingDone
                 display: 'flex', alignItems: 'center', gap: '5px',
                 padding: '5px 10px', borderRadius: '8px',
                 border: '1px solid #E5E5EA', background: 'transparent',
-                color: '#8E8E93', fontSize: '11px', fontWeight: 500,
+                color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500,
                 cursor: 'pointer',
               }}
             >

@@ -10,7 +10,7 @@ import { useTheme } from '../context/ThemeContext';
 import { intakeApi } from '../api/intake';
 
 function avatarColor(str = '') {
-  const colors = ['#BF5AF2','#0071E3','#34C759','#FF9500','#FF3B30','#5AC8FA','#FF6961'];
+  const colors = ['#BF5AF2','var(--color-blue)','#34C759','#FF9500','#FF3B30','#5AC8FA','#AF52DE'];
   let hash = 0;
   for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
   return colors[Math.abs(hash) % colors.length];
@@ -83,39 +83,47 @@ export default function Sidebar() {
       flexDirection: 'column',
       height: '100vh',
       background: c.sidebarBg,
-      backdropFilter: 'blur(24px)',
-      WebkitBackdropFilter: 'blur(24px)',
-      borderRight: `1px solid ${c.borderSubtle}`,
+      backdropFilter: 'saturate(180%) blur(24px)',
+      WebkitBackdropFilter: 'saturate(180%) blur(24px)',
+      borderRight: `0.5px solid ${c.borderSubtle}`,
       zIndex: 10,
-      transition: 'background 0.2s ease, border-color 0.2s ease',
+      transition: 'background 0.3s cubic-bezier(0.22,1,0.36,1)',
     }}>
 
       {/* Logo */}
-      <div style={{ padding: '20px 20px 8px', flexShrink: 0 }}>
+      <div style={{ padding: '18px 20px 6px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{
-            width: 32, height: 32, borderRadius: 9, background: c.blue,
+            width: 30, height: 30, borderRadius: 8,
+            background: `linear-gradient(135deg, ${c.blue}, ${isDark ? '#0064D1' : '#0055B8'})`,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: `0 2px 8px ${c.blueLight}`,
           }}>
             <Zap size={14} color="#fff" strokeWidth={2.5} />
           </div>
-          <span style={{ fontSize: 15, fontWeight: 600, color: c.text, letterSpacing: '-0.3px' }}>Vecturo</span>
+          <span style={{
+            fontSize: 15, fontWeight: 600, color: c.text,
+            letterSpacing: '-0.02em',
+          }}>Vecturo</span>
         </div>
       </div>
 
       {/* New project CTA */}
-      <div style={{ padding: '0 16px 12px', flexShrink: 0 }}>
+      <div style={{ padding: '8px 14px 8px' }}>
         <button
           onClick={() => navigate('/wizard')}
           style={{
             width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            gap: 6, padding: '9px 16px', fontSize: 13, fontWeight: 500,
-            color: '#fff', background: c.blue, border: 'none', borderRadius: 10,
-            cursor: 'pointer', transition: 'opacity 0.15s ease',
+            gap: 5, padding: '7px 14px', fontSize: 13, fontWeight: 500,
+            letterSpacing: '-0.008em',
+            color: c.blue, background: c.blueLight,
+            border: 'none', borderRadius: 8,
+            cursor: 'pointer',
+            transition: 'background 0.15s cubic-bezier(0.22,1,0.36,1), transform 0.1s cubic-bezier(0.22,1,0.36,1)',
           }}
-          onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
-          onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+          onMouseEnter={e => e.currentTarget.style.background = c.blueMuted}
+          onMouseLeave={e => e.currentTarget.style.background = c.blueLight}
+          onMouseDown={e => e.currentTarget.style.transform = 'scale(0.97)'}
+          onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
         >
           <Plus size={14} strokeWidth={2} />
           Neues Projekt
@@ -123,46 +131,44 @@ export default function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav style={{ flex: 1, overflowY: 'auto', padding: '0 12px 8px' }}>
+      <nav style={{ flex: 1, overflowY: 'auto', padding: '4px 10px 8px' }}>
         {NAV_GROUPS.map((group, gi) => (
           <div key={gi}>
             {group.label && (
               <p style={{
-                padding: '16px 12px 6px', fontSize: 10.5, fontWeight: 600,
-                color: c.textSecondary, textTransform: 'uppercase',
-                letterSpacing: '0.08em', userSelect: 'none', margin: 0,
+                padding: '16px 10px 5px', fontSize: 11, fontWeight: 600,
+                color: c.textTertiary, textTransform: 'uppercase',
+                letterSpacing: '0.04em', userSelect: 'none', margin: 0,
               }}>
                 {group.label}
               </p>
             )}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               {group.items.map(({ to, icon: Icon, label }) => (
                 <NavLink key={to} to={to} end={to === '/' || to === '/sales'} style={{ textDecoration: 'none' }}>
                   {({ isActive }) => (
                     <div style={{
-                      position: 'relative',
-                      display: 'flex', alignItems: 'center', gap: 10,
-                      padding: '7px 12px', borderRadius: 10,
-                      fontSize: 13.5, letterSpacing: '-0.01em', cursor: 'pointer',
-                      transition: 'background 0.12s ease, color 0.12s ease',
+                      display: 'flex', alignItems: 'center', gap: 8,
+                      padding: '6px 10px', borderRadius: 8,
+                      fontSize: 13, letterSpacing: '-0.008em', cursor: 'pointer',
+                      transition: 'background 0.15s cubic-bezier(0.22,1,0.36,1), color 0.15s cubic-bezier(0.22,1,0.36,1)',
                       background: isActive ? c.blueLight : 'transparent',
-                      color: isActive ? c.blue : (isDark ? '#AEAEB2' : '#424245'),
-                      fontWeight: isActive ? 500 : 400,
+                      color: isActive ? c.blue : c.textSecondary,
+                      fontWeight: isActive ? 600 : 400,
                     }}>
-                      {isActive && (
-                        <span style={{
-                          position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)',
-                          width: 3, height: 18, background: c.blue, borderRadius: '0 2px 2px 0',
-                        }} />
-                      )}
-                      <Icon size={15} color={isActive ? c.blue : c.textSecondary} strokeWidth={isActive ? 2 : 1.75} />
+                      <Icon
+                        size={16}
+                        color={isActive ? c.blue : c.textTertiary}
+                        strokeWidth={isActive ? 2 : 1.5}
+                      />
                       <span style={{ flex: 1 }}>{label}</span>
                       {to === '/intake' && unread?.count > 0 && (
                         <span style={{
-                          minWidth: 18, height: 18, padding: '0 4px',
+                          minWidth: 18, height: 18, padding: '0 5px',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                           borderRadius: 99, background: '#FF3B30',
-                          color: '#fff', fontSize: 10, fontWeight: 700,
+                          color: '#fff', fontSize: 11, fontWeight: 600,
+                          lineHeight: 1,
                         }}>
                           {unread.count > 99 ? '99+' : unread.count}
                         </span>
@@ -178,14 +184,17 @@ export default function Sidebar() {
 
       {/* User */}
       <div style={{
-        padding: '12px', borderTop: `1px solid ${c.borderSubtle}`, flexShrink: 0,
+        padding: '8px 10px 12px', borderTop: `0.5px solid ${c.borderSubtle}`,
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px', borderRadius: 10, marginBottom: 4 }}>
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px',
+          borderRadius: 8, cursor: 'default',
+        }}>
           <div style={{ position: 'relative', flexShrink: 0 }}>
             <div style={{
               width: 28, height: 28, borderRadius: '50%',
               background: bgColor, display: 'flex', alignItems: 'center',
-              justifyContent: 'center', fontSize: 10, fontWeight: 700,
+              justifyContent: 'center', fontSize: 11, fontWeight: 600,
               color: '#fff', overflow: 'hidden',
             }}>
               {user?.avatar_base64
@@ -193,14 +202,14 @@ export default function Sidebar() {
                 : initials}
             </div>
             <span style={{
-              position: 'absolute', bottom: -2, right: -2,
-              width: 10, height: 10, background: '#34C759',
-              borderRadius: '50%', border: `2px solid ${c.sidebarBg}`, display: 'block',
+              position: 'absolute', bottom: -1, right: -1,
+              width: 9, height: 9, background: '#34C759',
+              borderRadius: '50%', border: `2px solid ${isDark ? '#161618' : 'var(--color-card-secondary)'}`,
             }} />
           </div>
           <div style={{ minWidth: 0, flex: 1 }}>
             {user?.name && (
-              <p style={{ fontSize: 12, fontWeight: 500, color: c.text, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.name}</p>
+              <p style={{ fontSize: 13, fontWeight: 500, color: c.text, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', letterSpacing: '-0.008em' }}>{user.name}</p>
             )}
             <p style={{ fontSize: 11, color: c.textTertiary, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.email}</p>
           </div>
@@ -209,14 +218,16 @@ export default function Sidebar() {
           onClick={logout}
           style={{
             width: '100%', display: 'flex', alignItems: 'center', gap: 8,
-            padding: '6px 12px', fontSize: 12.5, color: c.textSecondary,
+            padding: '6px 10px', fontSize: 13, color: c.textTertiary,
+            letterSpacing: '-0.008em',
             borderRadius: 8, border: 'none', background: 'none',
-            cursor: 'pointer', transition: 'background 0.15s ease, color 0.15s ease',
+            cursor: 'pointer',
+            transition: 'background 0.15s cubic-bezier(0.22,1,0.36,1), color 0.15s cubic-bezier(0.22,1,0.36,1)',
           }}
-          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,59,48,0.1)'; e.currentTarget.style.color = '#FF3B30'; }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = c.textSecondary; }}
+          onMouseEnter={e => { e.currentTarget.style.background = c.redLight; e.currentTarget.style.color = c.red; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = c.textTertiary; }}
         >
-          <LogOut size={13} strokeWidth={1.75} />
+          <LogOut size={14} strokeWidth={1.5} />
           Abmelden
         </button>
       </div>

@@ -31,7 +31,7 @@ export default function SalesTargetModal({ targets, onSave, onClose, isPending }
     >
       <div
         style={{
-          background: '#fff', borderRadius: 18, padding: '28px', width: '100%', maxWidth: 420,
+          background: 'var(--color-card)', borderRadius: 18, padding: '28px', width: '100%', maxWidth: 420,
           boxShadow: '0 24px 60px rgba(0,0,0,0.18)',
         }}
         onClick={e => e.stopPropagation()}
@@ -39,16 +39,16 @@ export default function SalesTargetModal({ targets, onSave, onClose, isPending }
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 22 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{
-              width: 34, height: 34, borderRadius: 9, background: 'rgba(0,113,227,0.1)',
+              width: 34, height: 34, borderRadius: 9, background: 'rgba(0,122,255,0.1)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
-              <Settings size={16} color="#0071E3" />
+              <Settings size={16} color="#007AFF" />
             </div>
-            <span style={{ fontSize: 17, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-0.3px' }}>
+            <span style={{ fontSize: 17, fontWeight: 700, color: 'var(--color-text)', letterSpacing: '-0.3px' }}>
               Tagesziele bearbeiten
             </span>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#86868B', padding: 4 }}>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)', padding: 4 }}>
             <X size={18} />
           </button>
         </div>
@@ -56,7 +56,7 @@ export default function SalesTargetModal({ targets, onSave, onClose, isPending }
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
           {FIELDS.map(f => (
             <div key={f.key} style={f.key === 'weekly_closings' ? { gridColumn: 'span 2' } : undefined}>
-              <label style={{ fontSize: 12, fontWeight: 600, color: '#636366', display: 'block', marginBottom: 5 }}>{f.label}</label>
+              <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-tertiary)', display: 'block', marginBottom: 5 }}>{f.label}</label>
               <input
                 type="number"
                 min={0}
@@ -76,7 +76,7 @@ export default function SalesTargetModal({ targets, onSave, onClose, isPending }
             onClick={onClose}
             style={{
               flex: 1, padding: '10px', borderRadius: 10, fontSize: 14, fontWeight: 600,
-              border: '1.5px solid #E5E5EA', background: '#fff', color: '#636366', cursor: 'pointer',
+              border: '1.5px solid #E5E5EA', background: 'var(--color-card)', color: 'var(--color-text-tertiary)', cursor: 'pointer',
             }}
           >
             Abbrechen
@@ -86,7 +86,7 @@ export default function SalesTargetModal({ targets, onSave, onClose, isPending }
             disabled={isPending}
             style={{
               flex: 2, padding: '10px', borderRadius: 10, fontSize: 14, fontWeight: 600,
-              border: 'none', background: '#0071E3', color: '#fff',
+              border: 'none', background: 'var(--color-blue)', color: '#fff',
               cursor: isPending ? 'not-allowed' : 'pointer', opacity: isPending ? 0.6 : 1,
             }}
           >

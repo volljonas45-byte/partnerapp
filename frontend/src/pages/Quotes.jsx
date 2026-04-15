@@ -70,30 +70,35 @@ export default function Quotes() {
     }
   };
 
+  const cardStyle = {
+    background: c.card,
+    borderRadius: 12,
+    border: `0.5px solid ${c.borderSubtle}`,
+    boxShadow: isDark
+      ? '0 0 0 0.5px rgba(255,255,255,0.04), 0 1px 3px rgba(0,0,0,0.2), 0 6px 20px rgba(0,0,0,0.25)'
+      : '0 0 0 0.5px var(--color-border-subtle), 0 1px 3px var(--color-border-subtle), 0 6px 20px var(--color-border-subtle)',
+  };
+
   if (isLoading) return (
-    <div className={isMobile ? "p-4" : "p-8"}>
+    <div style={{ padding: isMobile ? 16 : '28px 32px' }}>
       <div className="page-header">
         <div>
           <div className="skeleton h-7 w-28 mb-2" />
           <div className="skeleton h-4 w-20" />
         </div>
-        <div className="skeleton h-9 w-36 rounded-full" />
+        <div className="skeleton h-9 w-36 rounded-lg" />
       </div>
-      <div style={{ display: 'flex', gap: '12px', marginBottom: '24px' }}>
+      <div style={{ display: 'flex', gap: 12, marginBottom: 24 }}>
         <div className="skeleton h-9 w-60 rounded-xl" />
         <div className="skeleton h-9 w-64 rounded-lg" />
       </div>
-      <div className="card p-0 overflow-hidden">
-        <div style={{ padding: '10px 18px', background: 'rgba(118,118,128,0.06)', borderBottom: `1px solid ${c.borderSubtle}` }}>
-          <div className="skeleton h-3 w-28" />
-        </div>
+      <div style={{ ...cardStyle, padding: 0, overflow: 'hidden' }}>
         {[...Array(5)].map((_, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '12px 18px 12px 20px', borderBottom: i < 4 ? '1px solid rgba(0,0,0,0.04)' : 'none' }}>
-            <div className="skeleton h-4" style={{ width: '100px' }} />
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '12px 20px', borderBottom: i < 4 ? `0.5px solid ${c.borderSubtle}` : 'none' }}>
+            <div className="skeleton h-4" style={{ width: 100 }} />
             <div className="skeleton h-4" style={{ width: `${110 + i * 18}px` }} />
-            <div className="skeleton h-4 hidden md:block" style={{ width: '80px' }} />
-            <div className="skeleton h-5 rounded-full" style={{ width: '72px' }} />
-            <div className="skeleton h-4 ml-auto" style={{ width: '64px' }} />
+            <div className="skeleton h-5 rounded-md" style={{ width: 72 }} />
+            <div className="skeleton h-4 ml-auto" style={{ width: 64 }} />
           </div>
         ))}
       </div>
@@ -104,42 +109,32 @@ export default function Quotes() {
   if (isMobile) {
     return (
       <div style={{ background: c.bg, minHeight: '100vh' }}>
-        {/* Header */}
         <div style={{ padding: '20px 16px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <h1 style={{ fontSize: 22, fontWeight: 700, color: c.text, letterSpacing: '-0.4px', margin: 0 }}>Angebote</h1>
-            <p style={{ fontSize: 13, color: c.textSecondary, margin: '2px 0 0' }}>{quotes.length} gesamt</p>
+            <h1 style={{ fontSize: 28, fontWeight: 700, color: c.text, letterSpacing: '-0.032em', margin: 0 }}>Angebote</h1>
+            <p style={{ fontSize: 13, color: c.textSecondary, margin: '4px 0 0', letterSpacing: '-0.006em' }}>{quotes.length} gesamt</p>
           </div>
-          <button
-            onClick={() => navigate('/quotes/new')}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 14px', borderRadius: 12, background: '#0071E3', color: '#fff', border: 'none', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
-          >
-            <Plus size={15} strokeWidth={2.5} />
-            Neu
+          <button onClick={() => navigate('/quotes/new')} className="btn-primary">
+            <Plus size={15} strokeWidth={2} /> Neu
           </button>
         </div>
 
-        {/* Search */}
         <div style={{ padding: '0 16px 10px', position: 'relative' }}>
-          <Search size={14} style={{ position: 'absolute', left: 28, top: '50%', transform: 'translateY(-50%)', color: c.textSecondary, pointerEvents: 'none' }} />
-          <input
-            style={{ width: '100%', padding: '10px 12px 10px 36px', borderRadius: 12, border: '1px solid rgba(0,0,0,0.1)', background: c.card, fontSize: 15, outline: 'none', boxSizing: 'border-box' }}
-            placeholder="Suchen…"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
+          <Search size={14} style={{ position: 'absolute', left: 28, top: '50%', transform: 'translateY(-50%)', color: c.textTertiary, pointerEvents: 'none' }} />
+          <input className="input" style={{ paddingLeft: 36 }} placeholder="Suchen..." value={search} onChange={e => setSearch(e.target.value)} />
         </div>
 
-        {/* Status filter scroll */}
-        <div style={{ display: 'flex', gap: 8, padding: '0 16px 14px', overflowX: 'auto', scrollbarWidth: 'none' }}>
+        <div style={{ display: 'flex', gap: 6, padding: '0 16px 14px', overflowX: 'auto', scrollbarWidth: 'none' }}>
           {STATUS_FILTERS.map(({ key, label }) => (
             <button
               key={key}
               onClick={() => setStatus(key)}
               style={{
-                flexShrink: 0, padding: '7px 14px', borderRadius: 99, border: 'none', fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                background: statusFilter === key ? '#1D1D1F' : '#fff',
-                color: statusFilter === key ? '#fff' : '#636366',
+                flexShrink: 0, padding: '6px 14px', borderRadius: 8, border: 'none',
+                fontSize: 13, fontWeight: 500, cursor: 'pointer', letterSpacing: '-0.006em',
+                background: statusFilter === key ? (isDark ? c.card : c.text) : c.cardSecondary,
+                color: statusFilter === key ? (isDark ? c.text : '#fff') : c.textSecondary,
+                transition: 'all 0.15s cubic-bezier(0.22,1,0.36,1)',
               }}
             >
               {label}
@@ -147,50 +142,49 @@ export default function Quotes() {
           ))}
         </div>
 
-        {/* Card list */}
         <div style={{ padding: '0 16px' }}>
           {filtered.length === 0 ? (
-            <div style={{ background: c.card, borderRadius: 16, padding: '40px 20px', textAlign: 'center' }}>
-              <ClipboardList size={32} color="#D1D1D6" strokeWidth={1.25} style={{ margin: '0 auto 12px' }} />
+            <div style={{ ...cardStyle, padding: '40px 20px', textAlign: 'center' }}>
+              <ClipboardList size={28} color={c.border} strokeWidth={1.25} style={{ margin: '0 auto 12px' }} />
               <p style={{ fontSize: 15, fontWeight: 600, color: c.text, margin: '0 0 4px' }}>
                 {search || statusFilter !== 'all' ? 'Keine Angebote gefunden' : 'Noch keine Angebote'}
               </p>
               {!search && statusFilter === 'all' && (
-                <button onClick={() => navigate('/quotes/new')} style={{ marginTop: 16, padding: '10px 20px', borderRadius: 12, background: '#0071E3', color: '#fff', border: 'none', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
+                <button onClick={() => navigate('/quotes/new')} className="btn-primary" style={{ marginTop: 16 }}>
                   Angebot erstellen
                 </button>
               )}
             </div>
           ) : (
-            <div style={{ background: c.card, borderRadius: 16, overflow: 'hidden', border: `1px solid ${c.borderSubtle}` }}>
+            <div style={{ ...cardStyle, padding: 0, overflow: 'hidden' }}>
               {filtered.map((q, idx) => (
                 <div
                   key={q.id}
                   onClick={() => navigate(`/quotes/${q.id}`)}
                   style={{
-                    display: 'flex', alignItems: 'center', padding: '14px 16px', cursor: 'pointer',
-                    borderBottom: idx < filtered.length - 1 ? '1px solid rgba(0,0,0,0.05)' : 'none',
+                    display: 'flex', alignItems: 'center', padding: '12px 16px', cursor: 'pointer',
+                    borderBottom: idx < filtered.length - 1 ? `0.5px solid ${c.borderSubtle}` : 'none',
                   }}
                 >
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                      <span style={{ fontSize: 15, fontWeight: 600, color: c.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <span style={{ fontSize: 15, fontWeight: 500, color: c.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', letterSpacing: '-0.009em' }}>
                         {q.client_name}
                       </span>
                       <StatusBadge status={q.status} />
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontSize: 12, color: c.textSecondary, fontFamily: 'monospace' }}>{q.quote_number}</span>
+                      <span style={{ fontSize: 12, color: c.textTertiary, fontFamily: 'monospace' }}>{q.quote_number}</span>
                       {q.valid_until && (
-                        <span style={{ fontSize: 12, color: c.textSecondary }}>· Gültig bis {formatDate(q.valid_until)}</span>
+                        <span style={{ fontSize: 12, color: c.textTertiary }}>· Gültig bis {formatDate(q.valid_until)}</span>
                       )}
                     </div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                    <span style={{ fontSize: 16, fontWeight: 700, color: c.text }}>
+                    <span style={{ fontSize: 16, fontWeight: 600, color: c.text, letterSpacing: '-0.01em' }}>
                       {formatCurrency(q.total)}
                     </span>
-                    <ChevronRight size={16} color="#C7C7CC" />
+                    <ChevronRight size={14} color={c.border} strokeWidth={2} />
                   </div>
                 </div>
               ))}
@@ -204,39 +198,39 @@ export default function Quotes() {
 
   // ── Desktop layout ─────────────────────────────────────────────
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between mb-8">
+    <div className="animate-fade-in" style={{ padding: '28px 32px' }}>
+      <div className="page-header">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">Angebote</h1>
-          <p className="text-sm text-gray-500 mt-0.5">{quotes.length} gesamt</p>
+          <h1 className="page-title">Angebote</h1>
+          <p className="page-subtitle">{quotes.length} gesamt</p>
         </div>
         <button onClick={() => navigate('/quotes/new')} className="btn-primary">
-          <Plus size={16} /> Neues Angebot
+          <Plus size={15} strokeWidth={2} /> Neues Angebot
         </button>
       </div>
 
-      {/* Filter */}
       <div className="flex flex-wrap items-center gap-3 mb-6">
         <div className="relative">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
-            className="input pl-9 w-64"
-            placeholder="Nach Nummer oder Kunde suchen…"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
+          <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: c.textTertiary }} />
+          <input className="input w-64" style={{ paddingLeft: 36 }} placeholder="Suchen..." value={search} onChange={e => setSearch(e.target.value)} />
         </div>
 
-        <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1 flex-wrap">
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 2,
+          background: c.inputBg, borderRadius: 8, padding: 3,
+        }}>
           {STATUS_FILTERS.map(({ key, label }) => (
             <button
               key={key}
               onClick={() => setStatus(key)}
-              className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
-                statusFilter === key
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
+              style={{
+                padding: '5px 12px', borderRadius: 6, border: 'none',
+                fontSize: 12, fontWeight: 500, cursor: 'pointer', letterSpacing: '-0.006em',
+                background: statusFilter === key ? c.card : 'transparent',
+                color: statusFilter === key ? c.text : c.textSecondary,
+                boxShadow: statusFilter === key ? (isDark ? '0 1px 3px rgba(0,0,0,0.3)' : '0 1px 3px var(--color-border-subtle)') : 'none',
+                transition: 'all 0.15s cubic-bezier(0.22,1,0.36,1)',
+              }}
             >
               {label}
             </button>
@@ -245,31 +239,37 @@ export default function Quotes() {
       </div>
 
       {filtered.length === 0 ? (
-        <div className="card text-center py-14">
-          <ClipboardList size={32} className="mx-auto text-gray-200 mb-3" />
-          <p className="text-sm text-gray-400">
-            {search || statusFilter !== 'all'
-              ? 'Keine Angebote gefunden.'
-              : 'Noch keine Angebote.'}
+        <div style={{ ...cardStyle, padding: '48px 24px', textAlign: 'center' }}>
+          <div style={{
+            width: 44, height: 44, borderRadius: '50%', background: c.cardSecondary,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px',
+          }}>
+            <ClipboardList size={20} color={c.textTertiary} />
+          </div>
+          <p style={{ fontSize: 15, fontWeight: 600, color: c.text, marginBottom: 4 }}>
+            {search || statusFilter !== 'all' ? 'Keine Angebote gefunden' : 'Noch keine Angebote'}
+          </p>
+          <p style={{ fontSize: 13, color: c.textSecondary, marginBottom: 16 }}>
+            {search ? `Keine Treffer für "${search}"` : 'Erstellen Sie Ihr erstes Angebot.'}
           </p>
           {!search && statusFilter === 'all' && (
-            <button onClick={() => navigate('/quotes/new')} className="btn-primary mt-4">
-              <Plus size={16} /> Angebot erstellen
+            <button onClick={() => navigate('/quotes/new')} className="btn-primary">
+              <Plus size={15} /> Angebot erstellen
             </button>
           )}
         </div>
       ) : (
-        <div className="card p-0 overflow-hidden">
+        <div style={{ ...cardStyle, padding: 0, overflow: 'hidden' }}>
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-100">
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400">Nummer</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400">Kunde</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400">Datum</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400">Gültig bis</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400">Status</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-400">Betrag</th>
-                <th className="px-6 py-3 w-24" />
+              <tr style={{ borderBottom: `0.5px solid ${c.borderSubtle}` }}>
+                <th className="table-header-cell pl-5">Nummer</th>
+                <th className="table-header-cell">Kunde</th>
+                <th className="table-header-cell hidden md:table-cell">Datum</th>
+                <th className="table-header-cell hidden sm:table-cell">Gültig bis</th>
+                <th className="table-header-cell">Status</th>
+                <th className="table-header-cell text-right">Betrag</th>
+                <th className="table-header-cell w-24" />
               </tr>
             </thead>
             <tbody>
@@ -277,36 +277,55 @@ export default function Quotes() {
                 <tr
                   key={q.id}
                   onClick={() => navigate(`/quotes/${q.id}`)}
-                  className="border-b border-gray-50 hover:bg-gray-50 cursor-pointer transition-colors"
+                  className="group"
+                  style={{
+                    borderBottom: `0.5px solid ${c.borderSubtle}`,
+                    cursor: 'pointer',
+                    transition: 'background 0.12s cubic-bezier(0.22,1,0.36,1)',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = c.blueLight}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                 >
-                  <td className="px-6 py-3 font-medium text-gray-900">{q.quote_number}</td>
-                  <td className="px-6 py-3 text-gray-700">{q.client_name}</td>
-                  <td className="px-6 py-3 text-gray-500">{formatDate(q.issue_date)}</td>
-                  <td className="px-6 py-3 text-gray-500">{formatDate(q.valid_until)}</td>
-                  <td className="px-6 py-3"><StatusBadge status={q.status} /></td>
-                  <td className="px-6 py-3 text-right font-semibold text-gray-900">{formatCurrency(q.total)}</td>
-                  <td className="px-6 py-3">
-                    <div className="flex items-center justify-end gap-1" onClick={e => e.stopPropagation()}>
+                  <td className="table-cell pl-5">
+                    <span style={{ fontFamily: 'monospace', fontWeight: 500, color: c.text, fontSize: 12 }}>{q.quote_number}</span>
+                  </td>
+                  <td className="table-cell">
+                    <span style={{ fontWeight: 500, color: c.text, fontSize: 13 }}>{q.client_name}</span>
+                  </td>
+                  <td className="table-cell hidden md:table-cell" style={{ color: c.textSecondary, fontSize: 13 }}>{formatDate(q.issue_date)}</td>
+                  <td className="table-cell hidden sm:table-cell" style={{ color: c.textSecondary, fontSize: 13 }}>{formatDate(q.valid_until)}</td>
+                  <td className="table-cell"><StatusBadge status={q.status} /></td>
+                  <td className="table-cell text-right">
+                    <span style={{ fontWeight: 600, color: c.text, fontVariantNumeric: 'tabular-nums', fontSize: 13 }}>{formatCurrency(q.total)}</span>
+                  </td>
+                  <td className="table-cell pr-4">
+                    <div className="flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
                       <button
                         onClick={() => navigate(`/quotes/${q.id}`)}
-                        className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
                         title="Öffnen"
+                        style={{ padding: 6, borderRadius: 6, border: 'none', background: 'transparent', cursor: 'pointer', color: c.textTertiary, transition: 'background 0.12s, color 0.12s' }}
+                        onMouseEnter={e => { e.currentTarget.style.background = c.cardSecondary; e.currentTarget.style.color = c.text; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = c.textTertiary; }}
                       >
-                        <Eye size={14} />
+                        <Eye size={13} />
                       </button>
                       <button
                         onClick={e => handleDownload(e, q)}
-                        className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
-                        title="PDF herunterladen"
+                        title="PDF"
+                        style={{ padding: 6, borderRadius: 6, border: 'none', background: 'transparent', cursor: 'pointer', color: c.textTertiary, transition: 'background 0.12s, color 0.12s' }}
+                        onMouseEnter={e => { e.currentTarget.style.background = c.cardSecondary; e.currentTarget.style.color = c.text; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = c.textTertiary; }}
                       >
-                        <Download size={14} />
+                        <Download size={13} />
                       </button>
                       <button
                         onClick={e => handleDelete(e, q)}
-                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
                         title="Löschen"
+                        style={{ padding: 6, borderRadius: 6, border: 'none', background: 'transparent', cursor: 'pointer', color: c.textTertiary, transition: 'background 0.12s, color 0.12s' }}
+                        onMouseEnter={e => { e.currentTarget.style.background = c.redLight; e.currentTarget.style.color = c.red; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = c.textTertiary; }}
                       >
-                        <Trash2 size={14} />
+                        <Trash2 size={13} />
                       </button>
                     </div>
                   </td>

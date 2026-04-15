@@ -53,8 +53,8 @@ export default function FollowupScheduler({ leadId, currentDate, onSave, onClose
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 34, height: 34, borderRadius: 9, background: 'rgba(0,113,227,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <CalendarDays size={16} color="#0071E3" />
+            <div style={{ width: 34, height: 34, borderRadius: 9, background: 'rgba(0,122,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <CalendarDays size={16} color="#007AFF" />
             </div>
             <span style={{ fontSize: 16, fontWeight: 700, color: c.text }}>Follow-up planen</span>
           </div>

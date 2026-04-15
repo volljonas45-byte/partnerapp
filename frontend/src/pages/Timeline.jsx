@@ -38,16 +38,16 @@ const VIEWS = {
 };
 
 const STATUS_CFG = {
-  planned:            { label: 'Geplant',          color: '#86868B', bg: 'rgba(118,118,128,0.1)' },
-  active:             { label: 'Aktiv',            color: '#0071E3', bg: 'rgba(0,113,227,0.1)'   },
+  planned:            { label: 'Geplant',          color: 'var(--color-text-secondary)', bg: 'rgba(118,118,128,0.1)' },
+  active:             { label: 'Aktiv',            color: 'var(--color-blue)', bg: 'rgba(0,122,255,0.1)'   },
   completed:          { label: 'Abgeschlossen',    color: '#34C759', bg: 'rgba(52,199,89,0.1)'   },
   waiting_for_client: { label: 'Wartet auf Kunde', color: '#FF9500', bg: 'rgba(255,149,0,0.1)'   },
-  deferred:           { label: 'Verschoben',       color: '#94A3B8', bg: 'rgba(148,163,184,0.1)' },
+  deferred:           { label: 'Verschoben',       color: 'var(--color-text-tertiary)', bg: 'rgba(148,163,184,0.1)' },
   on_hold:            { label: 'Pausiert',         color: '#FF9500', bg: 'rgba(255,149,0,0.1)'   },
 };
 
 const FALLBACK_COLORS = [
-  '#0071E3', '#34C759', '#FF9500', '#FF3B30', '#BF5AF2',
+  'var(--color-blue)', '#34C759', '#FF9500', '#FF3B30', '#BF5AF2',
   '#5AC8FA', '#32ADE6', '#AC8E68', '#FF6961', '#30B0C7',
 ];
 
@@ -176,10 +176,10 @@ export default function Timeline() {
 
       {/* ── Page header ───────────────────────────────────────────────────── */}
       <div style={{ padding: '24px 28px 0', flexShrink: 0 }}>
-        <h1 style={{ margin: 0, fontSize: '22px', fontWeight: '700', color: '#1D1D1F', letterSpacing: '-0.03em' }}>
+        <h1 style={{ margin: 0, fontSize: '22px', fontWeight: '700', color: 'var(--color-text)', letterSpacing: '-0.03em' }}>
           Timeline
         </h1>
-        <p style={{ margin: '3px 0 0', fontSize: '13px', color: '#86868B', letterSpacing: '-0.01em' }}>
+        <p style={{ margin: '3px 0 0', fontSize: '13px', color: 'var(--color-text-secondary)', letterSpacing: '-0.01em' }}>
           Projektfortschritt und Deadlines auf einen Blick
         </p>
       </div>
@@ -191,16 +191,16 @@ export default function Timeline() {
       }}>
         {/* View toggle */}
         <div style={{
-          display: 'flex', background: '#fff',
+          display: 'flex', background: 'var(--color-card)',
           borderRadius: '10px', padding: '3px',
-          border: '1px solid rgba(0,0,0,0.09)', gap: '1px',
+          border: '1px solid var(--color-border-subtle)', gap: '1px',
         }}>
           {[['day', 'Tag'], ['week', 'Woche'], ['month', 'Monat']].map(([v, lbl]) => (
             <button key={v} onClick={() => setView(v)} style={{
               padding: '5px 14px', borderRadius: '7px', border: 'none', cursor: 'pointer',
               fontSize: '13px', fontWeight: view === v ? '600' : '400',
-              color: view === v ? '#1D1D1F' : '#86868B',
-              background: view === v ? '#F2F2F7' : 'transparent',
+              color: view === v ? 'var(--color-text)' : 'var(--color-text-secondary)',
+              background: view === v ? 'var(--color-card-secondary)' : 'transparent',
               transition: 'all 0.12s', letterSpacing: '-0.01em',
             }}>{lbl}</button>
           ))}
@@ -213,11 +213,11 @@ export default function Timeline() {
               onClick={() => setAnchor(d => addDays(d, dir * cfg.step))}
               style={{
                 width: '30px', height: '30px', borderRadius: '8px',
-                border: '1px solid rgba(0,0,0,0.09)', background: '#fff',
+                border: '1px solid var(--color-border-subtle)', background: 'var(--color-card)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 cursor: 'pointer', transition: 'background 0.12s',
               }}
-              onMouseEnter={e => e.currentTarget.style.background = '#F2F2F7'}
+              onMouseEnter={e => e.currentTarget.style.background = 'var(--color-card-secondary)'}
               onMouseLeave={e => e.currentTarget.style.background = '#fff'}
             >
               <Icon size={14} color="#424245" />
@@ -225,17 +225,17 @@ export default function Timeline() {
           ))}
         </div>
 
-        <span style={{ fontSize: '13px', fontWeight: '500', color: '#424245', letterSpacing: '-0.01em' }}>
+        <span style={{ fontSize: '13px', fontWeight: '500', color: 'var(--color-text-secondary)', letterSpacing: '-0.01em' }}>
           {anchor.getDate()}. {MONTHS[anchor.getMonth()]} – {viewEnd.getDate()}. {MONTHS[viewEnd.getMonth()]} {viewEnd.getFullYear()}
         </span>
 
         <button onClick={goToday} style={{
           padding: '5px 12px', borderRadius: '8px',
-          border: '1px solid rgba(0,0,0,0.09)', background: '#fff',
-          fontSize: '12.5px', fontWeight: '500', color: '#424245',
+          border: '1px solid var(--color-border-subtle)', background: 'var(--color-card)',
+          fontSize: '12.5px', fontWeight: '500', color: 'var(--color-text-secondary)',
           cursor: 'pointer', letterSpacing: '-0.01em', transition: 'background 0.12s',
         }}
-          onMouseEnter={e => e.currentTarget.style.background = '#F2F2F7'}
+          onMouseEnter={e => e.currentTarget.style.background = 'var(--color-card-secondary)'}
           onMouseLeave={e => e.currentTarget.style.background = '#fff'}
         >
           Heute
@@ -246,15 +246,15 @@ export default function Timeline() {
         {/* Show done toggle */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '7px', cursor: 'pointer' }}
           onClick={() => setShowDone(v => !v)}>
-          <span style={{ fontSize: '12.5px', color: '#424245', letterSpacing: '-0.01em' }}>Abgeschlossen</span>
+          <span style={{ fontSize: '12.5px', color: 'var(--color-text-secondary)', letterSpacing: '-0.01em' }}>Abgeschlossen</span>
           <div style={{
             width: '36px', height: '20px', borderRadius: '99px',
-            background: showDone ? '#0071E3' : '#D1D1D6',
+            background: showDone ? 'var(--color-blue)' : 'var(--color-border)',
             position: 'relative', transition: 'background 0.2s', flexShrink: 0,
           }}>
             <div style={{
               position: 'absolute', width: '16px', height: '16px',
-              borderRadius: '50%', background: '#fff',
+              borderRadius: '50%', background: 'var(--color-card)',
               top: '2px', left: showDone ? '18px' : '2px',
               transition: 'left 0.2s',
               boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
@@ -265,8 +265,8 @@ export default function Timeline() {
         {/* Sort */}
         <select value={sortBy} onChange={e => setSortBy(e.target.value)} style={{
           padding: '6px 10px', borderRadius: '8px',
-          border: '1px solid rgba(0,0,0,0.09)', background: '#fff',
-          fontSize: '12.5px', color: '#424245', cursor: 'pointer',
+          border: '1px solid var(--color-border-subtle)', background: 'var(--color-card)',
+          fontSize: '12.5px', color: 'var(--color-text-secondary)', cursor: 'pointer',
           letterSpacing: '-0.01em', outline: 'none',
         }}>
           <option value="deadline">Nach Deadline</option>
@@ -279,10 +279,10 @@ export default function Timeline() {
       <div style={{
         flex: 1, minHeight: 0,
         margin: '0 28px 28px',
-        background: '#fff',
+        background: 'var(--color-card)',
         borderRadius: '16px',
-        border: '1px solid rgba(0,0,0,0.07)',
-        boxShadow: '0 2px 16px rgba(0,0,0,0.06)',
+        border: '1px solid var(--color-border-subtle)',
+        boxShadow: '0 2px 16px var(--color-border-subtle)',
         overflow: 'hidden',
         display: 'flex',
       }}>
@@ -290,22 +290,22 @@ export default function Timeline() {
         {/* ── LEFT PANEL (fixed) ────────────────────────────────────────── */}
         <div style={{
           width: `${LEFT_W}px`, flexShrink: 0,
-          borderRight: '1px solid rgba(0,0,0,0.07)',
+          borderRight: '1px solid var(--color-border-subtle)',
           display: 'flex', flexDirection: 'column',
           zIndex: 4,
-          boxShadow: '2px 0 8px rgba(0,0,0,0.04)',
+          boxShadow: '2px 0 8px var(--color-border-subtle)',
         }}>
           {/* Left header */}
           <div style={{
             height: `${HDR_H}px`, flexShrink: 0,
             display: 'flex', alignItems: 'flex-end',
             padding: '0 16px 10px',
-            borderBottom: '1px solid rgba(0,0,0,0.07)',
-            background: '#fff',
+            borderBottom: '1px solid var(--color-border-subtle)',
+            background: 'var(--color-card)',
           }}>
             <span style={{
               fontSize: '10.5px', fontWeight: '600',
-              color: '#86868B', textTransform: 'uppercase', letterSpacing: '0.07em',
+              color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.07em',
             }}>
               {projects.length} Projekt{projects.length !== 1 ? 'e' : ''}
             </span>
@@ -326,8 +326,8 @@ export default function Timeline() {
                     display: 'flex', alignItems: 'center',
                     gap: '10px', padding: '0 14px',
                     cursor: 'pointer',
-                    borderBottom: '1px solid rgba(0,0,0,0.04)',
-                    background: hovered === p.id ? 'rgba(0,0,0,0.025)' : 'transparent',
+                    borderBottom: '1px solid var(--color-border-subtle)',
+                    background: hovered === p.id ? 'var(--color-border-subtle)' : 'transparent',
                     transition: 'background 0.1s',
                   }}
                 >
@@ -339,12 +339,12 @@ export default function Timeline() {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{
                       margin: 0, fontSize: '13px', fontWeight: '500',
-                      color: '#1D1D1F', letterSpacing: '-0.01em',
+                      color: 'var(--color-text)', letterSpacing: '-0.01em',
                       overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                     }}>{p.name}</p>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '2px' }}>
                       {p._area?.name && (
-                        <span style={{ fontSize: '11px', color: '#86868B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <span style={{ fontSize: '11px', color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {p._area.name}
                         </span>
                       )}
@@ -379,18 +379,18 @@ export default function Timeline() {
             <div style={{
               position: 'sticky', top: 0, zIndex: 6,
               height: `${HDR_H}px`,
-              background: '#fff',
-              borderBottom: '1px solid rgba(0,0,0,0.07)',
+              background: 'var(--color-card)',
+              borderBottom: '1px solid var(--color-border-subtle)',
             }}>
               {/* Month row */}
-              <div style={{ display: 'flex', height: '24px', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
+              <div style={{ display: 'flex', height: '24px', borderBottom: '1px solid var(--color-border-subtle)' }}>
                 {monthGroups.map((g, i) => (
                   <div key={i} style={{
                     width: `${g.count * cfg.colW}px`, flexShrink: 0,
                     padding: '0 8px',
                     display: 'flex', alignItems: 'center',
                     fontSize: '11px', fontWeight: '600',
-                    color: '#6E6E73', letterSpacing: '0.01em',
+                    color: 'var(--color-text-tertiary)', letterSpacing: '0.01em',
                   }}>
                     {g.label}
                   </div>
@@ -407,15 +407,15 @@ export default function Timeline() {
                       width: `${cfg.colW}px`, flexShrink: 0,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       background: isTod
-                        ? 'rgba(0,113,227,0.07)'
-                        : isWe ? 'rgba(0,0,0,0.02)' : 'transparent',
+                        ? 'rgba(0,122,255,0.07)'
+                        : isWe ? 'var(--color-border-subtle)' : 'transparent',
                       position: 'relative',
                     }}>
                       {cfg.colW >= 18 && (
                         <span style={{
                           fontSize: cfg.colW >= 40 ? '11.5px' : '10px',
                           fontWeight: isTod ? '700' : '400',
-                          color: isTod ? '#0071E3' : isWe ? '#BCBCBC' : '#86868B',
+                          color: isTod ? 'var(--color-blue)' : isWe ? 'var(--color-text-tertiary)' : 'var(--color-text-secondary)',
                         }}>
                           {cfg.colW >= 40
                             ? `${DAYS_S[d.getDay()]} ${d.getDate()}`
@@ -428,7 +428,7 @@ export default function Timeline() {
                           position: 'absolute', bottom: 2,
                           left: '50%', transform: 'translateX(-50%)',
                           width: '5px', height: '5px',
-                          borderRadius: '50%', background: '#0071E3',
+                          borderRadius: '50%', background: 'var(--color-blue)',
                         }} />
                       )}
                     </div>
@@ -461,7 +461,7 @@ export default function Timeline() {
                   position: 'absolute',
                   left: `${todayIdx * cfg.colW}px`, top: 0,
                   width: `${cfg.colW}px`, height: '100%',
-                  background: 'rgba(0,113,227,0.04)',
+                  background: 'rgba(0,122,255,0.04)',
                   pointerEvents: 'none',
                 }} />
               )}
@@ -472,7 +472,7 @@ export default function Timeline() {
                   position: 'absolute',
                   left: `${todayX}px`, top: 0,
                   width: '1.5px', height: '100%',
-                  background: 'rgba(0,113,227,0.4)',
+                  background: 'rgba(0,122,255,0.4)',
                   pointerEvents: 'none', zIndex: 2,
                 }} />
               )}
@@ -484,7 +484,7 @@ export default function Timeline() {
                   left: 0, right: 0,
                   top: `${(ri + 1) * ROW_H - 1}px`,
                   height: '1px',
-                  background: 'rgba(0,0,0,0.04)',
+                  background: 'var(--color-border-subtle)',
                   pointerEvents: 'none',
                 }} />
               ))}
@@ -497,7 +497,7 @@ export default function Timeline() {
                     left: 0, right: 0,
                     top: `${ri * ROW_H}px`,
                     height: `${ROW_H}px`,
-                    background: 'rgba(0,0,0,0.02)',
+                    background: 'var(--color-border-subtle)',
                     pointerEvents: 'none',
                   }} />
                 )
@@ -583,12 +583,12 @@ export default function Timeline() {
                 alignItems: 'center', justifyContent: 'center',
                 height: '200px', gap: '8px',
               }}>
-                <p style={{ fontSize: '14px', color: '#86868B', margin: 0 }}>
+                <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)', margin: 0 }}>
                   Keine Projekte gefunden
                 </p>
                 {!showDone && (
                   <button onClick={() => setShowDone(true)} style={{
-                    fontSize: '12.5px', color: '#0071E3',
+                    fontSize: '12.5px', color: 'var(--color-blue)',
                     background: 'none', border: 'none', cursor: 'pointer',
                   }}>
                     Abgeschlossene anzeigen

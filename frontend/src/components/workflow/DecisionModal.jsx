@@ -37,7 +37,7 @@ export default function DecisionModal({ decisionKey, currentValue, onSave, onClo
         top: '50%', left: '50%',
         transform: 'translate(-50%, -50%)',
         zIndex: 1000,
-        background: '#fff',
+        background: 'var(--color-card)',
         borderRadius: '20px',
         boxShadow: '0 24px 64px rgba(0,0,0,0.18)',
         width: '100%',
@@ -46,7 +46,7 @@ export default function DecisionModal({ decisionKey, currentValue, onSave, onClo
       }}>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-          <h2 style={{ fontSize: '17px', fontWeight: 600, color: '#1D1D1F', margin: 0 }}>
+          <h2 style={{ fontSize: '17px', fontWeight: 600, color: 'var(--color-text)', margin: 0 }}>
             {config.label}
           </h2>
           <button
@@ -54,11 +54,11 @@ export default function DecisionModal({ decisionKey, currentValue, onSave, onClo
             style={{
               width: '30px', height: '30px',
               borderRadius: '50%',
-              background: '#F2F2F7',
+              background: 'var(--color-card-secondary)',
               border: 'none',
               cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: '#6E6E73',
+              color: 'var(--color-text-tertiary)',
             }}
           >
             <X size={15} />
@@ -79,8 +79,8 @@ export default function DecisionModal({ decisionKey, currentValue, onSave, onClo
                   gap: '12px',
                   padding: '14px 16px',
                   borderRadius: '14px',
-                  border: `2px solid ${isSelected ? (opt.color || '#0071E3') : '#F2F2F7'}`,
-                  background: isSelected ? (opt.color ? `${opt.color}10` : 'rgba(0,113,227,0.06)') : '#F9F9F9',
+                  border: `2px solid ${isSelected ? (opt.color || 'var(--color-blue)') : 'var(--color-card-secondary)'}`,
+                  background: isSelected ? (opt.color ? `${opt.color}10` : 'rgba(0,122,255,0.06)') : 'var(--color-card-secondary)',
                   cursor: 'pointer',
                   textAlign: 'left',
                   transition: 'all 0.15s',
@@ -99,12 +99,12 @@ export default function DecisionModal({ decisionKey, currentValue, onSave, onClo
                   <div style={{
                     fontSize: '14px',
                     fontWeight: 600,
-                    color: isSelected ? (opt.color || '#0071E3') : '#1D1D1F',
+                    color: isSelected ? (opt.color || 'var(--color-blue)') : 'var(--color-text)',
                   }}>
                     {opt.label}
                   </div>
                   {opt.desc && (
-                    <div style={{ fontSize: '12px', color: '#6E6E73', marginTop: '2px' }}>
+                    <div style={{ fontSize: '12px', color: 'var(--color-text-tertiary)', marginTop: '2px' }}>
                       {opt.desc}
                     </div>
                   )}
@@ -113,7 +113,7 @@ export default function DecisionModal({ decisionKey, currentValue, onSave, onClo
                   <div style={{
                     width: '20px', height: '20px',
                     borderRadius: '50%',
-                    background: opt.color || '#0071E3',
+                    background: opt.color || 'var(--color-blue)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     flexShrink: 0,
                   }}>
@@ -130,7 +130,7 @@ export default function DecisionModal({ decisionKey, currentValue, onSave, onClo
         {/* Date picker for "postponed" */}
         {needsDate && (
           <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#3C3C43', marginBottom: '6px' }}>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: 'var(--color-text-secondary)', marginBottom: '6px' }}>
               Follow-up Datum
             </label>
             <input
@@ -160,8 +160,8 @@ export default function DecisionModal({ decisionKey, currentValue, onSave, onClo
               padding: '12px',
               borderRadius: '12px',
               border: '1.5px solid #E5E5EA',
-              background: '#fff',
-              color: '#1D1D1F',
+              background: 'var(--color-card)',
+              color: 'var(--color-text)',
               fontSize: '14px',
               fontWeight: 500,
               cursor: 'pointer',
@@ -177,8 +177,8 @@ export default function DecisionModal({ decisionKey, currentValue, onSave, onClo
               padding: '12px',
               borderRadius: '12px',
               border: 'none',
-              background: !selected || (needsDate && !dueDate) ? '#E5E5EA' : '#0071E3',
-              color: !selected || (needsDate && !dueDate) ? '#8E8E93' : '#fff',
+              background: !selected || (needsDate && !dueDate) ? 'var(--color-border)' : 'var(--color-blue)',
+              color: !selected || (needsDate && !dueDate) ? 'var(--color-text-secondary)' : '#fff',
               fontSize: '14px',
               fontWeight: 600,
               cursor: !selected || (needsDate && !dueDate) ? 'not-allowed' : 'pointer',

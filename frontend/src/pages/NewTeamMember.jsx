@@ -14,7 +14,7 @@ const ROLES = [
 ];
 
 const COLORS = [
-  '#6366f1', '#0071E3', '#10B981', '#F59E0B',
+  '#6366f1', 'var(--color-blue)', '#10B981', '#F59E0B',
   '#EF4444', '#EC4899', '#8B5CF6', '#06B6D4',
 ];
 
@@ -102,7 +102,7 @@ export default function NewTeamMember() {
               <label key={r.value} style={{
                 display: 'flex', alignItems: 'center', gap: '12px',
                 padding: '12px 14px', borderRadius: '10px', cursor: 'pointer',
-                border: `1.5px solid ${active ? r.color : '#E5E7EB'}`,
+                border: `1.5px solid ${active ? r.color : 'var(--color-border)'}`,
                 background: active ? r.bg : '#fff',
                 transition: 'all 0.15s',
               }}>
@@ -116,8 +116,8 @@ export default function NewTeamMember() {
                   <Icon size={16} strokeWidth={2} />
                 </div>
                 <div>
-                  <p style={{ fontSize: '14px', fontWeight: '600', color: '#1D1D1F', margin: 0 }}>{r.label}</p>
-                  <p style={{ fontSize: '12px', color: '#6E6E73', margin: 0 }}>{r.desc}</p>
+                  <p style={{ fontSize: '14px', fontWeight: '600', color: 'var(--color-text)', margin: 0 }}>{r.label}</p>
+                  <p style={{ fontSize: '12px', color: 'var(--color-text-tertiary)', margin: 0 }}>{r.desc}</p>
                 </div>
               </label>
             );
@@ -149,7 +149,7 @@ export default function NewTeamMember() {
             }}>
               {(form.name || form.email || '?').trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase()}
             </div>
-            <span style={{ fontSize: '13px', color: '#6E6E73' }}>Vorschau Avatar</span>
+            <span style={{ fontSize: '13px', color: 'var(--color-text-tertiary)' }}>Vorschau Avatar</span>
           </div>
         </div>
 

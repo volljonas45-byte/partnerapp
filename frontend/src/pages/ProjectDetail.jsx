@@ -57,45 +57,66 @@ const NEXT_STEP = {
 // ── Inline status dropdown ────────────────────────────────────────────────────
 
 const STATUS_CFG = {
-  planned:            { label: 'Geplant',        dot: 'bg-gray-400',  chip: 'bg-gray-100 text-gray-600'   },
-  active:             { label: 'Demo',            dot: 'bg-blue-500',  chip: 'bg-blue-50 text-blue-700'    },
-  waiting_for_client: { label: 'Überarbeitung',   dot: 'bg-amber-400', chip: 'bg-amber-50 text-amber-700'  },
-  feedback:           { label: 'Überarbeitung',   dot: 'bg-amber-400', chip: 'bg-amber-50 text-amber-700'  },
-  waiting:            { label: 'Fertigstellung',  dot: 'bg-amber-400', chip: 'bg-amber-50 text-amber-700'  },
-  completed:          { label: 'Abgeschlossen',   dot: 'bg-green-500', chip: 'bg-green-50 text-green-700'  },
+  planned:            { label: 'Geplant',        dotColor: 'var(--color-text-secondary)', chipBg: 'rgba(142,142,147,0.12)', chipColor: 'var(--color-text-tertiary)' },
+  active:             { label: 'Demo',            dotColor: 'var(--color-blue)', chipBg: 'rgba(0,122,255,0.10)',   chipColor: 'var(--color-blue)' },
+  waiting_for_client: { label: 'Überarbeitung',   dotColor: '#F59E0B', chipBg: 'rgba(245,158,11,0.10)',  chipColor: '#B45309' },
+  feedback:           { label: 'Überarbeitung',   dotColor: '#F59E0B', chipBg: 'rgba(245,158,11,0.10)',  chipColor: '#B45309' },
+  waiting:            { label: 'Fertigstellung',  dotColor: '#F59E0B', chipBg: 'rgba(245,158,11,0.10)',  chipColor: '#B45309' },
+  completed:          { label: 'Abgeschlossen',   dotColor: '#34C759', chipBg: 'rgba(52,199,89,0.10)',   chipColor: '#15803D' },
 };
 const STATUS_DROPDOWN_OPTIONS = ['planned','active','waiting_for_client','feedback','waiting','completed'];
 
 function HeaderStatusDropdown({ status, onSelect }) {
   const [open, setOpen] = useState(false);
+  const { c: themeC } = useTheme();
   const cfg = STATUS_CFG[status] || STATUS_CFG.planned;
 
   return (
-    <div className="relative">
+    <div style={{ position: 'relative' }}>
       <button
         onClick={() => setOpen(o => !o)}
-        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${cfg.chip} hover:opacity-80 transition-opacity`}
+        style={{
+          display: 'inline-flex', alignItems: 'center', gap: '6px',
+          padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: '500',
+          background: cfg.chipBg, color: cfg.chipColor,
+          border: 'none', cursor: 'pointer', transition: 'opacity 0.15s cubic-bezier(0.22,1,0.36,1)',
+        }}
+        onMouseEnter={e => e.currentTarget.style.opacity = '0.8'}
+        onMouseLeave={e => e.currentTarget.style.opacity = '1'}
       >
-        <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: cfg.dotColor }} />
         {cfg.label}
-        <ChevronDown size={11} className="opacity-60" />
+        <ChevronDown size={11} style={{ opacity: 0.6 }} />
       </button>
       {open && (
         <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-full mt-1 z-50 w-48 bg-white rounded-lg shadow-lg border border-gray-100 py-1 text-sm">
+          <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setOpen(false)} />
+          <div style={{
+            position: 'absolute', right: 0, top: '100%', marginTop: '4px', zIndex: 50,
+            width: '192px', background: themeC.card, borderRadius: '12px',
+            boxShadow: '0 0 0 0.5px var(--color-border-subtle), 0 4px 16px rgba(0,0,0,0.12)',
+            border: `0.5px solid ${themeC.borderSubtle}`, padding: '4px 0', fontSize: '14px',
+          }}>
             {STATUS_DROPDOWN_OPTIONS.map(key => {
-              const c = STATUS_CFG[key];
+              const sc = STATUS_CFG[key];
               const isActive = status === key;
               return (
                 <button
                   key={key}
                   onClick={() => { onSelect(key); setOpen(false); }}
-                  className={`w-full flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50 transition-colors ${isActive ? 'font-medium' : ''}`}
+                  style={{
+                    width: '100%', display: 'flex', alignItems: 'center', gap: '8px',
+                    padding: '6px 12px', background: 'transparent', border: 'none',
+                    cursor: 'pointer', fontWeight: isActive ? '500' : '400',
+                    transition: 'background 0.12s cubic-bezier(0.22,1,0.36,1)',
+                    fontSize: '13px',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = themeC.inputBg}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                 >
-                  <span className={`w-2 h-2 rounded-full ${c.dot}`} />
-                  <span className={isActive ? 'text-gray-900' : 'text-gray-600'}>{c.label}</span>
-                  {isActive && <span className="ml-auto text-gray-400">✓</span>}
+                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: sc.dotColor }} />
+                  <span style={{ color: isActive ? themeC.text : themeC.textSecondary }}>{sc.label}</span>
+                  {isActive && <span style={{ marginLeft: 'auto', color: themeC.textTertiary }}>✓</span>}
                 </button>
               );
             })}
@@ -129,9 +150,9 @@ const BILLING_LABELS       = { one_time:'Einmalig', recurring:'Wiederkehrend' };
 const PAYMENT_LABELS       = { unpaid:'Offen', partial:'Teilweise', paid:'Bezahlt' };
 const CRED_TYPE_LABELS     = { password:'Passwort', guide:'Anleitung', other:'Sonstiges' };
 const CRED_TYPE_STYLES     = {
-  password: 'bg-red-50 text-red-600',
-  guide:    'bg-blue-50 text-blue-600',
-  other:    'bg-gray-100 text-gray-500',
+  password: { bg: 'rgba(255,59,48,0.08)', color: '#FF3B30' },
+  guide:    { bg: 'rgba(0,122,255,0.08)', color: 'var(--color-blue)' },
+  other:    { bg: 'rgba(142,142,147,0.12)', color: 'var(--color-text-secondary)' },
 };
 
 const STATUS_OPTIONS        = ['planned','active','waiting','completed'];
@@ -154,7 +175,7 @@ const PRIORITY_CONFIG = {
   kritisch: { label: 'Kritisch', color: '#EF4444' },
   hoch:     { label: 'Hoch',     color: '#F59E0B' },
   mittel:   { label: 'Mittel',   color: '#EAB308' },
-  niedrig:  { label: 'Niedrig',  color: '#6B7280' },
+  niedrig:  { label: 'Niedrig',  color: 'var(--color-text-tertiary)' },
 };
 const CHANGE_TYPE_CONFIG = {
   bug:    { label: 'Bug',    bg: '#FEE2E2', color: '#DC2626' },
@@ -163,8 +184,8 @@ const CHANGE_TYPE_CONFIG = {
 };
 const CHANGE_STATUS_CYCLE = ['offen', 'in_bearbeitung', 'erledigt'];
 const CHANGE_STATUS_CONFIG = {
-  offen:          { label: 'Offen',          bg: '#F2F2F7', color: '#6E6E73' },
-  in_bearbeitung: { label: 'In Bearbeitung', bg: '#E8F1FF', color: '#0071E3' },
+  offen:          { label: 'Offen',          bg: 'var(--color-card-secondary)', color: 'var(--color-text-tertiary)' },
+  in_bearbeitung: { label: 'In Bearbeitung', bg: '#E8F1FF', color: 'var(--color-blue)' },
   erledigt:       { label: 'Erledigt',       bg: '#D1FAE5', color: '#059669' },
 };
 
@@ -192,9 +213,10 @@ const TABS = [
 
 // ── Field components ──────────────────────────────────────────────────────────
 function SelectField({ label, value, options, labelMap, onChange }) {
+  const { c: themeC } = useTheme();
   return (
     <div>
-      <label className="block text-xs font-medium text-gray-500 mb-1">{label}</label>
+      <label className="block text-xs font-medium mb-1" style={{ color: themeC.textTertiary }}>{label}</label>
       <select className="input w-full text-sm" value={value || ''} onChange={e => onChange(e.target.value)}>
         <option value="">—</option>
         {options.filter(Boolean).map(o => (
@@ -206,9 +228,10 @@ function SelectField({ label, value, options, labelMap, onChange }) {
 }
 
 function TextField({ label, value, onChange, placeholder = '', type = 'text' }) {
+  const { c: themeC } = useTheme();
   return (
     <div>
-      <label className="block text-xs font-medium text-gray-500 mb-1">{label}</label>
+      <label className="block text-xs font-medium mb-1" style={{ color: themeC.textTertiary }}>{label}</label>
       <input
         type={type}
         className="input w-full text-sm"
@@ -221,9 +244,10 @@ function TextField({ label, value, onChange, placeholder = '', type = 'text' }) 
 }
 
 function TextAreaField({ label, value, onChange, placeholder = '', rows = 3 }) {
+  const { c: themeC } = useTheme();
   return (
     <div>
-      <label className="block text-xs font-medium text-gray-500 mb-1">{label}</label>
+      <label className="block text-xs font-medium mb-1" style={{ color: themeC.textTertiary }}>{label}</label>
       <textarea
         className="input w-full text-sm resize-none"
         rows={rows}
@@ -236,11 +260,12 @@ function TextAreaField({ label, value, onChange, placeholder = '', rows = 3 }) {
 }
 
 function InfoRow({ label, value }) {
+  const { c: themeC } = useTheme();
   if (!value) return null;
   return (
-    <div className="flex items-start justify-between py-2.5 border-b border-gray-50 last:border-0">
-      <span className="text-xs text-gray-400 w-40 shrink-0">{label}</span>
-      <span className="text-sm text-gray-700 text-right break-all">{value}</span>
+    <div className="flex items-start justify-between py-2.5 last:border-0" style={{ borderBottom: `0.5px solid ${themeC.borderSubtle}` }}>
+      <span className="text-xs w-40 shrink-0" style={{ color: themeC.textTertiary }}>{label}</span>
+      <span className="text-sm text-right break-all" style={{ color: themeC.textSecondary }}>{value}</span>
     </div>
   );
 }
@@ -513,7 +538,7 @@ export default function ProjectDetail() {
   const cancelEditCred = () => { setEditingCredId(null); setCredForm({ label: '', type: 'password', link: '', note: '' }); };
 
   if (isLoading) return <LoadingSpinner className="h-64" />;
-  if (!project)  return <div className="p-8 text-sm text-gray-500">Projekt nicht gefunden.</div>;
+  if (!project)  return <div className="p-8 text-sm" style={{ color: c.textTertiary }}>Projekt nicht gefunden.</div>;
 
   const tasks     = project.tasks     || [];
   const checklist = project.checklist || [];
@@ -553,7 +578,7 @@ export default function ProjectDetail() {
         display: 'flex', alignItems: 'center', gap: '8px',
         padding: isMobile ? '0 14px' : '0 28px',
         height: isMobile ? 52 : 60, flexShrink: 0,
-        background: c.card, borderBottom: '1px solid rgba(0,0,0,0.08)',
+        background: c.card, borderBottom: '1px solid var(--color-border-subtle)',
         overflowX: 'auto', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch',
       }}>
         <button
@@ -564,12 +589,12 @@ export default function ProjectDetail() {
             background: 'transparent', color: c.textSecondary, fontSize: '13px',
             cursor: 'pointer', transition: 'background 0.12s, color 0.12s',
           }}
-          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.05)'; e.currentTarget.style.color = '#1D1D1F'; }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#86868B'; }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-border-subtle)'; e.currentTarget.style.color = c.text; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = c.textSecondary; }}
         >
           <ArrowLeft size={14} /> Websites
         </button>
-        <span style={{ color: '#D1D1D6', fontSize: '14px' }}>/</span>
+        <span style={{ color: 'var(--color-border)', fontSize: '14px' }}>/</span>
         <h1 style={{ fontSize: '16px', fontWeight: '700', color: c.text, letterSpacing: '-0.02em', margin: 0 }}>
           {project.name}
         </h1>
@@ -586,10 +611,10 @@ export default function ProjectDetail() {
           style={{
             display: 'flex', alignItems: 'center', gap: '6px', padding: '7px 14px',
             borderRadius: '8px', border: '1px solid rgba(0,0,0,0.1)',
-            background: 'transparent', color: '#424245', fontSize: '13px', fontWeight: '500',
+            background: 'transparent', color: 'var(--color-text-secondary)', fontSize: '13px', fontWeight: '500',
             cursor: 'pointer', transition: 'background 0.12s',
           }}
-          onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.04)'}
+          onMouseEnter={e => e.currentTarget.style.background = 'var(--color-border-subtle)'}
           onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
         >
           <Pencil size={13} /> Bearbeiten
@@ -605,11 +630,11 @@ export default function ProjectDetail() {
           style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             padding: '7px 8px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.1)',
-            background: 'transparent', color: '#C7C7CC', cursor: 'pointer',
+            background: 'transparent', color: 'var(--color-text-tertiary)', cursor: 'pointer',
             transition: 'all 0.12s',
           }}
           onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,59,48,0.06)'; e.currentTarget.style.color = '#FF3B30'; e.currentTarget.style.borderColor = 'rgba(255,59,48,0.3)'; }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#C7C7CC'; e.currentTarget.style.borderColor = 'rgba(0,0,0,0.1)'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-text-tertiary)'; e.currentTarget.style.borderColor = 'rgba(0,0,0,0.1)'; }}
           title="Projekt löschen"
         >
           <Trash2 size={14} />
@@ -619,7 +644,7 @@ export default function ProjectDetail() {
       {/* ── TAB BAR ──────────────────────────────────────────────────────────── */}
       <div style={{
         display: 'flex', gap: 0, background: c.card,
-        borderBottom: '1px solid rgba(0,0,0,0.08)',
+        borderBottom: '1px solid var(--color-border-subtle)',
         padding: isMobile ? '0 14px' : '0 28px',
         flexShrink: 0, overflowX: 'auto', scrollbarWidth: 'none',
       }}>
@@ -630,15 +655,15 @@ export default function ProjectDetail() {
             style={{
               padding: '14px 16px', fontSize: '13px',
               fontWeight: activeTab === tab.key ? '600' : '400',
-              color: activeTab === tab.key ? '#1D1D1F' : '#86868B',
+              color: activeTab === tab.key ? c.text : c.textSecondary,
               background: 'transparent', border: 'none',
-              borderBottom: `2px solid ${activeTab === tab.key ? '#1D1D1F' : 'transparent'}`,
+              borderBottom: `2px solid ${activeTab === tab.key ? c.text : 'transparent'}`,
               cursor: 'pointer', transition: 'color 0.12s',
               display: 'flex', alignItems: 'center', gap: '6px',
               whiteSpace: 'nowrap', marginBottom: '-1px', letterSpacing: '-0.01em',
             }}
-            onMouseEnter={e => { if (activeTab !== tab.key) e.currentTarget.style.color = '#3C3C43'; }}
-            onMouseLeave={e => { if (activeTab !== tab.key) e.currentTarget.style.color = '#86868B'; }}
+            onMouseEnter={e => { if (activeTab !== tab.key) e.currentTarget.style.color = 'var(--color-text-secondary)'; }}
+            onMouseLeave={e => { if (activeTab !== tab.key) e.currentTarget.style.color = c.textSecondary; }}
           >
             {tab.label}
             {tab.key === 'tasks' && tasks.length > 0 && (
@@ -689,14 +714,14 @@ export default function ProjectDetail() {
         const invoicePct    = totalBudget > 0 ? Math.min(100, Math.round((totalInvoiced / totalBudget) * 100)) : 0;
         const openTaskCount = tasks.filter(t => t.status !== 'done').length;
 
-        const card = { background: c.card, borderRadius: '16px', padding: '22px', border: `1px solid ${c.borderSubtle}`, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' };
-        const sectionTitle = { fontSize: '11px', fontWeight: '600', color: '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.05em' };
-        const linkBtn = { fontSize: '12px', color: '#0071E3', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '500' };
+        const card = { background: c.card, borderRadius: '16px', padding: '22px', border: `1px solid ${c.borderSubtle}`, boxShadow: '0 1px 4px var(--color-border-subtle)' };
+        const sectionTitle = { fontSize: '11px', fontWeight: '600', color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' };
+        const linkBtn = { fontSize: '12px', color: 'var(--color-blue)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '500' };
 
         return (
           <div>
             {/* ── Summary Bar ── */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '14px', padding: '11px 18px', background: c.card, borderRadius: '14px', border: `1px solid ${c.borderSubtle}`, boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '14px', padding: '11px 18px', background: c.card, borderRadius: '14px', border: `1px solid ${c.borderSubtle}`, boxShadow: '0 1px 3px var(--color-border-subtle)' }}>
               {/* Health chip */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '3px 10px', borderRadius: '8px', flexShrink: 0,
                 background: health === 'good' ? 'rgba(52,199,89,0.1)' : health === 'warning' ? 'rgba(245,158,11,0.1)' : 'rgba(239,68,68,0.1)',
@@ -707,18 +732,18 @@ export default function ProjectDetail() {
               {/* Client */}
               {client && (
                 <>
-                  <div style={{ width: '1px', height: '14px', background: '#E5E5EA', flexShrink: 0 }} />
+                  <div style={{ width: '1px', height: '14px', background: 'var(--color-border)', flexShrink: 0 }} />
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <Building2 size={12} color="#8E8E93" />
-                    <span style={{ fontSize: '13px', fontWeight: '500', color: '#3C3C43' }}>{client.company_name || client.name}</span>
+                    <span style={{ fontSize: '13px', fontWeight: '500', color: 'var(--color-text-secondary)' }}>{client.company_name || client.name}</span>
                   </div>
                 </>
               )}
               {/* Project type */}
               {project.type && (
                 <>
-                  <div style={{ width: '1px', height: '14px', background: '#E5E5EA', flexShrink: 0 }} />
-                  <span style={{ fontSize: '12px', color: '#8E8E93' }}>{TYPE_LABELS[project.type] || project.type}</span>
+                  <div style={{ width: '1px', height: '14px', background: 'var(--color-border)', flexShrink: 0 }} />
+                  <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>{TYPE_LABELS[project.type] || project.type}</span>
                 </>
               )}
               <div style={{ flex: 1 }} />
@@ -731,7 +756,7 @@ export default function ProjectDetail() {
                 )}
                 {openCh.length > 0 && (
                   <button onClick={() => setActiveTab('changes')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: '12px', color: c.textTertiary }}>
-                    <span style={{ fontWeight: '700', color: urgentCh.length > 0 ? '#EF4444' : '#1D1D1F' }}>{openCh.length}</span> Änderungen
+                    <span style={{ fontWeight: '700', color: urgentCh.length > 0 ? '#EF4444' : c.text }}>{openCh.length}</span> Änderungen
                     {urgentCh.length > 0 && <span style={{ fontSize: '10px', fontWeight: '700', background: 'rgba(239,68,68,0.1)', color: '#EF4444', padding: '1px 5px', borderRadius: '5px', marginLeft: '5px' }}>{urgentCh.length} dringend</span>}
                   </button>
                 )}
@@ -756,8 +781,8 @@ export default function ProjectDetail() {
               <div
                 style={{ ...card, cursor: client ? 'pointer' : 'default', transition: 'box-shadow 0.15s' }}
                 onClick={() => client && navigate(`/clients/${client.id}`)}
-                onMouseEnter={e => { if (client) e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)'; }}
-                onMouseLeave={e => e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.04)'}
+                onMouseEnter={e => { if (client) e.currentTarget.style.boxShadow = '0 4px 12px var(--color-border-subtle)'; }}
+                onMouseLeave={e => e.currentTarget.style.boxShadow = '0 1px 4px var(--color-border-subtle)'}
               >
                 <p style={{ ...sectionTitle, marginBottom: '10px' }}>Klient</p>
                 {client ? (
@@ -765,14 +790,14 @@ export default function ProjectDetail() {
                     <p style={{ fontSize: '15px', fontWeight: '700', color: c.text, letterSpacing: '-0.02em', lineHeight: 1.2, marginBottom: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {client.company_name || client.name}
                     </p>
-                    <p style={{ fontSize: '11px', color: '#8E8E93', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <p style={{ fontSize: '11px', color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {client.email || TYPE_LABELS[project.type] || '—'}
                     </p>
                   </>
                 ) : (
                   <>
-                    <p style={{ fontSize: '15px', fontWeight: '700', color: '#C7C7CC', marginBottom: '4px' }}>—</p>
-                    <button onClick={e => { e.stopPropagation(); setActiveTab('overview'); }} style={{ fontSize: '11px', color: '#0071E3', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                    <p style={{ fontSize: '15px', fontWeight: '700', color: 'var(--color-text-tertiary)', marginBottom: '4px' }}>—</p>
+                    <button onClick={e => { e.stopPropagation(); setActiveTab('overview'); }} style={{ fontSize: '11px', color: 'var(--color-blue)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
                       Klient zuweisen →
                     </button>
                   </>
@@ -788,33 +813,33 @@ export default function ProjectDetail() {
                 {totalBudget > 0 ? (
                   <>
                     <div style={{ height: '3px', background: c.cardSecondary, borderRadius: '2px', marginBottom: '5px' }}>
-                      <div style={{ height: '100%', borderRadius: '2px', width: `${invoicePct}%`, background: invoicePct >= 100 ? '#34C759' : '#0071E3', transition: 'width 0.4s ease' }} />
+                      <div style={{ height: '100%', borderRadius: '2px', width: `${invoicePct}%`, background: invoicePct >= 100 ? '#34C759' : 'var(--color-blue)', transition: 'width 0.4s ease' }} />
                     </div>
-                    <p style={{ fontSize: '11px', color: '#8E8E93' }}>{formatCurrency(totalInvoiced)} fakturiert · {invoicePct}%</p>
+                    <p style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>{formatCurrency(totalInvoiced)} fakturiert · {invoicePct}%</p>
                   </>
                 ) : (
-                  <p style={{ fontSize: '11px', color: '#8E8E93' }}>{BILLING_LABELS[project.billing_type] || 'Einmalig'}</p>
+                  <p style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>{BILLING_LABELS[project.billing_type] || 'Einmalig'}</p>
                 )}
               </div>
 
               {/* Deadline */}
-              <div style={{ ...card, background: daysLeft !== null && daysLeft < 0 ? 'rgba(239,68,68,0.03)' : daysLeft !== null && daysLeft <= 7 ? 'rgba(245,158,11,0.03)' : '#fff', border: `1px solid ${daysLeft !== null && daysLeft < 0 ? 'rgba(239,68,68,0.18)' : daysLeft !== null && daysLeft <= 7 ? 'rgba(245,158,11,0.18)' : 'rgba(0,0,0,0.06)'}` }}>
+              <div style={{ ...card, background: daysLeft !== null && daysLeft < 0 ? 'rgba(239,68,68,0.03)' : daysLeft !== null && daysLeft <= 7 ? 'rgba(245,158,11,0.03)' : '#fff', border: `1px solid ${daysLeft !== null && daysLeft < 0 ? 'rgba(239,68,68,0.18)' : daysLeft !== null && daysLeft <= 7 ? 'rgba(245,158,11,0.18)' : 'var(--color-border-subtle)'}` }}>
                 <p style={{ ...sectionTitle, marginBottom: '10px' }}>Deadline</p>
                 {daysLeft !== null ? (
                   <>
-                    <p style={{ fontSize: '26px', fontWeight: '700', letterSpacing: '-0.04em', lineHeight: 1, marginBottom: '4px', color: daysLeft < 0 ? '#EF4444' : daysLeft <= 7 ? '#F59E0B' : '#1D1D1F' }}>
+                    <p style={{ fontSize: '26px', fontWeight: '700', letterSpacing: '-0.04em', lineHeight: 1, marginBottom: '4px', color: daysLeft < 0 ? '#EF4444' : daysLeft <= 7 ? '#F59E0B' : c.text }}>
                       {daysLeft < 0 ? `+${Math.abs(daysLeft)}` : daysLeft}
-                      <span style={{ fontSize: '13px', fontWeight: '400', color: '#8E8E93', marginLeft: '4px' }}>Tage</span>
+                      <span style={{ fontSize: '13px', fontWeight: '400', color: 'var(--color-text-secondary)', marginLeft: '4px' }}>Tage</span>
                     </p>
-                    <p style={{ fontSize: '11px', color: '#8E8E93' }}>
+                    <p style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>
                       {new Date(project.deadline).toLocaleDateString('de-DE', { day: 'numeric', month: 'short', year: 'numeric' })}
                       {daysLeft < 0 && <span style={{ color: '#EF4444', fontWeight: '600' }}> · überfällig</span>}
                     </p>
                   </>
                 ) : (
                   <>
-                    <p style={{ fontSize: '26px', fontWeight: '700', letterSpacing: '-0.04em', lineHeight: 1, marginBottom: '4px', color: '#C7C7CC' }}>—</p>
-                    <p style={{ fontSize: '11px', color: '#8E8E93' }}>kein Datum</p>
+                    <p style={{ fontSize: '26px', fontWeight: '700', letterSpacing: '-0.04em', lineHeight: 1, marginBottom: '4px', color: 'var(--color-text-tertiary)' }}>—</p>
+                    <p style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>kein Datum</p>
                   </>
                 )}
               </div>
@@ -823,23 +848,23 @@ export default function ProjectDetail() {
               <div
                 style={{ ...card, cursor: project.live_url ? 'pointer' : 'default', transition: 'box-shadow 0.15s' }}
                 onClick={() => project.live_url && window.open(project.live_url, '_blank')}
-                onMouseEnter={e => { if (project.live_url) e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,113,227,0.12)'; }}
-                onMouseLeave={e => e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.04)'}
+                onMouseEnter={e => { if (project.live_url) e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,122,255,0.12)'; }}
+                onMouseLeave={e => e.currentTarget.style.boxShadow = '0 1px 4px var(--color-border-subtle)'}
               >
                 <p style={{ ...sectionTitle, marginBottom: '10px' }}>Live-Website</p>
                 {project.live_url ? (
                   <>
-                    <p style={{ fontSize: '14px', fontWeight: '700', color: '#0071E3', letterSpacing: '-0.01em', lineHeight: 1.3, marginBottom: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--color-blue)', letterSpacing: '-0.01em', lineHeight: 1.3, marginBottom: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {project.live_url.replace(/^https?:\/\//, '')}
                     </p>
-                    <p style={{ fontSize: '11px', color: '#8E8E93', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                    <p style={{ fontSize: '11px', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: '3px' }}>
                       <ExternalLink size={10} /> öffnen
                     </p>
                   </>
                 ) : (
                   <>
-                    <p style={{ fontSize: '26px', fontWeight: '700', color: '#C7C7CC', letterSpacing: '-0.04em', lineHeight: 1, marginBottom: '4px' }}>—</p>
-                    <button onClick={e => { e.stopPropagation(); setActiveTab('setup'); }} style={{ fontSize: '11px', color: '#0071E3', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                    <p style={{ fontSize: '26px', fontWeight: '700', color: 'var(--color-text-tertiary)', letterSpacing: '-0.04em', lineHeight: 1, marginBottom: '4px' }}>—</p>
+                    <button onClick={e => { e.stopPropagation(); setActiveTab('setup'); }} style={{ fontSize: '11px', color: 'var(--color-blue)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
                       URL eintragen →
                     </button>
                   </>
@@ -873,7 +898,7 @@ export default function ProjectDetail() {
                         </div>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <span style={{ fontSize: '12px', fontWeight: '600', color: completedCnt === phaseTaskDefs.length && phaseTaskDefs.length > 0 ? '#34C759' : '#8E8E93' }}>
+                        <span style={{ fontSize: '12px', fontWeight: '600', color: completedCnt === phaseTaskDefs.length && phaseTaskDefs.length > 0 ? '#34C759' : 'var(--color-text-secondary)' }}>
                           {completedCnt}/{phaseTaskDefs.length}
                         </span>
                         <button onClick={() => setActiveTab('workflow')} style={linkBtn}>Workflow →</button>
@@ -882,7 +907,7 @@ export default function ProjectDetail() {
 
                     {/* Progress bar */}
                     <div style={{ height: '4px', background: c.cardSecondary, borderRadius: '2px', marginBottom: '16px' }}>
-                      <div style={{ height: '100%', borderRadius: '2px', background: phasePct === 100 ? '#34C759' : '#0071E3', width: `${phasePct}%`, transition: 'width 0.4s' }} />
+                      <div style={{ height: '100%', borderRadius: '2px', background: phasePct === 100 ? '#34C759' : 'var(--color-blue)', width: `${phasePct}%`, transition: 'width 0.4s' }} />
                     </div>
 
                     {curPhase ? (
@@ -895,14 +920,14 @@ export default function ProjectDetail() {
                               <div
                                 key={t.key}
                                 onClick={() => toggleWorkflowTask(curPhaseKey, t.key, done)}
-                                style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 12px', borderRadius: '10px', background: done ? 'rgba(52,199,89,0.05)' : '#FAFAFA', border: `1px solid ${done ? 'rgba(52,199,89,0.18)' : '#F0F0F5'}`, cursor: 'pointer', transition: 'background 0.12s' }}
-                                onMouseEnter={e => e.currentTarget.style.background = done ? 'rgba(52,199,89,0.09)' : '#F2F2F7'}
-                                onMouseLeave={e => e.currentTarget.style.background = done ? 'rgba(52,199,89,0.05)' : '#FAFAFA'}
+                                style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 12px', borderRadius: '10px', background: done ? 'rgba(52,199,89,0.05)' : 'var(--color-card-secondary)', border: `1px solid ${done ? 'rgba(52,199,89,0.18)' : 'var(--color-card-secondary)'}`, cursor: 'pointer', transition: 'background 0.12s' }}
+                                onMouseEnter={e => e.currentTarget.style.background = done ? 'rgba(52,199,89,0.09)' : 'var(--color-card-secondary)'}
+                                onMouseLeave={e => e.currentTarget.style.background = done ? 'rgba(52,199,89,0.05)' : 'var(--color-card-secondary)'}
                               >
-                                <div style={{ width: '18px', height: '18px', borderRadius: '50%', flexShrink: 0, border: `2px solid ${done ? '#34C759' : '#C7C7CC'}`, background: done ? '#34C759' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <div style={{ width: '18px', height: '18px', borderRadius: '50%', flexShrink: 0, border: `2px solid ${done ? '#34C759' : 'var(--color-text-tertiary)'}`, background: done ? '#34C759' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                   {done && <Check size={10} color="#fff" strokeWidth={3} />}
                                 </div>
-                                <span style={{ flex: 1, fontSize: '13px', color: done ? '#8E8E93' : '#1D1D1F', textDecoration: done ? 'line-through' : 'none' }}>{t.label}</span>
+                                <span style={{ flex: 1, fontSize: '13px', color: done ? 'var(--color-text-secondary)' : c.text, textDecoration: done ? 'line-through' : 'none' }}>{t.label}</span>
                               </div>
                             );
                           })}
@@ -913,7 +938,7 @@ export default function ProjectDetail() {
                           <button
                             onClick={() => workflowUpdateMutation.mutate({ current_phase: nextPhaseKey })}
                             disabled={workflowUpdateMutation.isPending}
-                            style={{ width: '100%', padding: '11px', borderRadius: '10px', background: '#0071E3', color: '#fff', border: 'none', fontSize: '13px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                            style={{ width: '100%', padding: '11px', borderRadius: '10px', background: 'var(--color-blue)', color: '#fff', border: 'none', fontSize: '13px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
                           >
                             <Check size={14} strokeWidth={3} /> Phase abschließen → {nextPhaseLabel}
                           </button>
@@ -926,7 +951,7 @@ export default function ProjectDetail() {
                       </>
                     ) : (
                       <div style={{ textAlign: 'center', padding: '20px 0' }}>
-                        <p style={{ fontSize: '13px', color: '#8E8E93' }}>Kein Workflow gestartet.</p>
+                        <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>Kein Workflow gestartet.</p>
                         <button onClick={() => setActiveTab('workflow')} style={{ ...linkBtn, marginTop: '8px' }}>Jetzt starten →</button>
                       </div>
                     )}
@@ -946,10 +971,10 @@ export default function ProjectDetail() {
                           value={changeForm.title}
                           onChange={e => setChangeForm(f => ({ ...f, title: e.target.value }))}
                           placeholder="Neue Änderung..."
-                          style={{ flex: 1, fontSize: '12px', padding: '7px 10px', borderRadius: '8px', border: '1px solid #E5E5EA', outline: 'none', background: '#FAFAFA', color: c.text }}
+                          style={{ flex: 1, fontSize: '12px', padding: '7px 10px', borderRadius: '8px', border: '1px solid #E5E5EA', outline: 'none', background: 'var(--color-card-secondary)', color: c.text }}
                         />
                         <button type="submit" disabled={!changeForm.title.trim() || createChangeMutation.isPending}
-                          style={{ padding: '7px 11px', borderRadius: '8px', background: changeForm.title.trim() ? '#0071E3' : '#E5E5EA', border: 'none', color: changeForm.title.trim() ? '#fff' : '#8E8E93', cursor: changeForm.title.trim() ? 'pointer' : 'default', display: 'flex', alignItems: 'center', transition: 'background 0.12s' }}>
+                          style={{ padding: '7px 11px', borderRadius: '8px', background: changeForm.title.trim() ? 'var(--color-blue)' : 'var(--color-border)', border: 'none', color: changeForm.title.trim() ? '#fff' : 'var(--color-text-secondary)', cursor: changeForm.title.trim() ? 'pointer' : 'default', display: 'flex', alignItems: 'center', transition: 'background 0.12s' }}>
                           <Plus size={14} />
                         </button>
                       </div>
@@ -958,8 +983,8 @@ export default function ProjectDetail() {
                           <button key={key} type="button"
                             onClick={() => setChangeForm(f => ({ ...f, type: key }))}
                             style={{ fontSize: '11px', fontWeight: '600', padding: '3px 9px', borderRadius: '6px', cursor: 'pointer',
-                              background: changeForm.type === key ? tc.bg : '#F2F2F7',
-                              color: changeForm.type === key ? tc.color : '#8E8E93',
+                              background: changeForm.type === key ? tc.bg : 'var(--color-card-secondary)',
+                              color: changeForm.type === key ? tc.color : 'var(--color-text-secondary)',
                               border: `1px solid ${changeForm.type === key ? tc.color + '40' : 'transparent'}`,
                               transition: 'all 0.1s' }}>
                             {tc.label}
@@ -979,7 +1004,7 @@ export default function ProjectDetail() {
                           const tc = CHANGE_TYPE_CONFIG[ch.type] || CHANGE_TYPE_CONFIG.intern;
                           const pc = PRIORITY_CONFIG[ch.priority] || PRIORITY_CONFIG.mittel;
                           return (
-                            <div key={ch.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', borderRadius: '10px', border: '1px solid #F2F2F7', background: '#FAFAFA' }}>
+                            <div key={ch.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', borderRadius: '10px', border: '1px solid #F2F2F7', background: 'var(--color-card-secondary)' }}>
                               <div style={{ width: '3px', alignSelf: 'stretch', borderRadius: '2px', background: pc.color, flexShrink: 0 }} />
                               <span style={{ fontSize: '10px', fontWeight: '700', padding: '2px 6px', borderRadius: '5px', background: tc.bg, color: tc.color, flexShrink: 0 }}>{tc.label}</span>
                               <span style={{ flex: 1, fontSize: '12px', color: c.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ch.title}</span>
@@ -988,7 +1013,7 @@ export default function ProjectDetail() {
                                 title="Als erledigt markieren"
                                 style={{ width: '22px', height: '22px', borderRadius: '50%', border: '1.5px solid #D1D1D6', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.12s' }}
                                 onMouseEnter={e => { e.currentTarget.style.borderColor = '#34C759'; e.currentTarget.style.background = 'rgba(52,199,89,0.1)'; }}
-                                onMouseLeave={e => { e.currentTarget.style.borderColor = '#D1D1D6'; e.currentTarget.style.background = 'transparent'; }}
+                                onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.background = 'transparent'; }}
                               >
                                 <Check size={10} color="#8E8E93" strokeWidth={3} />
                               </button>
@@ -996,7 +1021,7 @@ export default function ProjectDetail() {
                           );
                         })}
                         {openCh.length > 4 && (
-                          <button onClick={() => setActiveTab('changes')} style={{ fontSize: '12px', color: '#8E8E93', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0', textAlign: 'left' }}>
+                          <button onClick={() => setActiveTab('changes')} style={{ fontSize: '12px', color: 'var(--color-text-secondary)', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0', textAlign: 'left' }}>
                             +{openCh.length - 4} weitere
                           </button>
                         )}
@@ -1024,10 +1049,10 @@ export default function ProjectDetail() {
                       value={newTask}
                       onChange={e => setNewTask(e.target.value)}
                       placeholder="Neue Aufgabe..."
-                      style={{ flex: 1, fontSize: '12px', padding: '7px 10px', borderRadius: '8px', border: '1px solid #E5E5EA', outline: 'none', background: '#FAFAFA', color: c.text }}
+                      style={{ flex: 1, fontSize: '12px', padding: '7px 10px', borderRadius: '8px', border: '1px solid #E5E5EA', outline: 'none', background: 'var(--color-card-secondary)', color: c.text }}
                     />
                     <button type="submit" disabled={!newTask.trim() || createTaskMutation.isPending}
-                      style={{ padding: '7px 11px', borderRadius: '8px', background: newTask.trim() ? '#0071E3' : '#E5E5EA', border: 'none', color: newTask.trim() ? '#fff' : '#8E8E93', cursor: newTask.trim() ? 'pointer' : 'default', display: 'flex', alignItems: 'center', transition: 'background 0.12s' }}>
+                      style={{ padding: '7px 11px', borderRadius: '8px', background: newTask.trim() ? 'var(--color-blue)' : 'var(--color-border)', border: 'none', color: newTask.trim() ? '#fff' : 'var(--color-text-secondary)', cursor: newTask.trim() ? 'pointer' : 'default', display: 'flex', alignItems: 'center', transition: 'background 0.12s' }}>
                       <Plus size={14} />
                     </button>
                   </div>
@@ -1044,20 +1069,20 @@ export default function ProjectDetail() {
                       return (
                         <div key={task.id}
                           onClick={() => cycleTask(task)}
-                          style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', borderRadius: '8px', border: `1px solid ${isDoing ? 'rgba(0,113,227,0.18)' : '#F2F2F7'}`, background: isDoing ? 'rgba(0,113,227,0.03)' : '#FAFAFA', cursor: 'pointer', transition: 'background 0.12s' }}
-                          onMouseEnter={e => e.currentTarget.style.background = isDoing ? 'rgba(0,113,227,0.07)' : '#F2F2F7'}
-                          onMouseLeave={e => e.currentTarget.style.background = isDoing ? 'rgba(0,113,227,0.03)' : '#FAFAFA'}
+                          style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', borderRadius: '8px', border: `1px solid ${isDoing ? 'rgba(0,122,255,0.18)' : 'var(--color-card-secondary)'}`, background: isDoing ? 'rgba(0,122,255,0.03)' : 'var(--color-card-secondary)', cursor: 'pointer', transition: 'background 0.12s' }}
+                          onMouseEnter={e => e.currentTarget.style.background = isDoing ? 'rgba(0,122,255,0.07)' : 'var(--color-card-secondary)'}
+                          onMouseLeave={e => e.currentTarget.style.background = isDoing ? 'rgba(0,122,255,0.03)' : 'var(--color-card-secondary)'}
                         >
-                          <div style={{ width: '16px', height: '16px', borderRadius: '50%', flexShrink: 0, border: `2px solid ${isDoing ? '#0071E3' : '#D1D1D6'}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            {isDoing && <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#0071E3' }} />}
+                          <div style={{ width: '16px', height: '16px', borderRadius: '50%', flexShrink: 0, border: `2px solid ${isDoing ? 'var(--color-blue)' : 'var(--color-border)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            {isDoing && <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: 'var(--color-blue)' }} />}
                           </div>
                           <span style={{ flex: 1, fontSize: '12px', color: c.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{task.title}</span>
-                          {isDoing && <span style={{ fontSize: '9px', fontWeight: '700', background: '#0071E3', color: '#fff', padding: '1px 5px', borderRadius: '4px', flexShrink: 0 }}>Aktiv</span>}
+                          {isDoing && <span style={{ fontSize: '9px', fontWeight: '700', background: 'var(--color-blue)', color: '#fff', padding: '1px 5px', borderRadius: '4px', flexShrink: 0 }}>Aktiv</span>}
                         </div>
                       );
                     })}
                     {openTaskCount > 4 && (
-                      <button onClick={() => setActiveTab('tasks')} style={{ fontSize: '11px', color: '#8E8E93', background: 'none', border: 'none', cursor: 'pointer', padding: '3px 0', textAlign: 'left' }}>
+                      <button onClick={() => setActiveTab('tasks')} style={{ fontSize: '11px', color: 'var(--color-text-secondary)', background: 'none', border: 'none', cursor: 'pointer', padding: '3px 0', textAlign: 'left' }}>
                         +{openTaskCount - 4} weitere
                       </button>
                     )}
@@ -1075,25 +1100,25 @@ export default function ProjectDetail() {
                   {/* Live URL */}
                   {project.live_url ? (
                     <a href={project.live_url} target="_blank" rel="noreferrer"
-                      style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', borderRadius: '10px', background: 'rgba(0,113,227,0.04)', border: '1px solid rgba(0,113,227,0.12)', textDecoration: 'none', transition: 'background 0.12s' }}
-                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,113,227,0.08)'}
-                      onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,113,227,0.04)'}
+                      style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', borderRadius: '10px', background: 'rgba(0,122,255,0.04)', border: '1px solid rgba(0,122,255,0.12)', textDecoration: 'none', transition: 'background 0.12s' }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,122,255,0.08)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,122,255,0.04)'}
                     >
-                      <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(0,113,227,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <Globe size={13} color="#0071E3" />
+                      <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(0,122,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Globe size={13} color="#007AFF" />
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontSize: '12px', fontWeight: '600', color: '#0071E3' }}>Live-Website</p>
+                        <p style={{ fontSize: '12px', fontWeight: '600', color: 'var(--color-blue)' }}>Live-Website</p>
                         <p style={{ fontSize: '11px', color: c.textSecondary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{project.live_url.replace(/^https?:\/\//, '')}</p>
                       </div>
-                      <ExternalLink size={12} color="#0071E3" style={{ flexShrink: 0 }} />
+                      <ExternalLink size={12} color="#007AFF" style={{ flexShrink: 0 }} />
                     </a>
                   ) : (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', borderRadius: '10px', background: '#FAFAFA', border: '1px dashed #E5E5EA' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', borderRadius: '10px', background: 'var(--color-card-secondary)', border: '1px dashed #E5E5EA' }}>
                       <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: c.cardSecondary, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                         <Globe size={13} color="#C7C7CC" />
                       </div>
-                      <p style={{ fontSize: '12px', color: '#C7C7CC' }}>Live-URL noch nicht eingetragen</p>
+                      <p style={{ fontSize: '12px', color: 'var(--color-text-tertiary)' }}>Live-URL noch nicht eingetragen</p>
                     </div>
                   )}
 
@@ -1143,7 +1168,7 @@ export default function ProjectDetail() {
                   )}
 
                   {!project.live_url && !project.domain_name && !project.repository_url && !project.build_type && (
-                    <button onClick={() => setActiveTab('setup')} style={{ ...linkBtn, color: '#8E8E93', fontSize: '13px', padding: '6px 0', textAlign: 'left', display: 'block' }}>
+                    <button onClick={() => setActiveTab('setup')} style={{ ...linkBtn, color: 'var(--color-text-secondary)', fontSize: '13px', padding: '6px 0', textAlign: 'left', display: 'block' }}>
                       Setup einrichten →
                     </button>
                   )}
@@ -1167,16 +1192,16 @@ export default function ProjectDetail() {
                       <div
                         key={q.id}
                         onClick={() => navigate(`/quotes/${q.id}`)}
-                        style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 11px', borderRadius: '10px', background: 'rgba(0,113,227,0.03)', border: '1px solid rgba(0,113,227,0.12)', cursor: 'pointer', transition: 'background 0.12s' }}
-                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,113,227,0.07)'}
-                        onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,113,227,0.03)'}
+                        style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 11px', borderRadius: '10px', background: 'rgba(0,122,255,0.03)', border: '1px solid rgba(0,122,255,0.12)', cursor: 'pointer', transition: 'background 0.12s' }}
+                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,122,255,0.07)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,122,255,0.03)'}
                       >
-                        <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(0,113,227,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                          <ClipboardList size={13} color="#0071E3" />
+                        <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(0,122,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <ClipboardList size={13} color="#007AFF" />
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <p style={{ fontSize: '12px', fontWeight: '600', color: c.text }}>{q.quote_number}</p>
-                          <p style={{ fontSize: '11px', color: '#8E8E93' }}>Angebot · {formatCurrency(q.total)}</p>
+                          <p style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>Angebot · {formatCurrency(q.total)}</p>
                         </div>
                         <StatusBadge status={q.status} />
                       </div>
@@ -1194,13 +1219,13 @@ export default function ProjectDetail() {
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <p style={{ fontSize: '12px', fontWeight: '600', color: c.text }}>{inv.invoice_number}</p>
-                          <p style={{ fontSize: '11px', color: '#8E8E93' }}>Rechnung · {formatCurrency(inv.total)}</p>
+                          <p style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>Rechnung · {formatCurrency(inv.total)}</p>
                         </div>
                         <StatusBadge status={inv.status} />
                       </div>
                     ))}
                     {(pendingInvoices.length + pendingQuotes.length) > 4 && (
-                      <button onClick={() => setActiveTab('finance')} style={{ ...linkBtn, fontSize: '12px', color: '#8E8E93', padding: '4px 0', textAlign: 'left' }}>
+                      <button onClick={() => setActiveTab('finance')} style={{ ...linkBtn, fontSize: '12px', color: 'var(--color-text-secondary)', padding: '4px 0', textAlign: 'left' }}>
                         +{pendingInvoices.length + pendingQuotes.length - 4} weitere
                       </button>
                     )}
@@ -1223,7 +1248,7 @@ export default function ProjectDetail() {
         <div className="space-y-4">
           <div className="card">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Projektinfo</h2>
+              <h2 className="text-xs font-semibold uppercase tracking-wide" style={{ color: c.textTertiary }}>Projektinfo</h2>
               <EditBar section="overview" />
             </div>
 
@@ -1231,11 +1256,11 @@ export default function ProjectDetail() {
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Projektname</label>
+                    <label className="block text-xs font-medium mb-1" style={{ color: c.textTertiary }}>Projektname</label>
                     <input className="input w-full text-sm" value={editForm.name || ''} onChange={e => set('name')(e.target.value)} />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Kunde</label>
+                    <label className="block text-xs font-medium mb-1" style={{ color: c.textTertiary }}>Kunde</label>
                     <select className="input w-full text-sm" value={editForm.client_id || ''} onChange={e => set('client_id')(e.target.value ? Number(e.target.value) : null)}>
                       <option value="">— Kein Kunde</option>
                       {clients.map(c => <option key={c.id} value={c.id}>{c.company_name}</option>)}
@@ -1293,8 +1318,8 @@ export default function ProjectDetail() {
                           <span style={{
                             display: 'inline-flex', alignItems: 'center', gap: '5px',
                             padding: '2px 10px', borderRadius: '99px',
-                            background: phase === 'abgeschlossen' ? 'rgba(52,199,89,0.12)' : 'rgba(0,113,227,0.10)',
-                            color: phase === 'abgeschlossen' ? '#34C759' : '#0071E3',
+                            background: phase === 'abgeschlossen' ? 'rgba(52,199,89,0.12)' : 'rgba(0,122,255,0.10)',
+                            color: phase === 'abgeschlossen' ? '#34C759' : 'var(--color-blue)',
                             fontSize: '12px', fontWeight: 600,
                           }}>
                             {cfg?.label || 'Demo'}
@@ -1302,12 +1327,12 @@ export default function ProjectDetail() {
                           <div style={{ marginTop: '5px', height: '3px', background: c.cardSecondary, borderRadius: '2px', width: '100px' }}>
                             <div style={{
                               height: '100%', borderRadius: '2px',
-                              background: phase === 'abgeschlossen' ? '#34C759' : '#0071E3',
+                              background: phase === 'abgeschlossen' ? '#34C759' : 'var(--color-blue)',
                               width: `${Math.round(((phaseIdx + 1) / total) * 100)}%`,
                               transition: 'width 0.3s',
                             }} />
                           </div>
-                          <span style={{ fontSize: '10px', color: '#8E8E93', marginTop: '2px', display: 'block' }}>
+                          <span style={{ fontSize: '10px', color: 'var(--color-text-secondary)', marginTop: '2px', display: 'block' }}>
                             Schritt {phaseIdx + 1} von {total}
                           </span>
                         </div>
@@ -1367,11 +1392,11 @@ export default function ProjectDetail() {
 
           {/* Client info card */}
           {project.client_id && (
-            <div className="card" style={{ background: '#F9FAFB' }}>
+            <div className="card" style={{ background: 'var(--color-card-secondary)' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ width: '26px', height: '26px', borderRadius: '8px', background: 'rgba(0,113,227,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Building2 size={13} color="#0071E3" />
+                  <div style={{ width: '26px', height: '26px', borderRadius: '8px', background: 'rgba(0,122,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Building2 size={13} color="#007AFF" />
                   </div>
                   <span style={{ fontSize: '13px', fontWeight: '600', color: c.text, letterSpacing: '-0.01em' }}>
                     {project.client_name}
@@ -1379,8 +1404,8 @@ export default function ProjectDetail() {
                 </div>
                 <button
                   onClick={() => navigate(`/clients/${project.client_id}`)}
-                  style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#0071E3', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 8px', borderRadius: '6px' }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,113,227,0.07)'}
+                  style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: 'var(--color-blue)', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 8px', borderRadius: '6px' }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,122,255,0.07)'}
                   onMouseLeave={e => e.currentTarget.style.background = 'none'}
                 >
                   Kundenprofil <ChevronRight size={11} />
@@ -1402,8 +1427,8 @@ export default function ProjectDetail() {
                   <div style={{ minWidth: 0 }}>
                     <span style={{ fontSize: '10px', color: c.textSecondary, display: 'block', marginBottom: '2px' }}>E-MAIL</span>
                     {project.client_email
-                      ? <a href={`mailto:${project.client_email}`} style={{ fontSize: '13px', color: '#0071E3', fontWeight: '500', textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>{project.client_email}</a>
-                      : <span style={{ fontSize: '13px', color: '#C7C7CC' }}>–</span>}
+                      ? <a href={`mailto:${project.client_email}`} style={{ fontSize: '13px', color: 'var(--color-blue)', fontWeight: '500', textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>{project.client_email}</a>
+                      : <span style={{ fontSize: '13px', color: 'var(--color-text-tertiary)' }}>–</span>}
                   </div>
                 </div>
                 {/* Telefon */}
@@ -1413,7 +1438,7 @@ export default function ProjectDetail() {
                     <span style={{ fontSize: '10px', color: c.textSecondary, display: 'block', marginBottom: '2px' }}>TELEFON</span>
                     {project.client_phone
                       ? <a href={`tel:${project.client_phone}`} style={{ fontSize: '13px', color: c.text, fontWeight: '500', textDecoration: 'none' }}>{project.client_phone}</a>
-                      : <span style={{ fontSize: '13px', color: '#C7C7CC' }}>–</span>}
+                      : <span style={{ fontSize: '13px', color: 'var(--color-text-tertiary)' }}>–</span>}
                   </div>
                 </div>
                 {/* Adresse */}
@@ -1584,16 +1609,16 @@ export default function ProjectDetail() {
             return (
               <div key={phaseKey} style={{
                 background: c.card, borderRadius: '14px',
-                border: `1px solid ${isCurrent ? '#C8DEFF' : '#F2F2F7'}`,
-                borderLeft: `3px solid ${isDone ? '#34C759' : isCurrent ? '#0071E3' : '#E5E5EA'}`,
+                border: `1px solid ${isCurrent ? '#C8DEFF' : 'var(--color-card-secondary)'}`,
+                borderLeft: `3px solid ${isDone ? '#34C759' : isCurrent ? 'var(--color-blue)' : 'var(--color-border)'}`,
                 overflow: 'hidden',
                 opacity: phaseIdx > currentIdx ? 0.55 : 1,
               }}>
                 <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <span style={{ fontSize: '13px', fontWeight: 600, color: isDone ? '#34C759' : isCurrent ? '#0071E3' : '#8E8E93', flex: 1 }}>
+                  <span style={{ fontSize: '13px', fontWeight: 600, color: isDone ? '#34C759' : isCurrent ? 'var(--color-blue)' : 'var(--color-text-secondary)', flex: 1 }}>
                     {phase.label}
                   </span>
-                  <span style={{ fontSize: '11px', color: '#8E8E93' }}>{doneCount}/{visibleTasks.length}</span>
+                  <span style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>{doneCount}/{visibleTasks.length}</span>
                   {isDone && <Check size={13} color="#34C759" strokeWidth={2.5} />}
                 </div>
                 <div style={{ borderTop: '1px solid #F2F2F7' }}>
@@ -1609,7 +1634,7 @@ export default function ProjectDetail() {
                           onClick={() => toggleWorkflowTask(phaseKey, task.key, checked)}
                           style={{
                             width: '18px', height: '18px', borderRadius: '5px', flexShrink: 0,
-                            border: `2px solid ${checked ? '#34C759' : '#D1D1D6'}`,
+                            border: `2px solid ${checked ? '#34C759' : 'var(--color-border)'}`,
                             background: checked ? '#34C759' : '#fff',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             cursor: 'pointer', transition: 'all 0.15s',
@@ -1617,14 +1642,14 @@ export default function ProjectDetail() {
                         >
                           {checked && <Check size={11} color="#fff" strokeWidth={3} />}
                         </button>
-                        <span style={{ flex: 1, fontSize: '13px', color: checked ? '#8E8E93' : '#1D1D1F', textDecoration: checked ? 'line-through' : 'none' }}>
+                        <span style={{ flex: 1, fontSize: '13px', color: checked ? 'var(--color-text-secondary)' : c.text, textDecoration: checked ? 'line-through' : 'none' }}>
                           {task.label}
                         </span>
                         {task.decision && (
                           <span style={{
                             fontSize: '11px', padding: '2px 8px', borderRadius: '99px',
-                            background: decisions[task.decision] ? 'rgba(0,113,227,0.08)' : '#F2F2F7',
-                            color: decisions[task.decision] ? '#0071E3' : '#8E8E93', fontWeight: 500,
+                            background: decisions[task.decision] ? 'rgba(0,122,255,0.08)' : 'var(--color-card-secondary)',
+                            color: decisions[task.decision] ? 'var(--color-blue)' : 'var(--color-text-secondary)', fontWeight: 500,
                           }}>
                             {decisions[task.decision] || 'Offen'}
                           </span>
@@ -1678,7 +1703,7 @@ export default function ProjectDetail() {
                 </div>
               ))}
               {tasks.length === 0 && (
-                <p style={{ fontSize: '13px', color: '#8E8E93', marginTop: '8px' }}>Noch keine eigenen Aufgaben.</p>
+                <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginTop: '8px' }}>Noch keine eigenen Aufgaben.</p>
               )}
             </div>
           </div>
@@ -1994,7 +2019,11 @@ export default function ProjectDetail() {
                   editingCredId === cred.id ? null : (
                     <div key={cred.id} className="flex items-start justify-between gap-3 p-3 rounded-xl border border-gray-100 hover:bg-gray-50 transition-colors group">
                       <div className="flex items-start gap-3 min-w-0">
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 mt-0.5 ${CRED_TYPE_STYLES[cred.type] || CRED_TYPE_STYLES.other}`}>
+                        <span style={{
+                          fontSize: '12px', padding: '2px 8px', borderRadius: '6px', fontWeight: '500', flexShrink: 0, marginTop: '2px',
+                          background: (CRED_TYPE_STYLES[cred.type] || CRED_TYPE_STYLES.other).bg,
+                          color: (CRED_TYPE_STYLES[cred.type] || CRED_TYPE_STYLES.other).color,
+                        }}>
                           {CRED_TYPE_LABELS[cred.type] || cred.type}
                         </span>
                         <div className="min-w-0">
@@ -2105,9 +2134,9 @@ export default function ProjectDetail() {
                         onClick={() => setChangeForm(f => ({ ...f, type: k }))}
                         style={{
                           flex: 1, padding: '6px 4px', borderRadius: '8px', fontSize: '12px', fontWeight: '600',
-                          border: `1.5px solid ${changeForm.type === k ? v.color : '#E5E5EA'}`,
-                          background: changeForm.type === k ? v.bg : '#FAFAFA',
-                          color: changeForm.type === k ? v.color : '#8E8E93',
+                          border: `1.5px solid ${changeForm.type === k ? v.color : 'var(--color-border)'}`,
+                          background: changeForm.type === k ? v.bg : 'var(--color-card-secondary)',
+                          color: changeForm.type === k ? v.color : 'var(--color-text-secondary)',
                           cursor: 'pointer', transition: 'all 0.12s',
                         }}
                       >{v.label}</button>
@@ -2126,9 +2155,9 @@ export default function ProjectDetail() {
                           onClick={() => setChangeForm(f => ({ ...f, priority: k }))}
                           style={{
                             flex: 1, padding: '6px 4px', borderRadius: '8px', fontSize: '12px', fontWeight: '600',
-                            border: `1.5px solid ${active ? v.color : '#E5E5EA'}`,
-                            background: active ? v.color + '15' : '#FAFAFA',
-                            color: active ? v.color : '#8E8E93',
+                            border: `1.5px solid ${active ? v.color : 'var(--color-border)'}`,
+                            background: active ? v.color + '15' : 'var(--color-card-secondary)',
+                            color: active ? v.color : 'var(--color-text-secondary)',
                             cursor: 'pointer', transition: 'all 0.12s',
                           }}
                         >
@@ -2165,7 +2194,7 @@ export default function ProjectDetail() {
                       padding: '4px 12px', borderRadius: '7px', fontSize: '12px', fontWeight: '500',
                       border: 'none', cursor: 'pointer', transition: 'all 0.12s',
                       background: changeTypeFilter === k ? '#fff' : 'transparent',
-                      color: changeTypeFilter === k ? '#1D1D1F' : '#86868B',
+                      color: changeTypeFilter === k ? c.text : c.textSecondary,
                       boxShadow: changeTypeFilter === k ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
                     }}
                   >{label}</button>
@@ -2180,13 +2209,13 @@ export default function ProjectDetail() {
                       padding: '4px 12px', borderRadius: '7px', fontSize: '12px', fontWeight: '500',
                       border: 'none', cursor: 'pointer', transition: 'all 0.12s',
                       background: changeStatusFilter === k ? '#fff' : 'transparent',
-                      color: changeStatusFilter === k ? '#1D1D1F' : '#86868B',
+                      color: changeStatusFilter === k ? c.text : c.textSecondary,
                       boxShadow: changeStatusFilter === k ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
                     }}
                   >{label}</button>
                 ))}
               </div>
-              <span style={{ fontSize: '12px', color: '#C7C7CC', marginLeft: 'auto' }}>
+              <span style={{ fontSize: '12px', color: 'var(--color-text-tertiary)', marginLeft: 'auto' }}>
                 {changes.filter(c =>
                   (changeTypeFilter === 'all' || c.type === changeTypeFilter) &&
                   (changeStatusFilter === 'all' || c.status === changeStatusFilter)
@@ -2214,10 +2243,10 @@ export default function ProjectDetail() {
                   <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: c.cardSecondary, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
                     <CheckSquare size={18} color="#C7C7CC" />
                   </div>
-                  <p style={{ fontSize: '14px', fontWeight: '500', color: '#3C3C43', marginBottom: '4px' }}>
+                  <p style={{ fontSize: '14px', fontWeight: '500', color: 'var(--color-text-secondary)', marginBottom: '4px' }}>
                     {changes.length === 0 ? 'Noch keine Änderungen' : 'Keine Einträge'}
                   </p>
-                  <p style={{ fontSize: '13px', color: '#8E8E93' }}>
+                  <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>
                     {changes.length === 0 ? 'Leg die erste Änderung oben an.' : 'Passe den Filter an.'}
                   </p>
                 </div>
@@ -2236,14 +2265,14 @@ export default function ProjectDetail() {
 
                   return (
                     <div key={ch.id} style={{
-                      background: isDone ? '#FAFAFA' : '#fff',
+                      background: isDone ? 'var(--color-card-secondary)' : '#fff',
                       borderRadius: '14px',
                       border: '1px solid #E5E5EA',
                       borderLeft: `3px solid ${isDone ? '#D1FAE5' : priCfg.color}`,
                       overflow: 'hidden',
                       transition: 'box-shadow 0.15s',
                     }}
-                      onMouseEnter={e => { if (!isDone) e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06)'; }}
+                      onMouseEnter={e => { if (!isDone) e.currentTarget.style.boxShadow = '0 2px 8px var(--color-border-subtle)'; }}
                       onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}
                     >
                       {/* Card header */}
@@ -2262,7 +2291,7 @@ export default function ProjectDetail() {
                         {/* Title */}
                         <span style={{
                           flex: 1, fontSize: '13.5px', fontWeight: '500',
-                          color: isDone ? '#8E8E93' : '#1D1D1F',
+                          color: isDone ? 'var(--color-text-secondary)' : c.text,
                           textDecoration: isDone ? 'line-through' : 'none',
                           letterSpacing: '-0.01em',
                         }}>
@@ -2316,7 +2345,7 @@ export default function ProjectDetail() {
 
                       {/* Expanded section */}
                       {isExpanded && (
-                        <div style={{ borderTop: '1px solid #F2F2F7', padding: '16px', background: '#FAFAFA' }}>
+                        <div style={{ borderTop: '1px solid #F2F2F7', padding: '16px', background: 'var(--color-card-secondary)' }}>
                           {isEditing ? (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                               <input
@@ -2343,9 +2372,9 @@ export default function ProjectDetail() {
                                         onClick={() => setEditChangeForm(f => ({ ...f, type: k }))}
                                         style={{
                                           flex: 1, padding: '5px 4px', borderRadius: '7px', fontSize: '12px', fontWeight: '600',
-                                          border: `1.5px solid ${editChangeForm.type === k ? v.color : '#E5E5EA'}`,
+                                          border: `1.5px solid ${editChangeForm.type === k ? v.color : 'var(--color-border)'}`,
                                           background: editChangeForm.type === k ? v.bg : '#fff',
-                                          color: editChangeForm.type === k ? v.color : '#8E8E93', cursor: 'pointer',
+                                          color: editChangeForm.type === k ? v.color : 'var(--color-text-secondary)', cursor: 'pointer',
                                         }}
                                       >{v.label}</button>
                                     ))}
@@ -2362,9 +2391,9 @@ export default function ProjectDetail() {
                                           onClick={() => setEditChangeForm(f => ({ ...f, priority: k }))}
                                           style={{
                                             flex: 1, padding: '5px 4px', borderRadius: '7px', fontSize: '12px', fontWeight: '600',
-                                            border: `1.5px solid ${active ? v.color : '#E5E5EA'}`,
+                                            border: `1.5px solid ${active ? v.color : 'var(--color-border)'}`,
                                             background: active ? v.color + '15' : '#fff',
-                                            color: active ? v.color : '#8E8E93', cursor: 'pointer',
+                                            color: active ? v.color : 'var(--color-text-secondary)', cursor: 'pointer',
                                           }}
                                         >{v.label}</button>
                                       );
@@ -2402,11 +2431,11 @@ export default function ProjectDetail() {
                           ) : (
                             <div>
                               {ch.description ? (
-                                <p style={{ fontSize: '13px', color: '#3C3C43', marginBottom: '14px', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+                                <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginBottom: '14px', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
                                   {ch.description}
                                 </p>
                               ) : (
-                                <p style={{ fontSize: '13px', color: '#C7C7CC', marginBottom: '14px', fontStyle: 'italic' }}>Keine Beschreibung</p>
+                                <p style={{ fontSize: '13px', color: 'var(--color-text-tertiary)', marginBottom: '14px', fontStyle: 'italic' }}>Keine Beschreibung</p>
                               )}
                               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px', flexWrap: 'wrap' }}>
                                 {ch.assignee_name && (
@@ -2419,11 +2448,11 @@ export default function ProjectDetail() {
                                     }}>
                                       {ch.assignee_name.trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase()}
                                     </div>
-                                    <span style={{ fontSize: '12px', color: '#3C3C43', fontWeight: '500' }}>{ch.assignee_name}</span>
+                                    <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)', fontWeight: '500' }}>{ch.assignee_name}</span>
                                   </div>
                                 )}
-                                <span style={{ fontSize: '11px', color: '#C7C7CC' }}>·</span>
-                                <span style={{ fontSize: '12px', color: '#8E8E93' }}>
+                                <span style={{ fontSize: '11px', color: 'var(--color-text-tertiary)' }}>·</span>
+                                <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
                                   {new Date(ch.created_at).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                                 </span>
                               </div>

@@ -28,7 +28,7 @@ function TaskRow({ task, checked, onToggle, decisions, onDecision }) {
         style={{
           width: '20px', height: '20px',
           borderRadius: '6px',
-          border: `2px solid ${checked ? '#34C759' : '#D1D1D6'}`,
+          border: `2px solid ${checked ? '#34C759' : 'var(--color-border)'}`,
           background: checked ? '#34C759' : '#fff',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           cursor: 'pointer',
@@ -43,7 +43,7 @@ function TaskRow({ task, checked, onToggle, decisions, onDecision }) {
       <span style={{
         flex: 1,
         fontSize: '14px',
-        color: checked ? '#8E8E93' : '#1D1D1F',
+        color: checked ? 'var(--color-text-secondary)' : 'var(--color-text)',
         textDecoration: checked ? 'line-through' : 'none',
         lineHeight: 1.4,
       }}>
@@ -57,9 +57,9 @@ function TaskRow({ task, checked, onToggle, decisions, onDecision }) {
           style={{
             padding: '3px 10px',
             borderRadius: '20px',
-            border: `1.5px solid ${decisionValue ? '#0071E3' : '#D1D1D6'}`,
-            background: decisionValue ? 'rgba(0,113,227,0.08)' : '#F9F9F9',
-            color: decisionValue ? '#0071E3' : '#8E8E93',
+            border: `1.5px solid ${decisionValue ? 'var(--color-blue)' : 'var(--color-border)'}`,
+            background: decisionValue ? 'rgba(0,122,255,0.08)' : 'var(--color-card-secondary)',
+            color: decisionValue ? 'var(--color-blue)' : 'var(--color-text-secondary)',
             fontSize: '12px',
             fontWeight: 500,
             cursor: 'pointer',
@@ -124,13 +124,13 @@ export default function PhaseCard({
   const borderLeft = isDone
     ? '3px solid #34C759'
     : isActive
-    ? '3px solid #0071E3'
+    ? '3px solid #007AFF'
     : '3px solid transparent';
 
   return (
     <>
       <div style={{
-        background: '#fff',
+        background: 'var(--color-card)',
         borderRadius: '16px',
         border: '1px solid #F2F2F7',
         borderLeft,
@@ -160,7 +160,7 @@ export default function PhaseCard({
             borderRadius: '10px',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: '18px',
-            background: isDone ? '#F0FFF4' : isActive ? 'rgba(0,113,227,0.08)' : '#F9F9F9',
+            background: isDone ? '#F0FFF4' : isActive ? 'rgba(0,122,255,0.08)' : 'var(--color-card-secondary)',
             flexShrink: 0,
           }}>
             {isDone ? '✅' : phase.emoji}
@@ -171,7 +171,7 @@ export default function PhaseCard({
             <div style={{
               fontSize: '15px',
               fontWeight: 600,
-              color: isDone ? '#34C759' : isActive ? '#1D1D1F' : '#8E8E93',
+              color: isDone ? '#34C759' : isActive ? 'var(--color-text)' : 'var(--color-text-secondary)',
               lineHeight: 1.3,
             }}>
               {phase.label}
@@ -190,7 +190,7 @@ export default function PhaseCard({
               )}
             </div>
             {isActive && !expanded && (
-              <div style={{ fontSize: '12px', color: '#8E8E93', marginTop: '2px' }}>
+              <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)', marginTop: '2px' }}>
                 {phase.description}
               </div>
             )}
@@ -202,7 +202,7 @@ export default function PhaseCard({
               <span style={{
                 fontSize: '12px',
                 fontWeight: 500,
-                color: isActive ? '#0071E3' : '#8E8E93',
+                color: isActive ? 'var(--color-blue)' : 'var(--color-text-secondary)',
               }}>
                 {doneTasks}/{totalTasks}
               </span>
@@ -217,11 +217,11 @@ export default function PhaseCard({
 
         {/* Progress bar (active phase) */}
         {isActive && totalTasks > 0 && (
-          <div style={{ height: '3px', background: '#F2F2F7', margin: '0 18px' }}>
+          <div style={{ height: '3px', background: 'var(--color-card-secondary)', margin: '0 18px' }}>
             <div style={{
               height: '100%',
               width: `${progress}%`,
-              background: '#0071E3',
+              background: 'var(--color-blue)',
               borderRadius: '2px',
               transition: 'width 0.3s',
             }} />
@@ -232,7 +232,7 @@ export default function PhaseCard({
         {expanded && !isFuture && (
           <div style={{ padding: '4px 18px 18px' }}>
             {/* Description */}
-            <p style={{ fontSize: '13px', color: '#6E6E73', marginBottom: '12px', marginTop: '8px', lineHeight: 1.5 }}>
+            <p style={{ fontSize: '13px', color: 'var(--color-text-tertiary)', marginBottom: '12px', marginTop: '8px', lineHeight: 1.5 }}>
               {phase.description}
             </p>
 
@@ -258,10 +258,10 @@ export default function PhaseCard({
                 marginTop: '14px',
                 padding: '16px',
                 borderRadius: '14px',
-                background: '#F9F9FB',
+                background: 'var(--color-card-secondary)',
                 border: '1.5px solid #E5E5EA',
               }}>
-                <p style={{ fontSize: '12px', fontWeight: 600, color: '#6E6E73', margin: '0 0 12px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                <p style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-text-tertiary)', margin: '0 0 12px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                   Ergebnis
                 </p>
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
@@ -279,16 +279,16 @@ export default function PhaseCard({
                           flex: 1, minWidth: '100px',
                           padding: '12px 10px',
                           borderRadius: '12px',
-                          border: `2px solid ${isSelected ? opt.color : '#E5E5EA'}`,
+                          border: `2px solid ${isSelected ? opt.color : 'var(--color-border)'}`,
                           background: isSelected ? opt.bg : '#fff',
-                          color: isSelected ? opt.color : '#3C3C43',
+                          color: isSelected ? opt.color : 'var(--color-text-secondary)',
                           fontSize: '13px', fontWeight: isSelected ? 700 : 500,
                           cursor: 'pointer', textAlign: 'center',
                           transition: 'all 0.15s',
                           display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
                         }}
                         onMouseEnter={e => { if (!isSelected) e.currentTarget.style.borderColor = opt.color; }}
-                        onMouseLeave={e => { if (!isSelected) e.currentTarget.style.borderColor = '#E5E5EA'; }}
+                        onMouseLeave={e => { if (!isSelected) e.currentTarget.style.borderColor = 'var(--color-border)'; }}
                       >
                         <span style={{ fontSize: '18px' }}>
                           {opt.value === 'won' ? '✓' : opt.value === 'lost' ? '✗' : '↷'}
@@ -319,8 +319,8 @@ export default function PhaseCard({
                   display: 'flex', alignItems: 'center', gap: '7px',
                   marginBottom: '8px',
                 }}>
-                  <Link size={14} color="#0071E3" />
-                  <span style={{ fontSize: '13px', fontWeight: 600, color: '#0071E3' }}>
+                  <Link size={14} color="#007AFF" />
+                  <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-blue)' }}>
                     Demo-Link
                   </span>
                 </div>
@@ -343,8 +343,8 @@ export default function PhaseCard({
                       fontSize: '13px',
                       fontFamily: 'inherit',
                       outline: 'none',
-                      background: '#fff',
-                      color: '#1D1D1F',
+                      background: 'var(--color-card)',
+                      color: 'var(--color-text)',
                     }}
                   />
                   {decisions.demo_url && (
@@ -355,7 +355,7 @@ export default function PhaseCard({
                       style={{
                         padding: '8px 13px',
                         borderRadius: '9px',
-                        background: '#0071E3',
+                        background: 'var(--color-blue)',
                         color: '#fff',
                         fontSize: '12px',
                         fontWeight: 600,
@@ -389,10 +389,10 @@ export default function PhaseCard({
                 fontSize: '40px',
               }}>
                 🎉
-                <div style={{ fontSize: '16px', fontWeight: 600, color: '#1D1D1F', marginTop: '8px' }}>
+                <div style={{ fontSize: '16px', fontWeight: 600, color: 'var(--color-text)', marginTop: '8px' }}>
                   Projekt erfolgreich abgeschlossen!
                 </div>
-                <div style={{ fontSize: '13px', color: '#8E8E93', marginTop: '4px' }}>
+                <div style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginTop: '4px' }}>
                   Klasse Arbeit!
                 </div>
               </div>
@@ -409,7 +409,7 @@ export default function PhaseCard({
                   padding: '13px',
                   borderRadius: '12px',
                   border: 'none',
-                  background: '#0071E3',
+                  background: 'var(--color-blue)',
                   color: '#fff',
                   fontSize: '14px',
                   fontWeight: 600,

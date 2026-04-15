@@ -1,19 +1,7 @@
 import { useEffect } from 'react';
 import { AlertTriangle, Trash2, X } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 
-/**
- * In-app confirmation dialog — replaces browser confirm().
- *
- * Props:
- *   open          boolean
- *   title         string
- *   message       string
- *   confirmLabel  string  (default "Löschen")
- *   cancelLabel   string  (default "Abbrechen")
- *   danger        boolean (default true — red confirm button)
- *   onConfirm     () => void
- *   onCancel      () => void
- */
 export default function ConfirmDialog({
   open,
   title = 'Bist du sicher?',
@@ -24,7 +12,8 @@ export default function ConfirmDialog({
   onConfirm,
   onCancel,
 }) {
-  // Close on Escape
+  const { c, isDark } = useTheme();
+
   useEffect(() => {
     if (!open) return;
     const handler = e => {
@@ -38,57 +27,96 @@ export default function ConfirmDialog({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 10000,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: 16,
+    }}>
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/30 backdrop-blur-[2px]"
         onClick={onCancel}
+        style={{
+          position: 'absolute', inset: 0,
+          background: c.overlayBg,
+          backdropFilter: 'blur(6px)',
+          WebkitBackdropFilter: 'blur(6px)',
+          animation: 'backdropIn 0.15s cubic-bezier(0.22,1,0.36,1) both',
+        }}
       />
 
-      {/* Dialog card */}
-      <div className="relative w-full max-w-sm bg-white rounded-2xl shadow-2xl border border-gray-100 animate-fade-in">
-
-        {/* Close button */}
+      {/* Dialog */}
+      <div
+        className="animate-scale-in"
+        style={{
+          position: 'relative',
+          width: '100%', maxWidth: 340,
+          background: c.card,
+          borderRadius: 14,
+          border: `0.5px solid ${c.borderSubtle}`,
+          boxShadow: isDark
+            ? '0 24px 72px rgba(0,0,0,0.5), 0 8px 24px rgba(0,0,0,0.3)'
+            : '0 24px 72px rgba(0,0,0,0.14), 0 8px 24px var(--color-border-subtle)',
+        }}
+      >
+        {/* Close */}
         <button
           onClick={onCancel}
-          className="absolute top-4 right-4 p-1 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+          style={{
+            position: 'absolute', top: 14, right: 14,
+            width: 26, height: 26, borderRadius: '50%',
+            background: c.inputBg, border: 'none',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer',
+            transition: 'background 0.15s',
+          }}
+          onMouseEnter={e => e.currentTarget.style.background = c.inputBgHover}
+          onMouseLeave={e => e.currentTarget.style.background = c.inputBg}
         >
-          <X size={15} />
+          <X size={12} color={c.textSecondary} strokeWidth={2.5} />
         </button>
 
-        {/* Icon + content */}
-        <div className="px-6 pt-6 pb-5">
-          <div className={`w-11 h-11 rounded-xl flex items-center justify-center mb-4 ${
-            danger ? 'bg-red-50' : 'bg-amber-50'
-          }`}>
+        {/* Content */}
+        <div style={{ padding: '24px 24px 20px' }}>
+          <div style={{
+            width: 40, height: 40, borderRadius: 10,
+            background: danger ? c.redLight : c.orangeLight,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            marginBottom: 16,
+          }}>
             {danger
-              ? <Trash2 size={20} className="text-red-500" />
-              : <AlertTriangle size={20} className="text-amber-500" />
+              ? <Trash2 size={18} color={c.red} />
+              : <AlertTriangle size={18} color={c.orange} />
             }
           </div>
 
-          <h3 className="text-base font-semibold text-gray-900 mb-1.5">{title}</h3>
+          <h3 style={{
+            fontSize: 16, fontWeight: 600, color: c.text,
+            margin: '0 0 6px', letterSpacing: '-0.016em',
+          }}>{title}</h3>
           {message && (
-            <p className="text-sm text-gray-500 leading-relaxed">{message}</p>
+            <p style={{
+              fontSize: 14, color: c.textSecondary,
+              lineHeight: 1.5, margin: 0, letterSpacing: '-0.006em',
+            }}>{message}</p>
           )}
         </div>
 
         {/* Actions */}
-        <div className="px-6 pb-5 flex items-center justify-end gap-2">
-          <button
-            onClick={onCancel}
-            className="btn-secondary"
-          >
+        <div style={{
+          padding: '0 24px 20px',
+          display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8,
+        }}>
+          <button onClick={onCancel} className="btn-secondary">
             {cancelLabel}
           </button>
           <button
             onClick={onConfirm}
             autoFocus
-            className={
-              danger
-                ? 'inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-red-600 text-white rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-150 active:scale-[0.98]'
-                : 'btn-primary'
-            }
+            className={danger ? 'btn-danger' : 'btn-primary'}
+            style={danger ? {
+              background: c.red, color: '#fff',
+              fontWeight: 500,
+            } : {}}
           >
             {confirmLabel}
           </button>

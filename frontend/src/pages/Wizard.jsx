@@ -119,7 +119,7 @@ const INITIAL = {
 
 function Label({ children, required }) {
   return (
-    <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, color: '#6E6E73', marginBottom: '5px' }}>
+    <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, color: 'var(--color-text-tertiary)', marginBottom: '5px' }}>
       {children}{required && <span style={{ color: '#FF3B30', marginLeft: '2px' }}>*</span>}
     </label>
   );
@@ -149,13 +149,13 @@ function TextInput({ value, onChange, placeholder, type = 'text', required }) {
         borderRadius: '10px',
         fontSize: '14px',
         outline: 'none',
-        background: '#fff',
-        color: '#1D1D1F',
+        background: 'var(--color-card)',
+        color: 'var(--color-text)',
         fontFamily: 'inherit',
         transition: 'border-color 0.15s',
       }}
-      onFocus={e => e.target.style.borderColor = '#0071E3'}
-      onBlur={e => e.target.style.borderColor = '#E5E5EA'}
+      onFocus={e => e.target.style.borderColor = 'var(--color-blue)'}
+      onBlur={e => e.target.style.borderColor = 'var(--color-border)'}
     />
   );
 }
@@ -172,8 +172,8 @@ function SelectInput({ value, onChange, children }) {
         borderRadius: '10px',
         fontSize: '14px',
         outline: 'none',
-        background: '#fff',
-        color: value ? '#1D1D1F' : '#8E8E93',
+        background: 'var(--color-card)',
+        color: value ? 'var(--color-text)' : 'var(--color-text-secondary)',
         fontFamily: 'inherit',
       }}
     >
@@ -215,16 +215,16 @@ function BrancheSelect({ value, onChange }) {
         style={{
           width: '100%', boxSizing: 'border-box',
           padding: '9px 12px',
-          border: `1.5px solid ${open ? '#0071E3' : '#E5E5EA'}`,
+          border: `1.5px solid ${open ? 'var(--color-blue)' : 'var(--color-border)'}`,
           borderRadius: '10px', fontSize: '14px',
-          background: '#fff', cursor: 'pointer', textAlign: 'left',
-          color: value ? '#1D1D1F' : '#8E8E93',
+          background: 'var(--color-card)', cursor: 'pointer', textAlign: 'left',
+          color: value ? 'var(--color-text)' : 'var(--color-text-secondary)',
           fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           transition: 'border-color 0.15s',
         }}
       >
         <span>{value || 'Branche wählen'}</span>
-        <span style={{ fontSize: '10px', color: '#8E8E93', marginLeft: '6px' }}>{open ? '▲' : '▼'}</span>
+        <span style={{ fontSize: '10px', color: 'var(--color-text-secondary)', marginLeft: '6px' }}>{open ? '▲' : '▼'}</span>
       </button>
 
       {/* Dropdown */}
@@ -233,7 +233,7 @@ function BrancheSelect({ value, onChange }) {
           <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => { setOpen(false); setSearch(''); }} />
           <div style={{
             position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0,
-            background: '#fff', borderRadius: '12px', zIndex: 50,
+            background: 'var(--color-card)', borderRadius: '12px', zIndex: 50,
             border: '1.5px solid #E5E5EA',
             boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
             overflow: 'hidden',
@@ -250,16 +250,16 @@ function BrancheSelect({ value, onChange }) {
                   width: '100%', boxSizing: 'border-box',
                   padding: '7px 10px', border: '1.5px solid #E5E5EA',
                   borderRadius: '8px', fontSize: '13px', outline: 'none',
-                  background: '#F5F5F7', fontFamily: 'inherit', color: '#1D1D1F',
+                  background: '#F5F5F7', fontFamily: 'inherit', color: 'var(--color-text)',
                 }}
-                onFocus={e => e.target.style.borderColor = '#0071E3'}
-                onBlur={e => e.target.style.borderColor = '#E5E5EA'}
+                onFocus={e => e.target.style.borderColor = 'var(--color-blue)'}
+                onBlur={e => e.target.style.borderColor = 'var(--color-border)'}
               />
             </div>
 
             {/* Letter hint */}
             {search.length === 0 && (
-              <div style={{ padding: '2px 12px 6px', fontSize: '11px', color: '#8E8E93' }}>
+              <div style={{ padding: '2px 12px 6px', fontSize: '11px', color: 'var(--color-text-secondary)' }}>
                 Buchstabe tippen zum Filtern
               </div>
             )}
@@ -267,7 +267,7 @@ function BrancheSelect({ value, onChange }) {
             {/* List */}
             <div style={{ maxHeight: '240px', overflowY: 'auto' }}>
               {filtered.length === 0 ? (
-                <div style={{ padding: '16px 12px', fontSize: '13px', color: '#8E8E93', textAlign: 'center' }}>
+                <div style={{ padding: '16px 12px', fontSize: '13px', color: 'var(--color-text-secondary)', textAlign: 'center' }}>
                   Keine Branche gefunden
                 </div>
               ) : (
@@ -279,8 +279,8 @@ function BrancheSelect({ value, onChange }) {
                     style={{
                       display: 'block', width: '100%', textAlign: 'left',
                       padding: '8px 12px', fontSize: '13px', border: 'none',
-                      background: industry === value ? 'rgba(0,113,227,0.07)' : 'transparent',
-                      color: industry === value ? '#0071E3' : '#1D1D1F',
+                      background: industry === value ? 'rgba(0,122,255,0.07)' : 'transparent',
+                      color: industry === value ? 'var(--color-blue)' : 'var(--color-text)',
                       fontWeight: industry === value ? 600 : 400,
                       cursor: 'pointer', fontFamily: 'inherit',
                       transition: 'background 0.1s',
@@ -318,31 +318,31 @@ function CardSelect({ options, value, onChange, showCustom, customValue, onCusto
               display: 'flex', alignItems: 'center', gap: '12px',
               padding: '12px 14px',
               borderRadius: '12px',
-              border: `2px solid ${isSelected ? '#0071E3' : '#F2F2F7'}`,
-              background: isSelected ? 'rgba(0,113,227,0.05)' : '#F9F9F9',
+              border: `2px solid ${isSelected ? 'var(--color-blue)' : 'var(--color-card-secondary)'}`,
+              background: isSelected ? 'rgba(0,122,255,0.05)' : 'var(--color-card-secondary)',
               cursor: 'pointer',
               textAlign: 'left',
               transition: 'all 0.15s',
             }}
           >
-            {OptIcon && <OptIcon size={16} color={isSelected ? '#0071E3' : '#8E8E93'} strokeWidth={1.8} style={{ flexShrink: 0 }} />}
+            {OptIcon && <OptIcon size={16} color={isSelected ? 'var(--color-blue)' : 'var(--color-text-secondary)'} strokeWidth={1.8} style={{ flexShrink: 0 }} />}
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: '14px', fontWeight: 600, color: isSelected ? '#0071E3' : '#1D1D1F' }}>
+              <div style={{ fontSize: '14px', fontWeight: 600, color: isSelected ? 'var(--color-blue)' : 'var(--color-text)' }}>
                 {opt.label}
                 {opt.badge && (
                   <span style={{
                     marginLeft: '8px', fontSize: '10px', fontWeight: 600,
-                    background: '#0071E3', color: '#fff',
+                    background: 'var(--color-blue)', color: '#fff',
                     padding: '1px 7px', borderRadius: '20px',
                   }}>{opt.badge}</span>
                 )}
               </div>
-              {opt.desc && <div style={{ fontSize: '12px', color: '#8E8E93', marginTop: '1px' }}>{opt.desc}</div>}
+              {opt.desc && <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)', marginTop: '1px' }}>{opt.desc}</div>}
             </div>
             {isSelected && (
               <div style={{
                 width: '20px', height: '20px', borderRadius: '50%',
-                background: '#0071E3',
+                background: 'var(--color-blue)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 flexShrink: 0,
               }}>
@@ -367,7 +367,7 @@ function CardSelect({ options, value, onChange, showCustom, customValue, onCusto
                 border: '2px dashed #E5E5EA',
                 background: 'transparent',
                 cursor: 'pointer',
-                color: '#8E8E93',
+                color: 'var(--color-text-secondary)',
                 fontSize: '13px',
                 fontWeight: 500,
                 transition: 'all 0.15s',
@@ -392,7 +392,7 @@ function CardSelect({ options, value, onChange, showCustom, customValue, onCusto
                 }}
                 style={{
                   flex: 1, padding: '9px 12px', borderRadius: '10px',
-                  border: '1.5px solid #0071E3', fontSize: '13px',
+                  border: '1.5px solid #007AFF', fontSize: '13px',
                   outline: 'none', fontFamily: 'inherit',
                 }}
               />
@@ -407,7 +407,7 @@ function CardSelect({ options, value, onChange, showCustom, customValue, onCusto
                 }}
                 style={{
                   padding: '0 14px', borderRadius: '10px',
-                  border: 'none', background: '#0071E3', color: '#fff',
+                  border: 'none', background: 'var(--color-blue)', color: '#fff',
                   fontSize: '13px', fontWeight: 600, cursor: 'pointer',
                 }}
               >
@@ -419,15 +419,15 @@ function CardSelect({ options, value, onChange, showCustom, customValue, onCusto
             <div style={{
               display: 'flex', alignItems: 'center', gap: '8px',
               padding: '10px 14px', borderRadius: '12px',
-              border: '2px solid #0071E3', background: 'rgba(0,113,227,0.05)',
+              border: '2px solid #007AFF', background: 'rgba(0,122,255,0.05)',
             }}>
-              <span style={{ fontSize: '14px', fontWeight: 600, color: '#0071E3', flex: 1 }}>
+              <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--color-blue)', flex: 1 }}>
                 {customValue}
               </span>
               <button
                 type="button"
                 onClick={() => { onChange(''); onCustomChange(''); }}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8E8E93' }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)' }}
               >
                 <X size={14} />
               </button>
@@ -457,9 +457,9 @@ function ChipGroup({ options, value, onChange, showCustom, customValue, onCustom
               display: 'flex', alignItems: 'center', gap: '5px',
               padding: '7px 14px',
               borderRadius: '99px',
-              border: `2px solid ${isSelected ? '#0071E3' : '#E5E5EA'}`,
-              background: isSelected ? '#0071E3' : '#fff',
-              color: isSelected ? '#fff' : '#3C3C43',
+              border: `2px solid ${isSelected ? 'var(--color-blue)' : 'var(--color-border)'}`,
+              background: isSelected ? 'var(--color-blue)' : '#fff',
+              color: isSelected ? '#fff' : 'var(--color-text-secondary)',
               fontSize: '13px', fontWeight: 500,
               cursor: 'pointer',
               transition: 'all 0.15s',
@@ -482,8 +482,8 @@ function ChipGroup({ options, value, onChange, showCustom, customValue, onCustom
                 display: 'flex', alignItems: 'center', gap: '5px',
                 padding: '7px 14px',
                 borderRadius: '99px',
-                border: '2px solid #0071E3',
-                background: '#0071E3', color: '#fff',
+                border: '2px solid #007AFF',
+                background: 'var(--color-blue)', color: '#fff',
                 fontSize: '13px', fontWeight: 500,
                 cursor: 'pointer',
               }}
@@ -500,7 +500,7 @@ function ChipGroup({ options, value, onChange, showCustom, customValue, onCustom
                 borderRadius: '99px',
                 border: '2px dashed #D1D1D6',
                 background: 'transparent',
-                color: '#8E8E93',
+                color: 'var(--color-text-secondary)',
                 fontSize: '13px', fontWeight: 500,
                 cursor: 'pointer',
               }}
@@ -522,13 +522,13 @@ function ChipGroup({ options, value, onChange, showCustom, customValue, onCustom
                 }}
                 style={{
                   padding: '5px 10px', borderRadius: '99px',
-                  border: '2px solid #0071E3', fontSize: '13px',
+                  border: '2px solid #007AFF', fontSize: '13px',
                   outline: 'none', width: '140px', fontFamily: 'inherit',
                 }}
               />
               <button type="button"
                 onClick={() => { if (custom.trim()) { onChange('custom'); onCustomChange(custom.trim()); } setAdding(false); }}
-                style={{ padding: '4px 10px', borderRadius: '99px', border: 'none', background: '#0071E3', color: '#fff', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
+                style={{ padding: '4px 10px', borderRadius: '99px', border: 'none', background: 'var(--color-blue)', color: '#fff', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
               >OK</button>
             </div>
           )}
@@ -571,9 +571,9 @@ function MultiChipGroup({ options, value = [], onChange }) {
             style={{
               display: 'flex', alignItems: 'center', gap: '5px',
               padding: '7px 13px', borderRadius: '99px',
-              border: `2px solid ${sel ? '#0071E3' : '#E5E5EA'}`,
-              background: sel ? '#0071E3' : '#fff',
-              color: sel ? '#fff' : '#3C3C43',
+              border: `2px solid ${sel ? 'var(--color-blue)' : 'var(--color-border)'}`,
+              background: sel ? 'var(--color-blue)' : '#fff',
+              color: sel ? '#fff' : 'var(--color-text-secondary)',
               fontSize: '13px', fontWeight: 500,
               cursor: 'pointer', transition: 'all 0.15s',
             }}
@@ -591,7 +591,7 @@ function MultiChipGroup({ options, value = [], onChange }) {
             style={{
               display: 'flex', alignItems: 'center', gap: '5px',
               padding: '7px 13px', borderRadius: '99px',
-              border: '2px solid #0071E3', background: '#0071E3',
+              border: '2px solid #007AFF', background: 'var(--color-blue)',
               color: '#fff', fontSize: '13px', fontWeight: 500, cursor: 'pointer',
             }}
           >
@@ -607,7 +607,7 @@ function MultiChipGroup({ options, value = [], onChange }) {
             display: 'flex', alignItems: 'center', gap: '5px',
             padding: '7px 12px', borderRadius: '99px',
             border: '2px dashed #D1D1D6', background: 'transparent',
-            color: '#8E8E93', fontSize: '13px', fontWeight: 500, cursor: 'pointer',
+            color: 'var(--color-text-secondary)', fontSize: '13px', fontWeight: 500, cursor: 'pointer',
           }}
         >
           <Plus size={12} /> Eigene
@@ -620,12 +620,12 @@ function MultiChipGroup({ options, value = [], onChange }) {
             onKeyDown={e => { if (e.key === 'Enter') addCustom(); if (e.key === 'Escape') { setAdding(false); setCustom(''); } }}
             style={{
               padding: '5px 10px', borderRadius: '99px',
-              border: '2px solid #0071E3', fontSize: '13px',
+              border: '2px solid #007AFF', fontSize: '13px',
               outline: 'none', width: '130px', fontFamily: 'inherit',
             }}
           />
           <button type="button" onClick={addCustom}
-            style={{ padding: '4px 10px', borderRadius: '99px', border: 'none', background: '#0071E3', color: '#fff', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
+            style={{ padding: '4px 10px', borderRadius: '99px', border: 'none', background: 'var(--color-blue)', color: '#fff', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
           >OK</button>
         </div>
       )}
@@ -636,16 +636,16 @@ function MultiChipGroup({ options, value = [], onChange }) {
 function SectionCard({ title, children }) {
   return (
     <div style={{
-      background: '#fff',
+      background: 'var(--color-card)',
       borderRadius: '16px',
       border: '1px solid #F2F2F7',
       padding: '20px',
-      boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+      boxShadow: '0 1px 4px var(--color-border-subtle)',
     }}>
       {title && (
         <div style={{
           fontSize: '11px', fontWeight: 600,
-          color: '#8E8E93', textTransform: 'uppercase',
+          color: 'var(--color-text-secondary)', textTransform: 'uppercase',
           letterSpacing: '0.06em',
           marginBottom: '16px',
         }}>
@@ -670,9 +670,9 @@ function TogglePair({ options, value, onChange }) {
           style={{
             padding: '7px 16px',
             borderRadius: '99px',
-            border: `2px solid ${value === opt.value ? '#0071E3' : '#E5E5EA'}`,
-            background: value === opt.value ? '#0071E3' : '#fff',
-            color: value === opt.value ? '#fff' : '#3C3C43',
+            border: `2px solid ${value === opt.value ? 'var(--color-blue)' : 'var(--color-border)'}`,
+            background: value === opt.value ? 'var(--color-blue)' : '#fff',
+            color: value === opt.value ? '#fff' : 'var(--color-text-secondary)',
             fontSize: '13px', fontWeight: 500,
             cursor: 'pointer', transition: 'all 0.15s',
           }}
@@ -808,7 +808,7 @@ export default function Wizard() {
 
       {/* ── Top bar ── */}
       <div style={{
-        background: '#fff',
+        background: 'var(--color-card)',
         borderBottom: '1px solid #F2F2F7',
         padding: '16px 32px',
         display: 'flex',
@@ -817,8 +817,8 @@ export default function Wizard() {
         flexShrink: 0,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <Sparkles size={17} color="#0071E3" />
-          <span style={{ fontSize: '15px', fontWeight: 600, color: '#1D1D1F' }}>
+          <Sparkles size={17} color="#007AFF" />
+          <span style={{ fontSize: '15px', fontWeight: 600, color: 'var(--color-text)' }}>
             Neues Projekt einrichten
           </span>
         </div>
@@ -826,9 +826,9 @@ export default function Wizard() {
           onClick={() => navigate('/websites')}
           style={{
             width: '28px', height: '28px', borderRadius: '8px',
-            background: '#F2F2F7', border: 'none',
+            background: 'var(--color-card-secondary)', border: 'none',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer', color: '#6E6E73',
+            cursor: 'pointer', color: 'var(--color-text-tertiary)',
           }}
         >
           <X size={15} />
@@ -836,18 +836,18 @@ export default function Wizard() {
       </div>
 
       {/* ── Progress bar ── */}
-      <div style={{ height: '2px', background: '#F2F2F7', flexShrink: 0 }}>
+      <div style={{ height: '2px', background: 'var(--color-card-secondary)', flexShrink: 0 }}>
         <div style={{
           height: '100%',
           width: `${progress}%`,
-          background: '#0071E3',
+          background: 'var(--color-blue)',
           transition: 'width 0.4s ease',
         }} />
       </div>
 
       {/* ── Step indicators ── */}
       <div style={{
-        background: '#fff',
+        background: 'var(--color-card)',
         borderBottom: '1px solid #F2F2F7',
         padding: '12px 32px',
         flexShrink: 0,
@@ -865,18 +865,18 @@ export default function Wizard() {
                 <div style={{
                   display: 'flex', alignItems: 'center', gap: '6px',
                   fontSize: '12px', fontWeight: active ? 600 : 400,
-                  color: done ? '#34C759' : active ? '#0071E3' : '#C7C7CC',
+                  color: done ? '#34C759' : active ? 'var(--color-blue)' : 'var(--color-text-tertiary)',
                 }}>
                   <div style={{
                     width: '22px', height: '22px',
                     borderRadius: '50%',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    background: done ? '#34C759' : active ? '#0071E3' : '#F2F2F7',
+                    background: done ? '#34C759' : active ? 'var(--color-blue)' : 'var(--color-card-secondary)',
                     flexShrink: 0,
                   }}>
                     {done
                       ? <Check size={11} color="#fff" strokeWidth={3} />
-                      : <Icon size={11} color={active ? '#fff' : '#C7C7CC'} />
+                      : <Icon size={11} color={active ? '#fff' : 'var(--color-text-tertiary)'} />
                     }
                   </div>
                   <span style={{ whiteSpace: 'nowrap' }}>{s.label}</span>
@@ -884,7 +884,7 @@ export default function Wizard() {
                 {i < STEPS.length - 1 && (
                   <div style={{
                     flex: 1, height: '1px', margin: '0 8px',
-                    background: i < step ? '#34C759' : '#E5E5EA',
+                    background: i < step ? '#34C759' : 'var(--color-border)',
                   }} />
                 )}
               </div>
@@ -901,10 +901,10 @@ export default function Wizard() {
           {step === 0 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
-                <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#1D1D1F', margin: 0 }}>
+                <h2 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--color-text)', margin: 0 }}>
                   Kundeninformationen
                 </h2>
-                <p style={{ fontSize: '14px', color: '#8E8E93', marginTop: '4px' }}>
+                <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)', marginTop: '4px' }}>
                   Nur Name und E-Mail sind Pflicht — der Rest kann später ergänzt werden.
                 </p>
               </div>
@@ -957,7 +957,7 @@ export default function Wizard() {
               </SectionCard>
 
               <SectionCard title="GEWÜNSCHTE SEITEN">
-                <p style={{ fontSize: '12px', color: '#8E8E93', margin: '-4px 0 4px', lineHeight: 1.5 }}>
+                <p style={{ fontSize: '12px', color: 'var(--color-text-secondary)', margin: '-4px 0 4px', lineHeight: 1.5 }}>
                   Welche Seiten soll die Website haben? (Mehrfachauswahl)
                 </p>
                 <MultiChipGroup
@@ -981,10 +981,10 @@ export default function Wizard() {
                       borderRadius: '10px',
                       fontSize: '14px', outline: 'none',
                       resize: 'vertical', fontFamily: 'inherit',
-                      color: '#1D1D1F', lineHeight: 1.5,
+                      color: 'var(--color-text)', lineHeight: 1.5,
                     }}
-                    onFocus={e => e.target.style.borderColor = '#0071E3'}
-                    onBlur={e => e.target.style.borderColor = '#E5E5EA'}
+                    onFocus={e => e.target.style.borderColor = 'var(--color-blue)'}
+                    onBlur={e => e.target.style.borderColor = 'var(--color-border)'}
                   />
                 </Field>
               </SectionCard>
@@ -995,10 +995,10 @@ export default function Wizard() {
           {step === 1 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
-                <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#1D1D1F', margin: 0 }}>
+                <h2 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--color-text)', margin: 0 }}>
                   Projektdetails
                 </h2>
-                <p style={{ fontSize: '14px', color: '#8E8E93', marginTop: '4px' }}>
+                <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)', marginTop: '4px' }}>
                   Alles optional — kann im Workflow-Tab jederzeit ergänzt werden.
                 </p>
               </div>
@@ -1049,8 +1049,8 @@ export default function Wizard() {
                           style={{
                             display: 'flex', alignItems: 'center', gap: '8px',
                             padding: '8px 14px', borderRadius: '99px',
-                            border: `2px solid ${active ? m.color || '#0071E3' : '#E5E7EB'}`,
-                            background: active ? (m.color || '#0071E3') + '18' : '#fff',
+                            border: `2px solid ${active ? m.color || 'var(--color-blue)' : 'var(--color-border)'}`,
+                            background: active ? (m.color || 'var(--color-blue)') + '18' : '#fff',
                             cursor: 'pointer', transition: 'all 0.15s',
                           }}
                         >
@@ -1060,7 +1060,7 @@ export default function Wizard() {
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             fontSize: '10px', fontWeight: '700', color: '#fff', flexShrink: 0,
                           }}>{initials}</div>
-                          <span style={{ fontSize: '13px', fontWeight: active ? '600' : '400', color: '#1D1D1F' }}>
+                          <span style={{ fontSize: '13px', fontWeight: active ? '600' : '400', color: 'var(--color-text)' }}>
                             {m.name || m.email}
                           </span>
                         </button>
@@ -1076,10 +1076,10 @@ export default function Wizard() {
           {step === 2 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
-                <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#1D1D1F', margin: 0 }}>
+                <h2 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--color-text)', margin: 0 }}>
                   Technisches Setup
                 </h2>
-                <p style={{ fontSize: '14px', color: '#8E8E93', marginTop: '4px' }}>
+                <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)', marginTop: '4px' }}>
                   Alles optional — kann im Workflow jederzeit angepasst werden.
                 </p>
               </div>
@@ -1147,10 +1147,10 @@ export default function Wizard() {
                       outline: 'none',
                       resize: 'none',
                       fontFamily: 'inherit',
-                      color: '#1D1D1F',
+                      color: 'var(--color-text)',
                     }}
-                    onFocus={e => e.target.style.borderColor = '#0071E3'}
-                    onBlur={e => e.target.style.borderColor = '#E5E5EA'}
+                    onFocus={e => e.target.style.borderColor = 'var(--color-blue)'}
+                    onBlur={e => e.target.style.borderColor = 'var(--color-border)'}
                   />
                 </Field>
               </SectionCard>
@@ -1159,10 +1159,10 @@ export default function Wizard() {
               <div style={{
                 padding: '16px',
                 borderRadius: '14px',
-                background: 'rgba(0,113,227,0.05)',
-                border: '1px solid rgba(0,113,227,0.15)',
+                background: 'rgba(0,122,255,0.05)',
+                border: '1px solid rgba(0,122,255,0.15)',
               }}>
-                <div style={{ fontSize: '12px', fontWeight: 600, color: '#0071E3', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-blue)', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   Wird erstellt
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -1183,8 +1183,8 @@ export default function Wizard() {
                       }}>
                         <Check size={9} color="#fff" strokeWidth={3} />
                       </div>
-                      <span style={{ color: '#6E6E73' }}>{item.label}:</span>
-                      <span style={{ fontWeight: 600, color: '#1D1D1F' }}>{item.value}</span>
+                      <span style={{ color: 'var(--color-text-tertiary)' }}>{item.label}:</span>
+                      <span style={{ fontWeight: 600, color: 'var(--color-text)' }}>{item.value}</span>
                     </div>
                   ))}
                 </div>
@@ -1197,7 +1197,7 @@ export default function Wizard() {
 
       {/* ── Bottom nav ── */}
       <div style={{
-        background: '#fff',
+        background: 'var(--color-card)',
         borderTop: '1px solid #F2F2F7',
         paddingTop: 16,
         paddingLeft: isMobile ? 20 : 32,
@@ -1217,16 +1217,16 @@ export default function Wizard() {
             padding: '9px 16px',
             borderRadius: '10px',
             border: '1.5px solid #E5E5EA',
-            background: '#fff',
+            background: 'var(--color-card)',
             fontSize: '14px', fontWeight: 500,
-            color: step === 0 ? '#C7C7CC' : '#3C3C43',
+            color: step === 0 ? 'var(--color-text-tertiary)' : 'var(--color-text-secondary)',
             cursor: step === 0 ? 'not-allowed' : 'pointer',
           }}
         >
           <ChevronLeft size={16} /> Zurück
         </button>
 
-        <span style={{ fontSize: '12px', color: '#8E8E93' }}>
+        <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
           Schritt {step + 1} von {STEPS.length}
         </span>
 
@@ -1240,8 +1240,8 @@ export default function Wizard() {
               padding: '9px 20px',
               borderRadius: '10px',
               border: 'none',
-              background: canNext() ? '#0071E3' : '#E5E5EA',
-              color: canNext() ? '#fff' : '#8E8E93',
+              background: canNext() ? 'var(--color-blue)' : 'var(--color-border)',
+              color: canNext() ? '#fff' : 'var(--color-text-secondary)',
               fontSize: '14px', fontWeight: 600,
               cursor: canNext() ? 'pointer' : 'not-allowed',
               transition: 'background 0.15s',
@@ -1259,8 +1259,8 @@ export default function Wizard() {
               padding: '9px 20px',
               borderRadius: '10px',
               border: 'none',
-              background: loading ? '#E5E5EA' : '#0071E3',
-              color: loading ? '#8E8E93' : '#fff',
+              background: loading ? 'var(--color-border)' : 'var(--color-blue)',
+              color: loading ? 'var(--color-text-secondary)' : '#fff',
               fontSize: '14px', fontWeight: 600,
               cursor: loading ? 'not-allowed' : 'pointer',
             }}

@@ -3,9 +3,9 @@ import { Phone, X, PhoneOff } from 'lucide-react';
 
 const OUTCOMES = [
   { key: 'reached',     label: 'Erreicht',        color: '#34C759' },
-  { key: 'not_reached', label: 'Nicht erreicht',   color: '#86868B' },
+  { key: 'not_reached', label: 'Nicht erreicht',   color: 'var(--color-text-secondary)' },
   { key: 'voicemail',   label: 'Mailbox',          color: '#FF9500' },
-  { key: 'callback',    label: 'Rückruf',          color: '#0071E3' },
+  { key: 'callback',    label: 'Rückruf',          color: 'var(--color-blue)' },
 ];
 
 function fmtTimer(s) {
@@ -45,7 +45,7 @@ export default function CallInProgressSheet({ callId, clientName, phone, onEnd, 
       {/* Sheet */}
       <div style={{
         position: 'relative', zIndex: 1,
-        background: '#fff', borderRadius: '20px 20px 0 0', padding: '24px 24px calc(32px + env(safe-area-inset-bottom))',
+        background: 'var(--color-card)', borderRadius: '20px 20px 0 0', padding: '24px 24px calc(32px + env(safe-area-inset-bottom))',
         boxShadow: '0 -8px 40px rgba(0,0,0,0.15)',
         animation: 'slideUp 0.25s cubic-bezier(0.34,1.38,0.64,1) both',
       }}>
@@ -61,21 +61,21 @@ export default function CallInProgressSheet({ callId, clientName, phone, onEnd, 
               <Phone size={18} color="#34C759" />
             </div>
             <div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: '#1D1D1F' }}>{clientName}</div>
-              <div style={{ fontSize: 13, color: '#86868B' }}>{phone}</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-text)' }}>{clientName}</div>
+              <div style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>{phone}</div>
             </div>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#86868B' }}>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'var(--color-text-secondary)' }}>
             <X size={20} />
           </button>
         </div>
 
         {/* Timer */}
         <div style={{ textAlign: 'center', marginBottom: 22 }}>
-          <div style={{ fontSize: 40, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-1px', fontVariantNumeric: 'tabular-nums' }}>
+          <div style={{ fontSize: 40, fontWeight: 700, color: 'var(--color-text)', letterSpacing: '-1px', fontVariantNumeric: 'tabular-nums' }}>
             {fmtTimer(elapsed)}
           </div>
-          <div style={{ fontSize: 12, color: '#86868B', marginTop: 2 }}>Laufzeit</div>
+          <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginTop: 2 }}>Laufzeit</div>
         </div>
 
         {/* Outcome buttons */}
@@ -88,9 +88,9 @@ export default function CallInProgressSheet({ callId, clientName, phone, onEnd, 
                 onClick={() => setOutcome(o.key)}
                 style={{
                   padding: '10px 4px', borderRadius: 10, fontSize: 12, fontWeight: 600,
-                  border: `1.5px solid ${selected ? o.color : '#E5E5EA'}`,
+                  border: `1.5px solid ${selected ? o.color : 'var(--color-border)'}`,
                   background: selected ? `${o.color}14` : '#fff',
-                  color: selected ? o.color : '#636366',
+                  color: selected ? o.color : 'var(--color-text-tertiary)',
                   cursor: 'pointer', transition: 'all 0.15s',
                 }}
               >

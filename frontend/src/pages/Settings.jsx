@@ -24,7 +24,7 @@ const EMPTY_FORM = {
   kleinunternehmer: false,
   bank_name: '', iban: '', bic: '',
   invoice_prefix: 'RE', quote_prefix: 'AN',
-  primary_color: '#111827',
+  primary_color: 'var(--color-text)',
   footer_text: 'Vielen Dank für Ihr Vertrauen.',
   default_payment_days: 30,
   email_alias: '',
@@ -34,7 +34,7 @@ const EMPTY_FORM = {
 const EMPTY_TMPL = { name: '', description: '', unit: 'Stunde', unit_price: '', tax_rate: '19' };
 
 const AVATAR_COLORS = [
-  '#6366f1', '#0071E3', '#10B981', '#F59E0B',
+  '#6366f1', 'var(--color-blue)', '#34C759', '#FF9500',
   '#EF4444', '#EC4899', '#8B5CF6', '#06B6D4',
 ];
 
@@ -380,6 +380,7 @@ function PersonalSettings() {
 
 // ── TeamSettings ──────────────────────────────────────────────────────────────
 function TeamSettings() {
+  const { c, isDark } = useTheme();
   const qc = useQueryClient();
 
   const { data: members = [], isLoading } = useQuery({
@@ -398,8 +399,8 @@ function TeamSettings() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       <div>
-        <h2 style={{ fontSize: '13px', fontWeight: '600', color: '#1D1D1F', margin: 0 }}>Team Dashboard Sichtbarkeit</h2>
-        <p style={{ fontSize: '12px', color: '#86868B', margin: '4px 0 0', lineHeight: 1.5 }}>
+        <h2 style={{ fontSize: '13px', fontWeight: '600', color: c.text, margin: 0 }}>Team Dashboard Sichtbarkeit</h2>
+        <p style={{ fontSize: '12px', color: c.textSecondary, margin: '4px 0 0', lineHeight: 1.5 }}>
           Lege fest, welche Mitglieder in Aufgaben-Auswertungen und Zeiterfassungs-Statistiken erscheinen.
         </p>
       </div>
@@ -412,7 +413,7 @@ function TeamSettings() {
             <div key={m.id} style={{
               display: 'flex', alignItems: 'center', gap: '12px',
               padding: '14px 18px',
-              borderBottom: i < members.length - 1 ? '1px solid rgba(0,0,0,0.05)' : 'none',
+              borderBottom: i < members.length - 1 ? `0.5px solid ${c.borderSubtle}` : 'none',
             }}>
               {/* Avatar */}
               <div style={{
@@ -426,18 +427,18 @@ function TeamSettings() {
 
               {/* Info */}
               <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ fontSize: '13px', fontWeight: '500', color: '#1D1D1F', margin: 0, lineHeight: 1.3 }}>
+                <p style={{ fontSize: '13px', fontWeight: '500', color: c.text, margin: 0, lineHeight: 1.3 }}>
                   {m.name || m.email}
                 </p>
-                <p style={{ fontSize: '11px', color: '#86868B', margin: '1px 0 0' }}>
+                <p style={{ fontSize: '11px', color: c.textSecondary, margin: '1px 0 0' }}>
                   {m.email} · {m.role}
-                  {!m.workspace_owner_id && <span style={{ marginLeft: '6px', fontSize: '10px', background: 'rgba(0,113,227,0.1)', color: '#0071E3', borderRadius: '4px', padding: '1px 5px', fontWeight: '500' }}>Haupt-Account</span>}
+                  {!m.workspace_owner_id && <span style={{ marginLeft: '6px', fontSize: '10px', background: c.blueLight, color: c.blue, borderRadius: '4px', padding: '1px 5px', fontWeight: '500' }}>Haupt-Account</span>}
                 </p>
               </div>
 
               {/* Toggle */}
               <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', flexShrink: 0 }}>
-                <span style={{ fontSize: '12px', color: isVisible ? '#34C759' : '#86868B', fontWeight: '500' }}>
+                <span style={{ fontSize: '12px', color: isVisible ? '#34C759' : c.textSecondary, fontWeight: '500' }}>
                   {isVisible ? 'Sichtbar' : 'Ausgeblendet'}
                 </span>
                 <div
@@ -445,7 +446,7 @@ function TeamSettings() {
                   style={{
                     width: '40px', height: '24px',
                     borderRadius: '12px',
-                    background: isVisible ? '#34C759' : '#D1D1D6',
+                    background: isVisible ? '#34C759' : 'var(--color-border)',
                     position: 'relative',
                     cursor: 'pointer',
                     transition: 'background 0.2s ease',
@@ -458,7 +459,7 @@ function TeamSettings() {
                     left: isVisible ? '19px' : '3px',
                     width: '18px', height: '18px',
                     borderRadius: '50%',
-                    background: '#fff',
+                    background: 'var(--color-card)',
                     boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
                     transition: 'left 0.2s ease',
                   }} />
@@ -509,7 +510,7 @@ export default function Settings() {
         bic:                  settings.bic                  || '',
         invoice_prefix:       settings.invoice_prefix       || 'RE',
         quote_prefix:         settings.quote_prefix         || 'AN',
-        primary_color:        settings.primary_color        || '#111827',
+        primary_color:        settings.primary_color        || 'var(--color-text)',
         footer_text:          settings.footer_text          || 'Vielen Dank für Ihr Vertrauen.',
         default_payment_days: settings.default_payment_days ?? 30,
         email_alias:          settings.email_alias          || '',
@@ -567,7 +568,7 @@ export default function Settings() {
 
         {/* Header */}
         <div style={{ marginBottom: '28px' }}>
-          <h1 style={{ fontSize: '22px', fontWeight: '700', color: c.text, letterSpacing: '-0.03em', margin: 0 }}>Einstellungen</h1>
+          <h1 style={{ fontSize: '28px', fontWeight: '700', color: c.text, letterSpacing: '-0.025em', margin: 0, lineHeight: 1.15 }}>Einstellungen</h1>
           <p style={{ fontSize: '13px', color: c.textSecondary, margin: '3px 0 0', letterSpacing: '-0.01em' }}>Verwalte deine Unternehmens- und Dokumenteinstellungen</p>
         </div>
 
@@ -580,7 +581,7 @@ export default function Settings() {
               <button key={tab.id} onClick={() => setActiveTab(tab.id)}
                 style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', borderRadius: '9px', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: active ? '600' : '500',
                   background: active ? c.card : 'transparent', color: active ? c.text : c.textSecondary,
-                  boxShadow: active ? '0 1px 4px rgba(0,0,0,0.12)' : 'none', transition: 'all 0.15s', letterSpacing: '-0.01em', whiteSpace: 'nowrap' }}>
+                  boxShadow: active ? (isDark ? '0 1px 4px rgba(0,0,0,0.3)' : '0 1px 4px var(--color-border-subtle)') : 'none', transition: 'all 0.2s cubic-bezier(0.22,1,0.36,1)', letterSpacing: '-0.01em', whiteSpace: 'nowrap' }}>
                 <Icon size={14} />
                 {tab.label}
               </button>
@@ -722,9 +723,9 @@ export default function Settings() {
                 <label className="label">Primärfarbe</label>
                 <div className="flex items-center gap-2">
                   <input type="color" className="h-9 w-14 cursor-pointer rounded border border-gray-200"
-                    value={form.primary_color || '#111827'} onChange={e => setField('primary_color', e.target.value)} />
+                    value={form.primary_color || 'var(--color-text)'} onChange={e => setField('primary_color', e.target.value)} />
                   <input type="text" className="input flex-1" placeholder="#111827"
-                    value={form.primary_color || '#111827'} onChange={e => setField('primary_color', e.target.value)} />
+                    value={form.primary_color || 'var(--color-text)'} onChange={e => setField('primary_color', e.target.value)} />
                 </div>
                 <p className="text-xs text-gray-400 mt-1">Wird als Akzentfarbe auf Rechnungen und Angeboten verwendet</p>
               </div>
@@ -871,14 +872,14 @@ export default function Settings() {
             {/* Preview */}
             <div>
               <p style={{ fontSize: 12, fontWeight: 600, color: c.textSecondary, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>Vorschau</p>
-              <div style={{ borderRadius: 14, overflow: 'hidden', border: `1px solid ${c.border}` }}>
-                <div style={{ background: isDark ? '#000' : '#F5F5F7', padding: 16 }}>
-                  <div style={{ background: isDark ? '#1C1C1E' : '#fff', borderRadius: 10, padding: '12px 16px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: isDark ? '#F5F5F5' : '#1D1D1F', marginBottom: 4 }}>Beispiel-Karte</div>
-                    <div style={{ fontSize: 11.5, color: isDark ? '#8E8E93' : '#86868B' }}>So sehen Inhalte im {isDark ? 'dunklen' : 'hellen'} Modus aus.</div>
+              <div style={{ borderRadius: 12, overflow: 'hidden', border: `0.5px solid ${c.borderSubtle}` }}>
+                <div style={{ background: c.bg, padding: 16 }}>
+                  <div style={{ background: c.card, borderRadius: 10, padding: '12px 16px', boxShadow: isDark ? '0 1px 4px rgba(0,0,0,0.2)' : '0 1px 4px var(--color-border-subtle)' }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: c.text, marginBottom: 4 }}>Beispiel-Karte</div>
+                    <div style={{ fontSize: 11.5, color: c.textSecondary }}>So sehen Inhalte im {isDark ? 'dunklen' : 'hellen'} Modus aus.</div>
                     <div style={{ marginTop: 10, display: 'flex', gap: 6 }}>
-                      <span style={{ padding: '3px 10px', borderRadius: 99, fontSize: 11, fontWeight: 600, background: isDark ? 'rgba(10,132,255,0.15)' : 'rgba(0,113,227,0.1)', color: isDark ? '#0A84FF' : '#0071E3' }}>Aktiv</span>
-                      <span style={{ padding: '3px 10px', borderRadius: 99, fontSize: 11, fontWeight: 600, background: isDark ? '#2C2C2E' : '#F2F2F7', color: isDark ? '#8E8E93' : '#6E6E73' }}>Normal</span>
+                      <span style={{ padding: '3px 10px', borderRadius: 6, fontSize: 11, fontWeight: 600, background: c.blueLight, color: c.blue }}>Aktiv</span>
+                      <span style={{ padding: '3px 10px', borderRadius: 6, fontSize: 11, fontWeight: 600, background: c.inputBg, color: c.textSecondary }}>Normal</span>
                     </div>
                   </div>
                 </div>

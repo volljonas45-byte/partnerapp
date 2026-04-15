@@ -81,8 +81,8 @@ export default function NewInvoice() {
   const CYCLES = ['once', 'yearly', 'monthly'];
   const CYCLE_LABEL = { once: 'Einmalig', yearly: 'Jährlich', monthly: 'Monatlich' };
   const CYCLE_STYLE = {
-    once:    { background: '#F2F2F7', color: '#636366' },
-    yearly:  { background: '#EBF4FF', color: '#0071E3' },
+    once:    { background: 'var(--color-card-secondary)', color: 'var(--color-text-tertiary)' },
+    yearly:  { background: '#EBF4FF', color: 'var(--color-blue)' },
     monthly: { background: '#F3EEFF', color: '#7C3AED' },
   };
   const toggleCycle = (idx) => {
@@ -351,7 +351,7 @@ export default function NewInvoice() {
                   <div className="col-span-2 pt-0.5">
                     <div style={{ position: 'relative' }}>
                       <input type="text" inputMode="decimal" className="input" placeholder="0,00" style={{ paddingRight: '24px' }} value={item.unit_price === 0 ? '' : item.unit_price} onChange={e => updateItem(idx, 'unit_price', e.target.value)} />
-                      <span style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', fontSize: '12px', color: '#8E8E93', pointerEvents: 'none' }}>€</span>
+                      <span style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', fontSize: '12px', color: 'var(--color-text-secondary)', pointerEvents: 'none' }}>€</span>
                     </div>
                   </div>
                   <div className="col-span-2 pt-0.5">
@@ -374,30 +374,30 @@ export default function NewInvoice() {
 
           {/* ── Positionen Mobile — gestackte Cards ── */}
           {isMobile && items.map((item, idx) => (
-            <div key={idx} style={{ border: '1px solid rgba(0,0,0,0.08)', borderRadius: 12, padding: '12px', background: '#FAFAFA', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div key={idx} style={{ border: '1px solid var(--color-border-subtle)', borderRadius: 12, padding: '12px', background: 'var(--color-card-secondary)', display: 'flex', flexDirection: 'column', gap: 8 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: 11, fontWeight: 600, color: '#86868B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Position {idx + 1}</span>
+                <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Position {idx + 1}</span>
                 {items.length > 1 && <button type="button" onClick={() => removeItem(idx)} style={{ padding: 4, color: '#FF3B30', background: 'none', border: 'none', cursor: 'pointer' }}><Trash2 size={15} /></button>}
               </div>
               <input className="input" placeholder="Leistungsbezeichnung *" value={item.title} onChange={e => updateItem(idx, 'title', e.target.value)} required />
               <input className="input text-xs" placeholder="Beschreibung (optional)" value={item.description} onChange={e => updateItem(idx, 'description', e.target.value)} />
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                 <div>
-                  <label style={{ fontSize: 11, color: '#86868B', fontWeight: 500, display: 'block', marginBottom: 3 }}>Menge</label>
+                  <label style={{ fontSize: 11, color: 'var(--color-text-secondary)', fontWeight: 500, display: 'block', marginBottom: 3 }}>Menge</label>
                   <input type="text" inputMode="numeric" className="input" placeholder="1" value={item.quantity === 0 ? '' : item.quantity} onChange={e => updateItem(idx, 'quantity', e.target.value)} />
                 </div>
                 <div>
-                  <label style={{ fontSize: 11, color: '#86868B', fontWeight: 500, display: 'block', marginBottom: 3 }}>Einzelpreis (€)</label>
+                  <label style={{ fontSize: 11, color: 'var(--color-text-secondary)', fontWeight: 500, display: 'block', marginBottom: 3 }}>Einzelpreis (€)</label>
                   <input type="text" inputMode="decimal" className="input" placeholder="0,00" value={item.unit_price === 0 ? '' : item.unit_price} onChange={e => updateItem(idx, 'unit_price', e.target.value)} />
                 </div>
                 <div>
-                  <label style={{ fontSize: 11, color: '#86868B', fontWeight: 500, display: 'block', marginBottom: 3 }}>MwSt.</label>
+                  <label style={{ fontSize: 11, color: 'var(--color-text-secondary)', fontWeight: 500, display: 'block', marginBottom: 3 }}>MwSt.</label>
                   <select className="input" value={item.tax_rate} onChange={e => updateItem(idx, 'tax_rate', e.target.value)} disabled={reverseCharge}>
                     {VAT_RATES.map(r => <option key={r} value={r}>{r} %</option>)}
                   </select>
                 </div>
                 <div>
-                  <label style={{ fontSize: 11, color: '#86868B', fontWeight: 500, display: 'block', marginBottom: 3 }}>Abrechnung</label>
+                  <label style={{ fontSize: 11, color: 'var(--color-text-secondary)', fontWeight: 500, display: 'block', marginBottom: 3 }}>Abrechnung</label>
                   <select className="input" value={item.billing_cycle || 'once'} onChange={e => updateItem(idx, 'billing_cycle', e.target.value)}>
                     <option value="once">Einmalig</option>
                     <option value="yearly">Jährlich</option>
@@ -405,7 +405,7 @@ export default function NewInvoice() {
                   </select>
                 </div>
               </div>
-              <div style={{ textAlign: 'right', fontSize: 13, fontWeight: 600, color: '#1D1D1F' }}>
+              <div style={{ textAlign: 'right', fontSize: 13, fontWeight: 600, color: 'var(--color-text)' }}>
                 {((item.quantity || 0) * (item.unit_price || 0)).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
               </div>
             </div>
@@ -420,11 +420,11 @@ export default function NewInvoice() {
             });
             return (
               <div style={{ background: '#F0F6FF', border: '1px solid #C5DCFF', borderRadius: '10px', padding: '12px 16px', marginTop: '4px' }}>
-                <p style={{ fontSize: '11px', fontWeight: 700, color: '#0071E3', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Kostenüberblick</p>
+                <p style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-blue)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Kostenüberblick</p>
                 {['once','yearly','monthly'].filter(c => sums[c]).map(c => (
                   <div key={c} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12.5px', marginBottom: '3px' }}>
-                    <span style={{ color: '#636366' }}>{CYCLE_LABEL[c]}</span>
-                    <span style={{ fontWeight: 600, color: '#1D1D1F' }}>
+                    <span style={{ color: 'var(--color-text-tertiary)' }}>{CYCLE_LABEL[c]}</span>
+                    <span style={{ fontWeight: 600, color: 'var(--color-text)' }}>
                       {sums[c].toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
                     </span>
                   </div>

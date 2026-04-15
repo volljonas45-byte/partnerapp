@@ -1,7 +1,10 @@
 import { X } from 'lucide-react';
 import { useEffect } from 'react';
+import { useTheme } from '../context/ThemeContext';
 
 export default function Modal({ open, onClose, title, children, maxWidth = 'max-w-lg' }) {
+  const { c, isDark } = useTheme();
+
   useEffect(() => {
     if (!open) return;
     const handler = e => { if (e.key === 'Escape') onClose(); };
@@ -9,7 +12,6 @@ export default function Modal({ open, onClose, title, children, maxWidth = 'max-
     return () => document.removeEventListener('keydown', handler);
   }, [open, onClose]);
 
-  // Lock body scroll when open
   useEffect(() => {
     if (open) {
       document.body.style.overflow = 'hidden';
@@ -21,7 +23,6 @@ export default function Modal({ open, onClose, title, children, maxWidth = 'max-
 
   if (!open) return null;
 
-  // Max-width mapping
   const widthMap = {
     'max-w-sm':  '384px',
     'max-w-md':  '448px',
@@ -38,15 +39,15 @@ export default function Modal({ open, onClose, title, children, maxWidth = 'max-
         position: 'fixed',
         inset: 0,
         zIndex: 9999,
-        background: 'rgba(0,0,0,0.35)',
-        backdropFilter: 'blur(6px)',
-        WebkitBackdropFilter: 'blur(6px)',
+        background: c.overlayBg,
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '24px',
+        padding: 24,
         overflowY: 'auto',
-        animation: 'backdropIn 0.2s ease both',
+        animation: 'backdropIn 0.2s cubic-bezier(0.22,1,0.36,1) both',
       }}
     >
       <div
@@ -56,9 +57,12 @@ export default function Modal({ open, onClose, title, children, maxWidth = 'max-
           position: 'relative',
           width: '100%',
           maxWidth: maxWidthPx,
-          background: '#fff',
-          borderRadius: '16px',
-          boxShadow: '0 24px 72px rgba(0,0,0,0.18), 0 8px 24px rgba(0,0,0,0.08)',
+          background: c.card,
+          borderRadius: 14,
+          border: `0.5px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'var(--color-border-subtle)'}`,
+          boxShadow: isDark
+            ? '0 24px 72px rgba(0,0,0,0.5), 0 8px 24px rgba(0,0,0,0.3)'
+            : '0 24px 72px rgba(0,0,0,0.14), 0 8px 24px var(--color-border-subtle)',
           flexShrink: 0,
           margin: 'auto',
         }}
@@ -66,17 +70,26 @@ export default function Modal({ open, onClose, title, children, maxWidth = 'max-
         {/* Header */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '20px 24px 16px',
-          borderBottom: '1px solid rgba(0,0,0,0.06)',
+          padding: '18px 24px 14px',
+          borderBottom: `0.5px solid ${c.borderSubtle}`,
         }}>
-          <h3 style={{ fontSize: '15px', fontWeight: '600', color: '#1D1D1F', margin: 0 }}>{title}</h3>
+          <h3 style={{
+            fontSize: 15, fontWeight: 600, color: c.text,
+            margin: 0, letterSpacing: '-0.009em',
+          }}>{title}</h3>
           <button
             onClick={onClose}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6E6E73', padding: '2px', display: 'flex' }}
-            onMouseEnter={e => e.currentTarget.style.color = '#1D1D1F'}
-            onMouseLeave={e => e.currentTarget.style.color = '#6E6E73'}
+            style={{
+              width: 28, height: 28, borderRadius: '50%',
+              background: c.inputBg, border: 'none',
+              cursor: 'pointer', display: 'flex',
+              alignItems: 'center', justifyContent: 'center',
+              transition: 'background 0.15s cubic-bezier(0.22,1,0.36,1)',
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = c.inputBgHover}
+            onMouseLeave={e => e.currentTarget.style.background = c.inputBg}
           >
-            <X size={18} />
+            <X size={14} color={c.textSecondary} strokeWidth={2} />
           </button>
         </div>
 

@@ -212,7 +212,7 @@ export default function OnboardingFlows() {
                     <div className="flex items-center gap-2 mb-1">
                       <div
                         className="w-2.5 h-2.5 rounded-full shrink-0"
-                        style={{ backgroundColor: flow.brand_color || '#111827' }}
+                        style={{ backgroundColor: flow.brand_color || 'var(--color-text)' }}
                       />
                       <p className="text-sm font-medium text-gray-900 truncate">{displayName}</p>
                       <StatusBadge status={flow.status} />

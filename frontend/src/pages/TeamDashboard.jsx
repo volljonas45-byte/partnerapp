@@ -105,7 +105,7 @@ function Calendar({ projects }) {
         add(e.start_time.slice(0, 10), {
           type: 'time',
           label: `${e.user_name || 'Zeit'}: ${h ? h + 'h' : '–'} ${e.project_name ? `(${e.project_name})` : ''}`.trim(),
-          color: e.user_color || '#0071E3',
+          color: e.user_color || 'var(--color-blue)',
         });
       }
     }
@@ -124,7 +124,7 @@ function Calendar({ projects }) {
       const start = parseLocal(e.start_time);
       const end   = e.end_time ? parseLocal(e.end_time) : null;
       const dur   = e.duration ? ` · ${Math.floor(e.duration / 3600)}h ${Math.floor((e.duration % 3600) / 60)}m` : '';
-      all.push({ id: `t-${e.id}`, title: `${e.user_name || 'Zeit'}${e.project_name ? ' · ' + e.project_name : ''}${dur}`, _start: start, _end: end, _color: e.user_color || '#0071E3', all_day: false });
+      all.push({ id: `t-${e.id}`, title: `${e.user_name || 'Zeit'}${e.project_name ? ' · ' + e.project_name : ''}${dur}`, _start: start, _end: end, _color: e.user_color || 'var(--color-blue)', all_day: false });
     }
     return all;
   }, [projects, timeEntries]);
@@ -134,23 +134,23 @@ function Calendar({ projects }) {
   return (
     <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
       {/* ── Header ── */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px 12px', borderBottom: '1px solid rgba(0,0,0,0.06)', flexWrap: 'wrap', gap: 8 }}>
-        <h3 style={{ fontSize: 14, fontWeight: 600, color: '#1D1D1F', margin: 0 }}>Kalender</h3>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px 12px', borderBottom: '1px solid var(--color-border-subtle)', flexWrap: 'wrap', gap: 8 }}>
+        <h3 style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text)', margin: 0 }}>Kalender</h3>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ display: 'flex', background: 'rgba(0,0,0,0.05)', borderRadius: 8, padding: 3, gap: 2 }}>
+          <div style={{ display: 'flex', background: 'var(--color-border-subtle)', borderRadius: 8, padding: 3, gap: 2 }}>
             {[['month','Monat'],['week','Woche'],['day','Tag']].map(([v, lbl]) => (
               <button key={v} onClick={() => { setView(v); setPopup(null); }}
-                style={{ padding: '3px 10px', fontSize: 11, fontWeight: 600, border: 'none', cursor: 'pointer', borderRadius: 6, transition: 'all 0.15s', background: view === v ? '#fff' : 'transparent', color: view === v ? '#1D1D1F' : '#86868B', boxShadow: view === v ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
+                style={{ padding: '3px 10px', fontSize: 11, fontWeight: 600, border: 'none', cursor: 'pointer', borderRadius: 6, transition: 'all 0.15s', background: view === v ? '#fff' : 'transparent', color: view === v ? 'var(--color-text)' : 'var(--color-text-secondary)', boxShadow: view === v ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
                 {lbl}
               </button>
             ))}
           </div>
-          <button onClick={() => navDate(-1)} style={{ padding: 4, border: 'none', background: 'none', cursor: 'pointer', borderRadius: 6, color: '#6E6E73', display: 'flex' }}
+          <button onClick={() => navDate(-1)} style={{ padding: 4, border: 'none', background: 'none', cursor: 'pointer', borderRadius: 6, color: 'var(--color-text-tertiary)', display: 'flex' }}
             onMouseEnter={e => e.currentTarget.style.background = '#F5F5F7'} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
             <ChevronLeft size={16} />
           </button>
-          <span style={{ fontSize: 13, fontWeight: 500, color: '#1D1D1F', minWidth: 130, textAlign: 'center' }}>{periodLabel}</span>
-          <button onClick={() => navDate(1)} style={{ padding: 4, border: 'none', background: 'none', cursor: 'pointer', borderRadius: 6, color: '#6E6E73', display: 'flex' }}
+          <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text)', minWidth: 130, textAlign: 'center' }}>{periodLabel}</span>
+          <button onClick={() => navDate(1)} style={{ padding: 4, border: 'none', background: 'none', cursor: 'pointer', borderRadius: 6, color: 'var(--color-text-tertiary)', display: 'flex' }}
             onMouseEnter={e => e.currentTarget.style.background = '#F5F5F7'} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
             <ChevronRight size={16} />
           </button>
@@ -159,35 +159,35 @@ function Calendar({ projects }) {
 
       {/* ── Month View ── */}
       {view === 'month' && <>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', borderBottom: '1px solid var(--color-border-subtle)' }}>
           {WEEKDAYS.map(d => (
-            <div key={d} style={{ padding: '7px 0', textAlign: 'center', fontSize: 11, fontWeight: 600, color: '#86868B', letterSpacing: '0.04em' }}>{d}</div>
+            <div key={d} style={{ padding: '7px 0', textAlign: 'center', fontSize: 11, fontWeight: 600, color: 'var(--color-text-secondary)', letterSpacing: '0.04em' }}>{d}</div>
           ))}
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
           {Array.from({ length: rows * 7 }).map((_, i) => {
             const dayNum = i - startOffset + 1;
             const isValid = dayNum >= 1 && dayNum <= lastDay.getDate();
-            if (!isValid) return <div key={i} style={{ minHeight: 60, borderRight: (i+1)%7!==0?'1px solid rgba(0,0,0,0.04)':'none', borderBottom: i<(rows-1)*7?'1px solid rgba(0,0,0,0.04)':'none' }} />;
+            if (!isValid) return <div key={i} style={{ minHeight: 60, borderRight: (i+1)%7!==0?'1px solid var(--color-border-subtle)':'none', borderBottom: i<(rows-1)*7?'1px solid var(--color-border-subtle)':'none' }} />;
             const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(dayNum).padStart(2,'0')}`;
             const events = eventMap[dateStr] || [];
             const isToday_ = dateStr === today;
             return (
               <div key={i}
                 onClick={() => events.length > 0 && setPopup(popup?.date === dateStr ? null : { date: dateStr, events })}
-                style={{ minHeight: 60, padding: '6px 8px', borderRight: (i+1)%7!==0?'1px solid rgba(0,0,0,0.04)':'none', borderBottom: i<(rows-1)*7?'1px solid rgba(0,0,0,0.04)':'none', cursor: events.length>0?'pointer':'default', background: popup?.date===dateStr?'rgba(0,113,227,0.05)':'transparent', transition: 'background 0.1s' }}
-                onMouseEnter={e => { if (events.length>0) e.currentTarget.style.background='rgba(0,0,0,0.02)'; }}
+                style={{ minHeight: 60, padding: '6px 8px', borderRight: (i+1)%7!==0?'1px solid var(--color-border-subtle)':'none', borderBottom: i<(rows-1)*7?'1px solid var(--color-border-subtle)':'none', cursor: events.length>0?'pointer':'default', background: popup?.date===dateStr?'rgba(0,122,255,0.05)':'transparent', transition: 'background 0.1s' }}
+                onMouseEnter={e => { if (events.length>0) e.currentTarget.style.background='var(--color-border-subtle)'; }}
                 onMouseLeave={e => { if (popup?.date!==dateStr) e.currentTarget.style.background='transparent'; }}
               >
-                <div style={{ width:24, height:24, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, fontWeight:isToday_?600:400, color:isToday_?'#fff':'#1D1D1F', background:isToday_?'#0071E3':'transparent', marginBottom:3 }}>{dayNum}</div>
+                <div style={{ width:24, height:24, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, fontWeight:isToday_?600:400, color:isToday_?'#fff':'var(--color-text)', background:isToday_?'var(--color-blue)':'transparent', marginBottom:3 }}>{dayNum}</div>
                 <div style={{ display:'flex', flexWrap:'wrap', gap:3 }}>
                   {events.filter(e=>e.type==='deadline').slice(0,3).map((ev,j)=>(
                     <div key={j} title={ev.label} style={{ width:6, height:6, borderRadius:'50%', background:'#FF3B30', flexShrink:0 }} />
                   ))}
                   {events.filter(e=>e.type==='time').slice(0,3).map((ev,j)=>(
-                    <div key={j} title={ev.label} style={{ width:6, height:6, borderRadius:'50%', background:ev.color||'#0071E3', flexShrink:0 }} />
+                    <div key={j} title={ev.label} style={{ width:6, height:6, borderRadius:'50%', background:ev.color||'var(--color-blue)', flexShrink:0 }} />
                   ))}
-                  {events.length > 6 && <span style={{ fontSize:9, color:'#86868B', lineHeight:'6px' }}>+{events.length-6}</span>}
+                  {events.length > 6 && <span style={{ fontSize:9, color:'var(--color-text-secondary)', lineHeight:'6px' }}>+{events.length-6}</span>}
                 </div>
               </div>
             );
@@ -200,14 +200,14 @@ function Calendar({ projects }) {
         const days = getWeekDays(current);
         return (
           <div style={{ overflow: 'auto', maxHeight: 460 }}>
-            <div style={{ display:'grid', gridTemplateColumns:'44px repeat(7,1fr)', borderBottom:'1px solid rgba(0,0,0,0.06)', position:'sticky', top:0, background:'#fff', zIndex:1 }}>
+            <div style={{ display:'grid', gridTemplateColumns:'44px repeat(7,1fr)', borderBottom:'1px solid var(--color-border-subtle)', position:'sticky', top:0, background: 'var(--color-card)', zIndex:1 }}>
               <div />
               {days.map((d, i) => {
                 const isTodayDay = isoDate(d) === today;
                 return (
-                  <div key={i} style={{ padding:'8px 4px', textAlign:'center', borderLeft:'1px solid rgba(0,0,0,0.05)' }}>
-                    <div style={{ fontSize:10, color:'#86868B', fontWeight:600, letterSpacing:'0.04em' }}>{WEEKDAYS[i]}</div>
-                    <div style={{ width:26, height:26, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', margin:'2px auto 0', fontSize:12, fontWeight:700, background:isTodayDay?'#0071E3':'transparent', color:isTodayDay?'#fff':'#1D1D1F' }}>{d.getDate()}</div>
+                  <div key={i} style={{ padding:'8px 4px', textAlign:'center', borderLeft:'1px solid var(--color-border-subtle)' }}>
+                    <div style={{ fontSize:10, color:'var(--color-text-secondary)', fontWeight:600, letterSpacing:'0.04em' }}>{WEEKDAYS[i]}</div>
+                    <div style={{ width:26, height:26, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', margin:'2px auto 0', fontSize:12, fontWeight:700, background:isTodayDay?'var(--color-blue)':'transparent', color:isTodayDay?'#fff':'var(--color-text)' }}>{d.getDate()}</div>
                   </div>
                 );
               })}
@@ -216,7 +216,7 @@ function Calendar({ projects }) {
               <div>
                 {HOURS.map(h => (
                   <div key={h} style={{ height:`${HOUR_H}px`, padding:'0 6px', display:'flex', alignItems:'flex-start', paddingTop:4, justifyContent:'flex-end' }}>
-                    <span style={{ fontSize:10, color:'#A0A0AA', fontWeight:500 }}>{String(h).padStart(2,'0')}</span>
+                    <span style={{ fontSize:10, color:'var(--color-text-tertiary)', fontWeight:500 }}>{String(h).padStart(2,'0')}</span>
                   </div>
                 ))}
               </div>
@@ -224,8 +224,8 @@ function Calendar({ projects }) {
                 const dayStr = isoDate(day);
                 const dayEvts = timedEvents.filter(e => !e.all_day && e._start && isoDate(e._start) === dayStr);
                 return (
-                  <div key={di} style={{ borderLeft:'1px solid rgba(0,0,0,0.05)', position:'relative' }}>
-                    {HOURS.map(h => <div key={h} style={{ height:`${HOUR_H}px`, borderBottom:'1px solid rgba(0,0,0,0.04)' }} />)}
+                  <div key={di} style={{ borderLeft:'1px solid var(--color-border-subtle)', position:'relative' }}>
+                    {HOURS.map(h => <div key={h} style={{ height:`${HOUR_H}px`, borderBottom:'1px solid var(--color-border-subtle)' }} />)}
                     {dayEvts.map((ev, ei) => {
                       const startH = ev._start.getHours() + ev._start.getMinutes()/60;
                       const endH   = ev._end ? ev._end.getHours() + ev._end.getMinutes()/60 : startH + 1;
@@ -254,26 +254,26 @@ function Calendar({ projects }) {
         return (
           <div style={{ overflow:'auto', maxHeight:460 }}>
             {dayAllDay.length > 0 && (
-              <div style={{ padding:'8px 16px', borderBottom:'1px solid rgba(0,0,0,0.06)', display:'flex', gap:6, flexWrap:'wrap', background:'#FAFBFC' }}>
-                <span style={{ fontSize:11, color:'#A0A0AA', fontWeight:600, alignSelf:'center', marginRight:4 }}>Ganztägig</span>
+              <div style={{ padding:'8px 16px', borderBottom:'1px solid var(--color-border-subtle)', display:'flex', gap:6, flexWrap:'wrap', background:'var(--color-card-secondary)' }}>
+                <span style={{ fontSize:11, color:'var(--color-text-tertiary)', fontWeight:600, alignSelf:'center', marginRight:4 }}>Ganztägig</span>
                 {dayAllDay.map((ev,i) => (
                   <div key={i} style={{ padding:'3px 10px', borderRadius:6, background:ev._color+'20', borderLeft:`2px solid ${ev._color}`, fontSize:11, fontWeight:500, color:ev._color }}>{ev.title}</div>
                 ))}
               </div>
             )}
             {dayTimed.length === 0 && dayAllDay.length === 0 && (
-              <div style={{ textAlign:'center', padding:'32px 0', color:'#A0A0AA', fontSize:13 }}>Keine Einträge für diesen Tag</div>
+              <div style={{ textAlign:'center', padding:'32px 0', color:'var(--color-text-tertiary)', fontSize:13 }}>Keine Einträge für diesen Tag</div>
             )}
             <div style={{ display:'grid', gridTemplateColumns:'44px 1fr', position:'relative' }}>
               <div>
                 {HOURS.map(h => (
                   <div key={h} style={{ height:`${HOUR_H}px`, padding:'0 6px', display:'flex', alignItems:'flex-start', paddingTop:4, justifyContent:'flex-end' }}>
-                    <span style={{ fontSize:10, color:'#A0A0AA', fontWeight:500 }}>{String(h).padStart(2,'0')}:00</span>
+                    <span style={{ fontSize:10, color:'var(--color-text-tertiary)', fontWeight:500 }}>{String(h).padStart(2,'0')}:00</span>
                   </div>
                 ))}
               </div>
-              <div style={{ borderLeft:'1px solid rgba(0,0,0,0.06)', position:'relative' }}>
-                {HOURS.map(h => <div key={h} style={{ height:`${HOUR_H}px`, borderBottom:'1px solid rgba(0,0,0,0.04)' }} />)}
+              <div style={{ borderLeft:'1px solid var(--color-border-subtle)', position:'relative' }}>
+                {HOURS.map(h => <div key={h} style={{ height:`${HOUR_H}px`, borderBottom:'1px solid var(--color-border-subtle)' }} />)}
                 {dayTimed.map((ev, i) => {
                   const startH = ev._start.getHours() + ev._start.getMinutes()/60;
                   const endH   = ev._end ? ev._end.getHours() + ev._end.getMinutes()/60 : startH + 1;
@@ -282,7 +282,7 @@ function Calendar({ projects }) {
                   return (
                     <div key={i} title={ev.title} style={{ position:'absolute', left:8, right:12, top, height, background:ev._color+'18', borderLeft:`4px solid ${ev._color}`, borderRadius:6, padding:'4px 8px', zIndex:2 }}>
                       <p style={{ fontSize:11, fontWeight:600, color:ev._color, margin:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{ev.title}</p>
-                      <p style={{ fontSize:10, color:'#6B7280', margin:'1px 0 0' }}>
+                      <p style={{ fontSize:10, color:'var(--color-text-tertiary)', margin:'1px 0 0' }}>
                         {ev._start.getHours()}:{String(ev._start.getMinutes()).padStart(2,'0')}
                         {ev._end ? ` – ${ev._end.getHours()}:${String(ev._end.getMinutes()).padStart(2,'0')}` : ''}
                       </p>
@@ -296,26 +296,26 @@ function Calendar({ projects }) {
       })()}
 
       {/* ── Legend ── */}
-      <div style={{ display:'flex', gap:16, padding:'10px 20px', borderTop:'1px solid rgba(0,0,0,0.06)' }}>
-        <div style={{ display:'flex', alignItems:'center', gap:5, fontSize:11, color:'#6E6E73' }}>
+      <div style={{ display:'flex', gap:16, padding:'10px 20px', borderTop:'1px solid var(--color-border-subtle)' }}>
+        <div style={{ display:'flex', alignItems:'center', gap:5, fontSize:11, color:'var(--color-text-tertiary)' }}>
           <div style={{ width:8, height:8, borderRadius:'50%', background:'#FF3B30' }} /> Deadline
         </div>
-        <div style={{ display:'flex', alignItems:'center', gap:5, fontSize:11, color:'#6E6E73' }}>
-          <div style={{ width:8, height:8, borderRadius:'50%', background:'#0071E3' }} /> Zeiteintrag
+        <div style={{ display:'flex', alignItems:'center', gap:5, fontSize:11, color:'var(--color-text-tertiary)' }}>
+          <div style={{ width:8, height:8, borderRadius:'50%', background:'var(--color-blue)' }} /> Zeiteintrag
         </div>
       </div>
 
       {/* Month view popup */}
       {view === 'month' && popup && (
-        <div style={{ padding:'12px 20px', borderTop:'1px solid rgba(0,113,227,0.15)', background:'rgba(0,113,227,0.03)' }}>
-          <div style={{ fontSize:12, fontWeight:600, color:'#6E6E73', marginBottom:8 }}>
+        <div style={{ padding:'12px 20px', borderTop:'1px solid rgba(0,122,255,0.15)', background:'rgba(0,122,255,0.03)' }}>
+          <div style={{ fontSize:12, fontWeight:600, color:'var(--color-text-tertiary)', marginBottom:8 }}>
             {new Date(popup.date + 'T12:00:00').toLocaleDateString('de-DE', { weekday:'long', day:'2-digit', month:'long' })}
           </div>
           {popup.events.map((ev, i) => (
             <div key={i} style={{ display:'flex', alignItems:'center', gap:8, marginBottom:5, fontSize:13 }}>
               <div style={{ width:8, height:8, borderRadius:'50%', background:ev.color, flexShrink:0 }} />
-              <span style={{ color:'#1D1D1F' }}>{ev.label}</span>
-              <span style={{ fontSize:11, color:'#86868B' }}>{ev.type === 'deadline' ? '— Deadline' : '— Zeiteintrag'}</span>
+              <span style={{ color:'var(--color-text)' }}>{ev.label}</span>
+              <span style={{ fontSize:11, color:'var(--color-text-secondary)' }}>{ev.type === 'deadline' ? '— Deadline' : '— Zeiteintrag'}</span>
             </div>
           ))}
         </div>
@@ -343,24 +343,24 @@ function MemberCard({ member }) {
           {initials(member.name)}
         </div>
         <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: 14, fontWeight: 500, color: '#1D1D1F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{member.name}</div>
-          <div style={{ fontSize: 11, color: '#86868B' }}>{member.role}</div>
+          <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--color-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{member.name}</div>
+          <div style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>{member.role}</div>
         </div>
       </div>
 
       {/* Stats row */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 18, fontWeight: 600, color: '#1D1D1F' }}>{member.project_count}</div>
-          <div style={{ fontSize: 11, color: '#86868B' }}>Projekte</div>
+          <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--color-text)' }}>{member.project_count}</div>
+          <div style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>Projekte</div>
         </div>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 18, fontWeight: 600, color: '#1D1D1F' }}>{total}</div>
-          <div style={{ fontSize: 11, color: '#86868B' }}>Aufgaben</div>
+          <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--color-text)' }}>{total}</div>
+          <div style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>Aufgaben</div>
         </div>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 15, fontWeight: 600, color: '#1D1D1F', whiteSpace: 'nowrap' }}>{fmtHours(member.week_seconds)}</div>
-          <div style={{ fontSize: 11, color: '#86868B' }}>diese Woche</div>
+          <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--color-text)', whiteSpace: 'nowrap' }}>{fmtHours(member.week_seconds)}</div>
+          <div style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>diese Woche</div>
         </div>
       </div>
 
@@ -368,15 +368,15 @@ function MemberCard({ member }) {
       {total > 0 && (
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-            <span style={{ fontSize: 11, color: '#86868B' }}>Fortschritt</span>
+            <span style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>Fortschritt</span>
             <span style={{ fontSize: 11, fontWeight: 500, color: '#248A3D' }}>{donePercent}%</span>
           </div>
-          <div style={{ height: 5, background: 'rgba(0,0,0,0.06)', borderRadius: 99, overflow: 'hidden' }}>
+          <div style={{ height: 5, background: 'var(--color-border-subtle)', borderRadius: 99, overflow: 'hidden' }}>
             <div style={{ height: '100%', width: `${donePercent}%`, background: '#34C759', borderRadius: 99, transition: 'width 0.6s' }} />
           </div>
           <div style={{ display: 'flex', gap: 10, marginTop: 6 }}>
-            {[['Todo', member.task_todo, '#86868B'], ['Doing', member.task_doing, '#FF9500'], ['Done', member.task_done, '#34C759']].map(([label, count, color]) => (
-              <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#6E6E73' }}>
+            {[['Todo', member.task_todo, 'var(--color-text-secondary)'], ['Doing', member.task_doing, '#FF9500'], ['Done', member.task_done, '#34C759']].map(([label, count, color]) => (
+              <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--color-text-tertiary)' }}>
                 <div style={{ width: 6, height: 6, borderRadius: '50%', background: color }} />
                 {label}: <strong style={{ color }}>{count}</strong>
               </div>
@@ -391,11 +391,11 @@ function MemberCard({ member }) {
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 const CHART_COLORS = {
-  todo:      '#E5E5EA',
+  todo:      'var(--color-border)',
   doing:     '#FF9500',
   done:      '#34C759',
-  planned:   '#86868B',
-  active:    '#0071E3',
+  planned:   'var(--color-text-secondary)',
+  active:    'var(--color-blue)',
   completed: '#34C759',
   on_hold:   '#FF9500',
 };
@@ -440,7 +440,7 @@ export default function TeamDashboard() {
     return Object.entries(counts).map(([status, count]) => ({
       name: STATUS_LABELS[status] || status,
       count,
-      fill: CHART_COLORS[status] || '#86868B',
+      fill: CHART_COLORS[status] || 'var(--color-text-secondary)',
     }));
   }, [projects]);
 
@@ -513,9 +513,9 @@ export default function TeamDashboard() {
 
         {/* Task Status Donut */}
         <div className="card">
-          <h3 style={{ fontSize: 13, fontWeight: 600, color: '#6E6E73', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 16 }}>Aufgaben Status</h3>
+          <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 16 }}>Aufgaben Status</h3>
           {taskTotals.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '24px 0', color: '#86868B', fontSize: 13 }}>Keine Aufgaben</div>
+            <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--color-text-secondary)', fontSize: 13 }}>Keine Aufgaben</div>
           ) : (
             <>
               <ResponsiveContainer width="100%" height={160}>
@@ -523,7 +523,7 @@ export default function TeamDashboard() {
                   <Pie data={taskTotals} cx="50%" cy="50%" innerRadius={45} outerRadius={70} paddingAngle={3} dataKey="value">
                     {taskTotals.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
                   </Pie>
-                  <Tooltip formatter={(v, n) => [v, n]} contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid rgba(0,0,0,0.08)' }} />
+                  <Tooltip formatter={(v, n) => [v, n]} contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid var(--color-border-subtle)' }} />
                 </PieChart>
               </ResponsiveContainer>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -531,9 +531,9 @@ export default function TeamDashboard() {
                   <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       <div style={{ width: 8, height: 8, borderRadius: '50%', background: d.fill }} />
-                      <span style={{ color: '#6E6E73' }}>{d.name}</span>
+                      <span style={{ color: 'var(--color-text-tertiary)' }}>{d.name}</span>
                     </div>
-                    <strong style={{ color: '#1D1D1F' }}>{d.value}</strong>
+                    <strong style={{ color: 'var(--color-text)' }}>{d.value}</strong>
                   </div>
                 ))}
               </div>
@@ -543,18 +543,18 @@ export default function TeamDashboard() {
 
         {/* Team Workload */}
         <div className="card">
-          <h3 style={{ fontSize: 13, fontWeight: 600, color: '#6E6E73', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 16 }}>Team Auslastung</h3>
+          <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 16 }}>Team Auslastung</h3>
           {workloadData.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '24px 0', color: '#86868B', fontSize: 13 }}>Keine offenen Aufgaben</div>
+            <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--color-text-secondary)', fontSize: 13 }}>Keine offenen Aufgaben</div>
           ) : (
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={workloadData} layout="vertical" margin={{ left: 0, right: 20, top: 0, bottom: 0 }}>
-                <CartesianGrid horizontal={false} stroke="rgba(0,0,0,0.05)" />
-                <XAxis type="number" tick={{ fontSize: 11, fill: '#86868B' }} axisLine={false} tickLine={false} />
-                <YAxis type="category" dataKey="name" tick={{ fontSize: 12, fill: '#1D1D1F' }} axisLine={false} tickLine={false} width={70} />
-                <Tooltip formatter={v => [v, 'Offene Tasks']} contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid rgba(0,0,0,0.08)' }} />
+                <CartesianGrid horizontal={false} stroke="var(--color-border-subtle)" />
+                <XAxis type="number" tick={{ fontSize: 11, fill: 'var(--color-text-secondary)' }} axisLine={false} tickLine={false} />
+                <YAxis type="category" dataKey="name" tick={{ fontSize: 12, fill: 'var(--color-text)' }} axisLine={false} tickLine={false} width={70} />
+                <Tooltip formatter={v => [v, 'Offene Tasks']} contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid var(--color-border-subtle)' }} />
                 <Bar dataKey="tasks" radius={[0, 6, 6, 0]}>
-                  {workloadData.map((entry, i) => <Cell key={i} fill={entry.color || '#0071E3'} />)}
+                  {workloadData.map((entry, i) => <Cell key={i} fill={entry.color || 'var(--color-blue)'} />)}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
@@ -563,16 +563,16 @@ export default function TeamDashboard() {
 
         {/* Project Status */}
         <div className="card">
-          <h3 style={{ fontSize: 13, fontWeight: 600, color: '#6E6E73', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 16 }}>Projektstatus</h3>
+          <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 16 }}>Projektstatus</h3>
           {projectStatusData.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '24px 0', color: '#86868B', fontSize: 13 }}>Keine Projekte</div>
+            <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--color-text-secondary)', fontSize: 13 }}>Keine Projekte</div>
           ) : (
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={projectStatusData} margin={{ left: 0, right: 10, top: 0, bottom: 0 }}>
-                <CartesianGrid vertical={false} stroke="rgba(0,0,0,0.05)" />
-                <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#86868B' }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 11, fill: '#86868B' }} axisLine={false} tickLine={false} allowDecimals={false} />
-                <Tooltip formatter={v => [v, 'Projekte']} contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid rgba(0,0,0,0.08)' }} />
+                <CartesianGrid vertical={false} stroke="var(--color-border-subtle)" />
+                <XAxis dataKey="name" tick={{ fontSize: 11, fill: 'var(--color-text-secondary)' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: 'var(--color-text-secondary)' }} axisLine={false} tickLine={false} allowDecimals={false} />
+                <Tooltip formatter={v => [v, 'Projekte']} contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid var(--color-border-subtle)' }} />
                 <Bar dataKey="count" radius={[6, 6, 0, 0]}>
                   {projectStatusData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
                 </Bar>
@@ -588,11 +588,11 @@ export default function TeamDashboard() {
 
         {/* Upcoming deadlines */}
         <div className="card" style={{ padding: 0 }}>
-          <div style={{ padding: '14px 20px 12px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
-            <h3 style={{ fontSize: 14, fontWeight: 600, color: '#1D1D1F', margin: 0 }}>Nächste Deadlines</h3>
+          <div style={{ padding: '14px 20px 12px', borderBottom: '1px solid var(--color-border-subtle)' }}>
+            <h3 style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text)', margin: 0 }}>Nächste Deadlines</h3>
           </div>
           {upcomingDeadlines.length === 0 ? (
-            <div style={{ padding: '24px 20px', textAlign: 'center', color: '#86868B', fontSize: 13 }}>Keine bevorstehenden Deadlines</div>
+            <div style={{ padding: '24px 20px', textAlign: 'center', color: 'var(--color-text-secondary)', fontSize: 13 }}>Keine bevorstehenden Deadlines</div>
           ) : (
             <div>
               {upcomingDeadlines.map((p, i) => {
@@ -606,10 +606,10 @@ export default function TeamDashboard() {
                     style={{
                       display: 'flex', alignItems: 'center', gap: 12,
                       padding: '12px 20px', cursor: 'pointer',
-                      borderBottom: i < upcomingDeadlines.length - 1 ? '1px solid rgba(0,0,0,0.04)' : 'none',
+                      borderBottom: i < upcomingDeadlines.length - 1 ? '1px solid var(--color-border-subtle)' : 'none',
                       transition: 'background 0.1s',
                     }}
-                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,113,227,0.02)'}
+                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,122,255,0.02)'}
                     onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                   >
                     {isOverdue
@@ -619,15 +619,15 @@ export default function TeamDashboard() {
                         : <Circle size={14} color="#86868B" />
                     }
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 500, color: '#1D1D1F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
-                      <div style={{ fontSize: 11, color: '#86868B' }}>
+                      <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
+                      <div style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>
                         {new Date(p.deadline).toLocaleDateString('de-DE', { day: '2-digit', month: 'short' })}
                       </div>
                     </div>
                     <span style={{
                       fontSize: 11, fontWeight: 500, padding: '2px 8px', borderRadius: 99,
-                      background: isOverdue ? 'rgba(255,59,48,0.10)' : isSoon ? 'rgba(255,149,0,0.10)' : 'rgba(0,0,0,0.06)',
-                      color: isOverdue ? '#FF3B30' : isSoon ? '#C93400' : '#6E6E73',
+                      background: isOverdue ? 'rgba(255,59,48,0.10)' : isSoon ? 'rgba(255,149,0,0.10)' : 'var(--color-border-subtle)',
+                      color: isOverdue ? '#FF3B30' : isSoon ? '#C93400' : 'var(--color-text-tertiary)',
                       whiteSpace: 'nowrap',
                     }}>
                       {isOverdue ? `${Math.abs(daysLeft)}d überfällig` : daysLeft === 0 ? 'Heute' : `in ${daysLeft}d`}
@@ -643,20 +643,20 @@ export default function TeamDashboard() {
       {/* ── Open tasks per person ── */}
       {openTasksByMember.length > 0 && (
         <div className="card" style={{ padding: 0 }}>
-          <div style={{ padding: '14px 20px 12px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
-            <h3 style={{ fontSize: 14, fontWeight: 600, color: '#1D1D1F', margin: 0 }}>Offene Aufgaben pro Person</h3>
+          <div style={{ padding: '14px 20px 12px', borderBottom: '1px solid var(--color-border-subtle)' }}>
+            <h3 style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text)', margin: 0 }}>Offene Aufgaben pro Person</h3>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             {openTasksByMember.map((m, i) => (
-              <div key={m.user_id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 20px', borderBottom: i < openTasksByMember.length - 1 ? '1px solid rgba(0,0,0,0.04)' : 'none' }}>
+              <div key={m.user_id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 20px', borderBottom: i < openTasksByMember.length - 1 ? '1px solid var(--color-border-subtle)' : 'none' }}>
                 <div style={{ width: 28, height: 28, borderRadius: '50%', background: m.color || '#6366f1', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#fff', flexShrink: 0 }}>
                   {initials(m.name)}
                 </div>
-                <div style={{ minWidth: 80, fontSize: 13, fontWeight: 500, color: '#1D1D1F' }}>{m.name}</div>
+                <div style={{ minWidth: 80, fontSize: 13, fontWeight: 500, color: 'var(--color-text)' }}>{m.name}</div>
                 {/* Task chips */}
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', flex: 1 }}>
                   {m.task_todo > 0 && (
-                    <span style={{ fontSize: 11, padding: '2px 9px', borderRadius: 99, background: 'rgba(0,0,0,0.06)', color: '#6E6E73', fontWeight: 500 }}>
+                    <span style={{ fontSize: 11, padding: '2px 9px', borderRadius: 99, background: 'var(--color-border-subtle)', color: 'var(--color-text-tertiary)', fontWeight: 500 }}>
                       {m.task_todo} Todo
                     </span>
                   )}
@@ -666,7 +666,7 @@ export default function TeamDashboard() {
                     </span>
                   )}
                 </div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#1D1D1F', minWidth: 40, textAlign: 'right' }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text)', minWidth: 40, textAlign: 'right' }}>
                   {m.open} offen
                 </div>
               </div>

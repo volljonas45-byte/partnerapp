@@ -1,9 +1,9 @@
-import { NavLink, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   CalendarDays, Clock, CalendarRange, BarChart2,
   ClipboardCheck, PackageCheck, Layers,
   FileText, ClipboardList, Users, UserCog, Settings,
-  LogOut, X, Plus, Zap,
+  LogOut, X, Plus, Zap, ChevronRight,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -11,7 +11,7 @@ import { useQuery } from '@tanstack/react-query';
 import { intakeApi } from '../api/intake';
 
 function avatarColor(str = '') {
-  const colors = ['#BF5AF2', '#0071E3', '#34C759', '#FF9500', '#FF3B30', '#5AC8FA'];
+  const colors = ['#BF5AF2', 'var(--color-blue)', '#34C759', '#FF9500', '#FF3B30', '#5AC8FA'];
   let hash = 0;
   for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
   return colors[Math.abs(hash) % colors.length];
@@ -55,7 +55,7 @@ const SECTIONS = [
 
 export default function MobileDrawer({ onClose }) {
   const { logout, user, isAdmin, isPM } = useAuth();
-  const { c } = useTheme();
+  const { c, isDark } = useTheme();
   const navigate = useNavigate();
 
   const { data: unread } = useQuery({
@@ -79,52 +79,56 @@ export default function MobileDrawer({ onClose }) {
       <div
         onClick={onClose}
         style={{
-          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
-          zIndex: 150, backdropFilter: 'blur(2px)',
+          position: 'fixed', inset: 0,
+          background: isDark ? 'rgba(0,0,0,0.55)' : 'rgba(0,0,0,0.35)',
+          zIndex: 150,
+          backdropFilter: 'blur(4px)',
+          WebkitBackdropFilter: 'blur(4px)',
+          animation: 'backdropIn 0.2s cubic-bezier(0.22,1,0.36,1) both',
         }}
       />
 
       {/* Drawer */}
       <div style={{
         position: 'fixed', bottom: 0, left: 0, right: 0,
-        background: c.bg, borderRadius: '20px 20px 0 0',
+        background: c.bg, borderRadius: '16px 16px 0 0',
         zIndex: 160, maxHeight: '88vh', overflowY: 'auto',
         paddingBottom: 'calc(env(safe-area-inset-bottom) + 80px)',
-        transition: 'background 0.2s ease',
+        animation: 'slideUp 0.35s cubic-bezier(0.22,1,0.36,1) both',
       }}>
         {/* Handle + Header */}
         <div style={{
           position: 'sticky', top: 0,
           background: c.bg,
-          padding: '12px 20px 8px', borderBottom: `1px solid ${c.borderSubtle}`,
+          padding: '10px 20px 8px',
+          borderBottom: `0.5px solid ${c.borderSubtle}`,
           zIndex: 1,
-          transition: 'background 0.2s ease',
         }}>
-          {/* Drag handle */}
           <div style={{
             width: 36, height: 4, borderRadius: 99,
-            background: c.border,
+            background: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)',
             margin: '0 auto 12px',
           }} />
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <div style={{
-                width: 28, height: 28, borderRadius: 8, background: c.blue,
+                width: 28, height: 28, borderRadius: 8,
+                background: `linear-gradient(135deg, ${c.blue}, ${isDark ? '#0064D1' : '#0055B8'})`,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
                 <Zap size={13} color="#fff" strokeWidth={2.5} />
               </div>
-              <span style={{ fontSize: 16, fontWeight: 700, color: c.text, letterSpacing: '-0.3px' }}>Vecturo</span>
+              <span style={{ fontSize: 16, fontWeight: 700, color: c.text, letterSpacing: '-0.02em' }}>Vecturo</span>
             </div>
             <button
               onClick={onClose}
               style={{
-                width: 32, height: 32, borderRadius: 99, border: 'none',
+                width: 30, height: 30, borderRadius: '50%', border: 'none',
                 background: c.inputBg, display: 'flex', alignItems: 'center',
                 justifyContent: 'center', cursor: 'pointer',
               }}
             >
-              <X size={16} color={c.textSecondary} />
+              <X size={14} color={c.textSecondary} strokeWidth={2} />
             </button>
           </div>
         </div>
@@ -134,14 +138,15 @@ export default function MobileDrawer({ onClose }) {
           <button
             onClick={() => handleNav('/wizard')}
             style={{
-              width: '100%', padding: '13px', borderRadius: 14,
+              width: '100%', padding: '12px', borderRadius: 12,
               background: c.blue, color: '#fff', border: 'none',
-              fontSize: 15, fontWeight: 600, cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              fontSize: 15, fontWeight: 500, cursor: 'pointer',
+              letterSpacing: '-0.009em',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
             }}
           >
-            <Plus size={16} strokeWidth={2.5} />
-            Neues Projekt erstellen
+            <Plus size={16} strokeWidth={2} />
+            Neues Projekt
           </button>
         </div>
 
@@ -154,15 +159,15 @@ export default function MobileDrawer({ onClose }) {
           return (
             <div key={si} style={{ padding: '10px 16px 0' }}>
               <p style={{
-                fontSize: 11, fontWeight: 700, color: c.textSecondary,
-                textTransform: 'uppercase', letterSpacing: '0.08em',
+                fontSize: 11, fontWeight: 600, color: c.textTertiary,
+                textTransform: 'uppercase', letterSpacing: '0.04em',
                 paddingLeft: 4, marginBottom: 6,
               }}>
                 {section.label}
               </p>
               <div style={{
-                background: c.card, borderRadius: 14, overflow: 'hidden',
-                border: `1px solid ${c.borderSubtle}`,
+                background: c.card, borderRadius: 12, overflow: 'hidden',
+                border: `0.5px solid ${c.borderSubtle}`,
               }}>
                 {items.map(({ to, icon: Icon, label, badge }, idx) => (
                   <button
@@ -170,29 +175,23 @@ export default function MobileDrawer({ onClose }) {
                     onClick={() => handleNav(to)}
                     style={{
                       width: '100%', display: 'flex', alignItems: 'center', gap: 12,
-                      padding: '14px 16px',
+                      padding: '12px 16px',
                       background: 'none', border: 'none',
-                      borderBottom: idx < items.length - 1 ? `1px solid ${c.borderSubtle}` : 'none',
+                      borderBottom: idx < items.length - 1 ? `0.5px solid ${c.borderSubtle}` : 'none',
                       cursor: 'pointer', textAlign: 'left',
                     }}
                   >
-                    <div style={{
-                      width: 34, height: 34, borderRadius: 9,
-                      background: c.inputBg,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                    }}>
-                      <Icon size={16} color={c.textSecondary} strokeWidth={1.75} />
-                    </div>
-                    <span style={{ fontSize: 15, fontWeight: 500, color: c.text, flex: 1 }}>{label}</span>
+                    <Icon size={18} color={c.textTertiary} strokeWidth={1.5} />
+                    <span style={{ fontSize: 15, fontWeight: 400, color: c.text, flex: 1, letterSpacing: '-0.009em' }}>{label}</span>
                     {badge && unread?.count > 0 && (
                       <span style={{
-                        minWidth: 20, height: 20, borderRadius: 99, padding: '0 5px',
+                        minWidth: 18, height: 18, borderRadius: 99, padding: '0 5px',
                         background: '#FF3B30', color: '#fff',
-                        fontSize: 11, fontWeight: 700,
+                        fontSize: 11, fontWeight: 600,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                       }}>{unread.count > 99 ? '99+' : unread.count}</span>
                     )}
-                    <span style={{ fontSize: 14, color: c.border }}>›</span>
+                    <ChevronRight size={14} color={c.border} strokeWidth={2} />
                   </button>
                 ))}
               </div>
@@ -203,17 +202,17 @@ export default function MobileDrawer({ onClose }) {
         {/* User + Logout */}
         <div style={{ padding: '16px 16px 0' }}>
           <div style={{
-            background: c.card, borderRadius: 14, overflow: 'hidden',
-            border: `1px solid ${c.borderSubtle}`,
+            background: c.card, borderRadius: 12, overflow: 'hidden',
+            border: `0.5px solid ${c.borderSubtle}`,
           }}>
             <div style={{
               display: 'flex', alignItems: 'center', gap: 12,
-              padding: '14px 16px', borderBottom: `1px solid ${c.borderSubtle}`,
+              padding: '12px 16px', borderBottom: `0.5px solid ${c.borderSubtle}`,
             }}>
               <div style={{
-                width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
+                width: 34, height: 34, borderRadius: '50%', flexShrink: 0,
                 background: bgColor, display: 'flex', alignItems: 'center',
-                justifyContent: 'center', fontSize: 12, fontWeight: 700,
+                justifyContent: 'center', fontSize: 12, fontWeight: 600,
                 color: '#fff', overflow: 'hidden',
               }}>
                 {user?.avatar_base64
@@ -222,26 +221,20 @@ export default function MobileDrawer({ onClose }) {
               </div>
               <div style={{ minWidth: 0, flex: 1 }}>
                 {user?.name && (
-                  <div style={{ fontSize: 14, fontWeight: 600, color: c.text, marginBottom: 1 }}>{user.name}</div>
+                  <div style={{ fontSize: 15, fontWeight: 500, color: c.text, letterSpacing: '-0.009em' }}>{user.name}</div>
                 )}
-                <div style={{ fontSize: 12, color: c.textSecondary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.email}</div>
+                <div style={{ fontSize: 13, color: c.textSecondary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.email}</div>
               </div>
             </div>
             <button
               onClick={() => { logout(); onClose(); }}
               style={{
                 width: '100%', display: 'flex', alignItems: 'center', gap: 12,
-                padding: '14px 16px', background: 'none', border: 'none', cursor: 'pointer',
+                padding: '12px 16px', background: 'none', border: 'none', cursor: 'pointer',
               }}
             >
-              <div style={{
-                width: 34, height: 34, borderRadius: 9,
-                background: 'rgba(255,59,48,0.1)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-              }}>
-                <LogOut size={16} color="#FF453A" strokeWidth={1.75} />
-              </div>
-              <span style={{ fontSize: 15, fontWeight: 500, color: '#FF453A' }}>Abmelden</span>
+              <LogOut size={18} color={c.red} strokeWidth={1.5} />
+              <span style={{ fontSize: 15, fontWeight: 400, color: c.red, letterSpacing: '-0.009em' }}>Abmelden</span>
             </button>
           </div>
         </div>

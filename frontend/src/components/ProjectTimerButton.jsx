@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Play, Square } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { timeApi } from '../api/time';
+import { useTheme } from '../context/ThemeContext';
 
 function fmtElapsed(sec) {
   const h = Math.floor(sec / 3600);
@@ -14,6 +15,7 @@ function fmtElapsed(sec) {
 
 // size: 'normal' | 'small'
 export default function ProjectTimerButton({ projectId, projectName, size = 'normal' }) {
+  const { c, isDark } = useTheme();
   const qc = useQueryClient();
   const [elapsed, setElapsed] = useState(0);
 
@@ -64,9 +66,9 @@ export default function ProjectTimerButton({ projectId, projectName, size = 'nor
         style={{
           display: 'flex', alignItems: 'center', gap: '5px',
           padding: sm ? '4px 9px' : '5px 11px',
-          borderRadius: '99px',
-          background: 'rgba(255,59,48,0.09)',
-          border: '1.5px solid rgba(255,59,48,0.22)',
+          borderRadius: '8px',
+          background: 'rgba(255,59,48,0.08)',
+          border: '1px solid rgba(255,59,48,0.18)',
           color: '#FF3B30',
           fontSize: sm ? '11px' : '12px',
           fontWeight: '600',
@@ -95,21 +97,21 @@ export default function ProjectTimerButton({ projectId, projectName, size = 'nor
         height: sm ? '26px' : '30px',
         borderRadius: '50%',
         background: 'transparent',
-        border: '1.5px solid rgba(0,0,0,0.13)',
-        color: '#A0A0A8',
+        border: `1.5px solid ${c.borderSubtle}`,
+        color: c.textTertiary,
         cursor: 'pointer',
         flexShrink: 0,
-        transition: 'all 0.15s',
+        transition: 'all 0.15s cubic-bezier(0.22,1,0.36,1)',
       }}
       onMouseEnter={e => {
-        e.currentTarget.style.background = 'rgba(0,113,227,0.08)';
-        e.currentTarget.style.borderColor = '#0071E3';
-        e.currentTarget.style.color = '#0071E3';
+        e.currentTarget.style.background = c.blueLight;
+        e.currentTarget.style.borderColor = c.blue;
+        e.currentTarget.style.color = c.blue;
       }}
       onMouseLeave={e => {
         e.currentTarget.style.background = 'transparent';
-        e.currentTarget.style.borderColor = 'rgba(0,0,0,0.13)';
-        e.currentTarget.style.color = '#A0A0A8';
+        e.currentTarget.style.borderColor = c.borderSubtle;
+        e.currentTarget.style.color = c.textTertiary;
       }}
     >
       <Play size={sm ? 9 : 11} fill="currentColor" strokeWidth={0} style={{ marginLeft: '1px' }} />

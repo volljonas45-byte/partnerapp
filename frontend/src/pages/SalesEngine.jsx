@@ -63,10 +63,10 @@ function followupInfo(dateStr) {
 }
 
 const OUTCOME_CFG = {
-  reached:     { label: 'Erreicht',       color: '#34C759', bg: 'rgba(52,199,89,0.1)' },
-  not_reached: { label: 'Nicht erreicht', color: '#86868B', bg: 'rgba(118,118,128,0.1)' },
-  voicemail:   { label: 'Mailbox',        color: '#FF9500', bg: 'rgba(255,149,0,0.1)' },
-  callback:    { label: 'Rückruf',        color: '#0071E3', bg: 'rgba(0,113,227,0.1)' },
+  reached:     { label: 'Erreicht',       color: '#34C759', bg: 'rgba(52,199,89,0.08)' },
+  not_reached: { label: 'Nicht erreicht', color: 'var(--color-text-secondary)', bg: 'rgba(142,142,147,0.10)' },
+  voicemail:   { label: 'Mailbox',        color: '#FF9500', bg: 'rgba(255,149,0,0.08)' },
+  callback:    { label: 'Rückruf',        color: 'var(--color-blue)', bg: 'rgba(0,122,255,0.08)' },
 };
 
 const WEBSITE_STATUS_CFG = {
@@ -78,7 +78,7 @@ const WEBSITE_STATUS_CFG = {
 };
 
 const PRIORITY_CFG = {
-  0: { color: '#C7C7CC', label: 'Normal', dot: '#C7C7CC' },
+  0: { color: 'var(--color-text-tertiary)', label: 'Normal', dot: 'var(--color-text-tertiary)' },
   1: { color: '#FF9500', label: 'Hoch',   dot: '#FF9500' },
   2: { color: '#FF3B30', label: 'Dringend', dot: '#FF3B30' },
 };
@@ -125,7 +125,7 @@ function KpiCard({ icon: Icon, label, value, sub, color, target }) {
   return (
     <div style={{
       background: c.card, borderRadius: 12, padding: '12px 14px',
-      border: `1px solid ${c.borderSubtle}`, display: 'flex', flexDirection: 'column', gap: 6,
+      border: `0.5px solid ${c.borderSubtle}`, display: 'flex', flexDirection: 'column', gap: 6,
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         <div style={{
@@ -250,7 +250,7 @@ function EmptyDetail() {
   const { c } = useTheme();
   return (
     <div style={{
-      background: c.card, borderRadius: 14, border: `1px solid ${c.borderSubtle}`,
+      background: c.card, borderRadius: 12, border: `0.5px solid ${c.borderSubtle}`,
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       height: '100%', gap: 12, color: c.textSecondary,
     }}>
@@ -666,9 +666,9 @@ export default function SalesEngine() {
         {/* Icon */}
         <div style={{
           width: 28, height: 28, borderRadius: 8, flexShrink: 0,
-          background: 'rgba(0,113,227,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: isDark ? 'rgba(10,132,255,0.12)' : 'rgba(0,122,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
-          <Building2 size={13} color="#0071E3" />
+          <Building2 size={13} color={c.blue} />
         </div>
 
         {/* Text */}
@@ -746,13 +746,13 @@ export default function SalesEngine() {
                 </p>
               </div>
               <div style={{ display: 'flex', gap: 6 }}>
-                <button onClick={() => setShowScreenshot(true)} style={{ padding: '7px 10px', borderRadius: 9, fontSize: 12, fontWeight: 600, background: 'rgba(0,113,227,0.08)', color: '#0071E3', border: 'none', cursor: 'pointer' }}>
+                <button onClick={() => setShowScreenshot(true)} style={{ padding: '7px 10px', borderRadius: 9, fontSize: 12, fontWeight: 600, background: 'rgba(0,122,255,0.08)', color: 'var(--color-blue)', border: 'none', cursor: 'pointer' }}>
                   <Camera size={14} />
                 </button>
                 <button onClick={() => setShowExcelImport(true)} style={{ padding: '7px 10px', borderRadius: 9, fontSize: 12, fontWeight: 600, background: 'rgba(52,199,89,0.1)', color: '#1A8F40', border: 'none', cursor: 'pointer' }}>
                   <FileSpreadsheet size={14} />
                 </button>
-                <button onClick={() => setShowAddLead(true)} style={{ width: 34, height: 34, borderRadius: 9, fontSize: 12, fontWeight: 600, background: '#0071E3', color: '#fff', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <button onClick={() => setShowAddLead(true)} style={{ width: 34, height: 34, borderRadius: 8, fontSize: 12, fontWeight: 600, background: c.blue, color: '#fff', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <Plus size={16} />
                 </button>
               </div>
@@ -762,7 +762,7 @@ export default function SalesEngine() {
             <div style={{ overflowX: 'auto', margin: '0 -16px', scrollbarWidth: 'none' }}>
               <div style={{ display: 'flex', gap: 8, padding: '0 16px 12px', width: 'max-content' }}>
                 {[
-                  { icon: PhoneCall, label: 'Anrufe', value: t.calls_total || 0, color: '#0071E3', target: targets.daily_calls },
+                  { icon: PhoneCall, label: 'Anrufe', value: t.calls_total || 0, color: 'var(--color-blue)', target: targets.daily_calls },
                   { icon: Phone,     label: 'Gespräche', value: t.calls_reached || 0, color: '#34C759', sub: `${t.connect_rate || 0}%` },
                   { icon: CheckCircle2, label: 'Abschlüsse', value: t.closings || 0, color: '#7C3AED', target: targets.daily_closings },
                   { icon: Clock,     label: 'Fällig', value: stats?.followups_due || 0, color: '#FF9500' },
@@ -803,7 +803,7 @@ export default function SalesEngine() {
                 border: `1px solid ${mot.type === 'urgent' ? 'rgba(255,59,48,0.2)' : 'rgba(255,149,0,0.2)'}`,
               }}>
                 <Flame size={13} color={mot.type === 'urgent' ? '#FF3B30' : '#FF9500'} />
-                <span style={{ fontSize: 12.5, fontWeight: 600, color: mot.type === 'urgent' ? '#FF3B30' : '#B35A00' }}>{mot.message}</span>
+                <span style={{ fontSize: 12.5, fontWeight: 600, color: mot.type === 'urgent' ? '#FF3B30' : '#FF9500' }}>{mot.message}</span>
               </div>
             )}
 
@@ -853,9 +853,9 @@ export default function SalesEngine() {
                 >
                   <div style={{
                     width: 32, height: 32, borderRadius: 8, flexShrink: 0,
-                    background: 'rgba(0,113,227,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: isDark ? 'rgba(10,132,255,0.12)' : 'rgba(0,122,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}>
-                    <Building2 size={14} color="#0071E3" />
+                    <Building2 size={14} color={c.blue} />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 14, fontWeight: 600, color: c.text, marginBottom: 4 }}>{client.company_name}</div>
@@ -877,8 +877,8 @@ export default function SalesEngine() {
                       disabled={!client.phone}
                       style={{
                         width: 36, height: 36, borderRadius: 10, border: 'none', flexShrink: 0,
-                        background: client.phone ? 'rgba(52,199,89,0.12)' : 'rgba(0,0,0,0.05)',
-                        color: client.phone ? '#34C759' : '#C7C7CC',
+                        background: client.phone ? 'rgba(52,199,89,0.12)' : 'rgba(142,142,147,0.12)',
+                        color: client.phone ? '#34C759' : 'var(--color-text-tertiary)',
                         cursor: client.phone ? 'pointer' : 'not-allowed',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                       }}
@@ -911,7 +911,7 @@ export default function SalesEngine() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
                       <span style={{ padding: '2px 7px', borderRadius: 99, fontSize: 10.5, fontWeight: 600, background: ls.bg, color: ls.color }}>{ls.label}</span>
                       {ws && <span style={{ padding: '2px 6px', borderRadius: 6, fontSize: 10, fontWeight: 600, background: ws.bg, color: ws.color }}>{ws.short}</span>}
-                      {lead.city && <span style={{ fontSize: 11, color: '#AEAEB2' }}>{lead.city}</span>}
+                      {lead.city && <span style={{ fontSize: 11, color: c.textTertiary }}>{lead.city}</span>}
                     </div>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
@@ -921,8 +921,8 @@ export default function SalesEngine() {
                       disabled={!lead.phone}
                       style={{
                         width: 36, height: 36, borderRadius: 10, border: 'none', flexShrink: 0,
-                        background: lead.phone ? 'rgba(52,199,89,0.12)' : 'rgba(0,0,0,0.05)',
-                        color: lead.phone ? '#34C759' : '#C7C7CC',
+                        background: lead.phone ? 'rgba(52,199,89,0.12)' : 'rgba(142,142,147,0.12)',
+                        color: lead.phone ? '#34C759' : 'var(--color-text-tertiary)',
                         cursor: lead.phone ? 'pointer' : 'not-allowed',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                       }}
@@ -942,7 +942,7 @@ export default function SalesEngine() {
             {/* Backdrop */}
             <div
               onClick={() => setSelectedLeadId(null)}
-              style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex: 110, backdropFilter: 'blur(2px)' }}
+              style={{ position: 'fixed', inset: 0, background: c.overlayBg, zIndex: 110, backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}
             />
             {/* Sheet */}
             <div style={{
@@ -964,7 +964,7 @@ export default function SalesEngine() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                       {s && <span style={{ padding: '3px 9px', borderRadius: 99, fontSize: 11.5, fontWeight: 600, background: s.bg, color: s.color }}>{s.label}</span>}
                       {selWS && <span style={{ padding: '3px 8px', borderRadius: 8, fontSize: 11, fontWeight: 600, background: selWS.bg, color: selWS.color }}>{selectedLead.website_status}</span>}
-                      {selectedLead.city && <span style={{ fontSize: 12, color: '#86868B', display: 'flex', alignItems: 'center', gap: 3 }}><MapPin size={11} />{selectedLead.city}</span>}
+                      {selectedLead.city && <span style={{ fontSize: 12, color: c.textSecondary, display: 'flex', alignItems: 'center', gap: 3 }}><MapPin size={11} />{selectedLead.city}</span>}
                     </div>
                   </div>
                   <button onClick={() => setSelectedLeadId(null)} style={{ width: 30, height: 30, borderRadius: 99, border: 'none', background: c.inputBg, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
@@ -988,12 +988,12 @@ export default function SalesEngine() {
                       </a>
                     )}
                     {selectedLead.email && (
-                      <a href={`mailto:${selectedLead.email}`} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, background: 'rgba(0,113,227,0.08)', color: '#0071E3', textDecoration: 'none', fontSize: 13, fontWeight: 600 }}>
+                      <a href={`mailto:${selectedLead.email}`} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 8, background: c.blueLight, color: c.blue, textDecoration: 'none', fontSize: 13, fontWeight: 600 }}>
                         <Mail size={14} /> E-Mail
                       </a>
                     )}
                     {selectedLead.domain && (
-                      <a href={`https://${selectedLead.domain}`} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, background: 'rgba(0,0,0,0.05)', color: '#636366', textDecoration: 'none', fontSize: 13, fontWeight: 600 }}>
+                      <a href={`https://${selectedLead.domain}`} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 8, background: c.inputBg, color: c.textSecondary, textDecoration: 'none', fontSize: 13, fontWeight: 600 }}>
                         <Globe size={14} /> Website
                       </a>
                     )}
@@ -1034,7 +1034,7 @@ export default function SalesEngine() {
                   </div>
                   {selectedLead.next_followup_date ? (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <CalendarDays size={15} color={fwInfo?.color || '#86868B'} />
+                      <CalendarDays size={15} color={fwInfo?.color || c.textSecondary} />
                       <span style={{ fontSize: 14, fontWeight: 600, color: fwInfo?.color || c.text }}>
                         {fmtDate(selectedLead.next_followup_date, { day: '2-digit', month: 'long', year: 'numeric' })}
                       </span>
@@ -1043,7 +1043,7 @@ export default function SalesEngine() {
                   ) : (
                     <div style={{ fontSize: 13, color: c.textTertiary }}>Kein Follow-up geplant</div>
                   )}
-                  {selectedLead.next_followup_note && <div style={{ fontSize: 12, color: '#86868B', marginTop: 4 }}>{selectedLead.next_followup_note}</div>}
+                  {selectedLead.next_followup_note && <div style={{ fontSize: 12, color: c.textSecondary, marginTop: 4 }}>{selectedLead.next_followup_note}</div>}
                 </div>
 
                 {/* Notizen */}
@@ -1106,7 +1106,7 @@ export default function SalesEngine() {
                 <button
                   onClick={() => handleCall(selectedLead)}
                   disabled={!selectedLead.phone}
-                  style={{ flex: 2, padding: '13px', borderRadius: 12, background: selectedLead.phone ? '#34C759' : '#E5E5EA', color: selectedLead.phone ? '#fff' : '#AEAEB2', border: 'none', cursor: selectedLead.phone ? 'pointer' : 'not-allowed', fontSize: 15, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                  style={{ flex: 2, padding: '13px', borderRadius: 12, background: selectedLead.phone ? '#34C759' : c.inputBg, color: selectedLead.phone ? '#fff' : c.textTertiary, border: 'none', cursor: selectedLead.phone ? 'pointer' : 'not-allowed', fontSize: 15, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
                 >
                   <Phone size={16} /> Anrufen
                 </button>
@@ -1153,7 +1153,7 @@ export default function SalesEngine() {
 
         {/* KPI cards row */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(160px, 220px))', gap: 10, flex: 1 }}>
-          <KpiCard icon={PhoneCall}    label="Anrufe heute"      value={t.calls_total || 0}   color="#0071E3" target={targets.daily_calls} />
+          <KpiCard icon={PhoneCall}    label="Anrufe heute"      value={t.calls_total || 0}   color="#007AFF" target={targets.daily_calls} />
           <KpiCard icon={Phone}        label="Gespräche"          value={t.calls_reached || 0} color="#34C759" sub={`${t.connect_rate || 0}%`} target={targets.daily_connects} />
           <KpiCard icon={CheckCircle2} label="Abschlüsse"         value={t.closings || 0}      color="#7C3AED" target={targets.daily_closings} />
           <KpiCard icon={Clock}        label="Follow-ups fällig"  value={stats?.followups_due || 0} color="#FF9500" />
@@ -1166,8 +1166,8 @@ export default function SalesEngine() {
             title="Google Maps Screenshot importieren"
             style={{
               display: 'flex', alignItems: 'center', gap: 5, padding: '7px 12px', borderRadius: 9,
-              fontSize: 12, fontWeight: 600, background: 'rgba(0,113,227,0.08)', color: '#0071E3',
-              border: '1px solid rgba(0,113,227,0.15)', cursor: 'pointer',
+              fontSize: 12, fontWeight: 600, background: 'rgba(0,122,255,0.08)', color: 'var(--color-blue)',
+              border: '1px solid rgba(0,122,255,0.15)', cursor: 'pointer',
             }}
           >
             <Camera size={13} /> Screenshot
@@ -1186,7 +1186,7 @@ export default function SalesEngine() {
             onClick={() => setShowAddLead(true)}
             style={{
               display: 'flex', alignItems: 'center', gap: 5, padding: '7px 12px', borderRadius: 9,
-              fontSize: 12, fontWeight: 600, background: '#0071E3', color: '#fff',
+              fontSize: 12, fontWeight: 600, background: c.blue, color: '#fff',
               border: 'none', cursor: 'pointer',
             }}
           >
@@ -1216,7 +1216,7 @@ export default function SalesEngine() {
           border: `1px solid ${mot.type === 'urgent' ? 'rgba(255,59,48,0.2)' : 'rgba(255,149,0,0.2)'}`,
         }}>
           {mot.type === 'urgent' ? <Flame size={14} color="#FF3B30" /> : <AlertCircle size={14} color="#FF9500" />}
-          <span style={{ fontSize: 13, fontWeight: 600, color: mot.type === 'urgent' ? '#FF3B30' : '#B35A00' }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: mot.type === 'urgent' ? '#FF3B30' : '#FF9500' }}>
             {mot.message}
           </span>
         </div>
@@ -1240,11 +1240,11 @@ export default function SalesEngine() {
 
         {/* ════ LEFT: Lead List ════ */}
         <div style={{
-          background: c.card, borderRadius: 14, border: `1px solid ${c.borderSubtle}`,
+          background: c.card, borderRadius: 12, border: `0.5px solid ${c.borderSubtle}`,
           display: 'flex', flexDirection: 'column', overflow: 'hidden',
         }}>
           {/* List header */}
-          <div style={{ padding: '12px 14px 0', borderBottom: `1px solid ${c.borderSubtle}`, flexShrink: 0 }}>
+          <div style={{ padding: '12px 14px 0', borderBottom: `0.5px solid ${c.borderSubtle}`, flexShrink: 0 }}>
             {/* Avatar Switcher */}
             {renderAvatarSwitcher(false)}
             {/* Viewing-other banner */}
@@ -1275,7 +1275,7 @@ export default function SalesEngine() {
             {viewingAll && (
               <div style={{
                 display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', marginBottom: 8,
-                borderRadius: 8, background: 'rgba(0,113,227,0.06)', border: '1px solid rgba(0,113,227,0.15)',
+                borderRadius: 8, background: 'rgba(0,122,255,0.06)', border: '1px solid rgba(0,122,255,0.15)',
               }}>
                 <Users size={13} color={c.blue} />
                 <span style={{ fontSize: 11.5, fontWeight: 600, color: c.text, flex: 1 }}>Alle Pipelines</span>
@@ -1346,12 +1346,12 @@ export default function SalesEngine() {
         {/* ════ MIDDLE: Lead Detail ════ */}
         {!selectedLead ? <EmptyDetail /> : (
           <div style={{
-            background: c.card, borderRadius: 14, border: `1px solid ${c.borderSubtle}`,
+            background: c.card, borderRadius: 12, border: `0.5px solid ${c.borderSubtle}`,
             display: 'flex', flexDirection: 'column', overflow: 'hidden',
           }}>
             {/* Detail header */}
             <div style={{
-              padding: '16px 20px 14px', borderBottom: `1px solid ${c.borderSubtle}`, flexShrink: 0,
+              padding: '16px 20px 14px', borderBottom: `0.5px solid ${c.borderSubtle}`, flexShrink: 0,
             }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 10 }}>
                 <div style={{ minWidth: 0 }}>
@@ -1471,8 +1471,8 @@ export default function SalesEngine() {
                     style={{
                       display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 9,
                       fontSize: 13, fontWeight: 600,
-                      background: selectedLead.phone ? '#34C759' : '#E5E5EA',
-                      color: selectedLead.phone ? '#fff' : '#AEAEB2',
+                      background: selectedLead.phone ? '#34C759' : c.inputBg,
+                      color: selectedLead.phone ? '#fff' : c.textTertiary,
                       border: 'none', cursor: selectedLead.phone ? 'pointer' : 'not-allowed',
                     }}
                   >
@@ -1558,7 +1558,7 @@ export default function SalesEngine() {
             <div style={{ flex: 1, minHeight: 0, display: 'grid', gridTemplateColumns: '1fr 280px', overflow: 'hidden' }}>
 
               {/* LEFT: Notes + Follow-up + Deal */}
-              <div style={{ overflowY: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 14, borderRight: `1px solid ${c.borderSubtle}` }}>
+              <div style={{ overflowY: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 14, borderRight: `0.5px solid ${c.borderSubtle}` }}>
 
                 {/* Follow-up */}
                 <div>
@@ -1578,7 +1578,7 @@ export default function SalesEngine() {
                   </div>
                   {selectedLead.next_followup_date ? (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <CalendarDays size={15} color={fwInfo?.color || '#86868B'} />
+                      <CalendarDays size={15} color={fwInfo?.color || c.textSecondary} />
                       <div>
                         <span style={{ fontSize: 13.5, fontWeight: 600, color: fwInfo?.color || c.text }}>
                           {fmtDate(selectedLead.next_followup_date, { day: '2-digit', month: 'long', year: 'numeric' })}
@@ -1673,13 +1673,13 @@ export default function SalesEngine() {
 
                     {!isConverted && (
                       <div>
-                        <label style={{ fontSize: 11, fontWeight: 600, color: '#AEAEB2', display: 'block', marginBottom: 4 }}>E-Mail</label>
+                        <label style={{ fontSize: 11, fontWeight: 600, color: c.textTertiary, display: 'block', marginBottom: 4 }}>E-Mail</label>
                         <input
                           key={`em-${selectedLeadId}`}
                           defaultValue={selectedLead.email || ''}
                           onBlur={e => { if (e.target.value !== (selectedLead.email || '')) updateLeadMut.mutate({ id: selectedLeadId, data: { email: e.target.value } }); }}
                           placeholder="info@firma.de"
-                          style={{ width: '100%', padding: '7px 8px', borderRadius: 8, fontSize: 12.5, border: '1.5px solid #E5E5EA', outline: 'none', boxSizing: 'border-box' }}
+                          style={{ width: '100%', padding: '7px 8px', borderRadius: 8, fontSize: 12.5, border: `1.5px solid ${c.border}`, outline: 'none', boxSizing: 'border-box', background: c.cardSecondary, color: c.text }}
                         />
                       </div>
                     )}
@@ -1763,8 +1763,8 @@ export default function SalesEngine() {
         }}>
           {/* Chart */}
           <div style={{
-            background: c.card, borderRadius: 14, padding: '14px 16px 8px',
-            border: `1px solid ${c.borderSubtle}`, flexShrink: 0,
+            background: c.card, borderRadius: 12, padding: '14px 16px 8px',
+            border: `0.5px solid ${c.borderSubtle}`, flexShrink: 0,
           }}>
             <div style={{ fontSize: 12.5, fontWeight: 700, color: c.text, marginBottom: 12, letterSpacing: '-0.1px' }}>
               Anrufe / Tag
@@ -1786,8 +1786,8 @@ export default function SalesEngine() {
 
           {/* Recent calls */}
           <div style={{
-            background: c.card, borderRadius: 14, padding: 16,
-            border: `1px solid ${c.borderSubtle}`, flex: 1,
+            background: c.card, borderRadius: 12, padding: 16,
+            border: `0.5px solid ${c.borderSubtle}`, flex: 1,
           }}>
             <div style={{ fontSize: 12.5, fontWeight: 700, color: c.text, marginBottom: 12, letterSpacing: '-0.1px' }}>
               Letzte Anrufe

@@ -19,14 +19,14 @@ import { useTheme } from '../context/ThemeContext';
 const CARD = (c) => ({
   background: c.card,
   borderRadius: '16px',
-  border: '1px solid rgba(0,0,0,0.07)',
-  boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
+  border: '1px solid var(--color-border-subtle)',
+  boxShadow: '0 1px 4px var(--color-border-subtle)',
   padding: '20px',
 });
 
-const LABEL = { fontSize: '11px', color: '#86868B', letterSpacing: '0.02em', marginBottom: '4px', display: 'block' };
-const VALUE = { fontSize: '14px', color: '#1D1D1F', fontWeight: '500', margin: 0, letterSpacing: '-0.01em' };
-const EMPTY = { fontSize: '14px', color: '#C7C7CC', margin: 0 };
+const LABEL = { fontSize: '11px', color: 'var(--color-text-secondary)', letterSpacing: '0.02em', marginBottom: '4px', display: 'block' };
+const VALUE = { fontSize: '14px', color: 'var(--color-text)', fontWeight: '500', margin: 0, letterSpacing: '-0.01em' };
+const EMPTY = { fontSize: '14px', color: 'var(--color-text-tertiary)', margin: 0 };
 
 // ── ContactPersonWidget ────────────────────────────────────────────────────────
 
@@ -65,8 +65,8 @@ function ContactPersonWidget({ client, clientId }) {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(0,113,227,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <User size={14} color="#0071E3" />
+          <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(0,122,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <User size={14} color="#007AFF" />
           </div>
           <span style={{ fontSize: '14px', fontWeight: '600', color: c.text, letterSpacing: '-0.01em' }}>Kontaktperson</span>
         </div>
@@ -77,14 +77,14 @@ function ContactPersonWidget({ client, clientId }) {
               Abbrechen
             </button>
             <button onClick={() => saveMutation.mutate(form)} disabled={saveMutation.isPending}
-              style={{ fontSize: '12px', fontWeight: '600', color: '#fff', background: '#0071E3', border: 'none', borderRadius: '8px', cursor: 'pointer', padding: '5px 14px' }}>
+              style={{ fontSize: '12px', fontWeight: '600', color: '#fff', background: 'var(--color-blue)', border: 'none', borderRadius: '8px', cursor: 'pointer', padding: '5px 14px' }}>
               {saveMutation.isPending ? 'Speichern…' : 'Speichern'}
             </button>
           </div>
         ) : (
           <button onClick={startEdit}
             style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: c.textSecondary, background: 'none', border: 'none', cursor: 'pointer', padding: '5px 10px', borderRadius: '8px' }}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.05)'}
+            onMouseEnter={e => e.currentTarget.style.background = 'var(--color-border-subtle)'}
             onMouseLeave={e => e.currentTarget.style.background = 'none'}>
             <Pencil size={12} /> Bearbeiten
           </button>
@@ -189,7 +189,7 @@ function LegalSetup({ clientId }) {
               Abbrechen
             </button>
             <button onClick={() => saveMutation.mutate(form)} disabled={saveMutation.isPending}
-              style={{ fontSize: '12px', fontWeight: '600', color: '#fff', background: '#0071E3', border: 'none', borderRadius: '8px', cursor: 'pointer', padding: '5px 14px' }}>
+              style={{ fontSize: '12px', fontWeight: '600', color: '#fff', background: 'var(--color-blue)', border: 'none', borderRadius: '8px', cursor: 'pointer', padding: '5px 14px' }}>
               {saveMutation.isPending ? 'Speichern…' : 'Speichern'}
             </button>
           </div>
@@ -197,7 +197,7 @@ function LegalSetup({ clientId }) {
           <button
             onClick={() => setForm({ company_name: data.company_name || '', address: data.address || '', vat_id: data.vat_id || '', dsgvo_provider: data.dsgvo_provider || '' })}
             style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: c.textSecondary, background: 'none', border: 'none', cursor: 'pointer', padding: '5px 10px', borderRadius: '8px' }}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.05)'}
+            onMouseEnter={e => e.currentTarget.style.background = 'var(--color-border-subtle)'}
             onMouseLeave={e => e.currentTarget.style.background = 'none'}>
             <Pencil size={12} /> Bearbeiten
           </button>
@@ -270,9 +270,9 @@ export default function ClientDetail() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '28px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <button onClick={() => navigate('/clients')}
-            style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(0,0,0,0.05)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.textSecondary }}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.09)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0.05)'}>
+            style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'var(--color-border-subtle)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.textSecondary }}
+            onMouseEnter={e => e.currentTarget.style.background = 'var(--color-border-subtle)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'var(--color-border-subtle)'}>
             <ArrowLeft size={18} />
           </button>
           <div>
@@ -291,7 +291,7 @@ export default function ClientDetail() {
       {(client.industry || client.website) && (
         <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
           {client.industry && (
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '4px 12px', borderRadius: '99px', background: 'rgba(0,113,227,0.08)', color: '#0071E3', fontSize: '12px', fontWeight: 600 }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '4px 12px', borderRadius: '99px', background: 'rgba(0,122,255,0.08)', color: 'var(--color-blue)', fontSize: '12px', fontWeight: 600 }}>
               <Briefcase size={11} /> {client.industry}
             </span>
           )}
@@ -363,15 +363,15 @@ export default function ClientDetail() {
       <div style={{ ...CARD(c),padding: 0, overflow: 'hidden', marginBottom: '12px' }}>
         <div style={{ padding: '16px 20px', borderBottom: `1px solid ${c.borderSubtle}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(0,113,227,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Globe size={14} color="#0071E3" />
+            <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(0,122,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Globe size={14} color="#007AFF" />
             </div>
             <span style={{ fontSize: '14px', fontWeight: '600', color: c.text, letterSpacing: '-0.01em' }}>
               Websites
               <span style={{ marginLeft: '6px', fontSize: '13px', color: c.textSecondary, fontWeight: '400' }}>{clientProjects.length}</span>
             </span>
           </div>
-          <button onClick={() => navigate('/websites/new')} style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', fontWeight: '600', color: '#0071E3', background: 'rgba(0,113,227,0.08)', border: 'none', borderRadius: '8px', cursor: 'pointer', padding: '5px 12px' }}>
+          <button onClick={() => navigate('/websites/new')} style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', fontWeight: '600', color: 'var(--color-blue)', background: 'rgba(0,122,255,0.08)', border: 'none', borderRadius: '8px', cursor: 'pointer', padding: '5px 12px' }}>
             <Plus size={13} /> Neue Website
           </button>
         </div>
@@ -397,15 +397,15 @@ export default function ClientDetail() {
                   style={{
                     display: 'flex', alignItems: 'center', gap: '16px',
                     padding: '14px 20px',
-                    borderBottom: i < clientProjects.length - 1 ? '1px solid rgba(0,0,0,0.04)' : 'none',
+                    borderBottom: i < clientProjects.length - 1 ? '1px solid var(--color-border-subtle)' : 'none',
                     cursor: 'pointer', transition: 'background 0.1s',
                   }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.025)'}
+                  onMouseEnter={e => e.currentTarget.style.background = 'var(--color-border-subtle)'}
                   onMouseLeave={e => e.currentTarget.style.background = 'none'}
                 >
                   {/* Icon */}
-                  <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(0,113,227,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <Globe size={16} color="#0071E3" />
+                  <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(0,122,255,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Globe size={16} color="#007AFF" />
                   </div>
 
                   {/* Name */}
@@ -417,8 +417,8 @@ export default function ClientDetail() {
                   {/* Phase badge */}
                   <span style={{
                     padding: '3px 10px', borderRadius: '99px', fontSize: '11px', fontWeight: 600,
-                    background: isLast ? 'rgba(52,199,89,0.12)' : 'rgba(0,113,227,0.10)',
-                    color: isLast ? '#34C759' : '#0071E3',
+                    background: isLast ? 'rgba(52,199,89,0.12)' : 'rgba(0,122,255,0.10)',
+                    color: isLast ? '#34C759' : 'var(--color-blue)',
                     whiteSpace: 'nowrap', flexShrink: 0,
                   }}>
                     {cfg?.label || 'Start'}
@@ -427,9 +427,9 @@ export default function ClientDetail() {
                   {/* Progress bar */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
                     <div style={{ width: '56px', height: '3px', background: c.cardSecondary, borderRadius: '2px' }}>
-                      <div style={{ width: `${pct}%`, height: '100%', background: isLast ? '#34C759' : '#0071E3', borderRadius: '2px' }} />
+                      <div style={{ width: `${pct}%`, height: '100%', background: isLast ? '#34C759' : 'var(--color-blue)', borderRadius: '2px' }} />
                     </div>
-                    <span style={{ fontSize: '11px', color: '#8E8E93' }}>{phaseIdx + 1}/{total}</span>
+                    <span style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>{phaseIdx + 1}/{total}</span>
                   </div>
 
                   <ChevronRight size={14} color="#C7C7CC" />
@@ -444,8 +444,8 @@ export default function ClientDetail() {
       <div style={{ ...CARD(c),padding: 0, overflow: 'hidden' }}>
         <div style={{ padding: '16px 20px', borderBottom: `1px solid ${c.borderSubtle}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(0,113,227,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <FileText size={14} color="#0071E3" />
+            <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(0,122,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <FileText size={14} color="#007AFF" />
             </div>
             <span style={{ fontSize: '14px', fontWeight: '600', color: c.text, letterSpacing: '-0.01em' }}>
               Rechnungen
@@ -474,8 +474,8 @@ export default function ClientDetail() {
             <tbody>
               {invoices.map(inv => (
                 <tr key={inv.id} onClick={() => navigate(`/invoices/${inv.id}`)}
-                  style={{ borderBottom: '1px solid rgba(0,0,0,0.04)', cursor: 'pointer', transition: 'background 0.1s' }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.025)'}
+                  style={{ borderBottom: '1px solid var(--color-border-subtle)', cursor: 'pointer', transition: 'background 0.1s' }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'var(--color-border-subtle)'}
                   onMouseLeave={e => e.currentTarget.style.background = 'none'}>
                   <td style={{ padding: '12px 20px', fontWeight: '600', color: c.text }}>{inv.invoice_number}</td>
                   <td style={{ padding: '12px 20px', color: c.textSecondary }}>{formatDate(inv.issue_date)}</td>

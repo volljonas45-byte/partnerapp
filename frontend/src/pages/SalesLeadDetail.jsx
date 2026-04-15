@@ -15,9 +15,9 @@ import FollowupScheduler from '../components/sales/FollowupScheduler';
 
 const OUTCOME_CFG = {
   reached:     { label: 'Erreicht',       color: '#34C759', bg: 'rgba(52,199,89,0.1)' },
-  not_reached: { label: 'Nicht erreicht', color: '#86868B', bg: 'rgba(118,118,128,0.1)' },
+  not_reached: { label: 'Nicht erreicht', color: 'var(--color-text-secondary)', bg: 'rgba(118,118,128,0.1)' },
   voicemail:   { label: 'Mailbox',        color: '#FF9500', bg: 'rgba(255,149,0,0.1)' },
-  callback:    { label: 'Rückruf',        color: '#0071E3', bg: 'rgba(0,113,227,0.1)' },
+  callback:    { label: 'Rückruf',        color: 'var(--color-blue)', bg: 'rgba(0,122,255,0.1)' },
 };
 
 function fmtDate(iso) {
@@ -40,11 +40,11 @@ function fmtDuration(sec) {
 }
 
 function followupColor(dateStr) {
-  if (!dateStr) return '#86868B';
+  if (!dateStr) return 'var(--color-text-secondary)';
   const diff = Math.round((new Date(dateStr) - Date.now()) / 86400000);
   if (diff < 0) return '#FF3B30';
   if (diff === 0) return '#FF9500';
-  return '#86868B';
+  return 'var(--color-text-secondary)';
 }
 
 // ── Main Component ───────────────────────────────────────────────────────────
@@ -158,7 +158,7 @@ export default function SalesLeadDetail() {
   }
 
   if (isLoading || !lead) {
-    return <div style={{ padding: '60px 0', textAlign: 'center', color: '#86868B', fontSize: 14 }}>Laden...</div>;
+    return <div style={{ padding: '60px 0', textAlign: 'center', color: 'var(--color-text-secondary)', fontSize: 14 }}>Laden...</div>;
   }
 
   const fColor = followupColor(lead.next_followup_date);
@@ -173,7 +173,7 @@ export default function SalesLeadDetail() {
         onClick={() => navigate('/sales')}
         style={{
           display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 500,
-          color: '#0071E3', background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginBottom: 16,
+          color: 'var(--color-blue)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginBottom: 16,
         }}
       >
         <ArrowLeft size={15} />
@@ -183,17 +183,17 @@ export default function SalesLeadDetail() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24 }}>
         <div>
-          <h1 style={{ fontSize: 24, fontWeight: 700, color: '#1D1D1F', letterSpacing: '-0.5px', margin: 0 }}>
+          <h1 style={{ fontSize: 24, fontWeight: 700, color: 'var(--color-text)', letterSpacing: '-0.5px', margin: 0 }}>
             {lead.company_name}
           </h1>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 6, fontSize: 13, color: '#86868B', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 6, fontSize: 13, color: 'var(--color-text-secondary)', flexWrap: 'wrap' }}>
             {lead.contact_person && <span>{lead.contact_person}</span>}
             {lead.city   && <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}><MapPin size={12} />{lead.city}</span>}
             {lead.phone  && <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Phone size={12} />{lead.phone}</span>}
             {lead.email  && <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Mail size={12} />{lead.email}</span>}
             {lead.domain && (
               <a href={`https://${lead.domain}`} target="_blank" rel="noopener noreferrer"
-                style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#0071E3', textDecoration: 'none' }}>
+                style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--color-blue)', textDecoration: 'none' }}>
                 <Globe size={12} />{lead.domain} <ExternalLink size={10} />
               </a>
             )}
@@ -201,7 +201,7 @@ export default function SalesLeadDetail() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
             <LeadStatusBadge status={lead.status} />
             {lead.industry && (
-              <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11.5, color: '#86868B' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11.5, color: 'var(--color-text-secondary)' }}>
                 <Building2 size={11} /> {lead.industry}
               </span>
             )}
@@ -245,7 +245,7 @@ export default function SalesLeadDetail() {
               onClick={() => setShowStatusMenu(v => !v)}
               style={{
                 display: 'flex', alignItems: 'center', gap: 5, padding: '8px 14px', borderRadius: 10,
-                fontSize: 13, fontWeight: 600, background: 'rgba(0,0,0,0.04)', color: '#636366',
+                fontSize: 13, fontWeight: 600, background: 'var(--color-border-subtle)', color: 'var(--color-text-tertiary)',
                 border: 'none', cursor: 'pointer',
               }}
             >
@@ -253,9 +253,9 @@ export default function SalesLeadDetail() {
             </button>
             {showStatusMenu && (
               <div style={{
-                position: 'absolute', right: 0, top: '100%', marginTop: 4, background: '#fff',
+                position: 'absolute', right: 0, top: '100%', marginTop: 4, background: 'var(--color-card)',
                 borderRadius: 12, padding: 6, minWidth: 170, boxShadow: '0 8px 30px rgba(0,0,0,0.15)',
-                border: '1px solid rgba(0,0,0,0.08)', zIndex: 20,
+                border: '1px solid var(--color-border-subtle)', zIndex: 20,
               }}>
                 {Object.entries(LEAD_STATUSES)
                   .filter(([k]) => k !== 'abgeschlossen') // deduplicate
@@ -265,7 +265,7 @@ export default function SalesLeadDetail() {
                       onClick={() => handleStatusChange(k)}
                       style={{
                         display: 'block', width: '100%', padding: '8px 12px', fontSize: 13, fontWeight: 500,
-                        color: lead.status === k ? v.color : '#1D1D1F',
+                        color: lead.status === k ? v.color : 'var(--color-text)',
                         background: lead.status === k ? v.bg : 'none',
                         border: 'none', borderRadius: 8, cursor: 'pointer', textAlign: 'left',
                       }}
@@ -284,8 +284,8 @@ export default function SalesLeadDetail() {
             style={{
               display: 'flex', alignItems: 'center', gap: 6, padding: '8px 18px', borderRadius: 10,
               fontSize: 14, fontWeight: 600,
-              background: lead.phone ? '#34C759' : '#E5E5EA',
-              color: lead.phone ? '#fff' : '#AEAEB2',
+              background: lead.phone ? '#34C759' : 'var(--color-border)',
+              color: lead.phone ? '#fff' : 'var(--color-text-tertiary)',
               border: 'none', cursor: lead.phone ? 'pointer' : 'not-allowed',
             }}
           >
@@ -302,12 +302,12 @@ export default function SalesLeadDetail() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
           {/* Follow-up Card */}
-          <div style={{ background: '#fff', borderRadius: 14, padding: 20, border: '1px solid rgba(0,0,0,0.06)' }}>
+          <div style={{ background: 'var(--color-card)', borderRadius: 14, padding: 20, border: '1px solid var(--color-border-subtle)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-              <span style={{ fontSize: 15, fontWeight: 600, color: '#1D1D1F', letterSpacing: '-0.2px' }}>Follow-up</span>
+              <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--color-text)', letterSpacing: '-0.2px' }}>Follow-up</span>
               <button
                 onClick={() => setShowFollowup(true)}
-                style={{ padding: '5px 12px', borderRadius: 8, fontSize: 12, fontWeight: 600, background: 'rgba(0,113,227,0.1)', color: '#0071E3', border: 'none', cursor: 'pointer' }}
+                style={{ padding: '5px 12px', borderRadius: 8, fontSize: 12, fontWeight: 600, background: 'rgba(0,122,255,0.1)', color: 'var(--color-blue)', border: 'none', cursor: 'pointer' }}
               >
                 {lead.next_followup_date ? 'Ändern' : 'Planen'}
               </button>
@@ -317,17 +317,17 @@ export default function SalesLeadDetail() {
                 <CalendarDays size={16} color={fColor} />
                 <div>
                   <div style={{ fontSize: 14, fontWeight: 600, color: fColor }}>{fmtDate(lead.next_followup_date)}</div>
-                  {lead.next_followup_note && <div style={{ fontSize: 12.5, color: '#86868B', marginTop: 2 }}>{lead.next_followup_note}</div>}
+                  {lead.next_followup_note && <div style={{ fontSize: 12.5, color: 'var(--color-text-secondary)', marginTop: 2 }}>{lead.next_followup_note}</div>}
                 </div>
               </div>
             ) : (
-              <div style={{ fontSize: 13, color: '#AEAEB2' }}>Kein Follow-up geplant</div>
+              <div style={{ fontSize: 13, color: 'var(--color-text-tertiary)' }}>Kein Follow-up geplant</div>
             )}
           </div>
 
           {/* Details Card */}
-          <div style={{ background: '#fff', borderRadius: 14, padding: 20, border: '1px solid rgba(0,0,0,0.06)' }}>
-            <span style={{ fontSize: 15, fontWeight: 600, color: '#1D1D1F', letterSpacing: '-0.2px', display: 'block', marginBottom: 14 }}>Details</span>
+          <div style={{ background: 'var(--color-card)', borderRadius: 14, padding: 20, border: '1px solid var(--color-border-subtle)' }}>
+            <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--color-text)', letterSpacing: '-0.2px', display: 'block', marginBottom: 14 }}>Details</span>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
               <div>
@@ -410,8 +410,8 @@ export default function SalesLeadDetail() {
           </div>
 
           {/* Notes Card */}
-          <div style={{ background: '#fff', borderRadius: 14, padding: 20, border: '1px solid rgba(0,0,0,0.06)' }}>
-            <span style={{ fontSize: 15, fontWeight: 600, color: '#1D1D1F', letterSpacing: '-0.2px', display: 'block', marginBottom: 10 }}>Notizen</span>
+          <div style={{ background: 'var(--color-card)', borderRadius: 14, padding: 20, border: '1px solid var(--color-border-subtle)' }}>
+            <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--color-text)', letterSpacing: '-0.2px', display: 'block', marginBottom: 10 }}>Notizen</span>
             <textarea
               value={notes}
               onChange={e => setNotes(e.target.value)}
@@ -424,29 +424,29 @@ export default function SalesLeadDetail() {
         </div>
 
         {/* RIGHT — Call History */}
-        <div style={{ background: '#fff', borderRadius: 14, padding: 18, border: '1px solid rgba(0,0,0,0.06)' }}>
+        <div style={{ background: 'var(--color-card)', borderRadius: 14, padding: 18, border: '1px solid var(--color-border-subtle)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-            <span style={{ fontSize: 15, fontWeight: 600, color: '#1D1D1F', letterSpacing: '-0.2px' }}>Anrufe</span>
-            <span style={{ fontSize: 12, fontWeight: 600, color: '#86868B', background: '#F2F2F7', padding: '2px 8px', borderRadius: 99 }}>{calls.length}</span>
+            <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--color-text)', letterSpacing: '-0.2px' }}>Anrufe</span>
+            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-secondary)', background: 'var(--color-card-secondary)', padding: '2px 8px', borderRadius: 99 }}>{calls.length}</span>
           </div>
 
           {calls.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '32px 0' }}>
               <Phone size={24} color="#E5E5EA" style={{ marginBottom: 8 }} />
-              <div style={{ fontSize: 13, color: '#AEAEB2' }}>Noch keine Anrufe</div>
+              <div style={{ fontSize: 13, color: 'var(--color-text-tertiary)' }}>Noch keine Anrufe</div>
             </div>
           ) : (
             <div style={{ maxHeight: 500, overflowY: 'auto' }}>
               {calls.map(c => {
                 const o = OUTCOME_CFG[c.outcome] || OUTCOME_CFG.reached;
                 return (
-                  <div key={c.id} style={{ padding: '12px 0', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
+                  <div key={c.id} style={{ padding: '12px 0', borderBottom: '1px solid var(--color-border-subtle)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                      <span style={{ fontSize: 13, fontWeight: 600, color: '#1D1D1F' }}>{fmtDateTime(c.started_at)}</span>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text)' }}>{fmtDateTime(c.started_at)}</span>
                       <span style={{ padding: '2px 7px', borderRadius: 99, fontSize: 10.5, fontWeight: 600, background: o.bg, color: o.color }}>{o.label}</span>
                     </div>
-                    <div style={{ fontSize: 12, color: '#86868B' }}>Dauer: {fmtDuration(c.duration_sec)}</div>
-                    {c.notes && <div style={{ fontSize: 12.5, color: '#636366', marginTop: 4, lineHeight: 1.4 }}>{c.notes}</div>}
+                    <div style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>Dauer: {fmtDuration(c.duration_sec)}</div>
+                    {c.notes && <div style={{ fontSize: 12.5, color: 'var(--color-text-tertiary)', marginTop: 4, lineHeight: 1.4 }}>{c.notes}</div>}
                   </div>
                 );
               })}
@@ -462,5 +462,5 @@ export default function SalesLeadDetail() {
   );
 }
 
-const labelStyle  = { fontSize: 11.5, fontWeight: 600, color: '#86868B', display: 'block', marginBottom: 4 };
-const selectStyle = { width: '100%', padding: '8px 10px', borderRadius: 8, fontSize: 13, border: '1.5px solid #E5E5EA', outline: 'none', background: '#fff', cursor: 'pointer', boxSizing: 'border-box' };
+const labelStyle  = { fontSize: 11.5, fontWeight: 600, color: 'var(--color-text-secondary)', display: 'block', marginBottom: 4 };
+const selectStyle = { width: '100%', padding: '8px 10px', borderRadius: 8, fontSize: 13, border: '1.5px solid #E5E5EA', outline: 'none', background: 'var(--color-card)', cursor: 'pointer', boxSizing: 'border-box' };

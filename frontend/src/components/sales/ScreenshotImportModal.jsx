@@ -131,10 +131,10 @@ export default function ScreenshotImportModal({ onClose, onCreate, isCreating })
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{
               width: 32, height: 32, borderRadius: 9,
-              background: 'rgba(0,113,227,0.1)',
+              background: 'rgba(0,122,255,0.1)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
-              <Camera size={16} color="#0071E3" />
+              <Camera size={16} color="#007AFF" />
             </div>
             <div>
               <div style={{ fontSize: 15, fontWeight: 600, color: c.text, letterSpacing: '-0.2px' }}>
@@ -173,10 +173,10 @@ export default function ScreenshotImportModal({ onClose, onCreate, isCreating })
             >
               <div style={{
                 width: 48, height: 48, borderRadius: 14, margin: '0 auto 14px',
-                background: 'rgba(0,113,227,0.1)',
+                background: 'rgba(0,122,255,0.1)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
-                <Upload size={22} color="#0071E3" />
+                <Upload size={22} color="#007AFF" />
               </div>
               <div style={{ fontSize: 14, fontWeight: 600, color: c.text, marginBottom: 6 }}>
                 Screenshot hochladen

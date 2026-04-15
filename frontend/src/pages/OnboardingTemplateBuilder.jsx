@@ -297,7 +297,7 @@ function ConfigEditor({ step, onChange }) {
 // ── Live Preview ───────────────────────────────────────────────────────────────
 
 function PreviewStep({ step, brand }) {
-  const color = brand.color || '#111827';
+  const color = brand.color || 'var(--color-text)';
   if (!step) return (
     <div className="flex items-center justify-center h-full text-gray-300 text-sm">
       Wähle einen Schritt aus
@@ -446,7 +446,7 @@ function ClientBrandingPanel({ brand, onChange, onClose, clients = [] }) {
     if (client) {
       onChange({
         name:  client.company_name,
-        color: client.brand_color || '#111827',
+        color: client.brand_color || 'var(--color-text)',
         logo:  client.brand_logo  || null,
       });
     }
@@ -485,9 +485,9 @@ function ClientBrandingPanel({ brand, onChange, onClose, clients = [] }) {
         <div>
           <p className="text-xs font-medium text-gray-500 mb-1.5">Primärfarbe</p>
           <div className="flex items-center gap-2">
-            <input type="color" value={brand.color || '#111827'} onChange={e => onChange({ ...brand, color: e.target.value })}
+            <input type="color" value={brand.color || 'var(--color-text)'} onChange={e => onChange({ ...brand, color: e.target.value })}
               className="w-8 h-8 rounded-lg border border-gray-200 cursor-pointer p-0.5 shrink-0" />
-            <input value={brand.color || '#111827'} onChange={e => onChange({ ...brand, color: e.target.value })}
+            <input value={brand.color || 'var(--color-text)'} onChange={e => onChange({ ...brand, color: e.target.value })}
               className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 font-mono" />
           </div>
         </div>
@@ -518,7 +518,7 @@ function ClientBrandingPanel({ brand, onChange, onClose, clients = [] }) {
 
 function PreviewModal({ steps, brand, onClose }) {
   const [idx, setIdx] = useState(0);
-  const color = brand.color || '#111827';
+  const color = brand.color || 'var(--color-text)';
   const step  = steps[idx];
   const progress = Math.round(((idx) / steps.length) * 100);
 
@@ -721,12 +721,12 @@ export default function OnboardingTemplateBuilder() {
       setActiveId(template.steps?.[0]?.id ?? null);
     }
     if (template && !brand) {
-      setBrand({ name: template.brand_name || '', color: template.brand_color || '#111827', logo: template.brand_logo || null });
+      setBrand({ name: template.brand_name || '', color: template.brand_color || 'var(--color-text)', logo: template.brand_logo || null });
     }
   }, [template]);
 
   const liveSteps  = steps ?? (template?.steps || []);
-  const liveBrand  = brand ?? { name: '', color: '#111827', logo: null };
+  const liveBrand  = brand ?? { name: '', color: 'var(--color-text)', logo: null };
   const activeStep = liveSteps.find(s => s.id === activeId) ?? null;
 
   // ── Mutations ────────────────────────────────────────────────────────────────

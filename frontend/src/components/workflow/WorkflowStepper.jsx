@@ -39,12 +39,12 @@ export default function WorkflowStepper({ currentPhase }) {
                     background: '#34C759',
                     color: '#fff',
                   } : isActive ? {
-                    background: '#0071E3',
+                    background: 'var(--color-blue)',
                     color: '#fff',
-                    boxShadow: '0 0 0 4px rgba(0,113,227,0.15)',
+                    boxShadow: '0 0 0 4px rgba(0,122,255,0.15)',
                   } : {
-                    background: '#F2F2F7',
-                    color: '#8E8E93',
+                    background: 'var(--color-card-secondary)',
+                    color: 'var(--color-text-secondary)',
                   }),
                 }}>
                   {isDone ? (
@@ -58,7 +58,7 @@ export default function WorkflowStepper({ currentPhase }) {
                 <span style={{
                   fontSize: '11px',
                   fontWeight: isActive ? 600 : 400,
-                  color: isDone ? '#34C759' : isActive ? '#0071E3' : '#8E8E93',
+                  color: isDone ? '#34C759' : isActive ? 'var(--color-blue)' : 'var(--color-text-secondary)',
                   whiteSpace: 'nowrap',
                   maxWidth: '72px',
                   textAlign: 'center',
@@ -75,7 +75,7 @@ export default function WorkflowStepper({ currentPhase }) {
                   height: '2px',
                   margin: '-14px 4px 0',
                   borderRadius: '2px',
-                  background: idx < currentIdx ? '#34C759' : '#E5E5EA',
+                  background: idx < currentIdx ? '#34C759' : 'var(--color-border)',
                   flexShrink: 0,
                 }} />
               )}

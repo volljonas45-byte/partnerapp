@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useConfirm } from '../hooks/useConfirm';
+import { useTheme } from '../context/ThemeContext';
 import { invoicesApi } from '../api/invoices';
 import { settingsApi } from '../api/settings';
 import { formatCurrency, formatDate, today } from '../utils/formatters';
@@ -34,6 +35,7 @@ export default function InvoiceDetail() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const isMobile = useMobile();
+  const { c, isDark } = useTheme();
 
   const { confirm, ConfirmDialogNode } = useConfirm();
 
@@ -65,6 +67,15 @@ export default function InvoiceDetail() {
   const [showReminders,   setShowReminders]    = useState(false);
   const [showHistory,     setShowHistory]      = useState(false);
   const [showArchive,     setShowArchive]      = useState(false);
+
+  // Hover states
+  const [hoverBackBtn,    setHoverBackBtn]     = useState(false);
+  const [hoverAddPay,     setHoverAddPay]      = useState(false);
+  const [hoverAddRemind,  setHoverAddRemind]   = useState(false);
+  const [hoverPayDelete,  setHoverPayDelete]   = useState(null);
+  const [hoverRemDelete,  setHoverRemDelete]   = useState(null);
+  const [hoverArchiveDl,  setHoverArchiveDl]   = useState(null);
+  const [hoverTakeAmount, setHoverTakeAmount]  = useState(false);
 
   const { data: invoice, isLoading } = useQuery({
     queryKey: ['invoices', id],
@@ -240,7 +251,7 @@ export default function InvoiceDetail() {
   };
 
   if (isLoading) return <LoadingSpinner className="h-64" />;
-  if (!invoice)  return <div className="p-8 text-gray-400">Rechnung nicht gefunden.</div>;
+  if (!invoice)  return <div className="p-8" style={{ color: c.textTertiary }}>Rechnung nicht gefunden.</div>;
 
   const isPaid      = invoice.status === 'paid';
   const isDraft     = invoice.status === 'draft';
@@ -260,13 +271,20 @@ export default function InvoiceDetail() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate('/invoices')}
-            className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 rounded-lg"
+            style={{
+              color: hoverBackBtn ? c.textSecondary : c.textTertiary,
+              background: hoverBackBtn ? c.cardSecondary : 'transparent',
+              transition: 'all 0.2s cubic-bezier(0.22,1,0.36,1)',
+            }}
+            onMouseEnter={() => setHoverBackBtn(true)}
+            onMouseLeave={() => setHoverBackBtn(false)}
           >
             <ArrowLeft size={18} />
           </button>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-xl font-semibold text-gray-900">{invoice.invoice_number}</h1>
+              <h1 className="text-xl font-semibold" style={{ color: c.text }}>{invoice.invoice_number}</h1>
               <StatusBadge status={invoice.status} />
               {invoice.invoice_type && invoice.invoice_type !== 'standard' && (
                 <span className="px-2 py-0.5 text-xs font-medium bg-blue-50 text-blue-700 rounded-full border border-blue-100">
@@ -275,7 +293,7 @@ export default function InvoiceDetail() {
               )}
               {invoice.reverse_charge === 1 && (
                 <span className="px-2 py-0.5 text-xs font-medium bg-purple-50 text-purple-700 rounded-full border border-purple-100">
-                  §13b UStG
+                  &sect;13b UStG
                 </span>
               )}
               {isStorno && (
@@ -284,7 +302,7 @@ export default function InvoiceDetail() {
                 </span>
               )}
             </div>
-            <p className="text-sm text-gray-500 mt-0.5">{invoice.client_name}</p>
+            <p className="text-sm mt-0.5" style={{ color: c.textTertiary }}>{invoice.client_name}</p>
           </div>
         </div>
 
@@ -297,7 +315,7 @@ export default function InvoiceDetail() {
 
           {(isDraft || invoice.status === 'sent') && invoice.client_email && (
             <button onClick={handleSendEmail} disabled={sending} className="btn-secondary">
-              <Send size={15} /> {sending ? 'Wird gesendet…' : 'E-Mail senden'}
+              <Send size={15} /> {sending ? 'Wird gesendet...' : 'E-Mail senden'}
             </button>
           )}
 
@@ -314,11 +332,11 @@ export default function InvoiceDetail() {
           )}
 
           <button onClick={handleDuplicate} disabled={duplicating} className="btn-secondary">
-            <Copy size={15} /> {duplicating ? 'Wird dupliziert…' : 'Duplizieren'}
+            <Copy size={15} /> {duplicating ? 'Wird dupliziert...' : 'Duplizieren'}
           </button>
 
           <button onClick={handleDownload} disabled={downloading} className="btn-primary">
-            <Download size={15} /> {downloading ? 'Wird erstellt…' : 'PDF herunterladen'}
+            <Download size={15} /> {downloading ? 'Wird erstellt...' : 'PDF herunterladen'}
           </button>
 
           {/* Storno — only for non-draft, non-cancelled, non-storno invoices */}
@@ -349,12 +367,12 @@ export default function InvoiceDetail() {
         {[
           { label: 'Rechnungsdatum',  value: formatDate(invoice.issue_date) },
           { label: 'Fälligkeitsdatum', value: formatDate(invoice.due_date) },
-          { label: 'Zahlungsdatum',   value: invoice.payment_date ? formatDate(invoice.payment_date) : '—' },
+          { label: 'Zahlungsdatum',   value: invoice.payment_date ? formatDate(invoice.payment_date) : '\u2014' },
           { label: 'Gesamtbetrag',    value: formatCurrency(invoice.total) },
         ].map(({ label, value }) => (
           <div key={label} className="card py-4">
-            <p className="text-xs text-gray-400 mb-1">{label}</p>
-            <p className="text-sm font-semibold text-gray-900">{value}</p>
+            <p className="text-xs mb-1" style={{ color: c.textTertiary }}>{label}</p>
+            <p className="text-sm font-semibold" style={{ color: c.text }}>{value}</p>
           </div>
         ))}
       </div>
@@ -364,13 +382,13 @@ export default function InvoiceDetail() {
         <div className="card py-4 mb-6 max-w-sm">
           {invoice.leistungsdatum ? (
             <>
-              <p className="text-xs text-gray-400 mb-1">Leistungsdatum</p>
-              <p className="text-sm font-semibold text-gray-900">{formatDate(invoice.leistungsdatum)}</p>
+              <p className="text-xs mb-1" style={{ color: c.textTertiary }}>Leistungsdatum</p>
+              <p className="text-sm font-semibold" style={{ color: c.text }}>{formatDate(invoice.leistungsdatum)}</p>
             </>
           ) : (
             <>
-              <p className="text-xs text-gray-400 mb-1">Leistungszeitraum</p>
-              <p className="text-sm font-semibold text-gray-900">
+              <p className="text-xs mb-1" style={{ color: c.textTertiary }}>Leistungszeitraum</p>
+              <p className="text-sm font-semibold" style={{ color: c.text }}>
                 {formatDate(invoice.leistungszeitraum_von)} – {formatDate(invoice.leistungszeitraum_bis)}
               </p>
             </>
@@ -381,11 +399,14 @@ export default function InvoiceDetail() {
       {/* Partial payment progress */}
       {hasPartialPay && (
         <div className="card mb-6 py-4">
-          <p className="text-xs text-gray-400 mb-2">Zahlungsfortschritt</p>
-          <div className="w-full bg-gray-100 rounded-full h-2 mb-3">
+          <p className="text-xs mb-2" style={{ color: c.textTertiary }}>Zahlungsfortschritt</p>
+          <div className="w-full rounded-full h-2 mb-3" style={{ background: c.cardSecondary }}>
             <div
-              className="bg-green-500 h-2 rounded-full transition-all"
-              style={{ width: `${Math.min(100, (paidAmount / invoice.total) * 100)}%` }}
+              className="bg-green-500 h-2 rounded-full"
+              style={{
+                width: `${Math.min(100, (paidAmount / invoice.total) * 100)}%`,
+                transition: 'all 0.3s cubic-bezier(0.22,1,0.36,1)',
+              }}
             />
           </div>
           <div className="flex justify-between text-sm">
@@ -398,84 +419,84 @@ export default function InvoiceDetail() {
       {/* Rechnungssteller / Empfänger */}
       <div className={isMobile ? "grid grid-cols-1 gap-4 mb-6" : "grid grid-cols-2 gap-6 mb-6"}>
         <div className="card">
-          <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">Rechnungsempfänger</p>
-          <div className="space-y-0.5 text-sm text-gray-700">
-            <p className="font-medium text-gray-900">{invoice.client_name}</p>
+          <p className="text-xs font-medium uppercase tracking-wide mb-3" style={{ color: c.textTertiary }}>Rechnungsempfänger</p>
+          <div className="space-y-0.5 text-sm" style={{ color: c.textSecondary }}>
+            <p className="font-medium" style={{ color: c.text }}>{invoice.client_name}</p>
             {invoice.contact_person     && <p>{invoice.contact_person}</p>}
             {invoice.client_address     && <p>{invoice.client_address}</p>}
             {(invoice.client_postal_code || invoice.client_city) && (
               <p>{[invoice.client_postal_code, invoice.client_city].filter(Boolean).join(' ')}</p>
             )}
             {invoice.client_country     && <p>{invoice.client_country}</p>}
-            {invoice.client_email       && <p className="text-gray-500">{invoice.client_email}</p>}
+            {invoice.client_email       && <p style={{ color: c.textTertiary }}>{invoice.client_email}</p>}
             {invoice.client_vat_id      && (
-              <p className="text-gray-400 text-xs font-mono">USt-IdNr.: {invoice.client_vat_id}</p>
+              <p className="text-xs font-mono" style={{ color: c.textTertiary }}>USt-IdNr.: {invoice.client_vat_id}</p>
             )}
           </div>
         </div>
 
         {invoice.notes && (
           <div className="card">
-            <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">Hinweise</p>
-            <p className="text-sm text-gray-600 whitespace-pre-line">{invoice.notes}</p>
+            <p className="text-xs font-medium uppercase tracking-wide mb-3" style={{ color: c.textTertiary }}>Hinweise</p>
+            <p className="text-sm whitespace-pre-line" style={{ color: c.textSecondary }}>{invoice.notes}</p>
           </div>
         )}
       </div>
 
       {/* Positionen */}
-      <div className="card p-0 overflow-hidden mb-6">
+      <div className="card p-0 overflow-hidden mb-6" style={{ borderRadius: 12 }}>
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-gray-50 border-b border-gray-100">
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-400">Leistung</th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-400">Menge</th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-400">Einzelpreis</th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-400">MwSt. %</th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-400">Betrag</th>
+            <tr style={{ background: c.cardSecondary, borderBottom: `0.5px solid ${c.borderSubtle}` }}>
+              <th className="px-6 py-3 text-left text-xs font-medium" style={{ color: c.textTertiary }}>Leistung</th>
+              <th className="px-6 py-3 text-right text-xs font-medium" style={{ color: c.textTertiary }}>Menge</th>
+              <th className="px-6 py-3 text-right text-xs font-medium" style={{ color: c.textTertiary }}>Einzelpreis</th>
+              <th className="px-6 py-3 text-right text-xs font-medium" style={{ color: c.textTertiary }}>MwSt. %</th>
+              <th className="px-6 py-3 text-right text-xs font-medium" style={{ color: c.textTertiary }}>Betrag</th>
             </tr>
           </thead>
           <tbody>
             {invoice.items?.map((item, idx) => (
-              <tr key={idx} className="border-b border-gray-50">
+              <tr key={idx} style={{ borderBottom: `0.5px solid ${c.borderSubtle}` }}>
                 <td className="px-6 py-3">
-                  <p className="font-medium text-gray-900">{item.title || item.description}</p>
+                  <p className="font-medium" style={{ color: c.text }}>{item.title || item.description}</p>
                   {item.title && item.description && (
-                    <p className="text-xs text-gray-400 mt-0.5">{item.description}</p>
+                    <p className="text-xs mt-0.5" style={{ color: c.textTertiary }}>{item.description}</p>
                   )}
                 </td>
-                <td className="px-6 py-3 text-right text-gray-600">{item.quantity}</td>
-                <td className="px-6 py-3 text-right text-gray-600">{formatCurrency(item.unit_price)}</td>
-                <td className="px-6 py-3 text-right text-gray-500">
-                  {invoice.reverse_charge ? '—' : `${item.tax_rate} %`}
+                <td className="px-6 py-3 text-right" style={{ color: c.textSecondary }}>{item.quantity}</td>
+                <td className="px-6 py-3 text-right" style={{ color: c.textSecondary }}>{formatCurrency(item.unit_price)}</td>
+                <td className="px-6 py-3 text-right" style={{ color: c.textTertiary }}>
+                  {invoice.reverse_charge ? '\u2014' : `${item.tax_rate} %`}
                 </td>
-                <td className="px-6 py-3 text-right font-medium">{formatCurrency(item.amount)}</td>
+                <td className="px-6 py-3 text-right font-medium" style={{ color: c.text }}>{formatCurrency(item.amount)}</td>
               </tr>
             ))}
           </tbody>
         </table>
 
-        <div className="px-6 py-4 border-t border-gray-100 flex justify-end">
+        <div className="px-6 py-4 flex justify-end" style={{ borderTop: `0.5px solid ${c.borderSubtle}` }}>
           <div className="w-60 space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Nettobetrag</span>
-              <span>{formatCurrency(invoice.subtotal)}</span>
+              <span style={{ color: c.textTertiary }}>Nettobetrag</span>
+              <span style={{ color: c.text }}>{formatCurrency(invoice.subtotal)}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Umsatzsteuer</span>
-              <span>{invoice.reverse_charge ? '—' : formatCurrency(invoice.tax_total)}</span>
+              <span style={{ color: c.textTertiary }}>Umsatzsteuer</span>
+              <span style={{ color: c.text }}>{invoice.reverse_charge ? '\u2014' : formatCurrency(invoice.tax_total)}</span>
             </div>
-            <div className="flex justify-between text-sm font-bold border-t border-gray-200 pt-2">
-              <span>Gesamtbetrag</span>
-              <span className="text-base">{formatCurrency(invoice.total)}</span>
+            <div className="flex justify-between text-sm font-bold pt-2" style={{ borderTop: `0.5px solid ${c.borderSubtle}` }}>
+              <span style={{ color: c.text }}>Gesamtbetrag</span>
+              <span className="text-base" style={{ color: c.text }}>{formatCurrency(invoice.total)}</span>
             </div>
             {paidAmount > 0 && (
               <>
                 <div className="flex justify-between text-sm text-green-600">
                   <span>Bereits bezahlt</span>
-                  <span>− {formatCurrency(paidAmount)}</span>
+                  <span>&minus; {formatCurrency(paidAmount)}</span>
                 </div>
-                <div className="flex justify-between text-sm font-bold border-t border-gray-200 pt-2">
-                  <span>Offen</span>
+                <div className="flex justify-between text-sm font-bold pt-2" style={{ borderTop: `0.5px solid ${c.borderSubtle}` }}>
+                  <span style={{ color: c.text }}>Offen</span>
                   <span className={outstanding > 0 ? 'text-amber-600' : 'text-green-600'}>
                     {formatCurrency(outstanding)}
                   </span>
@@ -486,39 +507,48 @@ export default function InvoiceDetail() {
         </div>
       </div>
 
-      {/* ── PAYMENTS ── */}
+      {/* -- PAYMENTS -- */}
       <div className="card mb-4">
         <button
           className="w-full flex items-center justify-between"
           onClick={() => setShowPayments(v => !v)}
         >
           <div className="flex items-center gap-2">
-            <Euro size={16} className="text-gray-400" />
-            <span className="text-sm font-semibold text-gray-700">Zahlungseingang erfassen</span>
+            <Euro size={16} style={{ color: c.textTertiary }} />
+            <span className="text-sm font-semibold" style={{ color: c.textSecondary }}>Zahlungseingang erfassen</span>
             {payments.length > 0 && (
-              <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+              <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: c.cardSecondary, color: c.textSecondary }}>
                 {payments.length}
               </span>
             )}
           </div>
-          {showPayments ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
+          {showPayments
+            ? <ChevronUp size={16} style={{ color: c.textTertiary }} />
+            : <ChevronDown size={16} style={{ color: c.textTertiary }} />
+          }
         </button>
 
         {showPayments && (
           <div className="mt-4 space-y-3">
             {payments.length === 0 ? (
-              <p className="text-sm text-gray-400">Noch keine Zahlungen erfasst.</p>
+              <p className="text-sm" style={{ color: c.textTertiary }}>Noch keine Zahlungen erfasst.</p>
             ) : (
               <div className="space-y-2">
                 {payments.map(p => (
-                  <div key={p.id} className="flex items-center justify-between py-2 border-b border-gray-50">
+                  <div key={p.id} className="flex items-center justify-between py-2" style={{ borderBottom: `0.5px solid ${c.borderSubtle}` }}>
                     <div>
-                      <p className="text-sm font-medium text-gray-900">{formatCurrency(p.amount)}</p>
-                      <p className="text-xs text-gray-400">{formatDate(p.payment_date)}{p.notes ? ` · ${p.notes}` : ''}</p>
+                      <p className="text-sm font-medium" style={{ color: c.text }}>{formatCurrency(p.amount)}</p>
+                      <p className="text-xs" style={{ color: c.textTertiary }}>{formatDate(p.payment_date)}{p.notes ? ` \u00b7 ${p.notes}` : ''}</p>
                     </div>
                     <button
                       onClick={async () => { const ok = await confirm('Diese Zahlung wird entfernt.', { title: 'Zahlung entfernen' }); if (ok) deletePaymentMutation.mutate(p.id); }}
-                      className="p-1 text-gray-300 hover:text-red-500 transition-colors"
+                      className="p-1"
+                      style={{
+                        color: hoverPayDelete === p.id ? c.red : c.textTertiary,
+                        transition: 'color 0.15s cubic-bezier(0.22,1,0.36,1)',
+                      }}
+                      onMouseEnter={() => setHoverPayDelete(p.id)}
+                      onMouseLeave={() => setHoverPayDelete(null)}
                     >
                       <Trash2 size={13} />
                     </button>
@@ -530,7 +560,13 @@ export default function InvoiceDetail() {
             {!isPaid && !isCancelled && (
               <button
                 onClick={() => setPaymentModal(true)}
-                className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors mt-2"
+                className="flex items-center gap-2 text-sm mt-2"
+                style={{
+                  color: hoverAddPay ? c.text : c.textTertiary,
+                  transition: 'color 0.15s cubic-bezier(0.22,1,0.36,1)',
+                }}
+                onMouseEnter={() => setHoverAddPay(true)}
+                onMouseLeave={() => setHoverAddPay(false)}
               >
                 <Plus size={14} /> Zahlung hinzufügen
               </button>
@@ -539,41 +575,50 @@ export default function InvoiceDetail() {
         )}
       </div>
 
-      {/* ── REMINDERS ── */}
+      {/* -- REMINDERS -- */}
       <div className="card mb-4">
         <button
           className="w-full flex items-center justify-between"
           onClick={() => setShowReminders(v => !v)}
         >
           <div className="flex items-center gap-2">
-            <Bell size={16} className="text-gray-400" />
-            <span className="text-sm font-semibold text-gray-700">Mahnungen</span>
+            <Bell size={16} style={{ color: c.textTertiary }} />
+            <span className="text-sm font-semibold" style={{ color: c.textSecondary }}>Mahnungen</span>
             {reminders.length > 0 && (
               <span className="text-xs bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full border border-amber-100">
                 {reminders.length}
               </span>
             )}
           </div>
-          {showReminders ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
+          {showReminders
+            ? <ChevronUp size={16} style={{ color: c.textTertiary }} />
+            : <ChevronDown size={16} style={{ color: c.textTertiary }} />
+          }
         </button>
 
         {showReminders && (
           <div className="mt-4 space-y-3">
             {reminders.length === 0 ? (
-              <p className="text-sm text-gray-400">Noch keine Mahnungen erfasst.</p>
+              <p className="text-sm" style={{ color: c.textTertiary }}>Noch keine Mahnungen erfasst.</p>
             ) : (
               <div className="space-y-2">
                 {reminders.map(r => (
-                  <div key={r.id} className="flex items-center justify-between py-2 border-b border-gray-50">
+                  <div key={r.id} className="flex items-center justify-between py-2" style={{ borderBottom: `0.5px solid ${c.borderSubtle}` }}>
                     <div>
-                      <p className="text-sm font-medium text-gray-900">
+                      <p className="text-sm font-medium" style={{ color: c.text }}>
                         {REMINDER_LEVELS.find(l => l.value === r.reminder_level)?.label || `Mahnung ${r.reminder_level}`}
                       </p>
-                      <p className="text-xs text-gray-400">{formatDate(r.sent_at)}{r.notes ? ` · ${r.notes}` : ''}</p>
+                      <p className="text-xs" style={{ color: c.textTertiary }}>{formatDate(r.sent_at)}{r.notes ? ` \u00b7 ${r.notes}` : ''}</p>
                     </div>
                     <button
                       onClick={() => deleteReminderMutation.mutate(r.id)}
-                      className="p-1 text-gray-300 hover:text-red-500 transition-colors"
+                      className="p-1"
+                      style={{
+                        color: hoverRemDelete === r.id ? c.red : c.textTertiary,
+                        transition: 'color 0.15s cubic-bezier(0.22,1,0.36,1)',
+                      }}
+                      onMouseEnter={() => setHoverRemDelete(r.id)}
+                      onMouseLeave={() => setHoverRemDelete(null)}
                     >
                       <Trash2 size={13} />
                     </button>
@@ -585,7 +630,13 @@ export default function InvoiceDetail() {
             {!isPaid && !isCancelled && (
               <button
                 onClick={() => setReminderModal(true)}
-                className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors"
+                className="flex items-center gap-2 text-sm"
+                style={{
+                  color: hoverAddRemind ? c.text : c.textTertiary,
+                  transition: 'color 0.15s cubic-bezier(0.22,1,0.36,1)',
+                }}
+                onMouseEnter={() => setHoverAddRemind(true)}
+                onMouseLeave={() => setHoverAddRemind(false)}
               >
                 <Plus size={14} /> Mahnung erfassen
               </button>
@@ -594,29 +645,32 @@ export default function InvoiceDetail() {
         )}
       </div>
 
-      {/* ── DOCUMENT HISTORY ── */}
+      {/* -- DOCUMENT HISTORY -- */}
       <div className="card mb-4">
         <button
           className="w-full flex items-center justify-between"
           onClick={() => setShowHistory(v => !v)}
         >
           <div className="flex items-center gap-2">
-            <History size={16} className="text-gray-400" />
-            <span className="text-sm font-semibold text-gray-700">Dokumenthistorie</span>
+            <History size={16} style={{ color: c.textTertiary }} />
+            <span className="text-sm font-semibold" style={{ color: c.textSecondary }}>Dokumenthistorie</span>
           </div>
-          {showHistory ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
+          {showHistory
+            ? <ChevronUp size={16} style={{ color: c.textTertiary }} />
+            : <ChevronDown size={16} style={{ color: c.textTertiary }} />
+          }
         </button>
 
         {showHistory && (
           <div className="mt-4">
             {history.length === 0 ? (
-              <p className="text-sm text-gray-400">Keine Änderungen protokolliert.</p>
+              <p className="text-sm" style={{ color: c.textTertiary }}>Keine Änderungen protokolliert.</p>
             ) : (
               <div className="space-y-2">
                 {history.map(h => (
-                  <div key={h.id} className="flex items-center justify-between py-2 border-b border-gray-50">
-                    <p className="text-sm text-gray-700">Version {h.version}</p>
-                    <p className="text-xs text-gray-400">{new Date(h.changed_at).toLocaleString('de-DE')}</p>
+                  <div key={h.id} className="flex items-center justify-between py-2" style={{ borderBottom: `0.5px solid ${c.borderSubtle}` }}>
+                    <p className="text-sm" style={{ color: c.textSecondary }}>Version {h.version}</p>
+                    <p className="text-xs" style={{ color: c.textTertiary }}>{new Date(h.changed_at).toLocaleString('de-DE')}</p>
                   </div>
                 ))}
               </div>
@@ -625,41 +679,50 @@ export default function InvoiceDetail() {
         )}
       </div>
 
-      {/* ── PDF ARCHIVE ── */}
+      {/* -- PDF ARCHIVE -- */}
       <div className="card mb-6">
         <button
           className="w-full flex items-center justify-between"
           onClick={() => setShowArchive(v => !v)}
         >
           <div className="flex items-center gap-2">
-            <Download size={16} className="text-gray-400" />
-            <span className="text-sm font-semibold text-gray-700">PDF-Archiv</span>
+            <Download size={16} style={{ color: c.textTertiary }} />
+            <span className="text-sm font-semibold" style={{ color: c.textSecondary }}>PDF-Archiv</span>
             {archive.length > 0 && (
-              <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+              <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: c.cardSecondary, color: c.textSecondary }}>
                 {archive.length}
               </span>
             )}
           </div>
-          {showArchive ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
+          {showArchive
+            ? <ChevronUp size={16} style={{ color: c.textTertiary }} />
+            : <ChevronDown size={16} style={{ color: c.textTertiary }} />
+          }
         </button>
 
         {showArchive && (
           <div className="mt-4">
             {archive.length === 0 ? (
-              <p className="text-sm text-gray-400">Noch keine PDFs archiviert. Lade ein PDF herunter, um es zu archivieren.</p>
+              <p className="text-sm" style={{ color: c.textTertiary }}>Noch keine PDFs archiviert. Lade ein PDF herunter, um es zu archivieren.</p>
             ) : (
               <div className="space-y-2">
                 {archive.map(a => (
-                  <div key={a.id} className="flex items-center justify-between py-2 border-b border-gray-50">
+                  <div key={a.id} className="flex items-center justify-between py-2" style={{ borderBottom: `0.5px solid ${c.borderSubtle}` }}>
                     <div>
-                      <p className="text-sm font-medium text-gray-900">{a.document_number}</p>
-                      <p className="text-xs text-gray-400">
-                        {new Date(a.generated_at).toLocaleString('de-DE')} · {Math.round(a.file_size / 1024)} KB
+                      <p className="text-sm font-medium" style={{ color: c.text }}>{a.document_number}</p>
+                      <p className="text-xs" style={{ color: c.textTertiary }}>
+                        {new Date(a.generated_at).toLocaleString('de-DE')} &middot; {Math.round(a.file_size / 1024)} KB
                       </p>
                     </div>
                     <button
                       onClick={() => invoicesApi.downloadArchivedPDF(invoice.id, a.id, a.document_number)}
-                      className="text-xs text-gray-500 hover:text-gray-900 flex items-center gap-1 transition-colors"
+                      className="text-xs flex items-center gap-1"
+                      style={{
+                        color: hoverArchiveDl === a.id ? c.text : c.textTertiary,
+                        transition: 'color 0.15s cubic-bezier(0.22,1,0.36,1)',
+                      }}
+                      onMouseEnter={() => setHoverArchiveDl(a.id)}
+                      onMouseLeave={() => setHoverArchiveDl(null)}
                     >
                       <Download size={13} /> Herunterladen
                     </button>
@@ -671,12 +734,12 @@ export default function InvoiceDetail() {
         )}
       </div>
 
-      {/* ── MODALS ── */}
+      {/* -- MODALS -- */}
 
       {/* Als bezahlt markieren */}
       <Modal open={paidModal} onClose={() => setPaidModal(false)} title="Als bezahlt markieren">
         <div className="space-y-4">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm" style={{ color: c.textSecondary }}>
             Zahlungsdatum für Rechnung <strong>{invoice.invoice_number}</strong> erfassen.
           </p>
           <div>
@@ -730,7 +793,13 @@ export default function InvoiceDetail() {
               <button
                 type="button"
                 onClick={() => setPayAmount(outstanding.toFixed(2))}
-                className="text-xs text-gray-400 hover:text-gray-700 mt-1 transition-colors"
+                className="text-xs mt-1"
+                style={{
+                  color: hoverTakeAmount ? c.textSecondary : c.textTertiary,
+                  transition: 'color 0.15s cubic-bezier(0.22,1,0.36,1)',
+                }}
+                onMouseEnter={() => setHoverTakeAmount(true)}
+                onMouseLeave={() => setHoverTakeAmount(false)}
               >
                 Offenen Betrag übernehmen ({formatCurrency(outstanding)})
               </button>
@@ -747,7 +816,7 @@ export default function InvoiceDetail() {
           <div>
             <label className="label">Notiz</label>
             <input
-              className="input" placeholder="z.B. Überweisung, Barzahlung…"
+              className="input" placeholder="z.B. Überweisung, Barzahlung..."
               value={payNotes}
               onChange={e => setPayNotes(e.target.value)}
             />
@@ -791,7 +860,7 @@ export default function InvoiceDetail() {
           <div>
             <label className="label">Notiz</label>
             <input
-              className="input" placeholder="z.B. per E-Mail versendet…"
+              className="input" placeholder="z.B. per E-Mail versendet..."
               value={reminderNotes}
               onChange={e => setReminderNotes(e.target.value)}
             />

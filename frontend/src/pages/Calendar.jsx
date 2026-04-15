@@ -20,11 +20,11 @@ const MONTHS        = ['Januar','Februar','März','April','Mai','Juni','Juli','A
 const HOURS    = Array.from({ length: 24 }, (_, i) => i); // 0–23
 
 const EVENT_COLORS = [
-  '#0071E3','#34C759','#FF9500','#FF3B30','#AF52DE','#5AC8FA','#FF2D55','#5856D6',
+  'var(--color-blue)','#34C759','#FF9500','#FF3B30','#AF52DE','#5AC8FA','#FF2D55','#5856D6',
 ];
 
 const TYPE_CFG = {
-  event:   { label: 'Termin',      color: '#0071E3' },
+  event:   { label: 'Termin',      color: 'var(--color-blue)' },
   meeting: { label: 'Meeting',     color: '#AF52DE' },
   task:    { label: 'Aufgabe',     color: '#FF9500' },
   reminder:{ label: 'Erinnerung',  color: '#FF3B30' },
@@ -89,7 +89,7 @@ function buildEvents(calEvents, projects, timeEntries) {
   for (const e of calEvents) {
     const start = parseLocal(e.start_time);
     const end   = e.end_time ? parseLocal(e.end_time) : null;
-    all.push({ ...e, _type: 'event', _start: start, _end: end, _color: e.color || '#0071E3' });
+    all.push({ ...e, _type: 'event', _start: start, _end: end, _color: e.color || 'var(--color-blue)' });
   }
 
   // Project deadlines
@@ -132,6 +132,7 @@ function fmtDateLabel(isoStr) {
 // ── Mini Calendar Popup ───────────────────────────────────────────────────────
 
 function MiniCalPicker({ value, onChange, onClose, accentColor }) {
+  const { c } = useTheme();
   const [view, setView] = useState(() => {
     const d = value ? new Date(value + 'T12:00:00') : new Date();
     return { y: d.getFullYear(), m: d.getMonth() };
@@ -179,11 +180,11 @@ function MiniCalPicker({ value, onChange, onClose, accentColor }) {
                 borderRadius: '50%', border: 'none', cursor: 'pointer', fontSize: '12px',
                 fontWeight: isSel || isToday ? '600' : '400',
                 background: isSel ? accentColor : 'transparent',
-                color: isSel ? '#fff' : isToday ? accentColor : '#1D1D1F',
+                color: isSel ? '#fff' : isToday ? accentColor : c.text,
                 outline: isToday && !isSel ? `2px solid ${accentColor}` : 'none',
                 outlineOffset: '-2px',
               }}
-              onMouseEnter={e => { if (!isSel) e.currentTarget.style.background = 'rgba(0,0,0,0.06)'; }}
+              onMouseEnter={e => { if (!isSel) e.currentTarget.style.background = 'var(--color-border-subtle)'; }}
               onMouseLeave={e => { if (!isSel) e.currentTarget.style.background = 'transparent'; }}
             >
               {day.getDate()}
@@ -198,6 +199,7 @@ function MiniCalPicker({ value, onChange, onClose, accentColor }) {
 // ── Time Dropdown ─────────────────────────────────────────────────────────────
 
 function TimeDropdown({ value, onChange, onClose, accentColor }) {
+  const { c } = useTheme();
   const listRef = useRef(null);
   const slots = [];
   for (let h = 0; h < 24; h++)
@@ -222,8 +224,8 @@ function TimeDropdown({ value, onChange, onClose, accentColor }) {
         return (
           <button type="button" key={t} data-sel={isSel}
             onClick={() => { onChange(t); onClose(); }}
-            style={{ display: 'block', width: '100%', padding: '7px 14px', textAlign: 'left', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: isSel ? '600' : '400', background: isSel ? accentColor + '18' : 'transparent', color: isSel ? accentColor : '#1D1D1F', whiteSpace: 'nowrap' }}
-            onMouseEnter={e => { if (!isSel) e.currentTarget.style.background = 'rgba(0,0,0,0.04)'; }}
+            style={{ display: 'block', width: '100%', padding: '7px 14px', textAlign: 'left', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: isSel ? '600' : '400', background: isSel ? accentColor + '18' : 'transparent', color: isSel ? accentColor : c.text, whiteSpace: 'nowrap' }}
+            onMouseEnter={e => { if (!isSel) e.currentTarget.style.background = 'var(--color-border-subtle)'; }}
             onMouseLeave={e => { e.currentTarget.style.background = isSel ? accentColor + '18' : 'transparent'; }}
           >
             {t}
@@ -237,6 +239,7 @@ function TimeDropdown({ value, onChange, onClose, accentColor }) {
 // ── Event Modal ───────────────────────────────────────────────────────────────
 
 function EventModal({ event, defaultDate, projects, onClose, onSave, onDelete }) {
+  const { c } = useTheme();
   const isEdit = !!event?.id && !String(event.id).startsWith('deadline-') && !String(event.id).startsWith('time-');
 
   const initStart = defaultDate
@@ -251,7 +254,7 @@ function EventModal({ event, defaultDate, projects, onClose, onSave, onDelete })
   const [startVal,    setStartVal]    = useState(initStart);
   const [endVal,      setEndVal]      = useState(initEnd);
   const [allDay,      setAllDay]      = useState(event?.all_day || false);
-  const [color,       setColor]       = useState(event?._color || '#0071E3');
+  const [color,       setColor]       = useState(event?._color || 'var(--color-blue)');
   const [type,        setType]        = useState(event?.type || 'event');
   const [projectId,   setProjectId]   = useState(event?.project_id || '');
   const [meetingLink, setMeetingLink] = useState(event?.meeting_link || '');
@@ -308,7 +311,7 @@ function EventModal({ event, defaultDate, projects, onClose, onSave, onDelete })
 
   const attendeeList = attendees ? attendees.split(',').map(s => s.trim()).filter(Boolean) : [];
 
-  const ROW = { display: 'flex', alignItems: 'flex-start', gap: '14px', padding: '10px 0', borderBottom: '1px solid rgba(0,0,0,0.05)' };
+  const ROW = { display: 'flex', alignItems: 'flex-start', gap: '14px', padding: '10px 0', borderBottom: '1px solid var(--color-border-subtle)' };
   const ICON_COL = { width: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: '2px', flexShrink: 0 };
   const INPUT = { width: '100%', border: 'none', outline: 'none', fontSize: '13px', color: c.text, background: 'transparent', fontFamily: 'inherit' };
 
@@ -333,15 +336,15 @@ function EventModal({ event, defaultDate, projects, onClose, onSave, onDelete })
               <button key={val} type="button" onClick={() => setScope(val)} style={{
                 display: 'flex', alignItems: 'center', gap: '5px',
                 padding: '4px 10px', borderRadius: '20px', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: '600',
-                background: scope === val ? color + '18' : 'rgba(0,0,0,0.05)',
-                color: scope === val ? color : '#6E6E73',
+                background: scope === val ? color + '18' : 'var(--color-border-subtle)',
+                color: scope === val ? color : 'var(--color-text-tertiary)',
                 transition: 'all 0.15s',
               }}>
                 {icon} {label}
               </button>
             ))}
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#A0A0AA', padding: '4px', borderRadius: '6px', display: 'flex' }}>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-tertiary)', padding: '4px', borderRadius: '6px', display: 'flex' }}>
             <X size={16} />
           </button>
         </div>
@@ -363,8 +366,8 @@ function EventModal({ event, defaultDate, projects, onClose, onSave, onDelete })
                 style={{
                   padding: '4px 12px', borderRadius: '20px', border: `1.5px solid ${type === key ? cfg.color : 'transparent'}`,
                   fontSize: '12px', fontWeight: '600', cursor: 'pointer',
-                  background: type === key ? cfg.color + '15' : 'rgba(0,0,0,0.04)',
-                  color: type === key ? cfg.color : '#6B7280',
+                  background: type === key ? cfg.color + '15' : 'var(--color-border-subtle)',
+                  color: type === key ? cfg.color : 'var(--color-text-tertiary)',
                   transition: 'all 0.15s',
                 }}>
                 {cfg.label}
@@ -378,7 +381,7 @@ function EventModal({ event, defaultDate, projects, onClose, onSave, onDelete })
             <div style={{ flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: c.text, cursor: 'pointer' }}>
-                  <div style={{ width: '16px', height: '16px', borderRadius: '4px', border: `2px solid ${allDay ? color : '#D1D1D6'}`, background: allDay ? color : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.15s' }}
+                  <div style={{ width: '16px', height: '16px', borderRadius: '4px', border: `2px solid ${allDay ? color : 'var(--color-border)'}`, background: allDay ? color : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.15s' }}
                     onClick={() => setAllDay(a => !a)}>
                     {allDay && <Check size={10} color="#fff" strokeWidth={3} />}
                   </div>
@@ -392,7 +395,7 @@ function EventModal({ event, defaultDate, projects, onClose, onSave, onDelete })
                   <div style={{ position: 'relative' }}>
                     <button type="button"
                       onClick={() => setOpenPicker(p => p === 'date' ? null : 'date')}
-                      style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '6px 10px', borderRadius: '8px', border: `1.5px solid ${openPicker === 'date' ? color : 'transparent'}`, background: openPicker === 'date' ? color + '12' : 'rgba(0,0,0,0.05)', fontSize: '13px', fontWeight: '500', color: c.text, cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
+                      style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '6px 10px', borderRadius: '8px', border: `1.5px solid ${openPicker === 'date' ? color : 'transparent'}`, background: openPicker === 'date' ? color + '12' : 'var(--color-border-subtle)', fontSize: '13px', fontWeight: '500', color: c.text, cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
                       <CalIcon size={13} color={color} />
                       {fmtDateLabel(startVal.slice(0, 10))}
                     </button>
@@ -413,7 +416,7 @@ function EventModal({ event, defaultDate, projects, onClose, onSave, onDelete })
                   <div style={{ position: 'relative' }}>
                     <button type="button"
                       onClick={() => setOpenPicker(p => p === 'startTime' ? null : 'startTime')}
-                      style={{ padding: '6px 10px', borderRadius: '8px', border: `1.5px solid ${openPicker === 'startTime' ? color : 'transparent'}`, background: openPicker === 'startTime' ? color + '12' : 'rgba(0,0,0,0.05)', fontSize: '13px', fontWeight: '500', color: c.text, cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
+                      style={{ padding: '6px 10px', borderRadius: '8px', border: `1.5px solid ${openPicker === 'startTime' ? color : 'transparent'}`, background: openPicker === 'startTime' ? color + '12' : 'var(--color-border-subtle)', fontSize: '13px', fontWeight: '500', color: c.text, cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
                       {startVal.slice(11, 16)}
                     </button>
                     {openPicker === 'startTime' && (
@@ -442,7 +445,7 @@ function EventModal({ event, defaultDate, projects, onClose, onSave, onDelete })
                   <div style={{ position: 'relative' }}>
                     <button type="button"
                       onClick={() => setOpenPicker(p => p === 'endTime' ? null : 'endTime')}
-                      style={{ padding: '6px 10px', borderRadius: '8px', border: `1.5px solid ${openPicker === 'endTime' ? color : 'transparent'}`, background: openPicker === 'endTime' ? color + '12' : 'rgba(0,0,0,0.05)', fontSize: '13px', fontWeight: '500', color: c.text, cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
+                      style={{ padding: '6px 10px', borderRadius: '8px', border: `1.5px solid ${openPicker === 'endTime' ? color : 'transparent'}`, background: openPicker === 'endTime' ? color + '12' : 'var(--color-border-subtle)', fontSize: '13px', fontWeight: '500', color: c.text, cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
                       {endVal.slice(11, 16)}
                     </button>
                     {openPicker === 'endTime' && (
@@ -458,7 +461,7 @@ function EventModal({ event, defaultDate, projects, onClose, onSave, onDelete })
                 </div>
               ) : (
                 <input type="date" value={startVal.slice(0, 10)} onChange={e => setStartVal(e.target.value + 'T00:00')}
-                  style={{ ...INPUT, marginTop: '8px', padding: '5px 8px', borderRadius: '8px', background: 'rgba(0,0,0,0.04)' }} />
+                  style={{ ...INPUT, marginTop: '8px', padding: '5px 8px', borderRadius: '8px', background: 'var(--color-border-subtle)' }} />
               )}
             </div>
           </div>
@@ -473,7 +476,7 @@ function EventModal({ event, defaultDate, projects, onClose, onSave, onDelete })
                   onChange={e => setAttendeeInput(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addAttendee(); } if (e.key === ',' || e.key === ' ') { e.preventDefault(); addAttendee(); } }}
                   placeholder="Teilnehmer per E-Mail hinzufügen"
-                  style={{ ...INPUT, padding: '5px 8px', borderRadius: '8px', background: 'rgba(0,0,0,0.04)' }}
+                  style={{ ...INPUT, padding: '5px 8px', borderRadius: '8px', background: 'var(--color-border-subtle)' }}
                 />
                 {attendeeInput.trim() && (
                   <button type="button" onClick={addAttendee}
@@ -485,11 +488,11 @@ function EventModal({ event, defaultDate, projects, onClose, onSave, onDelete })
               {attendeeList.length > 0 && (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginTop: '8px' }}>
                   {attendeeList.map(email => (
-                    <div key={email} style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '3px 8px', borderRadius: '20px', background: 'rgba(0,0,0,0.06)', fontSize: '12px', color: '#374151' }}>
+                    <div key={email} style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '3px 8px', borderRadius: '20px', background: 'var(--color-border-subtle)', fontSize: '12px', color: 'var(--color-text-secondary)' }}>
                       <Mail size={10} color="#86868B" />
                       {email}
                       <button type="button" onClick={() => removeAttendee(email)}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#A0A0AA', padding: '0 0 0 2px', display: 'flex', lineHeight: 1 }}>
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-tertiary)', padding: '0 0 0 2px', display: 'flex', lineHeight: 1 }}>
                         <X size={10} />
                       </button>
                     </div>
@@ -506,7 +509,7 @@ function EventModal({ event, defaultDate, projects, onClose, onSave, onDelete })
               <input
                 value={meetingLink} onChange={e => setMeetingLink(e.target.value)}
                 placeholder="Meeting-Link hinzufügen (Zoom, Meet, Teams…)"
-                style={{ ...INPUT, flex: 1, padding: '5px 8px', borderRadius: '8px', background: 'rgba(0,0,0,0.04)' }}
+                style={{ ...INPUT, flex: 1, padding: '5px 8px', borderRadius: '8px', background: 'var(--color-border-subtle)' }}
               />
             </div>
           )}
@@ -515,7 +518,7 @@ function EventModal({ event, defaultDate, projects, onClose, onSave, onDelete })
           <div style={ROW}>
             <div style={ICON_COL}><Briefcase size={16} color="#86868B" strokeWidth={1.75} /></div>
             <select value={projectId} onChange={e => setProjectId(e.target.value)}
-              style={{ ...INPUT, flex: 1, padding: '5px 8px', borderRadius: '8px', background: 'rgba(0,0,0,0.04)', color: projectId ? '#1D1D1F' : '#A0A0AA' }}>
+              style={{ ...INPUT, flex: 1, padding: '5px 8px', borderRadius: '8px', background: 'var(--color-border-subtle)', color: projectId ? c.text : 'var(--color-text-tertiary)' }}>
               <option value="">— Kein Projekt</option>
               {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
@@ -527,7 +530,7 @@ function EventModal({ event, defaultDate, projects, onClose, onSave, onDelete })
             <textarea value={desc} onChange={e => setDesc(e.target.value)}
               placeholder="Beschreibung hinzufügen"
               rows={2}
-              style={{ ...INPUT, flex: 1, resize: 'none', padding: '5px 8px', borderRadius: '8px', background: 'rgba(0,0,0,0.04)', lineHeight: 1.5 }}
+              style={{ ...INPUT, flex: 1, resize: 'none', padding: '5px 8px', borderRadius: '8px', background: 'var(--color-border-subtle)', lineHeight: 1.5 }}
             />
           </div>
 
@@ -553,7 +556,7 @@ function EventModal({ event, defaultDate, projects, onClose, onSave, onDelete })
               </button>
             )}
             <button type="button" onClick={onClose}
-              style={{ flex: 1, padding: '9px', borderRadius: '10px', background: 'rgba(0,0,0,0.05)', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: '500', color: '#6B7280' }}>
+              style={{ flex: 1, padding: '9px', borderRadius: '10px', background: 'var(--color-border-subtle)', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: '500', color: 'var(--color-text-tertiary)' }}>
               Abbrechen
             </button>
             <button type="submit"
@@ -570,6 +573,7 @@ function EventModal({ event, defaultDate, projects, onClose, onSave, onDelete })
 // ── Month View ────────────────────────────────────────────────────────────────
 
 function MonthView({ currentDate, events, onDayClick, onEventClick }) {
+  const { c } = useTheme();
   const year  = currentDate.getFullYear();
   const month = currentDate.getMonth();
   const grid  = getMonthGrid(year, month);
@@ -580,13 +584,13 @@ function MonthView({ currentDate, events, onDayClick, onEventClick }) {
       {/* Weekday headers */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', borderBottom: `1px solid ${c.borderSubtle}` }}>
         {WEEKDAYS.map(d => (
-          <div key={d} style={{ padding: '10px 12px', fontSize: '11px', fontWeight: '600', color: '#A0A0AA', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{d}</div>
+          <div key={d} style={{ padding: '10px 12px', fontSize: '11px', fontWeight: '600', color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{d}</div>
         ))}
       </div>
       {/* Grid */}
       <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gridTemplateRows: `repeat(${grid.length / 7}, 1fr)`, overflow: 'auto' }}>
         {grid.map((day, i) => {
-          if (!day) return <div key={i} style={{ borderRight: '1px solid rgba(0,0,0,0.04)', borderBottom: '1px solid rgba(0,0,0,0.04)', background: '#FAFAFA' }} />;
+          if (!day) return <div key={i} style={{ borderRight: '1px solid var(--color-border-subtle)', borderBottom: '1px solid var(--color-border-subtle)', background: 'var(--color-card-secondary)' }} />;
           const dayEvents = eventsForDay(events, day);
           const isCurrentMonth = day.getMonth() === month;
           const isTodayDay = isToday(day);
@@ -595,22 +599,22 @@ function MonthView({ currentDate, events, onDayClick, onEventClick }) {
             <div key={i}
               onClick={() => onDayClick(day)}
               style={{
-                borderRight: '1px solid rgba(0,0,0,0.05)',
-                borderBottom: '1px solid rgba(0,0,0,0.05)',
+                borderRight: '1px solid var(--color-border-subtle)',
+                borderBottom: '1px solid var(--color-border-subtle)',
                 padding: '8px', minHeight: '90px',
-                background: isTodayDay ? 'rgba(0,113,227,0.02)' : '#fff',
+                background: isTodayDay ? 'rgba(0,122,255,0.02)' : '#fff',
                 cursor: 'pointer', overflow: 'hidden',
                 transition: 'background 0.1s',
               }}
-              onMouseEnter={e => { if (!isTodayDay) e.currentTarget.style.background = '#FAFBFC'; }}
-              onMouseLeave={e => { e.currentTarget.style.background = isTodayDay ? 'rgba(0,113,227,0.02)' : '#fff'; }}
+              onMouseEnter={e => { if (!isTodayDay) e.currentTarget.style.background = 'var(--color-card-secondary)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = isTodayDay ? 'rgba(0,122,255,0.02)' : '#fff'; }}
             >
               <div style={{
                 width: '26px', height: '26px', borderRadius: '50%',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: '13px', fontWeight: isTodayDay ? '700' : '400',
-                color: isTodayDay ? '#fff' : isCurrentMonth ? '#111827' : '#C0C0C8',
-                background: isTodayDay ? '#0071E3' : 'transparent',
+                color: isTodayDay ? '#fff' : isCurrentMonth ? 'var(--color-text)' : 'var(--color-text-tertiary)',
+                background: isTodayDay ? 'var(--color-blue)' : 'transparent',
                 marginBottom: '4px',
               }}>
                 {day.getDate()}
@@ -629,7 +633,7 @@ function MonthView({ currentDate, events, onDayClick, onEventClick }) {
                 </div>
               ))}
               {dayEvents.length > 3 && (
-                <div style={{ fontSize: '10px', color: '#A0A0AA', paddingLeft: '2px' }}>
+                <div style={{ fontSize: '10px', color: 'var(--color-text-tertiary)', paddingLeft: '2px' }}>
                   +{dayEvents.length - 3} weitere
                 </div>
               )}
@@ -644,6 +648,7 @@ function MonthView({ currentDate, events, onDayClick, onEventClick }) {
 // ── Week View ─────────────────────────────────────────────────────────────────
 
 function WeekView({ currentDate, events, onSlotClick, onEventClick }) {
+  const { c } = useTheme();
   const days = getWeekDays(currentDate);
   const today = new Date();
   const HOUR_H = 56; // px per hour
@@ -651,20 +656,20 @@ function WeekView({ currentDate, events, onSlotClick, onEventClick }) {
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       {/* Day headers */}
-      <div style={{ display: 'grid', gridTemplateColumns: '52px repeat(7,1fr)', borderBottom: '1px solid rgba(0,0,0,0.07)', flexShrink: 0 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '52px repeat(7,1fr)', borderBottom: '1px solid var(--color-border-subtle)', flexShrink: 0 }}>
         <div />
         {days.map((d, i) => {
           const isTodayDay = isToday(d);
           return (
-            <div key={i} style={{ padding: '10px 8px', textAlign: 'center', borderLeft: '1px solid rgba(0,0,0,0.05)' }}>
-              <div style={{ fontSize: '11px', color: '#A0A0AA', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{WEEKDAYS[i]}</div>
+            <div key={i} style={{ padding: '10px 8px', textAlign: 'center', borderLeft: '1px solid var(--color-border-subtle)' }}>
+              <div style={{ fontSize: '11px', color: 'var(--color-text-tertiary)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{WEEKDAYS[i]}</div>
               <div style={{
                 width: '30px', height: '30px', borderRadius: '50%',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 margin: '3px auto 0',
                 fontSize: '14px', fontWeight: '700',
-                background: isTodayDay ? '#0071E3' : 'transparent',
-                color: isTodayDay ? '#fff' : '#111827',
+                background: isTodayDay ? 'var(--color-blue)' : 'transparent',
+                color: isTodayDay ? '#fff' : 'var(--color-text)',
               }}>{d.getDate()}</div>
             </div>
           );
@@ -677,7 +682,7 @@ function WeekView({ currentDate, events, onSlotClick, onEventClick }) {
           <div>
             {HOURS.map(h => (
               <div key={h} style={{ height: `${HOUR_H}px`, padding: '0 8px', display: 'flex', alignItems: 'flex-start', paddingTop: '4px', justifyContent: 'flex-end' }}>
-                <span style={{ fontSize: '10px', color: '#A0A0AA', fontWeight: '500' }}>{String(h).padStart(2,'0')}:00</span>
+                <span style={{ fontSize: '10px', color: 'var(--color-text-tertiary)', fontWeight: '500' }}>{String(h).padStart(2,'0')}:00</span>
               </div>
             ))}
           </div>
@@ -685,15 +690,15 @@ function WeekView({ currentDate, events, onSlotClick, onEventClick }) {
           {days.map((day, di) => {
             const dayEvents = eventsForDay(events, day).filter(e => !e.all_day && e._start);
             return (
-              <div key={di} style={{ borderLeft: '1px solid rgba(0,0,0,0.05)', position: 'relative' }}>
+              <div key={di} style={{ borderLeft: '1px solid var(--color-border-subtle)', position: 'relative' }}>
                 {HOURS.map(h => (
                   <div key={h}
                     onClick={() => {
                       const d = new Date(day); d.setHours(h, 0, 0, 0);
                       onSlotClick(d);
                     }}
-                    style={{ height: `${HOUR_H}px`, borderBottom: '1px solid rgba(0,0,0,0.04)', cursor: 'pointer', transition: 'background 0.1s' }}
-                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,113,227,0.03)'}
+                    style={{ height: `${HOUR_H}px`, borderBottom: '1px solid var(--color-border-subtle)', cursor: 'pointer', transition: 'background 0.1s' }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,122,255,0.03)'}
                     onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                   />
                 ))}
@@ -738,6 +743,7 @@ function WeekView({ currentDate, events, onSlotClick, onEventClick }) {
 // ── Day View ──────────────────────────────────────────────────────────────────
 
 function DayView({ currentDate, events, onSlotClick, onEventClick }) {
+  const { c } = useTheme();
   const dayEvents = eventsForDay(events, currentDate);
   const allDay    = dayEvents.filter(e => e.all_day);
   const timed     = dayEvents.filter(e => !e.all_day && e._start);
@@ -747,8 +753,8 @@ function DayView({ currentDate, events, onSlotClick, onEventClick }) {
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       {/* All-day strip */}
       {allDay.length > 0 && (
-        <div style={{ padding: '10px 16px', borderBottom: '1px solid rgba(0,0,0,0.07)', display: 'flex', gap: '6px', flexWrap: 'wrap', background: '#FAFBFC' }}>
-          <span style={{ fontSize: '11px', color: '#A0A0AA', fontWeight: '600', alignSelf: 'center', marginRight: '4px' }}>Ganztägig</span>
+        <div style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-border-subtle)', display: 'flex', gap: '6px', flexWrap: 'wrap', background: 'var(--color-card-secondary)' }}>
+          <span style={{ fontSize: '11px', color: 'var(--color-text-tertiary)', fontWeight: '600', alignSelf: 'center', marginRight: '4px' }}>Ganztägig</span>
           {allDay.map((ev, i) => (
             <div key={i} onClick={() => onEventClick(ev)}
               style={{ padding: '4px 10px', borderRadius: '6px', background: ev._color + '20', borderLeft: `2px solid ${ev._color}`, fontSize: '12px', fontWeight: '500', color: ev._color, cursor: 'pointer' }}>
@@ -763,16 +769,16 @@ function DayView({ currentDate, events, onSlotClick, onEventClick }) {
           <div>
             {HOURS.map(h => (
               <div key={h} style={{ height: `${HOUR_H}px`, padding: '0 8px', display: 'flex', alignItems: 'flex-start', paddingTop: '4px', justifyContent: 'flex-end' }}>
-                <span style={{ fontSize: '11px', color: '#A0A0AA', fontWeight: '500' }}>{String(h).padStart(2,'0')}:00</span>
+                <span style={{ fontSize: '11px', color: 'var(--color-text-tertiary)', fontWeight: '500' }}>{String(h).padStart(2,'0')}:00</span>
               </div>
             ))}
           </div>
-          <div style={{ borderLeft: '1px solid rgba(0,0,0,0.06)', position: 'relative' }}>
+          <div style={{ borderLeft: '1px solid var(--color-border-subtle)', position: 'relative' }}>
             {HOURS.map(h => (
               <div key={h}
                 onClick={() => { const d = new Date(currentDate); d.setHours(h,0,0,0); onSlotClick(d); }}
-                style={{ height: `${HOUR_H}px`, borderBottom: '1px solid rgba(0,0,0,0.04)', cursor: 'pointer' }}
-                onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,113,227,0.03)'}
+                style={{ height: `${HOUR_H}px`, borderBottom: '1px solid var(--color-border-subtle)', cursor: 'pointer' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,122,255,0.03)'}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
               />
             ))}
@@ -791,7 +797,7 @@ function DayView({ currentDate, events, onSlotClick, onEventClick }) {
                     borderRadius: '6px', padding: '6px 10px', cursor: 'pointer', zIndex: 2,
                   }}>
                   <p style={{ fontSize: '12px', fontWeight: '600', color: ev._color, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.title}</p>
-                  <p style={{ fontSize: '11px', color: '#6B7280', margin: '2px 0 0' }}>
+                  <p style={{ fontSize: '11px', color: 'var(--color-text-tertiary)', margin: '2px 0 0' }}>
                     {ev._start.getHours()}:{String(ev._start.getMinutes()).padStart(2,'0')}
                     {ev._end ? ` – ${ev._end.getHours()}:${String(ev._end.getMinutes()).padStart(2,'0')}` : ''}
                     {ev.scope === 'team' ? ' · Team' : ''}
@@ -913,59 +919,59 @@ export default function Calendar() {
   const btnStyle = (active) => ({
     padding: '6px 14px', borderRadius: '8px', border: 'none', cursor: 'pointer',
     fontSize: '12px', fontWeight: '600',
-    background: active ? '#0071E3' : 'rgba(0,0,0,0.05)',
-    color: active ? '#fff' : '#6B7280',
+    background: active ? 'var(--color-blue)' : 'var(--color-border-subtle)',
+    color: active ? '#fff' : 'var(--color-text-tertiary)',
     transition: 'all 0.15s',
   });
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', background: '#F8F9FC' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', background: 'var(--color-card-secondary)' }}>
 
       {/* ── Toolbar ── */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0,
-        padding: '16px 24px', background: c.card, borderBottom: '1px solid rgba(0,0,0,0.07)',
-        boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+        padding: '16px 24px', background: c.card, borderBottom: '1px solid var(--color-border-subtle)',
+        boxShadow: '0 1px 4px var(--color-border-subtle)',
       }}>
         {/* Title */}
-        <h1 style={{ fontSize: '16px', fontWeight: '700', color: '#111827', letterSpacing: '-0.02em', margin: 0, marginRight: '4px' }}>
+        <h1 style={{ fontSize: '16px', fontWeight: '700', color: 'var(--color-text)', letterSpacing: '-0.02em', margin: 0, marginRight: '4px' }}>
           Kalender
         </h1>
 
         {/* Nav arrows */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
           <button onClick={() => navigate(-1)}
-            style={{ padding: '6px 8px', borderRadius: '8px', border: 'none', background: 'rgba(0,0,0,0.05)', cursor: 'pointer', display: 'flex', transition: 'background 0.15s' }}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.09)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0.05)'}
+            style={{ padding: '6px 8px', borderRadius: '8px', border: 'none', background: 'var(--color-border-subtle)', cursor: 'pointer', display: 'flex', transition: 'background 0.15s' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'var(--color-border-subtle)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'var(--color-border-subtle)'}
           >
             <ChevronLeft size={14} color="#374151" />
           </button>
           <button onClick={() => setCurrent(new Date())}
-            style={{ padding: '5px 12px', borderRadius: '8px', border: 'none', background: 'rgba(0,0,0,0.05)', cursor: 'pointer', fontSize: '12px', fontWeight: '600', color: '#374151', transition: 'background 0.15s' }}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.09)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0.05)'}
+            style={{ padding: '5px 12px', borderRadius: '8px', border: 'none', background: 'var(--color-border-subtle)', cursor: 'pointer', fontSize: '12px', fontWeight: '600', color: 'var(--color-text-secondary)', transition: 'background 0.15s' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'var(--color-border-subtle)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'var(--color-border-subtle)'}
           >
             Heute
           </button>
           <button onClick={() => navigate(1)}
-            style={{ padding: '6px 8px', borderRadius: '8px', border: 'none', background: 'rgba(0,0,0,0.05)', cursor: 'pointer', display: 'flex', transition: 'background 0.15s' }}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.09)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0.05)'}
+            style={{ padding: '6px 8px', borderRadius: '8px', border: 'none', background: 'var(--color-border-subtle)', cursor: 'pointer', display: 'flex', transition: 'background 0.15s' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'var(--color-border-subtle)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'var(--color-border-subtle)'}
           >
             <ChevronRight size={14} color="#374151" />
           </button>
         </div>
 
         {/* Period label */}
-        <span style={{ fontSize: '15px', fontWeight: '600', color: '#111827', letterSpacing: '-0.02em' }}>
+        <span style={{ fontSize: '15px', fontWeight: '600', color: 'var(--color-text)', letterSpacing: '-0.02em' }}>
           {navLabel()}
         </span>
 
         <div style={{ flex: 1 }} />
 
         {/* View switcher */}
-        <div style={{ display: 'flex', gap: '4px', background: 'rgba(0,0,0,0.05)', padding: '3px', borderRadius: '10px' }}>
+        <div style={{ display: 'flex', gap: '4px', background: 'var(--color-border-subtle)', padding: '3px', borderRadius: '10px' }}>
           {['month','week','day'].map(v => (
             <button key={v} onClick={() => setView(v)} style={btnStyle(view === v)}>
               {v === 'month' ? 'Monat' : v === 'week' ? 'Woche' : 'Tag'}
@@ -978,9 +984,9 @@ export default function Calendar() {
           style={{
             display: 'inline-flex', alignItems: 'center', gap: '6px',
             padding: '8px 15px', borderRadius: '10px', border: 'none',
-            background: 'linear-gradient(135deg, #0071E3, #0062C4)',
+            background: 'linear-gradient(135deg, #007AFF, #0062C4)',
             color: '#fff', fontSize: '13px', fontWeight: '600', cursor: 'pointer',
-            boxShadow: '0 2px 8px rgba(0,113,227,0.3)',
+            boxShadow: '0 2px 8px rgba(0,122,255,0.3)',
             transition: 'opacity 0.15s',
           }}
           onMouseEnter={e => e.currentTarget.style.opacity = '0.9'}
@@ -991,16 +997,16 @@ export default function Calendar() {
       </div>
 
       {/* ── Legend ── */}
-      <div style={{ display: 'flex', gap: '16px', padding: '8px 24px', background: c.card, borderBottom: '1px solid rgba(0,0,0,0.05)', flexShrink: 0 }}>
+      <div style={{ display: 'flex', gap: '16px', padding: '8px 24px', background: c.card, borderBottom: '1px solid var(--color-border-subtle)', flexShrink: 0 }}>
         {[
-          { color: '#0071E3', label: 'Termin' },
+          { color: 'var(--color-blue)', label: 'Termin' },
           { color: '#AF52DE', label: 'Meeting' },
           { color: '#EF4444', label: 'Deadline' },
           { color: '#5AC8FA', label: 'Zeiterfassung' },
         ].map(({ color, label }) => (
           <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
             <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: color }} />
-            <span style={{ fontSize: '11px', color: '#A0A0AA', fontWeight: '500' }}>{label}</span>
+            <span style={{ fontSize: '11px', color: 'var(--color-text-tertiary)', fontWeight: '500' }}>{label}</span>
           </div>
         ))}
       </div>

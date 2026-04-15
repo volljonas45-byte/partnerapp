@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Pencil, Trash2, Building2, Search, ArrowRight, ChevronRight, Phone, Mail } from 'lucide-react';
+import { Plus, Pencil, Trash2, Building2, Search, ArrowRight, ChevronRight, Phone } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { clientsApi } from '../api/clients';
 import Modal from '../components/Modal';
@@ -16,29 +16,26 @@ const EMPTY_FORM = {
   email: '', phone: '', vat_id: '',
 };
 
-// Deterministic avatar color from company name
 const AVATAR_COLORS = [
-  ['bg-violet-100 text-violet-700', 'bg-violet-200'],
-  ['bg-blue-100 text-blue-700',     'bg-blue-200'  ],
-  ['bg-emerald-100 text-emerald-700','bg-emerald-200'],
-  ['bg-amber-100 text-amber-700',   'bg-amber-200' ],
-  ['bg-rose-100 text-rose-700',     'bg-rose-200'  ],
-  ['bg-cyan-100 text-cyan-700',     'bg-cyan-200'  ],
-  ['bg-orange-100 text-orange-700', 'bg-orange-200'],
-  ['bg-pink-100 text-pink-700',     'bg-pink-200'  ],
+  '#AF52DE', 'var(--color-blue)', '#34C759', '#FF9500', '#FF3B30', '#5AC8FA', '#FF6961', '#BF5AF2',
 ];
 
 function getAvatarColor(name = '') {
   let hash = 0;
   for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length][0];
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
 }
 
 function ClientAvatar({ name }) {
   const letters = (name || '?').trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
-  const cls = getAvatarColor(name);
+  const bg = getAvatarColor(name);
   return (
-    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${cls}`}>
+    <div style={{
+      width: 32, height: 32, borderRadius: '50%',
+      background: bg, display: 'flex', alignItems: 'center',
+      justifyContent: 'center', fontSize: 12, fontWeight: 600,
+      color: '#fff', flexShrink: 0, letterSpacing: '-0.01em',
+    }}>
       {letters}
     </div>
   );
@@ -81,7 +78,7 @@ export default function Clients() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const isMobile = useMobile();
-  const { c } = useTheme();
+  const { c, isDark } = useTheme();
 
   const [search, setSearch]   = useState('');
   const [modal, setModal]     = useState(null);
@@ -151,27 +148,32 @@ export default function Clients() {
       || c.email?.toLowerCase().includes(q);
   }), [clients, search]);
 
+  const cardStyle = {
+    background: c.card,
+    borderRadius: 12,
+    border: `0.5px solid ${c.borderSubtle}`,
+    boxShadow: isDark
+      ? '0 0 0 0.5px rgba(255,255,255,0.04), 0 1px 3px rgba(0,0,0,0.2), 0 6px 20px rgba(0,0,0,0.25)'
+      : '0 0 0 0.5px var(--color-border-subtle), 0 1px 3px var(--color-border-subtle), 0 6px 20px var(--color-border-subtle)',
+  };
+
   if (isLoading) return (
-    <div className={isMobile ? "p-4" : "p-8"}>
+    <div style={{ padding: isMobile ? '16px' : '28px 32px' }}>
       <div className="page-header">
         <div>
           <div className="skeleton h-7 w-32 mb-2" />
           <div className="skeleton h-4 w-20" />
         </div>
-        <div className="skeleton h-9 w-36 rounded-full" />
+        <div className="skeleton h-9 w-36 rounded-lg" />
       </div>
       <div className="skeleton h-9 w-56 rounded-xl mb-5" />
-      <div className="card p-0 overflow-hidden">
-        <div style={{ padding: '10px 18px', background: 'rgba(118,118,128,0.06)', borderBottom: `1px solid ${c.borderSubtle}` }}>
-          <div className="skeleton h-3 w-24" />
-        </div>
+      <div style={{ ...cardStyle, padding: 0, overflow: 'hidden' }}>
         {[...Array(5)].map((_, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 18px 12px 20px', borderBottom: i < 4 ? '1px solid rgba(0,0,0,0.04)' : 'none' }}>
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 20px', borderBottom: i < 4 ? `0.5px solid ${c.borderSubtle}` : 'none' }}>
             <div className="skeleton rounded-full shrink-0" style={{ width: 32, height: 32 }} />
-            <div style={{ flex: 1, display: 'flex', gap: '12px' }}>
+            <div style={{ flex: 1, display: 'flex', gap: 12 }}>
               <div className="skeleton h-4" style={{ width: `${130 + i * 20}px` }} />
-              <div className="skeleton h-4 hidden sm:block" style={{ width: '110px' }} />
-              <div className="skeleton h-4 hidden md:block" style={{ width: '160px' }} />
+              <div className="skeleton h-4 hidden sm:block" style={{ width: 110 }} />
             </div>
           </div>
         ))}
@@ -183,87 +185,89 @@ export default function Clients() {
   if (isMobile) {
     return (
       <div style={{ background: c.bg, minHeight: '100vh' }}>
-        {/* Header */}
         <div style={{ padding: '20px 16px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <h1 style={{ fontSize: 22, fontWeight: 700, color: c.text, letterSpacing: '-0.4px', margin: 0 }}>Kunden</h1>
-            <p style={{ fontSize: 13, color: c.textSecondary, margin: '2px 0 0' }}>
+            <h1 style={{ fontSize: 28, fontWeight: 700, color: c.text, letterSpacing: '-0.032em', margin: 0 }}>Kunden</h1>
+            <p style={{ fontSize: 13, color: c.textSecondary, margin: '4px 0 0', letterSpacing: '-0.006em' }}>
               {clients.length} {clients.length === 1 ? 'Kunde' : 'Kunden'}
             </p>
           </div>
           <button
             onClick={() => navigate('/clients/new')}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 14px', borderRadius: 12, background: '#0071E3', color: '#fff', border: 'none', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
+            className="btn-primary"
           >
-            <Plus size={15} strokeWidth={2.5} />
+            <Plus size={15} strokeWidth={2} />
             Neu
           </button>
         </div>
 
-        {/* Search */}
         <div style={{ padding: '0 16px 14px', position: 'relative' }}>
-          <Search size={14} style={{ position: 'absolute', left: 28, top: '50%', transform: 'translateY(-50%)', color: c.textSecondary, pointerEvents: 'none' }} />
+          <Search size={14} style={{ position: 'absolute', left: 28, top: '50%', transform: 'translateY(-50%)', color: c.textTertiary, pointerEvents: 'none' }} />
           <input
-            style={{ width: '100%', padding: '10px 12px 10px 36px', borderRadius: 12, border: '1px solid rgba(0,0,0,0.1)', background: c.card, fontSize: 15, outline: 'none', boxSizing: 'border-box' }}
-            placeholder="Suchen…"
+            className="input"
+            style={{ paddingLeft: 36 }}
+            placeholder="Suchen..."
             value={search}
             onChange={e => setSearch(e.target.value)}
           />
         </div>
 
-        {/* Card list */}
         <div style={{ padding: '0 16px' }}>
           {filtered.length === 0 ? (
-            <div style={{ background: c.card, borderRadius: 16, padding: '40px 20px', textAlign: 'center' }}>
-              <Building2 size={32} color="#D1D1D6" strokeWidth={1.25} style={{ margin: '0 auto 12px' }} />
+            <div style={{ ...cardStyle, padding: '40px 20px', textAlign: 'center' }}>
+              <Building2 size={28} color={c.border} strokeWidth={1.25} style={{ margin: '0 auto 12px' }} />
               <p style={{ fontSize: 15, fontWeight: 600, color: c.text, margin: '0 0 4px' }}>
                 {search ? 'Keine Kunden gefunden' : 'Noch keine Kunden'}
               </p>
               <p style={{ fontSize: 13, color: c.textSecondary, margin: 0 }}>
-                {search ? `Keine Treffer für „${search}"` : 'Lege jetzt deinen ersten Kunden an.'}
+                {search ? `Keine Treffer für "${search}"` : 'Lege jetzt deinen ersten Kunden an.'}
               </p>
               {!search && (
-                <button onClick={() => navigate('/clients/new')} style={{ marginTop: 16, padding: '10px 20px', borderRadius: 12, background: '#0071E3', color: '#fff', border: 'none', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
+                <button onClick={() => navigate('/clients/new')} className="btn-primary" style={{ marginTop: 16 }}>
                   Kunde anlegen
                 </button>
               )}
             </div>
           ) : (
-            <div style={{ background: c.card, borderRadius: 16, overflow: 'hidden', border: `1px solid ${c.borderSubtle}` }}>
-              {filtered.map((c, idx) => (
+            <div style={{ ...cardStyle, padding: 0, overflow: 'hidden' }}>
+              {filtered.map((cl, idx) => (
                 <div
-                  key={c.id}
-                  onClick={() => navigate(`/clients/${c.id}`)}
+                  key={cl.id}
+                  onClick={() => navigate(`/clients/${cl.id}`)}
                   style={{
-                    display: 'flex', alignItems: 'center', padding: '14px 16px', cursor: 'pointer',
-                    borderBottom: idx < filtered.length - 1 ? '1px solid rgba(0,0,0,0.05)' : 'none',
+                    display: 'flex', alignItems: 'center', padding: '12px 16px', cursor: 'pointer',
+                    borderBottom: idx < filtered.length - 1 ? `0.5px solid ${c.borderSubtle}` : 'none',
                   }}
                 >
-                  <ClientAvatar name={c.company_name} />
+                  <ClientAvatar name={cl.company_name} />
                   <div style={{ flex: 1, minWidth: 0, marginLeft: 12 }}>
-                    <p style={{ fontSize: 15, fontWeight: 600, color: c.text, margin: '0 0 3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {c.company_name}
+                    <p style={{ fontSize: 15, fontWeight: 500, color: c.text, margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', letterSpacing: '-0.009em' }}>
+                      {cl.company_name}
                     </p>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 10px' }}>
-                      {c.contact_person && (
-                        <span style={{ fontSize: 12, color: c.textSecondary }}>{c.contact_person}</span>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2px 8px' }}>
+                      {cl.contact_person && (
+                        <span style={{ fontSize: 12, color: c.textSecondary }}>{cl.contact_person}</span>
                       )}
-                      {c.city && (
-                        <span style={{ fontSize: 12, color: c.textSecondary }}>{c.city}</span>
+                      {cl.city && (
+                        <span style={{ fontSize: 12, color: c.textTertiary }}>{cl.city}</span>
                       )}
                     </div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, marginLeft: 8 }}>
-                    {c.phone && (
+                    {cl.phone && (
                       <a
-                        href={`tel:${c.phone}`}
+                        href={`tel:${cl.phone}`}
                         onClick={e => e.stopPropagation()}
-                        style={{ width: 34, height: 34, borderRadius: 10, background: '#F2F2F7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+                        style={{
+                          width: 32, height: 32, borderRadius: 8,
+                          background: c.cardSecondary,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}
                       >
-                        <Phone size={15} color="#636366" />
+                        <Phone size={14} color={c.textTertiary} />
                       </a>
                     )}
-                    <ChevronRight size={16} color="#C7C7CC" />
+                    <ChevronRight size={14} color={c.border} strokeWidth={2} />
                   </div>
                 </div>
               ))}
@@ -273,7 +277,6 @@ export default function Clients() {
 
         {ConfirmDialogNode}
 
-        {/* Modal */}
         <Modal
           open={!!modal}
           onClose={closeModal}
@@ -288,7 +291,7 @@ export default function Clients() {
               disabled={createMutation.isPending || updateMutation.isPending}
               className="btn-primary"
             >
-              {modal === 'add' ? 'Kunden anlegen' : 'Änderungen speichern'}
+              {modal === 'add' ? 'Kunden anlegen' : 'Speichern'}
             </button>
           </div>
         </Modal>
@@ -298,41 +301,44 @@ export default function Clients() {
 
   // ── Desktop layout ─────────────────────────────────────────────
   return (
-    <div className="p-8 animate-fade-in">
+    <div className="animate-fade-in" style={{ padding: '28px 32px' }}>
 
-      {/* Header */}
       <div className="page-header">
         <div>
           <h1 className="page-title">Kunden</h1>
           <p className="page-subtitle">{clients.length} {clients.length === 1 ? 'Kunde' : 'Kunden'}</p>
         </div>
         <button onClick={() => navigate('/clients/new')} className="btn-primary">
-          <Plus size={15} /> Kunden anlegen
+          <Plus size={15} strokeWidth={2} /> Kunden anlegen
         </button>
       </div>
 
-      {/* Search */}
       <div className="relative mb-5 max-w-xs">
-        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+        <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: c.textTertiary }} />
         <input
-          className="input pl-9"
-          placeholder="Suchen…"
+          className="input"
+          style={{ paddingLeft: 36 }}
+          placeholder="Suchen..."
           value={search}
           onChange={e => setSearch(e.target.value)}
         />
       </div>
 
-      {/* List */}
       {filtered.length === 0 ? (
-        <div className="card text-center py-16">
-          <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-            <Building2 size={20} className="text-gray-400" />
+        <div style={{ ...cardStyle, padding: '48px 24px', textAlign: 'center' }}>
+          <div style={{
+            width: 44, height: 44, borderRadius: '50%',
+            background: c.cardSecondary,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            margin: '0 auto 12px',
+          }}>
+            <Building2 size={20} color={c.textTertiary} />
           </div>
-          <p className="text-sm font-medium text-gray-700 mb-1">
+          <p style={{ fontSize: 15, fontWeight: 600, color: c.text, marginBottom: 4 }}>
             {search ? 'Keine Kunden gefunden' : 'Noch keine Kunden'}
           </p>
-          <p className="text-xs text-gray-400 mb-5">
-            {search ? `Keine Treffer für „${search}"` : 'Legen Sie jetzt Ihren ersten Kunden an.'}
+          <p style={{ fontSize: 13, color: c.textSecondary, marginBottom: 16 }}>
+            {search ? `Keine Treffer für "${search}"` : 'Legen Sie jetzt Ihren ersten Kunden an.'}
           </p>
           {!search && (
             <button onClick={() => navigate('/clients/new')} className="btn-primary mx-auto">
@@ -341,10 +347,10 @@ export default function Clients() {
           )}
         </div>
       ) : (
-        <div className="card p-0 overflow-hidden">
+        <div style={{ ...cardStyle, padding: 0, overflow: 'hidden' }}>
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-100 bg-gray-50/50">
+              <tr style={{ borderBottom: `0.5px solid ${c.borderSubtle}` }}>
                 <th className="table-header-cell pl-5 w-full">Unternehmen</th>
                 <th className="table-header-cell hidden sm:table-cell">Ansprechpartner</th>
                 <th className="table-header-cell hidden md:table-cell">E-Mail</th>
@@ -354,65 +360,91 @@ export default function Clients() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map(c => (
+              {filtered.map(cl => (
                 <tr
-                  key={c.id}
-                  onClick={() => navigate(`/clients/${c.id}`)}
-                  className="group table-row border-b border-gray-50 last:border-0"
+                  key={cl.id}
+                  onClick={() => navigate(`/clients/${cl.id}`)}
+                  className="group"
+                  style={{
+                    borderBottom: `0.5px solid ${c.borderSubtle}`,
+                    cursor: 'pointer',
+                    transition: 'background 0.12s cubic-bezier(0.22,1,0.36,1)',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = c.blueLight}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                 >
-                  {/* Company with avatar */}
                   <td className="table-cell pl-5">
                     <div className="flex items-center gap-3">
-                      <ClientAvatar name={c.company_name} />
+                      <ClientAvatar name={cl.company_name} />
                       <div className="min-w-0">
-                        <p className="font-medium text-gray-900 truncate group-hover:text-gray-700 transition-colors">
-                          {c.company_name}
+                        <p style={{ fontSize: 14, fontWeight: 500, color: c.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {cl.company_name}
                         </p>
-                        {c.contact_person && (
-                          <p className="text-xs text-gray-400 truncate sm:hidden">{c.contact_person}</p>
+                        {cl.contact_person && (
+                          <p className="sm:hidden" style={{ fontSize: 12, color: c.textTertiary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cl.contact_person}</p>
                         )}
                       </div>
                     </div>
                   </td>
-                  <td className="table-cell text-gray-500 hidden sm:table-cell">
-                    {c.contact_person || <span className="text-gray-300">—</span>}
+                  <td className="table-cell hidden sm:table-cell" style={{ color: c.textSecondary, fontSize: 13 }}>
+                    {cl.contact_person || <span style={{ color: c.border }}>—</span>}
                   </td>
                   <td className="table-cell hidden md:table-cell">
-                    {c.email
-                      ? <a href={`mailto:${c.email}`} onClick={e => e.stopPropagation()} className="text-gray-500 hover:text-gray-900 hover:underline transition-colors">{c.email}</a>
-                      : <span className="text-gray-300">—</span>
+                    {cl.email
+                      ? <a href={`mailto:${cl.email}`} onClick={e => e.stopPropagation()} style={{ color: c.textSecondary, fontSize: 13, textDecoration: 'none' }}>{cl.email}</a>
+                      : <span style={{ color: c.border }}>—</span>
                     }
                   </td>
-                  <td className="table-cell text-gray-500 hidden lg:table-cell">
-                    {[c.address, c.postal_code, c.city].filter(Boolean).join(', ') || <span className="text-gray-300">—</span>}
+                  <td className="table-cell hidden lg:table-cell" style={{ color: c.textSecondary, fontSize: 13 }}>
+                    {[cl.address, cl.postal_code, cl.city].filter(Boolean).join(', ') || <span style={{ color: c.border }}>—</span>}
                   </td>
-                  <td className="table-cell text-gray-400 font-mono text-xs hidden xl:table-cell">
-                    {c.vat_id || <span className="text-gray-300">—</span>}
+                  <td className="table-cell hidden xl:table-cell" style={{ color: c.textTertiary, fontFamily: 'monospace', fontSize: 12 }}>
+                    {cl.vat_id || <span style={{ color: c.border }}>—</span>}
                   </td>
-                  {/* Actions — only visible on hover */}
                   <td className="table-cell pr-4">
                     <div
                       className="flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
                       onClick={e => e.stopPropagation()}
                     >
                       <button
-                        onClick={e => { e.stopPropagation(); openEdit(c); }}
+                        onClick={e => { e.stopPropagation(); openEdit(cl); }}
                         title="Bearbeiten"
-                        className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                        style={{
+                          padding: 6, borderRadius: 6, border: 'none',
+                          background: 'transparent', cursor: 'pointer',
+                          color: c.textTertiary,
+                          transition: 'background 0.12s, color 0.12s',
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.background = c.cardSecondary; e.currentTarget.style.color = c.text; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = c.textTertiary; }}
                       >
                         <Pencil size={13} />
                       </button>
                       <button
-                        onClick={e => handleDelete(e, c)}
+                        onClick={e => handleDelete(e, cl)}
                         title="Löschen"
-                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                        style={{
+                          padding: 6, borderRadius: 6, border: 'none',
+                          background: 'transparent', cursor: 'pointer',
+                          color: c.textTertiary,
+                          transition: 'background 0.12s, color 0.12s',
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.background = c.redLight; e.currentTarget.style.color = c.red; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = c.textTertiary; }}
                       >
                         <Trash2 size={13} />
                       </button>
                       <button
-                        onClick={() => navigate(`/clients/${c.id}`)}
+                        onClick={() => navigate(`/clients/${cl.id}`)}
                         title="Details"
-                        className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                        style={{
+                          padding: 6, borderRadius: 6, border: 'none',
+                          background: 'transparent', cursor: 'pointer',
+                          color: c.textTertiary,
+                          transition: 'background 0.12s, color 0.12s',
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.background = c.cardSecondary; e.currentTarget.style.color = c.text; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = c.textTertiary; }}
                       >
                         <ArrowRight size={13} />
                       </button>
@@ -427,7 +459,6 @@ export default function Clients() {
 
       {ConfirmDialogNode}
 
-      {/* Modal */}
       <Modal
         open={!!modal}
         onClose={closeModal}
@@ -442,7 +473,7 @@ export default function Clients() {
             disabled={createMutation.isPending || updateMutation.isPending}
             className="btn-primary"
           >
-            {modal === 'add' ? 'Kunden anlegen' : 'Änderungen speichern'}
+            {modal === 'add' ? 'Kunden anlegen' : 'Speichern'}
           </button>
         </div>
       </Modal>

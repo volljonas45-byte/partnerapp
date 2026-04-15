@@ -303,7 +303,7 @@ function PinScreen({ brandColor, brandName, onSubmit, error }) {
       <div className="w-full max-w-sm bg-white rounded-2xl shadow-sm border border-gray-200 p-8 text-center">
         <div
           className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4"
-          style={{ backgroundColor: brandColor || '#111827' }}
+          style={{ backgroundColor: brandColor || 'var(--color-text)' }}
         >
           <Lock size={20} className="text-white" />
         </div>
@@ -322,7 +322,7 @@ function PinScreen({ brandColor, brandName, onSubmit, error }) {
           <button
             type="submit"
             className="w-full py-3 rounded-xl text-sm font-medium text-white transition-opacity hover:opacity-90"
-            style={{ backgroundColor: brandColor || '#111827' }}
+            style={{ backgroundColor: brandColor || 'var(--color-text)' }}
           >
             Bestätigen
           </button>
@@ -340,7 +340,7 @@ function CompletionScreen({ brandColor, brandName }) {
       <div className="w-full max-w-sm text-center">
         <div
           className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6"
-          style={{ backgroundColor: brandColor || '#111827' }}
+          style={{ backgroundColor: brandColor || 'var(--color-text)' }}
         >
           <Check size={28} className="text-white" strokeWidth={2.5} />
         </div>
@@ -438,7 +438,7 @@ export default function OnboardingClient() {
   }
 
   const { steps = [], brand_color, brand_name, brand_logo } = data;
-  const brandColor = brand_color || '#111827';
+  const brandColor = brand_color || 'var(--color-text)';
 
   if (completed || data.status === 'completed') {
     return <CompletionScreen brandColor={brandColor} brandName={brand_name} />;

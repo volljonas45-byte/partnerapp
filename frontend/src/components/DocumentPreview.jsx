@@ -19,7 +19,7 @@ const A4_H = 842; // pt / px — DIN A4 height
 
 export default function DocumentPreview({ type = 'invoice', form = {}, clients = [], settings = {}, scale = 0.64 }) {
   const client  = clients.find(c => String(c.id) === String(form.clientId)) || null;
-  const primary = settings.primary_color || '#111827';
+  const primary = settings.primary_color || 'var(--color-text)';
 
   const items    = form.items || [];
   const pv = v => parseFloat(String(v).replace(',', '.')) || 0;
@@ -31,7 +31,7 @@ export default function DocumentPreview({ type = 'invoice', form = {}, clients =
 
   const CYCLE_ORDER  = ['once', 'yearly', 'monthly'];
   const CYCLE_LABELS = { once: 'Einmalige Leistungen', yearly: 'Jährliche Kosten', monthly: 'Monatliche Kosten' };
-  const CYCLE_BADGE  = { once: null, yearly: { bg: '#EBF4FF', color: '#0071E3', text: 'Jährlich' }, monthly: { bg: '#F3EEFF', color: '#7C3AED', text: 'Monatlich' } };
+  const CYCLE_BADGE  = { once: null, yearly: { bg: '#EBF4FF', color: 'var(--color-blue)', text: 'Jährlich' }, monthly: { bg: '#F3EEFF', color: '#7C3AED', text: 'Monatlich' } };
   const hasMixed = items.some(i => (i.billing_cycle || 'once') !== 'once');
   const grouped  = hasMixed
     ? CYCLE_ORDER.map(c => ({ cycle: c, rows: items.filter(i => (i.billing_cycle || 'once') === c) })).filter(g => g.rows.length > 0)
@@ -46,9 +46,9 @@ export default function DocumentPreview({ type = 'invoice', form = {}, clients =
     : 'RECHNUNG';
 
   // ── styles ──────────────────────────────────────────────────────────────────
-  const lbl  = { fontSize: 7.5, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 };
-  const meta = { fontSize: 8.5, color: '#4b5563', lineHeight: 1.6 };
-  const bld  = { fontWeight: 600, color: '#111827' };
+  const lbl  = { fontSize: 7.5, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 };
+  const meta = { fontSize: 8.5, color: 'var(--color-text-secondary)', lineHeight: 1.6 };
+  const bld  = { fontWeight: 600, color: 'var(--color-text)' };
 
   return (
     // `zoom` scales the element AND its layout box — no wrapper-width tricks needed
@@ -58,7 +58,7 @@ export default function DocumentPreview({ type = 'invoice', form = {}, clients =
       zoom: scale,
       backgroundColor: '#ffffff',
       fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
-      color: '#1f2937',
+      color: 'var(--color-text)',
       padding: '44px 44px 40px',
       lineHeight: 1.4,
       boxShadow: '0 4px 28px rgba(0,0,0,0.14)',
@@ -79,7 +79,7 @@ export default function DocumentPreview({ type = 'invoice', form = {}, clients =
         </div>
         <div style={{ ...meta, textAlign: 'right', fontSize: 8 }}>
           {settings.logo_base64 && settings.company_name && (
-            <div style={{ fontWeight: 600, color: '#374151', fontSize: 9, marginBottom: 2 }}>
+            <div style={{ fontWeight: 600, color: 'var(--color-text-secondary)', fontSize: 9, marginBottom: 2 }}>
               {settings.company_name}
             </div>
           )}
@@ -87,7 +87,7 @@ export default function DocumentPreview({ type = 'invoice', form = {}, clients =
           {(settings.postal_code || settings.city) && (
             <div>{[settings.postal_code, settings.city].filter(Boolean).join(' ')}</div>
           )}
-          {settings.email && <div style={{ color: '#9ca3af' }}>{settings.email}</div>}
+          {settings.email && <div style={{ color: 'var(--color-text-tertiary)' }}>{settings.email}</div>}
         </div>
       </div>
 
@@ -109,7 +109,7 @@ export default function DocumentPreview({ type = 'invoice', form = {}, clients =
               {client.country && <div>{client.country}</div>}
             </>
           ) : (
-            <div style={{ color: '#d1d5db', fontStyle: 'italic', fontSize: 8 }}>Kein Kunde ausgewählt</div>
+            <div style={{ color: 'var(--color-border)', fontStyle: 'italic', fontSize: 8 }}>Kein Kunde ausgewählt</div>
           )}
         </div>
 
@@ -118,17 +118,17 @@ export default function DocumentPreview({ type = 'invoice', form = {}, clients =
             {docTitle}
           </div>
           <div>
-            <span style={{ color: '#9ca3af' }}>Datum: </span>
+            <span style={{ color: 'var(--color-text-tertiary)' }}>Datum: </span>
             <span style={bld}>{formatDate(form.issueDate || form.issue_date || '') || '—'}</span>
           </div>
           {type === 'invoice' ? (
             <div>
-              <span style={{ color: '#9ca3af' }}>Fällig: </span>
+              <span style={{ color: 'var(--color-text-tertiary)' }}>Fällig: </span>
               <span style={bld}>{formatDate(form.dueDate || form.due_date || '') || '—'}</span>
             </div>
           ) : (
             <div>
-              <span style={{ color: '#9ca3af' }}>Gültig bis: </span>
+              <span style={{ color: 'var(--color-text-tertiary)' }}>Gültig bis: </span>
               <span style={bld}>{formatDate(form.validUntil || form.valid_until || '') || '—'}</span>
             </div>
           )}
@@ -138,7 +138,7 @@ export default function DocumentPreview({ type = 'invoice', form = {}, clients =
       {/* ── ITEMS TABLE ── */}
       <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 14, fontSize: 8.5 }}>
         <thead>
-          <tr style={{ backgroundColor: '#f9fafb', borderBottom: '1.5px solid #e5e7eb' }}>
+          <tr style={{ backgroundColor: 'var(--color-card-secondary)', borderBottom: '1.5px solid #e5e7eb' }}>
             {[
               { h: 'Leistung', align: 'left',  w: undefined },
               { h: 'Menge',    align: 'right', w: 48 },
@@ -148,7 +148,7 @@ export default function DocumentPreview({ type = 'invoice', form = {}, clients =
             ].map(({ h, align, w }) => (
               <th key={h} style={{
                 padding: '6px 8px', textAlign: align, fontWeight: 600,
-                color: '#9ca3af', fontSize: 7, textTransform: 'uppercase',
+                color: 'var(--color-text-tertiary)', fontSize: 7, textTransform: 'uppercase',
                 letterSpacing: '0.05em', width: w,
               }}>
                 {h}
@@ -159,7 +159,7 @@ export default function DocumentPreview({ type = 'invoice', form = {}, clients =
         <tbody>
           {items.length === 0 ? (
             <tr>
-              <td colSpan={5} style={{ padding: '12px 8px', color: '#d1d5db', fontStyle: 'italic', fontSize: 8 }}>
+              <td colSpan={5} style={{ padding: '12px 8px', color: 'var(--color-border)', fontStyle: 'italic', fontSize: 8 }}>
                 Noch keine Positionen
               </td>
             </tr>
@@ -168,7 +168,7 @@ export default function DocumentPreview({ type = 'invoice', form = {}, clients =
             hasMixed && (
               <tr key={`hdr-${cycle}`}>
                 <td colSpan={5} style={{ padding: '5px 8px', background: '#F0F6FF', borderTop: '1px solid #D0E4FF', borderBottom: '1px solid #D0E4FF' }}>
-                  <span style={{ fontSize: 7.5, fontWeight: 700, color: '#0071E3', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  <span style={{ fontSize: 7.5, fontWeight: 700, color: 'var(--color-blue)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                     {CYCLE_LABELS[cycle]}
                   </span>
                 </td>
@@ -176,10 +176,10 @@ export default function DocumentPreview({ type = 'invoice', form = {}, clients =
             ),
             // Item rows
             ...rows.map((item, idx) => (
-              <tr key={`${cycle}-${idx}`} style={{ borderBottom: '1px solid #f3f4f6', background: idx % 2 === 1 ? '#fafafa' : 'transparent' }}>
-                <td style={{ padding: '7px 8px', color: '#1f2937' }}>
+              <tr key={`${cycle}-${idx}`} style={{ borderBottom: '1px solid #f3f4f6', background: idx % 2 === 1 ? 'var(--color-card-secondary)' : 'transparent' }}>
+                <td style={{ padding: '7px 8px', color: 'var(--color-text)' }}>
                   <div style={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: 5 }}>
-                    {item.title || <span style={{ color: '#d1d5db' }}>—</span>}
+                    {item.title || <span style={{ color: 'var(--color-border)' }}>—</span>}
                     {!hasMixed && CYCLE_BADGE[item.billing_cycle || 'once'] && (
                       <span style={{ fontSize: 6.5, fontWeight: 600, padding: '1px 5px', borderRadius: 99, ...CYCLE_BADGE[item.billing_cycle] }}>
                         {CYCLE_BADGE[item.billing_cycle].text}
@@ -187,12 +187,12 @@ export default function DocumentPreview({ type = 'invoice', form = {}, clients =
                     )}
                   </div>
                   {item.title && item.description && (
-                    <div style={{ fontSize: 7.5, color: '#9ca3af', marginTop: 2 }}>{item.description}</div>
+                    <div style={{ fontSize: 7.5, color: 'var(--color-text-tertiary)', marginTop: 2 }}>{item.description}</div>
                   )}
                 </td>
-                <td style={{ padding: '7px 8px', textAlign: 'right', color: '#6b7280' }}>{pv(item.quantity) || 1}</td>
-                <td style={{ padding: '7px 8px', textAlign: 'right', color: '#6b7280' }}>{formatCurrency(pv(item.unit_price))}</td>
-                <td style={{ padding: '7px 8px', textAlign: 'right', color: '#6b7280' }}>
+                <td style={{ padding: '7px 8px', textAlign: 'right', color: 'var(--color-text-tertiary)' }}>{pv(item.quantity) || 1}</td>
+                <td style={{ padding: '7px 8px', textAlign: 'right', color: 'var(--color-text-tertiary)' }}>{formatCurrency(pv(item.unit_price))}</td>
+                <td style={{ padding: '7px 8px', textAlign: 'right', color: 'var(--color-text-tertiary)' }}>
                   {form.reverseCharge ? '—' : `${pv(item.tax_rate) || 0} %`}
                 </td>
                 <td style={{ padding: '7px 8px', textAlign: 'right', fontWeight: 500 }}>
@@ -207,11 +207,11 @@ export default function DocumentPreview({ type = 'invoice', form = {}, clients =
       {/* ── KOSTENÜBERBLICK (nur bei gemischten Zyklen) ── */}
       {hasMixed && (
         <div style={{ margin: '10px 0', padding: '10px 14px', background: '#F0F6FF', border: '1px solid #C5DCFF', borderRadius: 6 }}>
-          <div style={{ fontSize: 7.5, fontWeight: 700, color: '#0071E3', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>Kostenüberblick</div>
+          <div style={{ fontSize: 7.5, fontWeight: 700, color: 'var(--color-blue)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>Kostenüberblick</div>
           {CYCLE_ORDER.filter(c => cycleSums[c]).map(c => (
             <div key={c} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 8.5, marginBottom: 3 }}>
-              <span style={{ color: '#4b5563' }}>{c === 'once' ? 'Einmalig' : c === 'yearly' ? 'Jährlich' : 'Monatlich'}</span>
-              <span style={{ fontWeight: 600, color: '#111827' }}>{formatCurrency(cycleSums[c])}</span>
+              <span style={{ color: 'var(--color-text-secondary)' }}>{c === 'once' ? 'Einmalig' : c === 'yearly' ? 'Jährlich' : 'Monatlich'}</span>
+              <span style={{ fontWeight: 600, color: 'var(--color-text)' }}>{formatCurrency(cycleSums[c])}</span>
             </div>
           ))}
         </div>
@@ -220,10 +220,10 @@ export default function DocumentPreview({ type = 'invoice', form = {}, clients =
       {/* ── TOTALS ── */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
         <div style={{ width: 210, fontSize: 8.5 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', color: '#6b7280' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', color: 'var(--color-text-tertiary)' }}>
             <span>Nettobetrag</span><span>{formatCurrency(subtotal)}</span>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', color: '#6b7280' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', color: 'var(--color-text-tertiary)' }}>
             <span>Umsatzsteuer</span>
             <span>{form.reverseCharge ? '—' : formatCurrency(taxTotal)}</span>
           </div>
@@ -232,7 +232,7 @@ export default function DocumentPreview({ type = 'invoice', form = {}, clients =
             padding: '7px 0 4px', borderTop: '1.5px solid #e5e7eb',
             fontWeight: 700, fontSize: 10, marginTop: 4,
           }}>
-            <span style={{ color: '#111827' }}>Gesamt</span>
+            <span style={{ color: 'var(--color-text)' }}>Gesamt</span>
             <span style={{ color: primary }}>{formatCurrency(total)}</span>
           </div>
         </div>
@@ -240,18 +240,18 @@ export default function DocumentPreview({ type = 'invoice', form = {}, clients =
 
       {/* ── NOTES ── */}
       {form.notes && (
-        <div style={{ fontSize: 8, color: '#6b7280', borderTop: '1px solid #f3f4f6', paddingTop: 12, marginTop: 4 }}>
+        <div style={{ fontSize: 8, color: 'var(--color-text-tertiary)', borderTop: '1px solid #f3f4f6', paddingTop: 12, marginTop: 4 }}>
           {form.notes}
         </div>
       )}
 
       {/* ── LEGAL NOTICES ── */}
       {settings.kleinunternehmer ? (
-        <div style={{ fontSize: 7.5, color: '#9ca3af', marginTop: 12 }}>
+        <div style={{ fontSize: 7.5, color: 'var(--color-text-tertiary)', marginTop: 12 }}>
           Gemäß §19 UStG wird keine Umsatzsteuer berechnet.
         </div>
       ) : form.reverseCharge ? (
-        <div style={{ fontSize: 7.5, color: '#9ca3af', marginTop: 12 }}>
+        <div style={{ fontSize: 7.5, color: 'var(--color-text-tertiary)', marginTop: 12 }}>
           Steuerschuldnerschaft des Leistungsempfängers (§13b UStG)
         </div>
       ) : null}
@@ -260,7 +260,7 @@ export default function DocumentPreview({ type = 'invoice', form = {}, clients =
       {(settings.bank_name || settings.iban || settings.footer_text) && (
         <div style={{
           marginTop: 28, paddingTop: 10, borderTop: '1px solid #e5e7eb',
-          fontSize: 7.5, color: '#9ca3af', display: 'flex', justifyContent: 'space-between', gap: 8,
+          fontSize: 7.5, color: 'var(--color-text-tertiary)', display: 'flex', justifyContent: 'space-between', gap: 8,
         }}>
           <div>
             {settings.bank_name && <span>{settings.bank_name}{settings.iban ? ' · ' : ''}</span>}

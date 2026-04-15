@@ -9,6 +9,7 @@ import { projectsApi } from '../api/projects';
 import { clientsApi } from '../api/clients';
 import { PHASE_ORDER, PHASES } from '../components/workflow/workflowConfig';
 import { formatDate, isPast } from '../utils/formatters';
+import { useTheme } from '../context/ThemeContext';
 
 function computeHealth(project) {
   if (project.status === 'completed') return 'good';
@@ -33,15 +34,6 @@ function HealthDot({ project }) {
   return <span title={title} className={`inline-block w-2 h-2 rounded-full ${dot}`} />;
 }
 
-const STATUSES = {
-  planned:            { label: 'Geplant',          dot: 'bg-gray-400',    chip: 'bg-gray-100 text-gray-600'     },
-  active:             { label: 'Aktiv',             dot: 'bg-blue-500',    chip: 'bg-blue-50 text-blue-700'      },
-  waiting_for_client: { label: 'Warten auf Kunde',  dot: 'bg-amber-400',   chip: 'bg-amber-50 text-amber-700'    },
-  feedback:           { label: 'Feedback',          dot: 'bg-orange-400',  chip: 'bg-orange-50 text-orange-700'  },
-  review:             { label: 'Review',            dot: 'bg-violet-400',  chip: 'bg-violet-50 text-violet-700'  },
-  completed:          { label: 'Abgeschlossen',     dot: 'bg-emerald-500', chip: 'bg-emerald-50 text-emerald-700'},
-  waiting:            { label: 'Warten auf Kunde',  dot: 'bg-amber-400',   chip: 'bg-amber-50 text-amber-700'    },
-};
 const STATUS_ORDER = ['planned', 'active', 'feedback', 'review', 'completed', 'waiting_for_client', 'waiting'];
 const STATUS_SORT_WEIGHT = { waiting_for_client: 10, waiting: 11 };
 
@@ -65,13 +57,28 @@ function normalizeStatus(s) {
   return s === 'waiting' ? 'waiting_for_client' : s;
 }
 
+function useStatuses() {
+  const { c } = useTheme();
+  return useMemo(() => ({
+    planned:            { label: 'Geplant',          dot: 'bg-slate-400',   chipStyle: { background: c.cardSecondary, color: c.textTertiary } },
+    active:             { label: 'Aktiv',             dot: 'bg-blue-500',    chipStyle: { background: c.blueLight, color: c.blue }            },
+    waiting_for_client: { label: 'Warten auf Kunde',  dot: 'bg-amber-400',   chipStyle: { background: c.orangeLight, color: c.orange }        },
+    feedback:           { label: 'Feedback',          dot: 'bg-orange-400',  chipStyle: { background: c.orangeLight, color: c.orange }        },
+    review:             { label: 'Review',            dot: 'bg-violet-400',  chipStyle: { background: c.purpleLight, color: c.purple }        },
+    completed:          { label: 'Abgeschlossen',     dot: 'bg-emerald-500', chipStyle: { background: c.greenLight, color: c.green }          },
+    waiting:            { label: 'Warten auf Kunde',  dot: 'bg-amber-400',   chipStyle: { background: c.orangeLight, color: c.orange }        },
+  }), [c]);
+}
+
 function StatusChip({ status, onClick }) {
+  const STATUSES = useStatuses();
   const s = normalizeStatus(status);
   const cfg = STATUSES[s] || STATUSES.planned;
   return (
     <button
       onClick={onClick}
-      className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${cfg.chip} hover:opacity-80 transition-opacity`}
+      className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium hover:opacity-80 transition-opacity"
+      style={cfg.chipStyle}
     >
       <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
       {cfg.label}
@@ -81,9 +88,10 @@ function StatusChip({ status, onClick }) {
 }
 
 function TypeBadge({ type }) {
+  const { c } = useTheme();
   if (!type) return null;
   const cfg = TYPES[type];
-  if (!cfg) return <span className="text-xs text-gray-400">{type}</span>;
+  if (!cfg) return <span className="text-xs" style={{ color: c.textTertiary }}>{type}</span>;
   return (
     <span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${cfg.cls}`}>
       {cfg.label}
@@ -92,6 +100,8 @@ function TypeBadge({ type }) {
 }
 
 function StatusDropdown({ current, onSelect, onClose, anchorRef }) {
+  const { c } = useTheme();
+  const STATUSES = useStatuses();
   const dropRef = useRef(null);
   const [pos, setPos] = useState({ top: 0, left: 0 });
 
@@ -116,8 +126,12 @@ function StatusDropdown({ current, onSelect, onClose, anchorRef }) {
   return (
     <div
       ref={dropRef}
-      style={{ position: 'fixed', top: pos.top, left: pos.left, zIndex: 9999 }}
-      className="w-48 bg-white rounded-lg shadow-lg border border-gray-100 py-1 text-sm"
+      style={{
+        position: 'fixed', top: pos.top, left: pos.left, zIndex: 9999,
+        background: c.card, borderRadius: 12, border: `0.5px solid ${c.borderSubtle}`,
+        boxShadow: c.shadow,
+      }}
+      className="w-48 py-1 text-sm"
     >
       {STATUS_ORDER.map(key => {
         const cfg = STATUSES[key];
@@ -126,11 +140,14 @@ function StatusDropdown({ current, onSelect, onClose, anchorRef }) {
           <button
             key={key}
             onClick={() => { onSelect(key); onClose(); }}
-            className={`w-full flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50 transition-colors ${isActive ? 'font-medium' : ''}`}
+            className="w-full flex items-center gap-2 px-3 py-1.5 transition-colors"
+            style={{ background: 'transparent', color: isActive ? c.text : c.textSecondary }}
+            onMouseEnter={e => e.currentTarget.style.background = c.cardHover}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
           >
             <span className={`w-2 h-2 rounded-full ${cfg.dot}`} />
-            <span className={isActive ? 'text-gray-900' : 'text-gray-600'}>{cfg.label}</span>
-            {isActive && <span className="ml-auto text-gray-400">✓</span>}
+            <span className={isActive ? 'font-medium' : ''}>{cfg.label}</span>
+            {isActive && <span className="ml-auto" style={{ color: c.textTertiary }}>&#10003;</span>}
           </button>
         );
       })}
@@ -139,6 +156,7 @@ function StatusDropdown({ current, onSelect, onClose, anchorRef }) {
 }
 
 function DeadlineCell({ project, onUpdate }) {
+  const { c } = useTheme();
   const [editing, setEditing] = useState(false);
 
   if (editing) {
@@ -147,7 +165,8 @@ function DeadlineCell({ project, onUpdate }) {
         type="date"
         autoFocus
         defaultValue={project.deadline ? project.deadline.slice(0, 10) : ''}
-        className="text-xs border border-gray-300 rounded px-1.5 py-0.5 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        className="text-xs rounded px-1.5 py-0.5 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        style={{ border: `0.5px solid ${c.border}`, background: c.inputBg, color: c.text }}
         onBlur={e => { onUpdate(project.id, { deadline: e.target.value || null }); setEditing(false); }}
         onKeyDown={e => { if (e.key === 'Escape') setEditing(false); }}
       />
@@ -157,15 +176,18 @@ function DeadlineCell({ project, onUpdate }) {
   return (
     <button
       onClick={() => setEditing(true)}
-      className="flex items-center gap-1.5 text-gray-500 hover:text-gray-800 transition-colors group"
+      className="flex items-center gap-1.5 transition-colors group"
+      style={{ color: c.textTertiary }}
+      onMouseEnter={e => e.currentTarget.style.color = c.text}
+      onMouseLeave={e => e.currentTarget.style.color = c.textTertiary}
     >
       {project.deadline ? (
         <>
-          <CalendarDays size={12} className="text-gray-400" />
+          <CalendarDays size={12} style={{ color: c.textTertiary }} />
           <span className="text-xs">{formatDate(project.deadline)}</span>
         </>
       ) : (
-        <span className="text-gray-300 text-xs group-hover:text-gray-400">—</span>
+        <span className="text-xs" style={{ color: c.borderSubtle }}>—</span>
       )}
     </button>
   );
@@ -194,40 +216,48 @@ function StatusCell({ project, onUpdate }) {
 }
 
 function KanbanCard({ project, onDragStart, onUpdate, navigate }) {
+  const { c } = useTheme();
   return (
     <div
       draggable
       onDragStart={e => onDragStart(e, project.id)}
       onClick={() => navigate(`/websites/${project.id}`)}
-      className="bg-white rounded-lg border border-gray-100 px-3 py-2.5 shadow-sm hover:shadow-md cursor-pointer transition-shadow group"
+      className="cursor-pointer transition-shadow group"
+      style={{
+        background: c.card, borderRadius: 12, border: `0.5px solid ${c.borderSubtle}`,
+        padding: '10px 12px', boxShadow: c.shadowSm,
+      }}
+      onMouseEnter={e => e.currentTarget.style.boxShadow = c.shadow}
+      onMouseLeave={e => e.currentTarget.style.boxShadow = c.shadowSm}
     >
       <div className="flex items-start justify-between gap-2 mb-1.5">
         <div className="flex items-start gap-1.5 min-w-0">
           <HealthDot project={project} />
-          <p className="text-sm font-medium text-gray-900 leading-snug line-clamp-2">{project.name}</p>
+          <p className="text-sm font-medium leading-snug line-clamp-2" style={{ color: c.text }}>{project.name}</p>
         </div>
         <button
           onClick={e => { e.stopPropagation(); navigate(`/websites/${project.id}`); }}
-          className="opacity-0 group-hover:opacity-100 p-0.5 text-gray-400 hover:text-gray-700 flex-shrink-0 transition-opacity"
+          className="opacity-0 group-hover:opacity-100 p-0.5 flex-shrink-0 transition-opacity"
+          style={{ color: c.textTertiary }}
         >
           <Eye size={13} />
         </button>
       </div>
 
-      <p className="text-xs text-gray-400 mb-1.5">
-        {project.client_name || <span className="text-gray-200">Kein Kunde</span>}
+      <p className="text-xs mb-1.5" style={{ color: c.textTertiary }}>
+        {project.client_name || <span style={{ color: c.borderSubtle }}>Kein Kunde</span>}
       </p>
 
       <div className="flex items-center gap-1.5 flex-wrap">
         {project.type && <TypeBadge type={project.type} />}
         {project.deadline && (
-          <span onClick={e => e.stopPropagation()} className="inline-flex items-center gap-1 text-xs text-gray-400">
+          <span onClick={e => e.stopPropagation()} className="inline-flex items-center gap-1 text-xs" style={{ color: c.textTertiary }}>
             <CalendarDays size={11} />
             {formatDate(project.deadline)}
           </span>
         )}
         {project.task_count > 0 && (
-          <span className="ml-auto text-xs text-gray-400">
+          <span className="ml-auto text-xs" style={{ color: c.textTertiary }}>
             {project.task_done_count}/{project.task_count}
           </span>
         )}
@@ -237,6 +267,7 @@ function KanbanCard({ project, onDragStart, onUpdate, navigate }) {
 }
 
 function CreateModal({ clients, onClose, onCreate, isPending }) {
+  const { c } = useTheme();
   const [name, setName]       = useState('');
   const [clientId, setClient] = useState('');
   const [type, setType]       = useState('');
@@ -254,18 +285,22 @@ function CreateModal({ clients, onClose, onCreate, isPending }) {
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6" onClick={e => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: c.overlayBg }} onClick={onClose}>
+      <div
+        className="w-full max-w-md mx-4 p-6"
+        style={{ background: c.card, borderRadius: 12, boxShadow: c.shadowLg }}
+        onClick={e => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-base font-semibold text-gray-900">Neue Website</h2>
-          <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600 rounded transition-colors">
+          <h2 className="text-base font-semibold" style={{ color: c.text }}>Neue Website</h2>
+          <button onClick={onClose} className="p-1 rounded transition-colors" style={{ color: c.textTertiary }}>
             <X size={16} />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">Name *</label>
+            <label className="block text-xs font-medium mb-1" style={{ color: c.textSecondary }}>Name *</label>
             <input
               autoFocus
               className="input w-full"
@@ -276,17 +311,17 @@ function CreateModal({ clients, onClose, onCreate, isPending }) {
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">Kunde</label>
+            <label className="block text-xs font-medium mb-1" style={{ color: c.textSecondary }}>Kunde</label>
             <select className="input w-full" value={clientId} onChange={e => setClient(e.target.value)}>
               <option value="">Kein Kunde</option>
-              {clients.map(c => (
-                <option key={c.id} value={c.id}>{c.company_name}</option>
+              {clients.map(cl => (
+                <option key={cl.id} value={cl.id}>{cl.company_name}</option>
               ))}
             </select>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">Typ</label>
+            <label className="block text-xs font-medium mb-1" style={{ color: c.textSecondary }}>Typ</label>
             <select className="input w-full" value={type} onChange={e => setType(e.target.value)}>
               <option value="">Kein Typ</option>
               {Object.entries(TYPES).map(([key, { label }]) => (
@@ -298,7 +333,7 @@ function CreateModal({ clients, onClose, onCreate, isPending }) {
           <div className="flex justify-end gap-2 pt-1">
             <button type="button" onClick={onClose} className="btn-secondary">Abbrechen</button>
             <button type="submit" disabled={!name.trim() || isPending} className="btn-primary">
-              {isPending ? 'Erstelle…' : 'Erstellen'}
+              {isPending ? 'Erstelle...' : 'Erstellen'}
             </button>
           </div>
         </form>
@@ -310,6 +345,8 @@ function CreateModal({ clients, onClose, onCreate, isPending }) {
 export default function Websites() {
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const { c } = useTheme();
+  const STATUSES = useStatuses();
 
   const [view, setView]               = useState('list');
   const [search, setSearch]           = useState('');
@@ -421,21 +458,31 @@ export default function Websites() {
       <div className="flex-shrink-0 px-8 pt-8 pb-4">
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">Websites</h1>
-            <p className="text-sm text-gray-400 mt-0.5">{projects.length} gesamt</p>
+            <h1 className="text-xl font-semibold" style={{ color: c.text }}>Websites</h1>
+            <p className="text-sm mt-0.5" style={{ color: c.textTertiary }}>{projects.length} gesamt</p>
           </div>
           <div className="flex items-center gap-2">
-            <div className="flex items-center bg-gray-100 rounded-lg p-0.5">
+            <div className="flex items-center rounded-lg p-0.5" style={{ background: c.cardSecondary }}>
               <button
                 onClick={() => setView('list')}
-                className={`p-1.5 rounded-md transition-colors ${view === 'list' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
+                className="p-1.5 rounded-md transition-colors"
+                style={view === 'list'
+                  ? { background: c.card, boxShadow: c.shadowSm, color: c.text }
+                  : { color: c.textTertiary }}
+                onMouseEnter={e => { if (view !== 'list') e.currentTarget.style.color = c.textSecondary; }}
+                onMouseLeave={e => { if (view !== 'list') e.currentTarget.style.color = c.textTertiary; }}
                 title="Listenansicht"
               >
                 <List size={15} />
               </button>
               <button
                 onClick={() => setView('kanban')}
-                className={`p-1.5 rounded-md transition-colors ${view === 'kanban' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
+                className="p-1.5 rounded-md transition-colors"
+                style={view === 'kanban'
+                  ? { background: c.card, boxShadow: c.shadowSm, color: c.text }
+                  : { color: c.textTertiary }}
+                onMouseEnter={e => { if (view !== 'kanban') e.currentTarget.style.color = c.textSecondary; }}
+                onMouseLeave={e => { if (view !== 'kanban') e.currentTarget.style.color = c.textTertiary; }}
                 title="Kanban"
               >
                 <LayoutGrid size={15} />
@@ -452,10 +499,10 @@ export default function Websites() {
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative">
-            <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: c.textTertiary }} />
             <input
               className="input pl-8 h-8 text-sm w-56"
-              placeholder="Suchen…"
+              placeholder="Suchen..."
               value={search}
               onChange={e => setSearch(e.target.value)}
             />
@@ -488,7 +535,10 @@ export default function Websites() {
           {(search || filterStatus || filterType || filterHosting) && (
             <button
               onClick={() => { setSearch(''); setFStatus(''); setFType(''); setFHosting(''); }}
-              className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 px-2 py-1 rounded hover:bg-gray-100 transition-colors"
+              className="flex items-center gap-1 text-xs px-2 py-1 rounded transition-colors"
+              style={{ color: c.textTertiary }}
+              onMouseEnter={e => { e.currentTarget.style.color = c.textSecondary; e.currentTarget.style.background = c.cardSecondary; }}
+              onMouseLeave={e => { e.currentTarget.style.color = c.textTertiary; e.currentTarget.style.background = 'transparent'; }}
             >
               <X size={12} /> Filter zurücksetzen
             </button>
@@ -500,8 +550,8 @@ export default function Websites() {
       {filtered.length === 0 ? (
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <Globe size={32} className="mx-auto text-gray-200 mb-3" />
-            <p className="text-sm text-gray-400">
+            <Globe size={32} className="mx-auto mb-3" style={{ color: c.borderSubtle }} />
+            <p className="text-sm" style={{ color: c.textTertiary }}>
               {search || filterStatus || filterType || filterHosting
                 ? 'Keine Websites gefunden.'
                 : 'Noch keine Websites.'}
@@ -518,15 +568,15 @@ export default function Websites() {
           <div className="card p-0 overflow-hidden">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-100 bg-gray-50/50">
+                <tr style={{ borderBottom: `0.5px solid ${c.borderSubtle}`, background: c.cardSecondary }}>
                   <th className="px-4 py-2.5 w-8" />
-                  <th className="px-5 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wide">Name</th>
-                  <th className="px-5 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wide">Kunde</th>
-                  <th className="px-5 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wide">Status</th>
-                  <th className="px-5 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wide">Typ</th>
-                  <th className="px-5 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wide">Deadline</th>
-                  <th className="px-5 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wide">Hoster</th>
-                  <th className="px-5 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wide">Aufgaben</th>
+                  <th className="px-5 py-2.5 text-left text-xs font-medium uppercase tracking-wide" style={{ color: c.textTertiary }}>Name</th>
+                  <th className="px-5 py-2.5 text-left text-xs font-medium uppercase tracking-wide" style={{ color: c.textTertiary }}>Kunde</th>
+                  <th className="px-5 py-2.5 text-left text-xs font-medium uppercase tracking-wide" style={{ color: c.textTertiary }}>Status</th>
+                  <th className="px-5 py-2.5 text-left text-xs font-medium uppercase tracking-wide" style={{ color: c.textTertiary }}>Typ</th>
+                  <th className="px-5 py-2.5 text-left text-xs font-medium uppercase tracking-wide" style={{ color: c.textTertiary }}>Deadline</th>
+                  <th className="px-5 py-2.5 text-left text-xs font-medium uppercase tracking-wide" style={{ color: c.textTertiary }}>Hoster</th>
+                  <th className="px-5 py-2.5 text-left text-xs font-medium uppercase tracking-wide" style={{ color: c.textTertiary }}>Aufgaben</th>
                   <th className="w-12" />
                 </tr>
               </thead>
@@ -535,24 +585,27 @@ export default function Websites() {
                   <tr
                     key={p.id}
                     onClick={() => navigate(`/websites/${p.id}`)}
-                    className="border-b border-gray-50 last:border-0 hover:bg-gray-50/60 cursor-pointer transition-colors"
+                    className="last:border-0 cursor-pointer transition-colors"
+                    style={{ borderBottom: `0.5px solid ${c.borderSubtle}` }}
+                    onMouseEnter={e => e.currentTarget.style.background = c.cardHover}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                   >
                     <td className="px-4 py-2.5 text-center"><HealthDot project={p} /></td>
-                    <td className="px-5 py-2.5 font-medium text-gray-900">{p.name}</td>
+                    <td className="px-5 py-2.5 font-medium" style={{ color: c.text }}>{p.name}</td>
                     <td className="px-5 py-2.5 text-xs" onClick={e => e.stopPropagation()}>
                       <select
                         value={p.client_id || ''}
                         onChange={e => handleUpdate(p.id, { client_id: e.target.value || null })}
                         style={{
                           border: 'none', background: 'transparent', fontSize: '12px',
-                          color: p.client_name ? '#374151' : '#D1D5DB',
+                          color: p.client_name ? c.textSecondary : c.borderSubtle,
                           cursor: 'pointer', outline: 'none', padding: '0',
                           maxWidth: '140px',
                         }}
                       >
                         <option value="">— Zuweisen</option>
-                        {clients.map(c => (
-                          <option key={c.id} value={c.id}>{c.company_name}</option>
+                        {clients.map(cl => (
+                          <option key={cl.id} value={cl.id}>{cl.company_name}</option>
                         ))}
                       </select>
                     </td>
@@ -565,8 +618,8 @@ export default function Websites() {
                           <span style={{
                             display: 'inline-flex', alignItems: 'center', gap: '5px',
                             padding: '2px 9px', borderRadius: '99px', fontSize: '11px', fontWeight: 600,
-                            background: isLast ? 'rgba(52,199,89,0.12)' : 'rgba(0,113,227,0.10)',
-                            color: isLast ? '#34C759' : '#0071E3',
+                            background: isLast ? c.greenLight : c.blueLight,
+                            color: isLast ? c.green : c.blue,
                           }}>
                             {cfg?.label || 'Demo'}
                           </span>
@@ -575,27 +628,27 @@ export default function Websites() {
                     </td>
                     <td className="px-5 py-2.5">
                       <TypeBadge type={p.type} />
-                      {!p.type && <span className="text-gray-300 text-xs">—</span>}
+                      {!p.type && <span className="text-xs" style={{ color: c.borderSubtle }}>—</span>}
                     </td>
                     <td className="px-5 py-2.5" onClick={e => e.stopPropagation()}>
                       <DeadlineCell project={p} onUpdate={handleUpdate} />
                     </td>
-                    <td className="px-5 py-2.5 text-xs text-gray-500">
-                      {p.hosting_provider ? (HOSTING_LABELS[p.hosting_provider] || p.hosting_provider) : <span className="text-gray-300">—</span>}
+                    <td className="px-5 py-2.5 text-xs" style={{ color: c.textTertiary }}>
+                      {p.hosting_provider ? (HOSTING_LABELS[p.hosting_provider] || p.hosting_provider) : <span style={{ color: c.borderSubtle }}>—</span>}
                     </td>
-                    <td className="px-5 py-2.5 text-xs text-gray-500">
+                    <td className="px-5 py-2.5 text-xs" style={{ color: c.textTertiary }}>
                       {(() => {
                         const phase = p.current_phase;
-                        if (!phase) return <span className="text-gray-300">—</span>;
+                        if (!phase) return <span style={{ color: c.borderSubtle }}>—</span>;
                         const idx = PHASE_ORDER.indexOf(phase);
                         const total = PHASE_ORDER.length;
                         const pct = Math.round(((idx + 1) / total) * 100);
                         return (
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <div style={{ width: '48px', height: '3px', background: '#F2F2F7', borderRadius: '2px' }}>
-                              <div style={{ width: `${pct}%`, height: '100%', background: phase === 'abgeschlossen' ? '#34C759' : '#0071E3', borderRadius: '2px' }} />
+                            <div style={{ width: '48px', height: '3px', background: c.cardSecondary, borderRadius: '2px' }}>
+                              <div style={{ width: `${pct}%`, height: '100%', background: phase === 'abgeschlossen' ? c.green : c.blue, borderRadius: '2px' }} />
                             </div>
-                            <span style={{ color: '#8E8E93', fontSize: '11px' }}>{idx + 1}/{total}</span>
+                            <span style={{ color: c.textTertiary, fontSize: '11px' }}>{idx + 1}/{total}</span>
                           </div>
                         );
                       })()}
@@ -603,7 +656,10 @@ export default function Websites() {
                     <td className="px-5 py-2.5" onClick={e => e.stopPropagation()}>
                       <button
                         onClick={() => navigate(`/websites/${p.id}`)}
-                        className="p-1 text-gray-300 hover:text-gray-600 rounded transition-colors"
+                        className="p-1 rounded transition-colors"
+                        style={{ color: c.borderSubtle }}
+                        onMouseEnter={e => e.currentTarget.style.color = c.textSecondary}
+                        onMouseLeave={e => e.currentTarget.style.color = c.borderSubtle}
                       >
                         <Eye size={14} />
                       </button>
@@ -629,10 +685,13 @@ export default function Websites() {
                 >
                   <div className="flex items-center gap-2 mb-2 px-1">
                     <span className={`w-2 h-2 rounded-full ${cfg.dot}`} />
-                    <span className="text-xs font-medium text-gray-700">{cfg.label}</span>
-                    <span className="ml-auto text-xs text-gray-400 bg-gray-100 rounded px-1.5 py-0.5">{cards.length}</span>
+                    <span className="text-xs font-medium" style={{ color: c.textSecondary }}>{cfg.label}</span>
+                    <span className="ml-auto text-xs rounded px-1.5 py-0.5" style={{ color: c.textTertiary, background: c.cardSecondary }}>{cards.length}</span>
                   </div>
-                  <div className="flex-1 rounded-xl bg-gray-50 border border-gray-100 p-2 flex flex-col gap-2 min-h-[120px]">
+                  <div
+                    className="flex-1 p-2 flex flex-col gap-2 min-h-[120px]"
+                    style={{ borderRadius: 12, background: c.cardSecondary, border: `0.5px solid ${c.borderSubtle}` }}
+                  >
                     {cards.map(p => (
                       <KanbanCard
                         key={p.id}
@@ -644,7 +703,7 @@ export default function Websites() {
                     ))}
                     {cards.length === 0 && (
                       <div className="flex-1 flex items-center justify-center">
-                        <p className="text-xs text-gray-300">Keine Websites</p>
+                        <p className="text-xs" style={{ color: c.borderSubtle }}>Keine Websites</p>
                       </div>
                     )}
                   </div>

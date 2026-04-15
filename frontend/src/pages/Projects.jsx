@@ -15,11 +15,11 @@ import ProjectTimerButton from '../components/ProjectTimerButton';
 // ── Status config ─────────────────────────────────────────────────────────────
 
 const STATUS_CONFIG = {
-  planned:            { label: 'Geplant',           color: '#86868B', bg: 'rgba(118,118,128,0.1)'  },
-  active:             { label: 'Aktiv',             color: '#0071E3', bg: 'rgba(0,113,227,0.1)'    },
+  planned:            { label: 'Geplant',           color: 'var(--color-text-secondary)', bg: 'rgba(118,118,128,0.1)'  },
+  active:             { label: 'Aktiv',             color: 'var(--color-blue)', bg: 'rgba(0,122,255,0.1)'    },
   completed:          { label: 'Abgeschlossen',     color: '#34C759', bg: 'rgba(52,199,89,0.1)'    },
   waiting_for_client: { label: 'Wartet auf Kunde',  color: '#FF9500', bg: 'rgba(255,149,0,0.1)'    },
-  deferred:           { label: 'Verschoben',        color: '#94A3B8', bg: 'rgba(148,163,184,0.1)'  },
+  deferred:           { label: 'Verschoben',        color: 'var(--color-text-tertiary)', bg: 'rgba(148,163,184,0.1)'  },
   on_hold:            { label: 'Pausiert',          color: '#FF9500', bg: 'rgba(255,149,0,0.1)'    },
 };
 
@@ -74,7 +74,7 @@ function Modal({ title, onClose, children }) {
           <button
             onClick={onClose}
             style={{
-              width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(0,0,0,0.07)',
+              width: '28px', height: '28px', borderRadius: '50%', background: 'var(--color-border-subtle)',
               border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}
           >
@@ -98,7 +98,7 @@ function CreateProjectModal({ onClose, onCreate, isPending }) {
 
   const inputStyle = {
     width: '100%', padding: '9px 12px', fontSize: '14px', color: c.text,
-    background: 'rgba(0,0,0,0.04)', border: '1.5px solid transparent',
+    background: 'var(--color-border-subtle)', border: '1.5px solid transparent',
     borderRadius: '10px', outline: 'none', boxSizing: 'border-box',
     letterSpacing: '-0.01em', transition: 'border-color 0.15s',
     fontFamily: 'inherit',
@@ -126,7 +126,7 @@ function CreateProjectModal({ onClose, onCreate, isPending }) {
             placeholder="z.B. Produktlaunch Q3"
             value={name}
             onChange={e => setName(e.target.value)}
-            onFocus={e => e.target.style.borderColor = '#0071E3'}
+            onFocus={e => e.target.style.borderColor = 'var(--color-blue)'}
             onBlur={e => e.target.style.borderColor = 'transparent'}
           />
         </div>
@@ -138,7 +138,7 @@ function CreateProjectModal({ onClose, onCreate, isPending }) {
             placeholder="Was ist das Ziel dieses Projekts?"
             value={description}
             onChange={e => setDesc(e.target.value)}
-            onFocus={e => e.target.style.borderColor = '#0071E3'}
+            onFocus={e => e.target.style.borderColor = 'var(--color-blue)'}
             onBlur={e => e.target.style.borderColor = 'transparent'}
           />
         </div>
@@ -149,7 +149,7 @@ function CreateProjectModal({ onClose, onCreate, isPending }) {
               style={{ ...inputStyle, appearance: 'none', cursor: 'pointer' }}
               value={status}
               onChange={e => setStatus(e.target.value)}
-              onFocus={e => e.target.style.borderColor = '#0071E3'}
+              onFocus={e => e.target.style.borderColor = 'var(--color-blue)'}
               onBlur={e => e.target.style.borderColor = 'transparent'}
             >
               {Object.entries(STATUS_CONFIG).map(([k, v]) => (
@@ -164,7 +164,7 @@ function CreateProjectModal({ onClose, onCreate, isPending }) {
               style={inputStyle}
               value={deadline}
               onChange={e => setDeadline(e.target.value)}
-              onFocus={e => e.target.style.borderColor = '#0071E3'}
+              onFocus={e => e.target.style.borderColor = 'var(--color-blue)'}
               onBlur={e => e.target.style.borderColor = 'transparent'}
             />
           </div>
@@ -175,7 +175,7 @@ function CreateProjectModal({ onClose, onCreate, isPending }) {
             onClick={onClose}
             style={{
               padding: '9px 18px', fontSize: '13px', fontWeight: '600',
-              color: c.textSecondary, background: 'rgba(0,0,0,0.06)',
+              color: c.textSecondary, background: 'var(--color-border-subtle)',
               border: 'none', borderRadius: '99px', cursor: 'pointer',
             }}
           >
@@ -186,7 +186,7 @@ function CreateProjectModal({ onClose, onCreate, isPending }) {
             disabled={!name.trim() || isPending}
             style={{
               padding: '9px 18px', fontSize: '13px', fontWeight: '600',
-              color: '#fff', background: !name.trim() || isPending ? '#C7C7CC' : '#0071E3',
+              color: '#fff', background: !name.trim() || isPending ? 'var(--color-text-tertiary)' : 'var(--color-blue)',
               border: 'none', borderRadius: '99px', cursor: !name.trim() || isPending ? 'not-allowed' : 'pointer',
               transition: 'background 0.15s',
             }}
@@ -210,7 +210,7 @@ function ProjectCard({ project, areaColor, onDelete }) {
   const taskDone  = project.task_done_count || 0;
   const pct       = taskTotal > 0 ? Math.round((taskDone / taskTotal) * 100) : 0;
   const isOverdue = project.deadline && new Date(project.deadline) < new Date() && project.status !== 'completed';
-  const accentColor = areaColor || '#0071E3';
+  const accentColor = areaColor || 'var(--color-blue)';
 
   const assigneeLabel = project.assignee_name || project.assignee_email || '';
   const assigneeInitials = assigneeLabel.trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
@@ -223,8 +223,8 @@ function ProjectCard({ project, areaColor, onDelete }) {
       style={{
         background: c.card,
         borderRadius: '14px',
-        border: '1px solid rgba(0,0,0,0.07)',
-        boxShadow: hovered ? '0 4px 20px rgba(0,0,0,0.1)' : '0 1px 4px rgba(0,0,0,0.05)',
+        border: '1px solid var(--color-border-subtle)',
+        boxShadow: hovered ? '0 4px 20px rgba(0,0,0,0.1)' : '0 1px 4px var(--color-border-subtle)',
         transform: hovered ? 'translateY(-1px)' : 'translateY(0)',
         transition: 'box-shadow 0.2s, transform 0.2s',
         cursor: 'pointer',
@@ -256,12 +256,12 @@ function ProjectCard({ project, areaColor, onDelete }) {
             onClick={e => { e.stopPropagation(); onDelete(project.id); }}
             style={{
               background: 'none', border: 'none', cursor: 'pointer',
-              color: '#C7C7CC',
+              color: 'var(--color-text-tertiary)',
               padding: '2px', flexShrink: 0,
               transition: 'color 0.15s',
             }}
             onMouseEnter={e => { e.stopPropagation(); e.currentTarget.style.color = '#FF3B30'; }}
-            onMouseLeave={e => { e.stopPropagation(); e.currentTarget.style.color = '#C7C7CC'; }}
+            onMouseLeave={e => { e.stopPropagation(); e.currentTarget.style.color = 'var(--color-text-tertiary)'; }}
           >
             <Trash2 size={13} />
           </button>
@@ -283,7 +283,7 @@ function ProjectCard({ project, areaColor, onDelete }) {
           <div>
             <div style={{
               height: '4px', borderRadius: '99px',
-              background: 'rgba(0,0,0,0.07)', overflow: 'hidden',
+              background: 'var(--color-border-subtle)', overflow: 'hidden',
             }}>
               <div style={{
                 height: '100%',
@@ -310,7 +310,7 @@ function ProjectCard({ project, areaColor, onDelete }) {
             <span style={{
               display: 'flex', alignItems: 'center', gap: '3px',
               fontSize: '11px', fontWeight: '500',
-              color: isOverdue ? '#FF3B30' : '#86868B',
+              color: isOverdue ? '#FF3B30' : c.textSecondary,
               whiteSpace: 'nowrap',
             }}>
               <Calendar size={10} />
@@ -353,7 +353,7 @@ function AreaSection({ area, projects, onDelete }) {
   const { c } = useTheme();
   const [collapsed, setCollapsed] = useState(false);
 
-  const areaColor  = area?.color  || '#0071E3';
+  const areaColor  = area?.color  || 'var(--color-blue)';
   const areaName   = area?.name   || 'Ohne Bereich';
   const areaIcon   = area?.icon   || null;
   const count      = projects.length;
@@ -371,7 +371,7 @@ function AreaSection({ area, projects, onDelete }) {
         {/* Area icon badge */}
         <div style={{
           width: '28px', height: '28px', borderRadius: '8px',
-          background: area ? areaColor : 'rgba(0,0,0,0.08)',
+          background: area ? areaColor : 'var(--color-border-subtle)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           flexShrink: 0,
         }}>
@@ -393,26 +393,26 @@ function AreaSection({ area, projects, onDelete }) {
         {/* Count badge */}
         <span style={{
           padding: '2px 8px', borderRadius: '99px', fontSize: '11px', fontWeight: '600',
-          background: 'rgba(0,0,0,0.06)', color: c.textSecondary,
+          background: 'var(--color-border-subtle)', color: c.textSecondary,
         }}>
           {count}
         </span>
 
         {/* Spacer + chevron */}
         <div style={{ flex: 1 }} />
-        <span style={{ color: '#C7C7CC', transition: 'transform 0.15s', display: 'flex', alignItems: 'center' }}>
+        <span style={{ color: 'var(--color-text-tertiary)', transition: 'transform 0.15s', display: 'flex', alignItems: 'center' }}>
           {collapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
         </span>
       </div>
 
       {/* Divider */}
-      <div style={{ height: '1px', background: 'rgba(0,0,0,0.06)', marginBottom: '14px' }} />
+      <div style={{ height: '1px', background: 'var(--color-border-subtle)', marginBottom: '14px' }} />
 
       {/* Project grid */}
       {!collapsed && (
         count === 0 ? (
           <div style={{ padding: '32px', textAlign: 'center' }}>
-            <p style={{ fontSize: '13px', color: '#C7C7CC', margin: 0, fontStyle: 'italic' }}>
+            <p style={{ fontSize: '13px', color: 'var(--color-text-tertiary)', margin: 0, fontStyle: 'italic' }}>
               Keine Projekte in diesem Bereich.
             </p>
           </div>
@@ -533,7 +533,7 @@ export default function Projects() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
         <div style={{
           width: '24px', height: '24px', borderRadius: '50%',
-          border: '2.5px solid #0071E3', borderTopColor: 'transparent',
+          border: '2.5px solid #007AFF', borderTopColor: 'transparent',
           animation: 'spin 0.8s linear infinite',
         }} />
       </div>
@@ -573,10 +573,10 @@ export default function Projects() {
             style={{
               display: 'flex', alignItems: 'center', gap: '6px',
               padding: '9px 18px', fontSize: '13px', fontWeight: '600',
-              color: '#fff', background: '#0071E3',
+              color: '#fff', background: 'var(--color-blue)',
               border: 'none', borderRadius: '99px', cursor: 'pointer',
               flexShrink: 0, letterSpacing: '-0.01em',
-              boxShadow: '0 2px 8px rgba(0,113,227,0.35)',
+              boxShadow: '0 2px 8px rgba(0,122,255,0.35)',
               transition: 'opacity 0.15s, transform 0.1s',
             }}
             onMouseEnter={e => e.currentTarget.style.opacity = '0.88'}
@@ -602,7 +602,7 @@ export default function Projects() {
               placeholder="Projekte suchen…"
               value={search}
               onChange={e => setSearch(e.target.value)}
-              onFocus={e => e.target.style.borderColor = '#0071E3'}
+              onFocus={e => e.target.style.borderColor = 'var(--color-blue)'}
               onBlur={e => e.target.style.borderColor = 'rgba(0,0,0,0.1)'}
             />
           </div>
@@ -614,7 +614,7 @@ export default function Projects() {
               style={{ ...inputBase, padding: '8px 12px 8px 28px', appearance: 'none', cursor: 'pointer', paddingRight: '28px' }}
               value={filterStatus}
               onChange={e => setFilterStatus(e.target.value)}
-              onFocus={e => e.target.style.borderColor = '#0071E3'}
+              onFocus={e => e.target.style.borderColor = 'var(--color-blue)'}
               onBlur={e => e.target.style.borderColor = 'rgba(0,0,0,0.1)'}
             >
               <option value="">Alle Status</option>
@@ -632,7 +632,7 @@ export default function Projects() {
               style={{ ...inputBase, padding: '8px 12px 8px 28px', appearance: 'none', cursor: 'pointer', paddingRight: '28px' }}
               value={filterArea}
               onChange={e => setFilterArea(e.target.value)}
-              onFocus={e => e.target.style.borderColor = '#0071E3'}
+              onFocus={e => e.target.style.borderColor = 'var(--color-blue)'}
               onBlur={e => e.target.style.borderColor = 'rgba(0,0,0,0.1)'}
             >
               <option value="">Alle Bereiche</option>
@@ -658,10 +658,10 @@ export default function Projects() {
           }}>
             <div style={{
               width: '64px', height: '64px', borderRadius: '18px',
-              background: 'rgba(0,113,227,0.08)',
+              background: 'rgba(0,122,255,0.08)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
-              <Zap size={30} color="#0071E3" strokeWidth={1.5} />
+              <Zap size={30} color="#007AFF" strokeWidth={1.5} />
             </div>
             <p style={{ fontSize: '18px', fontWeight: '700', color: c.text, letterSpacing: '-0.02em', margin: 0 }}>
               Noch keine Projekte
@@ -674,10 +674,10 @@ export default function Projects() {
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: '6px',
                 padding: '10px 20px', fontSize: '13px', fontWeight: '600',
-                color: '#fff', background: '#0071E3',
+                color: '#fff', background: 'var(--color-blue)',
                 border: 'none', borderRadius: '99px', cursor: 'pointer',
                 marginTop: '6px', letterSpacing: '-0.01em',
-                boxShadow: '0 2px 8px rgba(0,113,227,0.35)',
+                boxShadow: '0 2px 8px rgba(0,122,255,0.35)',
               }}
             >
               <Plus size={15} /> Erstes Projekt erstellen
@@ -693,7 +693,7 @@ export default function Projects() {
           }}>
             <div style={{
               width: '56px', height: '56px', borderRadius: '16px',
-              background: 'rgba(0,0,0,0.05)',
+              background: 'var(--color-border-subtle)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
               <Search size={24} color="#C7C7CC" />
@@ -708,7 +708,7 @@ export default function Projects() {
               onClick={() => { setSearch(''); setFilterStatus(''); setFilterArea(''); }}
               style={{
                 padding: '7px 16px', fontSize: '13px', fontWeight: '600',
-                color: '#0071E3', background: 'rgba(0,113,227,0.08)',
+                color: 'var(--color-blue)', background: 'rgba(0,122,255,0.08)',
                 border: 'none', borderRadius: '99px', cursor: 'pointer',
               }}
             >

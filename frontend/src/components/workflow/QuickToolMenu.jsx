@@ -13,7 +13,7 @@ function ToolItem({ tool, onEdit, onDelete }) {
       padding: '6px 8px', borderRadius: '8px',
       transition: 'background 0.1s',
     }}
-      onMouseEnter={e => e.currentTarget.style.background = '#F2F2F7'}
+      onMouseEnter={e => e.currentTarget.style.background = 'var(--color-card-secondary)'}
       onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
     >
       <span style={{
@@ -31,7 +31,7 @@ function ToolItem({ tool, onEdit, onDelete }) {
             style={{
               fontSize: '13px',
               fontWeight: 500,
-              color: '#1D1D1F',
+              color: 'var(--color-text)',
               textDecoration: 'none',
               display: 'flex', alignItems: 'center', gap: '4px',
             }}
@@ -40,16 +40,16 @@ function ToolItem({ tool, onEdit, onDelete }) {
             <ExternalLink size={10} color="#8E8E93" />
           </a>
         ) : (
-          <span style={{ fontSize: '13px', fontWeight: 500, color: '#1D1D1F' }}>
+          <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--color-text)' }}>
             {tool.name}
           </span>
         )}
-        <span style={{ fontSize: '11px', color: '#8E8E93' }}>{cat.label}</span>
+        <span style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>{cat.label}</span>
       </div>
       <div style={{ display: 'flex', gap: '2px', opacity: 0 }}
         className="tool-actions"
       >
-        <button onClick={() => onEdit(tool)} style={{ padding: '3px', border: 'none', background: 'none', cursor: 'pointer', color: '#8E8E93', borderRadius: '4px' }}>
+        <button onClick={() => onEdit(tool)} style={{ padding: '3px', border: 'none', background: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)', borderRadius: '4px' }}>
           <Pencil size={11} />
         </button>
         <button onClick={() => onDelete(tool.id)} style={{ padding: '3px', border: 'none', background: 'none', cursor: 'pointer', color: '#FF3B30', borderRadius: '4px' }}>
@@ -138,8 +138,8 @@ export default function QuickToolMenu() {
           width: '40px', height: '40px',
           borderRadius: '12px',
           border: 'none',
-          background: open ? '#0071E3' : '#F2F2F7',
-          color: open ? '#fff' : '#3C3C43',
+          background: open ? 'var(--color-blue)' : 'var(--color-card-secondary)',
+          color: open ? '#fff' : 'var(--color-text-secondary)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           cursor: 'pointer',
           transition: 'all 0.15s',
@@ -157,10 +157,10 @@ export default function QuickToolMenu() {
           right: 0,
           marginTop: '8px',
           width: '280px',
-          background: '#fff',
+          background: 'var(--color-card)',
           borderRadius: '16px',
           boxShadow: '0 8px 40px rgba(0,0,0,0.16)',
-          border: '1px solid rgba(0,0,0,0.06)',
+          border: '1px solid var(--color-border-subtle)',
           zIndex: 200,
           overflow: 'hidden',
         }}>
@@ -170,7 +170,7 @@ export default function QuickToolMenu() {
             borderBottom: '1px solid #F2F2F7',
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           }}>
-            <span style={{ fontSize: '13px', fontWeight: 600, color: '#1D1D1F' }}>
+            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-text)' }}>
               Quick Tools
             </span>
             <button
@@ -179,8 +179,8 @@ export default function QuickToolMenu() {
                 padding: '4px 10px',
                 borderRadius: '8px',
                 border: 'none',
-                background: '#F2F2F7',
-                color: '#0071E3',
+                background: 'var(--color-card-secondary)',
+                color: 'var(--color-blue)',
                 fontSize: '12px',
                 fontWeight: 600,
                 cursor: 'pointer',
@@ -194,7 +194,7 @@ export default function QuickToolMenu() {
           {/* Tool list */}
           <div style={{ maxHeight: '360px', overflowY: 'auto', padding: '8px 6px' }}>
             {tools.length === 0 ? (
-              <p style={{ fontSize: '13px', color: '#8E8E93', textAlign: 'center', padding: '16px 0' }}>
+              <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', textAlign: 'center', padding: '16px 0' }}>
                 Keine Tools hinzugefügt
               </p>
             ) : (
@@ -202,7 +202,7 @@ export default function QuickToolMenu() {
                 <div key={cat} style={{ marginBottom: '8px' }}>
                   <div style={{
                     fontSize: '10px', fontWeight: 600,
-                    color: '#8E8E93', textTransform: 'uppercase',
+                    color: 'var(--color-text-secondary)', textTransform: 'uppercase',
                     letterSpacing: '0.06em',
                     padding: '4px 8px 2px',
                   }}>
@@ -237,9 +237,9 @@ export default function QuickToolMenu() {
             <div style={{
               borderTop: '1px solid #F2F2F7',
               padding: '12px 14px',
-              background: '#FAFAFA',
+              background: 'var(--color-card-secondary)',
             }}>
-              <div style={{ fontSize: '12px', fontWeight: 600, color: '#1D1D1F', marginBottom: '10px' }}>
+              <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-text)', marginBottom: '10px' }}>
                 {editing ? 'Tool bearbeiten' : 'Neues Tool hinzufügen'}
               </div>
               <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -270,7 +270,7 @@ export default function QuickToolMenu() {
                   style={{
                     padding: '8px 10px', borderRadius: '8px',
                     border: '1.5px solid #E5E5EA', fontSize: '13px',
-                    background: '#fff', outline: 'none',
+                    background: 'var(--color-card)', outline: 'none',
                   }}
                 >
                   {Object.entries(TOOL_CATEGORIES).map(([k, v]) => (
@@ -283,8 +283,8 @@ export default function QuickToolMenu() {
                     onClick={() => { setShowAdd(false); setEditing(null); }}
                     style={{
                       flex: 1, padding: '8px', borderRadius: '8px',
-                      border: '1.5px solid #E5E5EA', background: '#fff',
-                      fontSize: '13px', cursor: 'pointer', color: '#6E6E73',
+                      border: '1.5px solid #E5E5EA', background: 'var(--color-card)',
+                      fontSize: '13px', cursor: 'pointer', color: 'var(--color-text-tertiary)',
                     }}
                   >
                     Abbrechen
@@ -293,7 +293,7 @@ export default function QuickToolMenu() {
                     type="submit"
                     style={{
                       flex: 2, padding: '8px', borderRadius: '8px',
-                      border: 'none', background: '#0071E3',
+                      border: 'none', background: 'var(--color-blue)',
                       fontSize: '13px', fontWeight: 600,
                       cursor: 'pointer', color: '#fff',
                     }}
