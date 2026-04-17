@@ -14,6 +14,7 @@ import { teamApi } from '../api/team';
 import { LEAD_STATUSES } from '../components/sales/LeadStatusBadge';
 import CallInProgressSheet from '../components/sales/CallInProgressSheet';
 import FollowupScheduler from '../components/sales/FollowupScheduler';
+import LeadEmailModal from '../components/sales/LeadEmailModal';
 import SalesTargetModal from '../components/sales/SalesTargetModal';
 import ExcelImportModal from '../components/sales/ExcelImportModal';
 import CreateLeadModal from '../components/sales/CreateLeadModal';
@@ -282,6 +283,7 @@ export default function SalesEngine() {
   const [showExcelImport, setShowExcelImport] = useState(false);
   const [showTargets, setShowTargets]       = useState(false);
   const [showScreenshot, setShowScreenshot] = useState(false);
+  const [showEmailModal, setShowEmailModal] = useState(false);
   const [viewOwnerId, setViewOwnerId]       = useState(null); // null = me
   const [activeCall, setActiveCall]         = useState(null);
   const [followupFor, setFollowupFor]       = useState(null);
@@ -992,11 +994,12 @@ export default function SalesEngine() {
                         <Phone size={14} /> {selectedLead.phone}
                       </a>
                     )}
-                    {selectedLead.email && (
-                      <a href={`mailto:${selectedLead.email}`} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 8, background: c.blueLight, color: c.blue, textDecoration: 'none', fontSize: 13, fontWeight: 600 }}>
-                        <Mail size={14} /> E-Mail
-                      </a>
-                    )}
+                    <button
+                      onClick={() => setShowEmailModal(true)}
+                      style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 8, background: 'rgba(175,82,222,0.1)', color: '#AF52DE', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}
+                    >
+                      <Mail size={14} /> E-Mail{!selectedLead.email && <span style={{ fontSize: 10, opacity: 0.7 }}>(keine)</span>}
+                    </button>
                     {selectedLead.domain && (
                       <a href={`https://${selectedLead.domain}`} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 8, background: c.inputBg, color: c.textSecondary, textDecoration: 'none', fontSize: 13, fontWeight: 600 }}>
                         <Globe size={14} /> Website
@@ -1127,6 +1130,7 @@ export default function SalesEngine() {
         {showExcelImport && <ExcelImportModal onClose={() => setShowExcelImport(false)} onImport={handleImport} isImporting={importLeadsMut.isPending} />}
         {showTargets && stats?.targets && <SalesTargetModal targets={stats.targets} onSave={data => updateTargetsMut.mutate(data)} onClose={() => setShowTargets(false)} isPending={updateTargetsMut.isPending} />}
         {showScreenshot && <ScreenshotImportModal onClose={() => setShowScreenshot(false)} onCreate={data => { createLeadMut.mutate(data); setShowScreenshot(false); }} isCreating={createLeadMut.isPending} />}
+        {showEmailModal && selectedLead && <LeadEmailModal lead={selectedLead} onClose={() => setShowEmailModal(false)} />}
       </div>
     );
   }
@@ -1467,6 +1471,19 @@ export default function SalesEngine() {
                     }}
                   >
                     <ArrowRight size={14} />
+                  </button>
+
+                  {/* Email button */}
+                  <button
+                    onClick={() => setShowEmailModal(true)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 9,
+                      fontSize: 13, fontWeight: 600,
+                      background: 'rgba(175,82,222,0.12)', color: '#AF52DE',
+                      border: 'none', cursor: 'pointer',
+                    }}
+                  >
+                    <Mail size={13} /> E-Mail
                   </button>
 
                   {/* Call button */}
@@ -1882,6 +1899,9 @@ export default function SalesEngine() {
           onCreate={data => { createLeadMut.mutate(data); setShowScreenshot(false); }}
           isCreating={createLeadMut.isPending}
         />
+      )}
+      {showEmailModal && selectedLead && (
+        <LeadEmailModal lead={selectedLead} onClose={() => setShowEmailModal(false)} />
       )}
     </div>
   );
