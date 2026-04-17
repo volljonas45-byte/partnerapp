@@ -1,60 +1,76 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { planningApi } from '../api/planning';
 import api from '../api/client';
 import toast from 'react-hot-toast';
 import {
-  Plus, X, ChevronDown, Check, Target, Zap, AlertTriangle, TrendingUp,
-  MessageSquare, CheckSquare, Lightbulb, ArrowRight, Trash2, Edit3,
-  Calendar, User, ChevronLeft, ChevronRight,
+  Plus, X, Target, MessageSquare, CheckSquare, Lightbulb,
+  Trash2, Edit3, Calendar, ChevronLeft, ChevronRight,
 } from 'lucide-react';
 
-// ── Constants ─────────────────────────────────────────────────────────────────
+// ── Dark Design Tokens ────────────────────────────────────────────────────────
+
+const D = {
+  bg:      '#06060F',
+  card:    '#0D0D1E',
+  card2:   '#121228',
+  card3:   '#181838',
+  border:  'rgba(255,255,255,0.07)',
+  borderB: 'rgba(255,255,255,0.14)',
+  text:    '#EEEEFF',
+  text2:   '#9090B8',
+  text3:   '#55557A',
+  blue:    '#5B8CF5',
+  purple:  '#9B72F2',
+  green:   '#34D399',
+  orange:  '#FB923C',
+  red:     '#F87171',
+  pink:    '#F472B6',
+  cyan:    '#22D3EE',
+  yellow:  '#FBBF24',
+};
+
+const AREA_THEME = {
+  Vertrieb:   { accent: '#5B8CF5', glow: 'rgba(91,140,245,0.14)',   bg: 'linear-gradient(145deg,#0B1028 0%,#0D1840 100%)' },
+  Finanzen:   { accent: '#34D399', glow: 'rgba(52,211,153,0.14)',   bg: 'linear-gradient(145deg,#060F0B 0%,#0A2018 100%)' },
+  Projekte:   { accent: '#9B72F2', glow: 'rgba(155,114,242,0.14)',  bg: 'linear-gradient(145deg,#0A0720 0%,#14103C 100%)' },
+  Team:       { accent: '#FB923C', glow: 'rgba(251,146,60,0.14)',   bg: 'linear-gradient(145deg,#150900 0%,#2C1400 100%)' },
+  Marketing:  { accent: '#F472B6', glow: 'rgba(244,114,182,0.14)',  bg: 'linear-gradient(145deg,#160009 0%,#2C0118 100%)' },
+  Operations: { accent: '#22D3EE', glow: 'rgba(34,211,238,0.14)',   bg: 'linear-gradient(145deg,#050D14 0%,#0A1E2E 100%)' },
+  Allgemein:  { accent: '#9090B8', glow: 'rgba(144,144,184,0.10)',  bg: 'linear-gradient(145deg,#0A0A16 0%,#12122A 100%)' },
+};
 
 const TABS = [
-  { id: 'overview',    label: 'Übersicht'     },
-  { id: 'feedback',    label: 'Feedback'      },
-  { id: 'kpis',        label: 'KPIs'          },
-  { id: 'tasks',       label: 'Aufgaben'      },
-  { id: 'decisions',   label: 'Entscheidungen'},
+  { id: 'overview',   label: 'Übersicht'      },
+  { id: 'feedback',   label: 'Feedback'       },
+  { id: 'kpis',       label: 'KPIs'           },
+  { id: 'tasks',      label: 'Aufgaben'       },
+  { id: 'decisions',  label: 'Entscheidungen' },
 ];
 
 const AREAS = ['Vertrieb', 'Finanzen', 'Projekte', 'Team', 'Marketing', 'Operations', 'Allgemein'];
 
-const AREA_COLORS = {
-  Vertrieb:   '#007AFF',
-  Finanzen:   '#34C759',
-  Projekte:   '#AF52DE',
-  Team:       '#FF9500',
-  Marketing:  '#FF2D55',
-  Operations: '#5AC8FA',
-  Allgemein:  '#8E8E93',
-};
-
 const RATINGS = [
-  { value: 1, emoji: '😞', label: 'Schwierig',  color: '#FF3B30' },
-  { value: 2, emoji: '😐', label: 'Okay',        color: '#FF9500' },
-  { value: 3, emoji: '😊', label: 'Gut',         color: '#FFCC00' },
-  { value: 4, emoji: '🙂', label: 'Super',       color: '#34C759' },
-  { value: 5, emoji: '🚀', label: 'Ausgezeichnet',color: '#007AFF' },
+  { value: 1, emoji: '😞', label: 'Schwierig',     color: '#F87171' },
+  { value: 2, emoji: '😐', label: 'Okay',           color: '#FB923C' },
+  { value: 3, emoji: '😊', label: 'Gut',            color: '#FBBF24' },
+  { value: 4, emoji: '🙂', label: 'Super',          color: '#34D399' },
+  { value: 5, emoji: '🚀', label: 'Ausgezeichnet',  color: '#5B8CF5' },
 ];
 
-const PRIORITY_COLORS = {
-  low:      '#8E8E93',
-  medium:   '#007AFF',
-  high:     '#FF9500',
-  critical: '#FF3B30',
+const PRIORITY = {
+  low:      { color: '#55557A', label: 'Niedrig'  },
+  medium:   { color: '#5B8CF5', label: 'Mittel'   },
+  high:     { color: '#FB923C', label: 'Hoch'     },
+  critical: { color: '#F87171', label: 'Kritisch' },
 };
 
-const PRIORITY_LABELS = { low: 'Niedrig', medium: 'Mittel', high: 'Hoch', critical: 'Kritisch' };
-
 const TASK_COLS = [
-  { id: 'open',        label: 'Offen',      color: '#8E8E93' },
-  { id: 'in_progress', label: 'In Arbeit',  color: '#007AFF' },
-  { id: 'blocked',     label: 'Blockiert',  color: '#FF3B30' },
-  { id: 'done',        label: 'Erledigt',   color: '#34C759' },
+  { id: 'open',        label: 'Offen',     color: '#9090B8' },
+  { id: 'in_progress', label: 'In Arbeit', color: '#5B8CF5' },
+  { id: 'blocked',     label: 'Blockiert', color: '#F87171' },
+  { id: 'done',        label: 'Erledigt',  color: '#34D399' },
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -66,142 +82,137 @@ function getWeekStart(date = new Date()) {
   return d.toISOString().slice(0, 10);
 }
 
-function formatWeekLabel(weekStart) {
-  if (!weekStart) return '';
-  const d = new Date(weekStart);
-  const end = new Date(d);
-  end.setDate(d.getDate() + 6);
-  const fmt = (dt) => dt.toLocaleDateString('de-DE', { day: '2-digit', month: 'short' });
-  return `${fmt(d)} – ${fmt(end)}`;
+function formatWeekLabel(ws) {
+  if (!ws) return '';
+  const d = new Date(ws);
+  const e = new Date(d); e.setDate(d.getDate() + 6);
+  const f = dt => dt.toLocaleDateString('de-DE', { day: '2-digit', month: 'short' });
+  return `${f(d)} – ${f(e)}`;
 }
 
-function avatarInitials(name = '', email = '') {
-  const src = name || email || '?';
-  return src.trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+function initials(name = '', email = '') {
+  const s = name || email || '?';
+  return s.trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
 }
 
-function avatarBg(email = '') {
-  const colors = ['#BF5AF2', '#007AFF', '#34C759', '#FF9500', '#FF3B30', '#5AC8FA'];
+function avatarHue(email = '') {
+  const cols = ['#9B72F2','#5B8CF5','#34D399','#FB923C','#F87171','#22D3EE','#F472B6'];
   let h = 0;
   for (let i = 0; i < email.length; i++) h = email.charCodeAt(i) + ((h << 5) - h);
-  return colors[Math.abs(h) % colors.length];
+  return cols[Math.abs(h) % cols.length];
 }
 
-// ── ProgressRing ──────────────────────────────────────────────────────────────
+// ── Base UI Primitives ────────────────────────────────────────────────────────
 
-function ProgressRing({ pct = 0, color = '#007AFF', size = 64 }) {
+function Av({ name, email, color, size = 28 }) {
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: '50%',
+      background: color || avatarHue(email || ''),
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontSize: size * 0.38, fontWeight: 700, color: '#fff', flexShrink: 0,
+      letterSpacing: '-0.01em',
+    }}>
+      {initials(name, email)}
+    </div>
+  );
+}
+
+function Ring({ pct = 0, color = '#5B8CF5', size = 60 }) {
   const r = (size - 8) / 2;
-  const circ = 2 * Math.PI * r;
-  const filled = Math.min(pct / 100, 1) * circ;
+  const c = 2 * Math.PI * r;
+  const f = Math.min(pct / 100, 1) * c;
   return (
     <svg width={size} height={size} style={{ transform: 'rotate(-90deg)', flexShrink: 0 }}>
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--color-input-bg)" strokeWidth={5} />
-      <circle
-        cx={size / 2} cy={size / 2} r={r} fill="none"
-        stroke={color} strokeWidth={5}
-        strokeDasharray={`${filled} ${circ}`}
-        strokeLinecap="round"
-        style={{ transition: 'stroke-dasharray 0.6s cubic-bezier(0.22,1,0.36,1)' }}
+      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={5} />
+      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth={5}
+        strokeDasharray={`${f} ${c}`} strokeLinecap="round"
+        style={{ transition: 'stroke-dasharray 0.7s cubic-bezier(0.22,1,0.36,1)', filter: `drop-shadow(0 0 6px ${color}80)` }}
       />
     </svg>
   );
 }
 
-// ── Avatar ────────────────────────────────────────────────────────────────────
-
-function Avatar({ name, email, color, size = 28 }) {
+function DBtn({ children, onClick, variant = 'primary', type = 'button', disabled, style }) {
+  const base = {
+    display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+    padding: '9px 18px', borderRadius: 10, border: 'none', cursor: disabled ? 'not-allowed' : 'pointer',
+    fontSize: 13, fontWeight: 600, fontFamily: 'inherit', letterSpacing: '-0.01em',
+    transition: 'all 0.18s cubic-bezier(0.22,1,0.36,1)', whiteSpace: 'nowrap', opacity: disabled ? 0.4 : 1,
+  };
+  const variants = {
+    primary:  { background: 'linear-gradient(135deg,#4F46E5,#7C3AED)', color: '#fff', boxShadow: '0 4px 16px rgba(124,58,237,0.35)' },
+    ghost:    { background: 'rgba(255,255,255,0.06)', color: D.text2, boxShadow: 'none', border: `0.5px solid ${D.border}` },
+    danger:   { background: 'rgba(248,113,113,0.1)', color: '#F87171', boxShadow: 'none', border: '0.5px solid rgba(248,113,113,0.2)' },
+  };
   return (
-    <div style={{
-      width: size, height: size, borderRadius: '50%',
-      background: color || avatarBg(email || ''),
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontSize: size * 0.38, fontWeight: 600, color: '#fff', flexShrink: 0,
-    }}>
-      {avatarInitials(name, email)}
-    </div>
+    <button type={type} onClick={onClick} disabled={disabled}
+      style={{ ...base, ...variants[variant], ...style }}
+      onMouseEnter={e => { if (!disabled && variant === 'primary') e.currentTarget.style.filter = 'brightness(1.1)'; if (!disabled && variant === 'ghost') e.currentTarget.style.background = 'rgba(255,255,255,0.10)'; }}
+      onMouseLeave={e => { e.currentTarget.style.filter = ''; if (variant === 'ghost') e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; }}
+      onMouseDown={e => { if (!disabled) e.currentTarget.style.transform = 'scale(0.97)'; }}
+      onMouseUp={e => { e.currentTarget.style.transform = ''; }}
+    >{children}</button>
   );
 }
 
-// ── AreaDot ───────────────────────────────────────────────────────────────────
-
-function AreaDot({ area, style }) {
+function DInput({ as: As = 'input', style, ...props }) {
   return (
-    <span style={{
-      display: 'inline-block', width: 7, height: 7, borderRadius: '50%',
-      background: AREA_COLORS[area] || AREA_COLORS.Allgemein, flexShrink: 0,
-      ...style,
-    }} />
+    <As
+      {...props}
+      style={{
+        width: '100%', padding: '9px 12px', fontSize: 13, fontFamily: 'inherit',
+        background: 'rgba(255,255,255,0.05)', color: D.text,
+        border: `0.5px solid ${D.border}`, borderRadius: 9, outline: 'none',
+        letterSpacing: '-0.01em', transition: 'border-color 0.15s ease, background 0.15s ease',
+        ...style,
+      }}
+      onFocus={e => { e.target.style.borderColor = 'rgba(91,140,245,0.5)'; e.target.style.background = 'rgba(91,140,245,0.06)'; }}
+      onBlur={e => { e.target.style.borderColor = D.border; e.target.style.background = 'rgba(255,255,255,0.05)'; }}
+    />
   );
 }
 
-// ── Modal (shared) ────────────────────────────────────────────────────────────
+function DLabel({ children }) {
+  return <p style={{ margin: '0 0 7px', fontSize: 11, fontWeight: 700, color: D.text3, textTransform: 'uppercase', letterSpacing: '0.07em' }}>{children}</p>;
+}
 
-function Modal({ open, onClose, title, children, width = 480 }) {
+function DField({ label, children, style }) {
+  return <div style={{ marginBottom: 14, ...style }}>{label && <DLabel>{label}</DLabel>}{children}</div>;
+}
+
+// ── Dark Modal ────────────────────────────────────────────────────────────────
+
+function DModal({ open, onClose, title, children, width = 480 }) {
   useEffect(() => {
-    if (open) document.body.style.overflow = 'hidden';
-    else document.body.style.overflow = '';
+    document.body.style.overflow = open ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
   }, [open]);
-
   if (!open) return null;
   return (
-    <div
-      onClick={onClose}
-      style={{
-        position: 'fixed', inset: 0, zIndex: 1000,
-        background: 'rgba(0,0,0,0.45)',
-        backdropFilter: 'blur(8px)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: 20,
-        animation: 'fadeIn 0.18s ease',
-      }}
-    >
-      <div
-        onClick={e => e.stopPropagation()}
-        style={{
-          width: '100%', maxWidth: width,
-          background: 'var(--color-card)',
-          borderRadius: 20,
-          border: '0.5px solid var(--color-border-subtle)',
-          boxShadow: '0 8px 40px rgba(0,0,0,0.18), 0 0 0 0.5px rgba(0,0,0,0.04)',
-          overflow: 'hidden',
-          animation: 'slideUp 0.22s cubic-bezier(0.22,1,0.36,1)',
-        }}
-      >
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '18px 20px 14px',
-          borderBottom: '0.5px solid var(--color-border-subtle)',
-        }}>
-          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: 'var(--color-text)', letterSpacing: '-0.02em' }}>
-            {title}
-          </h3>
-          <button
-            onClick={onClose}
-            style={{
-              width: 28, height: 28, borderRadius: '50%', border: 'none',
-              background: 'var(--color-input-bg)', color: 'var(--color-text-secondary)',
-              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}
-          >
-            <X size={14} />
+    <div onClick={onClose} style={{
+      position: 'fixed', inset: 0, zIndex: 1000,
+      background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(12px)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
+      animation: 'fadeIn 0.18s ease',
+    }}>
+      <div onClick={e => e.stopPropagation()} style={{
+        width: '100%', maxWidth: width,
+        background: D.card,
+        borderRadius: 20,
+        border: `0.5px solid ${D.borderB}`,
+        boxShadow: '0 24px 80px rgba(0,0,0,0.7), 0 0 0 0.5px rgba(255,255,255,0.04)',
+        overflow: 'hidden',
+        animation: 'slideUp 0.24s cubic-bezier(0.22,1,0.36,1)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px 14px', borderBottom: `0.5px solid ${D.border}` }}>
+          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: D.text, letterSpacing: '-0.022em' }}>{title}</h3>
+          <button onClick={onClose} style={{ width: 28, height: 28, borderRadius: '50%', border: 'none', background: 'rgba(255,255,255,0.07)', color: D.text2, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <X size={13} />
           </button>
         </div>
-        <div style={{ padding: '16px 20px 20px', maxHeight: '80vh', overflowY: 'auto' }}>
-          {children}
-        </div>
+        <div style={{ padding: '16px 20px 20px', maxHeight: '80vh', overflowY: 'auto' }}>{children}</div>
       </div>
-    </div>
-  );
-}
-
-// ── FormField ─────────────────────────────────────────────────────────────────
-
-function Field({ label, children, style }) {
-  return (
-    <div style={{ marginBottom: 14, ...style }}>
-      {label && <label className="label" style={{ display: 'block', marginBottom: 6 }}>{label}</label>}
-      {children}
     </div>
   );
 }
@@ -212,235 +223,138 @@ function Field({ label, children, style }) {
 
 function FeedbackTab({ teamMembers, currentUser }) {
   const qc = useQueryClient();
-  const [selectedWeek, setSelectedWeek] = useState(getWeekStart());
+  const [week, setWeek] = useState(getWeekStart());
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editEntry, setEditEntry] = useState(null);
 
-  const { data: weeks = [] } = useQuery({
-    queryKey: ['planning-feedback-weeks'],
-    queryFn: planningApi.listWeeks,
-  });
-
-  const { data: entries = [], isLoading } = useQuery({
-    queryKey: ['planning-feedback', selectedWeek],
-    queryFn: () => planningApi.listFeedback({ week: selectedWeek }),
-  });
+  const { data: weeks = [] } = useQuery({ queryKey: ['planning-feedback-weeks'], queryFn: planningApi.listWeeks });
+  const { data: entries = [], isLoading } = useQuery({ queryKey: ['planning-feedback', week], queryFn: () => planningApi.listFeedback({ week }) });
 
   const save = useMutation({
     mutationFn: planningApi.upsertFeedback,
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['planning-feedback'] });
-      qc.invalidateQueries({ queryKey: ['planning-feedback-weeks'] });
-      setSheetOpen(false);
-      setEditEntry(null);
-      toast.success('Feedback gespeichert');
-    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['planning-feedback'] }); qc.invalidateQueries({ queryKey: ['planning-feedback-weeks'] }); setSheetOpen(false); setEditEntry(null); toast.success('Feedback gespeichert'); },
     onError: () => toast.error('Fehler beim Speichern'),
   });
 
-  const isCurrentWeek = selectedWeek === getWeekStart();
-  const allWeeks = isCurrentWeek
-    ? [selectedWeek, ...weeks.filter(w => w !== selectedWeek)]
-    : [getWeekStart(), ...weeks.filter(w => w !== getWeekStart())];
-  const uniqueWeeks = [...new Set(allWeeks)].slice(0, 12);
-
+  const isCurrent = week === getWeekStart();
   const myEntry = entries.find(e => String(e.author_id) === String(currentUser?.id));
-
-  function openSheet(entry = null) {
-    setEditEntry(entry);
-    setSheetOpen(true);
-  }
-
-  const prevWeek = () => {
-    const d = new Date(selectedWeek);
-    d.setDate(d.getDate() - 7);
-    setSelectedWeek(d.toISOString().slice(0, 10));
-  };
-  const nextWeek = () => {
-    const d = new Date(selectedWeek);
-    d.setDate(d.getDate() + 7);
-    const next = d.toISOString().slice(0, 10);
-    if (next <= getWeekStart()) setSelectedWeek(next);
-  };
-
-  const allMembers = teamMembers || [];
-  const membersWithoutEntry = allMembers.filter(
-    m => !entries.find(e => String(e.author_id) === String(m.id))
-  );
+  const noEntry = (teamMembers || []).filter(m => !entries.find(e => String(e.author_id) === String(m.id)));
+  const prevW = () => { const d = new Date(week); d.setDate(d.getDate()-7); setWeek(d.toISOString().slice(0,10)); };
+  const nextW = () => { const d = new Date(week); d.setDate(d.getDate()+7); const n=d.toISOString().slice(0,10); if(n<=getWeekStart()) setWeek(n); };
 
   return (
     <div>
-      {/* Week navigation */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24, flexWrap: 'wrap' }}>
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 2,
-          background: 'var(--color-input-bg)', borderRadius: 10, padding: 3,
-        }}>
-          <button
-            onClick={prevWeek}
-            style={{ width: 28, height: 28, border: 'none', background: 'none', borderRadius: 7, cursor: 'pointer', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-          >
+      {/* Week nav */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 28, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', background: D.card, border: `0.5px solid ${D.border}`, borderRadius: 12, overflow: 'hidden' }}>
+          <button onClick={prevW} style={{ width: 34, height: 34, border: 'none', background: 'none', cursor: 'pointer', color: D.text2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <ChevronLeft size={14} />
           </button>
-          <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text)', letterSpacing: '-0.01em', padding: '0 8px', whiteSpace: 'nowrap' }}>
-            {isCurrentWeek ? 'Diese Woche' : formatWeekLabel(selectedWeek)}
+          <span style={{ fontSize: 13, fontWeight: 600, color: D.text, padding: '0 10px', letterSpacing: '-0.01em', whiteSpace: 'nowrap' }}>
+            {isCurrent ? 'Diese Woche' : formatWeekLabel(week)}
           </span>
-          <button
-            onClick={nextWeek}
-            disabled={isCurrentWeek}
-            style={{ width: 28, height: 28, border: 'none', background: 'none', borderRadius: 7, cursor: isCurrentWeek ? 'not-allowed' : 'pointer', color: isCurrentWeek ? 'var(--color-text-tertiary)' : 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: isCurrentWeek ? 0.4 : 1 }}
-          >
+          <button onClick={nextW} disabled={isCurrent} style={{ width: 34, height: 34, border: 'none', background: 'none', cursor: isCurrent ? 'not-allowed' : 'pointer', color: isCurrent ? D.text3 : D.text2, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: isCurrent ? 0.4 : 1 }}>
             <ChevronRight size={14} />
           </button>
         </div>
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-          {uniqueWeeks.slice(0, 5).map(w => (
-            <button
-              key={w}
-              onClick={() => setSelectedWeek(w)}
-              style={{
-                padding: '4px 10px', fontSize: 12, borderRadius: 8, border: 'none', cursor: 'pointer',
-                fontFamily: 'inherit', letterSpacing: '-0.008em',
-                background: w === selectedWeek ? 'var(--color-blue)' : 'var(--color-input-bg)',
-                color: w === selectedWeek ? '#fff' : 'var(--color-text-secondary)',
-                fontWeight: w === selectedWeek ? 600 : 400,
-                transition: 'all 0.15s ease',
-              }}
-            >
-              {w === getWeekStart() ? 'Aktuell' : formatWeekLabel(w)}
-            </button>
-          ))}
-        </div>
-        <div style={{ flex: 1 }} />
-        {isCurrentWeek && (
-          <button
-            onClick={() => openSheet(myEntry || null)}
-            className="btn-primary"
-            style={{ gap: 6, fontSize: 13 }}
-          >
-            <Plus size={14} />
-            {myEntry ? 'Mein Feedback bearbeiten' : 'Mein Feedback eintragen'}
+        {[getWeekStart(), ...(weeks||[]).filter(w=>w!==getWeekStart())].slice(0,4).map(w2 => w2 !== getWeekStart() && (
+          <button key={w2} onClick={() => setWeek(w2)} style={{
+            padding: '4px 11px', fontSize: 12, borderRadius: 8, border: `0.5px solid ${week===w2?D.blue:D.border}`,
+            background: week===w2 ? 'rgba(91,140,245,0.12)' : 'transparent',
+            color: week===w2 ? D.blue : D.text3, cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500,
+          }}>
+            {formatWeekLabel(w2)}
           </button>
+        ))}
+        <div style={{ flex: 1 }} />
+        {isCurrent && (
+          <DBtn onClick={() => { setEditEntry(myEntry||null); setSheetOpen(true); }}>
+            <Plus size={13} /> {myEntry ? 'Bearbeiten' : 'Mein Feedback'}
+          </DBtn>
         )}
       </div>
 
-      {/* Team feedback cards grid */}
       {isLoading ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 12 }}>
-          {[1, 2, 3].map(i => <div key={i} className="skeleton" style={{ height: 200, borderRadius: 16 }} />)}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(290px,1fr))', gap: 14 }}>
+          {[1,2,3].map(i => <Skel key={i} h={220} r={18} />)}
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 14 }}>
-          {entries.map(entry => (
-            <FeedbackCard
-              key={entry.id}
-              entry={entry}
-              isMine={String(entry.author_id) === String(currentUser?.id)}
-              canEdit={isCurrentWeek}
-              onEdit={() => openSheet(entry)}
-            />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(290px,1fr))', gap: 14 }}>
+          {entries.map(e => (
+            <FbCard key={e.id} entry={e} isMine={String(e.author_id)===String(currentUser?.id)} canEdit={isCurrent} onEdit={() => { setEditEntry(e); setSheetOpen(true); }} />
           ))}
-          {/* Empty state cards for members without entry */}
-          {isCurrentWeek && membersWithoutEntry.map(m => (
-            <FeedbackEmptyCard key={m.id} member={m} onFill={() => openSheet(null)} isMine={String(m.id) === String(currentUser?.id)} />
+          {isCurrent && noEntry.map(m => (
+            <FbEmpty key={m.id} member={m} isMine={String(m.id)===String(currentUser?.id)} onFill={() => { setEditEntry(null); setSheetOpen(true); }} />
           ))}
         </div>
       )}
 
-      {entries.length === 0 && !isLoading && !isCurrentWeek && (
-        <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--color-text-tertiary)' }}>
-          <MessageSquare size={32} style={{ opacity: 0.3, marginBottom: 12 }} />
-          <p style={{ fontSize: 14, margin: 0 }}>Kein Feedback für diese Woche</p>
-        </div>
+      {entries.length === 0 && !isLoading && !isCurrent && (
+        <EmptyState icon={<MessageSquare size={28} />} title="Kein Feedback für diese Woche" />
       )}
 
-      {/* Feedback Sheet */}
-      <FeedbackSheet
-        open={sheetOpen}
-        onClose={() => { setSheetOpen(false); setEditEntry(null); }}
-        onSave={(data) => save.mutate({ ...data, week_start: selectedWeek })}
-        initial={editEntry}
-        loading={save.isPending}
-        weekLabel={isCurrentWeek ? 'Diese Woche' : formatWeekLabel(selectedWeek)}
+      <FeedbackSheet open={sheetOpen} onClose={() => { setSheetOpen(false); setEditEntry(null); }}
+        onSave={d => save.mutate({ ...d, week_start: week })}
+        initial={editEntry} loading={save.isPending}
+        weekLabel={isCurrent ? 'Diese Woche' : formatWeekLabel(week)}
       />
     </div>
   );
 }
 
-function FeedbackCard({ entry, isMine, canEdit, onEdit }) {
+function FbCard({ entry, isMine, canEdit, onEdit }) {
   const rating = RATINGS.find(r => r.value === entry.rating);
   return (
     <div style={{
-      background: 'var(--color-card)', borderRadius: 16,
-      border: '0.5px solid var(--color-border-subtle)',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 0 0 0.5px rgba(0,0,0,0.02)',
+      background: D.card, borderRadius: 18,
+      border: `0.5px solid ${D.border}`,
+      borderTop: rating ? `2px solid ${rating.color}` : `2px solid ${D.border}`,
+      boxShadow: rating ? `0 0 28px ${rating.color}18` : 'none',
       overflow: 'hidden',
-      transition: 'box-shadow 0.2s ease, transform 0.2s ease',
+      transition: 'transform 0.2s cubic-bezier(0.22,1,0.36,1), box-shadow 0.2s ease',
     }}
-    onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-    onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.04)'; e.currentTarget.style.transform = 'translateY(0)'; }}
+    onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = rating ? `0 8px 32px ${rating.color}22` : '0 8px 24px rgba(0,0,0,0.4)'; }}
+    onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = rating ? `0 0 28px ${rating.color}18` : 'none'; }}
     >
-      {/* Card header */}
-      <div style={{
-        padding: '14px 16px 12px',
-        borderBottom: '0.5px solid var(--color-border-subtle)',
-        display: 'flex', alignItems: 'center', gap: 10,
-      }}>
-        <Avatar name={entry.author_name} email={entry.author_email} color={entry.author_color} size={32} />
+      {/* Header */}
+      <div style={{ padding: '14px 16px 12px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: `0.5px solid ${D.border}` }}>
+        <Av name={entry.author_name} email={entry.author_email} color={entry.author_color} size={34} />
         <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'var(--color-text)', letterSpacing: '-0.01em' }}>
+          <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: D.text, letterSpacing: '-0.015em' }}>
             {entry.author_name || entry.author_email}
           </p>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
-            <AreaDot area={entry.area} />
-            <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>{entry.area}</span>
-          </div>
+          <p style={{ margin: '2px 0 0', fontSize: 11, color: D.text3 }}>{entry.area}</p>
         </div>
         {rating && (
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 5,
-            background: `${rating.color}15`, borderRadius: 8, padding: '3px 8px',
-          }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 9px', borderRadius: 8, background: `${rating.color}15`, border: `0.5px solid ${rating.color}30` }}>
             <span style={{ fontSize: 16 }}>{rating.emoji}</span>
-            <span style={{ fontSize: 11, fontWeight: 600, color: rating.color }}>{rating.label}</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: rating.color }}>{rating.label}</span>
           </div>
         )}
       </div>
 
       {/* Content */}
       <div style={{ padding: '12px 16px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {entry.wins && (
-          <FeedbackSection icon="✅" label="Wins" text={entry.wins} color="#34C759" />
-        )}
-        {entry.blockers && (
-          <FeedbackSection icon="🚧" label="Blocker" text={entry.blockers} color="#FF9500" />
-        )}
-        {entry.next_steps && (
-          <FeedbackSection icon="→" label="Nächste Schritte" text={entry.next_steps} color="#007AFF" />
-        )}
-        {entry.improvement_goal && (
-          <FeedbackSection icon="⭐" label="Verbesserungsziel" text={entry.improvement_goal} color="#AF52DE" />
-        )}
+        {entry.wins && <FbRow icon="✅" label="Wins" text={entry.wins} color={D.green} />}
+        {entry.blockers && <FbRow icon="🚧" label="Blocker" text={entry.blockers} color={D.orange} />}
+        {entry.next_steps && <FbRow icon="→" label="Nächste Schritte" text={entry.next_steps} color={D.blue} />}
+        {entry.improvement_goal && <FbRow icon="⭐" label="Verbesserungsziel" text={entry.improvement_goal} color={D.purple} />}
         {!entry.wins && !entry.blockers && !entry.next_steps && !entry.improvement_goal && (
-          <p style={{ fontSize: 13, color: 'var(--color-text-tertiary)', margin: 0, fontStyle: 'italic' }}>
-            Keine Details eingetragen
-          </p>
+          <p style={{ margin: 0, fontSize: 12, color: D.text3, fontStyle: 'italic' }}>Keine Details</p>
         )}
       </div>
 
       {isMine && canEdit && (
         <div style={{ padding: '0 16px 14px' }}>
-          <button
-            onClick={onEdit}
-            style={{
-              width: '100%', padding: '7px 12px', fontSize: 12, borderRadius: 8,
-              border: '0.5px solid var(--color-border)', background: 'none',
-              color: 'var(--color-text-secondary)', cursor: 'pointer', fontFamily: 'inherit',
-              letterSpacing: '-0.008em', transition: 'background 0.15s ease',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-            }}
-            onMouseEnter={e => e.currentTarget.style.background = 'var(--color-input-bg)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'none'}
+          <button onClick={onEdit} style={{
+            width: '100%', padding: '7px', fontSize: 12, borderRadius: 9,
+            border: `0.5px solid ${D.border}`, background: 'rgba(255,255,255,0.03)',
+            color: D.text2, cursor: 'pointer', fontFamily: 'inherit',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+            transition: 'background 0.15s ease',
+          }}
+          onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.07)'}
+          onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}
           >
             <Edit3 size={11} /> Bearbeiten
           </button>
@@ -450,42 +364,27 @@ function FeedbackCard({ entry, isMine, canEdit, onEdit }) {
   );
 }
 
-function FeedbackSection({ icon, label, text, color }) {
+function FbRow({ icon, label, text, color }) {
   return (
     <div>
-      <p style={{ margin: '0 0 3px', fontSize: 10, fontWeight: 700, color, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-        {icon} {label}
-      </p>
-      <p style={{ margin: 0, fontSize: 13, color: 'var(--color-text-secondary)', lineHeight: 1.5 }}>{text}</p>
+      <p style={{ margin: '0 0 2px', fontSize: 10, fontWeight: 700, color, textTransform: 'uppercase', letterSpacing: '0.07em' }}>{icon} {label}</p>
+      <p style={{ margin: 0, fontSize: 13, color: D.text2, lineHeight: 1.5 }}>{text}</p>
     </div>
   );
 }
 
-function FeedbackEmptyCard({ member, onFill, isMine }) {
+function FbEmpty({ member, isMine, onFill }) {
   return (
     <div style={{
-      background: 'var(--color-card-secondary)', borderRadius: 16,
-      border: '1px dashed var(--color-border)', padding: '20px 16px',
-      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10,
-      opacity: 0.7,
+      background: D.card, borderRadius: 18, border: `1px dashed ${D.border}`,
+      padding: '24px 16px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10,
     }}>
-      <Avatar name={member.name} email={member.email} color={member.color} size={32} />
+      <Av name={member.name} email={member.email} color={member.color} size={36} />
       <div style={{ textAlign: 'center' }}>
-        <p style={{ margin: 0, fontSize: 13, fontWeight: 500, color: 'var(--color-text)' }}>{member.name || member.email}</p>
-        <p style={{ margin: '3px 0 0', fontSize: 12, color: 'var(--color-text-tertiary)' }}>Noch kein Feedback</p>
+        <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: D.text2 }}>{member.name || member.email}</p>
+        <p style={{ margin: '3px 0 0', fontSize: 12, color: D.text3 }}>Noch kein Feedback</p>
       </div>
-      {isMine && (
-        <button
-          onClick={onFill}
-          style={{
-            padding: '6px 16px', fontSize: 12, borderRadius: 8, border: 'none',
-            background: 'var(--color-blue-light)', color: 'var(--color-blue)',
-            cursor: 'pointer', fontFamily: 'inherit', letterSpacing: '-0.008em', fontWeight: 500,
-          }}
-        >
-          Jetzt eintragen
-        </button>
-      )}
+      {isMine && <DBtn onClick={onFill} style={{ fontSize: 12, padding: '6px 14px' }}>Eintragen</DBtn>}
     </div>
   );
 }
@@ -501,182 +400,87 @@ function FeedbackSheet({ open, onClose, onSave, initial, loading, weekLabel }) {
   const [goal, setGoal] = useState('');
 
   useEffect(() => {
-    if (open) {
-      setArea(initial?.area || 'Allgemein');
-      setRating(initial?.rating || null);
-      setWins(initial?.wins || '');
-      setBlockers(initial?.blockers || '');
-      setNextSteps(initial?.next_steps || '');
-      setGoal(initial?.improvement_goal || '');
-    }
+    if (open) { setArea(initial?.area||'Allgemein'); setRating(initial?.rating||null); setWins(initial?.wins||''); setBlockers(initial?.blockers||''); setNextSteps(initial?.next_steps||''); setGoal(initial?.improvement_goal||''); }
   }, [open, initial]);
 
-  useEffect(() => {
-    if (open) document.body.style.overflow = 'hidden';
-    else document.body.style.overflow = '';
-    return () => { document.body.style.overflow = ''; };
-  }, [open]);
+  useEffect(() => { document.body.style.overflow = open ? 'hidden' : ''; return () => { document.body.style.overflow = ''; }; }, [open]);
 
   if (!open) return null;
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!rating) { toast.error('Bitte wähle eine Bewertung'); return; }
-    onSave({ area, rating, wins, blockers, next_steps: nextSteps, improvement_goal: goal });
-  };
+  const submit = e => { e.preventDefault(); if (!rating) { toast.error('Bitte wähle eine Bewertung'); return; } onSave({ area, rating, wins, blockers, next_steps: nextSteps, improvement_goal: goal }); };
 
   return (
     <>
-      <div
-        onClick={onClose}
-        style={{
-          position: 'fixed', inset: 0, zIndex: 990,
-          background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(6px)',
-          animation: 'fadeIn 0.2s ease',
-        }}
-      />
+      <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 990, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(10px)', animation: 'fadeIn 0.2s ease' }} />
       <div style={{
         position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 1000,
-        background: 'var(--color-card)',
-        borderRadius: '22px 22px 0 0',
-        border: '0.5px solid var(--color-border-subtle)',
-        boxShadow: '0 -8px 40px rgba(0,0,0,0.16)',
-        maxHeight: '90vh', overflowY: 'auto',
-        animation: 'sheetUp 0.28s cubic-bezier(0.22,1,0.36,1)',
+        background: D.card, borderRadius: '24px 24px 0 0',
+        border: `0.5px solid ${D.borderB}`, borderBottom: 'none',
+        boxShadow: '0 -12px 60px rgba(0,0,0,0.7)',
+        maxHeight: '92vh', overflowY: 'auto',
+        animation: 'sheetUp 0.3s cubic-bezier(0.22,1,0.36,1)',
       }}>
-        {/* Drag handle */}
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 0' }}>
-          <div style={{ width: 36, height: 4, borderRadius: 99, background: 'var(--color-border)' }} />
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '14px 0 0' }}>
+          <div style={{ width: 40, height: 4, borderRadius: 99, background: D.border }} />
         </div>
-
-        <form onSubmit={handleSubmit}>
-          <div style={{ padding: '12px 20px 6px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <form onSubmit={submit}>
+          <div style={{ padding: '12px 22px 6px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
-              <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--color-text)' }}>
-                Wöchentliches Feedback
-              </h3>
-              <p style={{ margin: '2px 0 0', fontSize: 13, color: 'var(--color-text-tertiary)' }}>{weekLabel}</p>
+              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, letterSpacing: '-0.028em', color: D.text }}>Wöchentliches Feedback</h3>
+              <p style={{ margin: '3px 0 0', fontSize: 12, color: D.text3 }}>{weekLabel}</p>
             </div>
-            <button type="button" onClick={onClose} style={{ width: 32, height: 32, borderRadius: '50%', border: 'none', background: 'var(--color-input-bg)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-secondary)' }}>
-              <X size={15} />
+            <button type="button" onClick={onClose} style={{ width: 32, height: 32, borderRadius: '50%', border: 'none', background: 'rgba(255,255,255,0.07)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: D.text2 }}>
+              <X size={14} />
             </button>
           </div>
 
-          <div style={{ padding: '10px 20px 32px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+          <div style={{ padding: '14px 22px 40px', display: 'flex', flexDirection: 'column', gap: 20 }}>
             {/* Bereich */}
             <div>
-              <label className="label" style={{ display: 'block', marginBottom: 8 }}>Mein Fokus-Bereich</label>
+              <DLabel>Mein Fokus-Bereich</DLabel>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                {AREAS.map(a => (
-                  <button
-                    key={a}
-                    type="button"
-                    onClick={() => setArea(a)}
-                    style={{
-                      padding: '5px 12px', fontSize: 13, borderRadius: 99, border: 'none', cursor: 'pointer',
-                      fontFamily: 'inherit', letterSpacing: '-0.008em',
-                      background: area === a ? (AREA_COLORS[a] || '#8E8E93') : 'var(--color-input-bg)',
-                      color: area === a ? '#fff' : 'var(--color-text-secondary)',
-                      fontWeight: area === a ? 600 : 400,
-                      transition: 'all 0.15s ease',
-                    }}
-                  >
-                    {a}
-                  </button>
-                ))}
+                {AREAS.map(a => {
+                  const t = AREA_THEME[a];
+                  const active = area === a;
+                  return (
+                    <button key={a} type="button" onClick={() => setArea(a)} style={{
+                      padding: '5px 14px', fontSize: 13, borderRadius: 99, border: `0.5px solid ${active ? t.accent+'60' : D.border}`,
+                      background: active ? `${t.accent}18` : 'transparent',
+                      color: active ? t.accent : D.text3, cursor: 'pointer', fontFamily: 'inherit',
+                      fontWeight: active ? 700 : 400, letterSpacing: '-0.01em', transition: 'all 0.15s ease',
+                    }}>{a}</button>
+                  );
+                })}
               </div>
             </div>
 
             {/* Rating */}
             <div>
-              <label className="label" style={{ display: 'block', marginBottom: 8 }}>Wie lief die Woche?</label>
+              <DLabel>Wie lief die Woche?</DLabel>
               <div style={{ display: 'flex', gap: 8 }}>
                 {RATINGS.map(r => (
-                  <button
-                    key={r.value}
-                    type="button"
-                    onClick={() => setRating(r.value)}
-                    style={{
-                      flex: 1, padding: '10px 6px', borderRadius: 12, border: 'none', cursor: 'pointer',
-                      fontFamily: 'inherit', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-                      background: rating === r.value ? `${r.color}18` : 'var(--color-input-bg)',
-                      boxShadow: rating === r.value ? `0 0 0 1.5px ${r.color}` : 'none',
-                      transition: 'all 0.15s ease',
-                    }}
-                  >
-                    <span style={{ fontSize: 22 }}>{r.emoji}</span>
-                    <span style={{ fontSize: 10, color: rating === r.value ? r.color : 'var(--color-text-tertiary)', fontWeight: rating === r.value ? 600 : 400 }}>
-                      {r.label}
-                    </span>
+                  <button key={r.value} type="button" onClick={() => setRating(r.value)} style={{
+                    flex: 1, padding: '12px 4px', borderRadius: 14, border: `0.5px solid ${rating===r.value ? r.color+'50' : D.border}`,
+                    background: rating===r.value ? `${r.color}14` : D.card2,
+                    cursor: 'pointer', fontFamily: 'inherit', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
+                    boxShadow: rating===r.value ? `0 0 16px ${r.color}30` : 'none',
+                    transition: 'all 0.18s cubic-bezier(0.22,1,0.36,1)',
+                  }}>
+                    <span style={{ fontSize: 24 }}>{r.emoji}</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: rating===r.value ? r.color : D.text3, letterSpacing: '0.01em' }}>{r.label}</span>
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Wins */}
-            <div>
-              <label className="label" style={{ display: 'block', marginBottom: 6 }}>
-                ✅ Was lief gut diese Woche?
-              </label>
-              <textarea
-                className="input"
-                rows={3}
-                placeholder="Erfolge, Fortschritte, positive Momente..."
-                value={wins}
-                onChange={e => setWins(e.target.value)}
-              />
-            </div>
+            <DField label="✅ Was lief gut?"><DInput as="textarea" rows={3} placeholder="Erfolge, Fortschritte..." value={wins} onChange={e=>setWins(e.target.value)} style={{ resize: 'vertical', minHeight: 72 }} /></DField>
+            <DField label="🚧 Was hat gebremst?"><DInput as="textarea" rows={3} placeholder="Hindernisse, Probleme..." value={blockers} onChange={e=>setBlockers(e.target.value)} style={{ resize: 'vertical', minHeight: 72 }} /></DField>
+            <DField label="→ Nächste Schritte"><DInput as="textarea" rows={3} placeholder="Plane für nächste Woche..." value={nextSteps} onChange={e=>setNextSteps(e.target.value)} style={{ resize: 'vertical', minHeight: 72 }} /></DField>
+            <DField label="⭐ Verbesserungsziel"><DInput as="textarea" rows={2} placeholder="Woran möchtest du wachsen?" value={goal} onChange={e=>setGoal(e.target.value)} style={{ resize: 'vertical', minHeight: 60 }} /></DField>
 
-            {/* Blockers */}
-            <div>
-              <label className="label" style={{ display: 'block', marginBottom: 6 }}>
-                🚧 Was hat mich gebremst?
-              </label>
-              <textarea
-                className="input"
-                rows={3}
-                placeholder="Hindernisse, Probleme, fehlende Ressourcen..."
-                value={blockers}
-                onChange={e => setBlockers(e.target.value)}
-              />
-            </div>
-
-            {/* Next steps */}
-            <div>
-              <label className="label" style={{ display: 'block', marginBottom: 6 }}>
-                → Nächste Schritte
-              </label>
-              <textarea
-                className="input"
-                rows={3}
-                placeholder="Was nehme ich mir für nächste Woche vor?"
-                value={nextSteps}
-                onChange={e => setNextSteps(e.target.value)}
-              />
-            </div>
-
-            {/* Improvement goal */}
-            <div>
-              <label className="label" style={{ display: 'block', marginBottom: 6 }}>
-                ⭐ Mein persönliches Verbesserungsziel
-              </label>
-              <textarea
-                className="input"
-                rows={2}
-                placeholder="In welchem Bereich möchte ich mich verbessern?"
-                value={goal}
-                onChange={e => setGoal(e.target.value)}
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="btn-primary"
-              disabled={loading}
-              style={{ width: '100%', justifyContent: 'center', fontSize: 15, padding: '12px 20px' }}
-            >
+            <DBtn type="submit" disabled={loading} style={{ width: '100%', justifyContent: 'center', padding: '13px 20px', fontSize: 15, borderRadius: 13 }}>
               {loading ? 'Speichern...' : 'Feedback speichern'}
-            </button>
+            </DBtn>
           </div>
         </form>
       </div>
@@ -693,57 +497,41 @@ function KpisTab({ teamMembers }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [editKpi, setEditKpi] = useState(null);
 
-  const { data: kpis = [], isLoading } = useQuery({
-    queryKey: ['planning-kpis'],
-    queryFn: planningApi.listKpis,
-  });
+  const { data: kpis = [], isLoading } = useQuery({ queryKey: ['planning-kpis'], queryFn: planningApi.listKpis });
 
-  const saveKpi = useMutation({
-    mutationFn: (data) => data.id ? planningApi.updateKpi(data.id, data) : planningApi.createKpi(data),
+  const save = useMutation({
+    mutationFn: d => d.id ? planningApi.updateKpi(d.id, d) : planningApi.createKpi(d),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['planning-kpis'] }); setModalOpen(false); setEditKpi(null); toast.success('KPI gespeichert'); },
-    onError: () => toast.error('Fehler beim Speichern'),
+    onError: () => toast.error('Fehler'),
   });
+  const del = useMutation({ mutationFn: planningApi.deleteKpi, onSuccess: () => qc.invalidateQueries({ queryKey: ['planning-kpis'] }) });
 
-  const deleteKpi = useMutation({
-    mutationFn: planningApi.deleteKpi,
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['planning-kpis'] }); toast.success('KPI gelöscht'); },
-  });
-
-  const grouped = AREAS.reduce((acc, a) => {
-    acc[a] = kpis.filter(k => k.area === a);
-    return acc;
-  }, {});
+  const grouped = AREAS.reduce((a, k) => { a[k] = kpis.filter(x => x.area === k); return a; }, {});
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 20 }}>
-        <button onClick={() => { setEditKpi(null); setModalOpen(true); }} className="btn-primary" style={{ fontSize: 13 }}>
-          <Plus size={14} /> KPI hinzufügen
-        </button>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 24 }}>
+        <DBtn onClick={() => { setEditKpi(null); setModalOpen(true); }}><Plus size={13} /> KPI hinzufügen</DBtn>
       </div>
 
       {isLoading ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12 }}>
-          {[1, 2, 3, 4].map(i => <div key={i} className="skeleton" style={{ height: 140, borderRadius: 16 }} />)}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(240px,1fr))', gap: 12 }}>
+          {[1,2,3,4].map(i => <Skel key={i} h={160} r={18} />)}
         </div>
       ) : kpis.length === 0 ? (
-        <EmptyState icon={<Target size={32} />} title="Noch keine KPIs" text="Erstelle dein erstes KPI um Fortschritte zu messen." />
+        <EmptyState icon={<Target size={28} />} title="Noch keine KPIs" sub="Erstelle dein erstes KPI um Fortschritte zu messen." />
       ) : (
         Object.entries(grouped).map(([area, items]) => items.length > 0 && (
-          <div key={area} style={{ marginBottom: 28 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-              <AreaDot area={area} />
-              <h3 style={{ margin: 0, fontSize: 12, fontWeight: 700, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                {area}
-              </h3>
+          <div key={area} style={{ marginBottom: 32 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: AREA_THEME[area]?.accent || D.text3, boxShadow: `0 0 8px ${AREA_THEME[area]?.accent}80` }} />
+              <span style={{ fontSize: 11, fontWeight: 800, color: AREA_THEME[area]?.accent || D.text3, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{area}</span>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(240px,1fr))', gap: 12 }}>
               {items.map(kpi => (
-                <KpiCard
-                  key={kpi.id}
-                  kpi={kpi}
+                <KpiCard key={kpi.id} kpi={kpi}
                   onEdit={() => { setEditKpi(kpi); setModalOpen(true); }}
-                  onDelete={() => { if (confirm('KPI löschen?')) deleteKpi.mutate(kpi.id); }}
+                  onDelete={() => { if (confirm('KPI löschen?')) del.mutate(kpi.id); }}
                 />
               ))}
             </div>
@@ -751,82 +539,67 @@ function KpisTab({ teamMembers }) {
         ))
       )}
 
-      <KpiModal
-        open={modalOpen}
-        onClose={() => { setModalOpen(false); setEditKpi(null); }}
-        onSave={saveKpi.mutate}
-        initial={editKpi}
-        loading={saveKpi.isPending}
-        teamMembers={teamMembers || []}
-      />
+      <KpiModal open={modalOpen} onClose={() => { setModalOpen(false); setEditKpi(null); }}
+        onSave={save.mutate} initial={editKpi} loading={save.isPending} teamMembers={teamMembers||[]} />
     </div>
   );
 }
 
 function KpiCard({ kpi, onEdit, onDelete }) {
   const pct = kpi.target_value > 0 ? Math.round((kpi.current_value / kpi.target_value) * 100) : 0;
-  const color = AREA_COLORS[kpi.area] || '#007AFF';
+  const t = AREA_THEME[kpi.area] || AREA_THEME.Allgemein;
   const isGood = pct >= 80;
+  const ringColor = isGood ? D.green : t.accent;
 
   return (
     <div style={{
-      background: 'var(--color-card)', borderRadius: 16,
-      border: '0.5px solid var(--color-border-subtle)',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-      padding: '16px', position: 'relative', overflow: 'hidden',
-      transition: 'box-shadow 0.2s ease, transform 0.2s ease',
+      background: t.bg, borderRadius: 18,
+      border: `0.5px solid ${t.accent}25`,
+      boxShadow: `0 0 32px ${t.glow}, 0 1px 3px rgba(0,0,0,0.4)`,
+      padding: '18px 18px 14px',
+      transition: 'transform 0.2s cubic-bezier(0.22,1,0.36,1), box-shadow 0.2s ease',
     }}
-    onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-    onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.04)'; e.currentTarget.style.transform = 'translateY(0)'; }}
+    onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = `0 8px 40px ${t.glow}, 0 4px 16px rgba(0,0,0,0.5)`; }}
+    onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = `0 0 32px ${t.glow}, 0 1px 3px rgba(0,0,0,0.4)`; }}
     >
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ margin: '0 0 2px', fontSize: 13, fontWeight: 600, color: 'var(--color-text)', letterSpacing: '-0.01em' }}>
+          <p style={{ margin: '0 0 10px', fontSize: 12, fontWeight: 700, color: t.accent, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
             {kpi.title}
           </p>
-          {kpi.description && (
-            <p style={{ margin: 0, fontSize: 11, color: 'var(--color-text-tertiary)', lineHeight: 1.4 }}>{kpi.description}</p>
-          )}
-          <div style={{ marginTop: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 3 }}>
-              <span style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--color-text)' }}>
-                {Number(kpi.current_value).toLocaleString('de-DE')}
-              </span>
-              <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)', fontWeight: 500 }}>{kpi.unit}</span>
-            </div>
-            <p style={{ margin: '1px 0 0', fontSize: 11, color: 'var(--color-text-tertiary)' }}>
-              Ziel: {Number(kpi.target_value).toLocaleString('de-DE')} {kpi.unit}
-            </p>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
+            <span style={{ fontSize: 30, fontWeight: 800, color: D.text, letterSpacing: '-0.04em', lineHeight: 1 }}>
+              {Number(kpi.current_value).toLocaleString('de-DE')}
+            </span>
+            <span style={{ fontSize: 13, color: D.text3, fontWeight: 600 }}>{kpi.unit}</span>
           </div>
+          <p style={{ margin: '3px 0 10px', fontSize: 11, color: D.text3 }}>
+            Ziel: {Number(kpi.target_value).toLocaleString('de-DE')} {kpi.unit}
+          </p>
           {/* Progress bar */}
-          <div style={{ marginTop: 10, height: 4, background: 'var(--color-input-bg)', borderRadius: 99, overflow: 'hidden' }}>
+          <div style={{ height: 3, background: 'rgba(255,255,255,0.07)', borderRadius: 99, overflow: 'hidden', marginBottom: 4 }}>
             <div style={{
               height: '100%', borderRadius: 99,
-              background: isGood ? '#34C759' : color,
+              background: `linear-gradient(90deg, ${t.accent}80, ${t.accent})`,
               width: `${Math.min(pct, 100)}%`,
-              transition: 'width 0.6s cubic-bezier(0.22,1,0.36,1)',
+              boxShadow: `0 0 8px ${t.accent}60`,
+              transition: 'width 0.7s cubic-bezier(0.22,1,0.36,1)',
             }} />
           </div>
-          <p style={{ margin: '4px 0 0', fontSize: 11, color: isGood ? '#34C759' : 'var(--color-text-tertiary)', fontWeight: 600 }}>
-            {pct}%
-          </p>
+          <span style={{ fontSize: 11, fontWeight: 700, color: isGood ? D.green : t.accent }}>{pct}%</span>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
-          <ProgressRing pct={pct} color={isGood ? '#34C759' : color} size={56} />
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+          <Ring pct={pct} color={ringColor} size={58} />
           <div style={{ display: 'flex', gap: 4 }}>
-            <button onClick={onEdit} style={{ width: 24, height: 24, borderRadius: 6, border: 'none', background: 'var(--color-input-bg)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-secondary)' }}>
-              <Edit3 size={11} />
-            </button>
-            <button onClick={onDelete} style={{ width: 24, height: 24, borderRadius: 6, border: 'none', background: 'var(--color-input-bg)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-tertiary)' }}>
-              <Trash2 size={11} />
-            </button>
+            <button onClick={onEdit} style={{ width: 24, height: 24, borderRadius: 6, border: 'none', background: 'rgba(255,255,255,0.07)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: D.text2 }}><Edit3 size={10} /></button>
+            <button onClick={onDelete} style={{ width: 24, height: 24, borderRadius: 6, border: 'none', background: 'rgba(255,255,255,0.05)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: D.text3 }}><Trash2 size={10} /></button>
           </div>
         </div>
       </div>
       {kpi.owner_name && (
-        <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 5 }}>
-          <Avatar name={kpi.owner_name} email="" color={kpi.owner_color} size={16} />
-          <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>{kpi.owner_name}</span>
+        <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 6, paddingTop: 10, borderTop: `0.5px solid rgba(255,255,255,0.06)` }}>
+          <Av name={kpi.owner_name} email="" color={kpi.owner_color} size={16} />
+          <span style={{ fontSize: 11, color: D.text3 }}>{kpi.owner_name}</span>
         </div>
       )}
     </div>
@@ -834,66 +607,56 @@ function KpiCard({ kpi, onEdit, onDelete }) {
 }
 
 function KpiModal({ open, onClose, onSave, initial, loading, teamMembers }) {
-  const [form, setForm] = useState({});
-  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
-
-  useEffect(() => {
-    if (open) setForm(initial ? { ...initial } : { area: 'Vertrieb', unit: '%', frequency: 'monthly', color: 'blue', target_value: 100, current_value: 0 });
-  }, [open, initial]);
-
-  const submit = (e) => {
-    e.preventDefault();
-    if (!form.title?.trim()) { toast.error('Titel erforderlich'); return; }
-    onSave(form);
-  };
+  const [f, setF] = useState({});
+  const s = (k, v) => setF(x => ({ ...x, [k]: v }));
+  useEffect(() => { if (open) setF(initial ? {...initial} : { area: 'Vertrieb', unit: '%', frequency: 'monthly', target_value: 100, current_value: 0 }); }, [open, initial]);
+  const submit = e => { e.preventDefault(); if (!f.title?.trim()) { toast.error('Titel erforderlich'); return; } onSave(f); };
 
   return (
-    <Modal open={open} onClose={onClose} title={initial ? 'KPI bearbeiten' : 'Neues KPI'}>
+    <DModal open={open} onClose={onClose} title={initial ? 'KPI bearbeiten' : 'Neues KPI'}>
       <form onSubmit={submit}>
-        <Field label="Titel"><input className="input" value={form.title || ''} onChange={e => set('title', e.target.value)} placeholder="z.B. Conversion Rate" required /></Field>
+        <DField label="Titel"><DInput value={f.title||''} onChange={e=>s('title',e.target.value)} placeholder="z.B. Conversion Rate" required /></DField>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          <Field label="Bereich">
-            <select className="input" value={form.area || 'Allgemein'} onChange={e => set('area', e.target.value)}>
-              {AREAS.map(a => <option key={a}>{a}</option>)}
-            </select>
-          </Field>
-          <Field label="Einheit">
-            <select className="input" value={form.unit || '%'} onChange={e => set('unit', e.target.value)}>
-              {['%', '€', 'Stk.', 'h', 'Tage', 'Punkte', 'Leads'].map(u => <option key={u}>{u}</option>)}
-            </select>
-          </Field>
+          <DField label="Bereich">
+            <DInput as="select" value={f.area||'Allgemein'} onChange={e=>s('area',e.target.value)} style={{ appearance: 'none' }}>
+              {AREAS.map(a=><option key={a} style={{ background: D.card }}>{a}</option>)}
+            </DInput>
+          </DField>
+          <DField label="Einheit">
+            <DInput as="select" value={f.unit||'%'} onChange={e=>s('unit',e.target.value)} style={{ appearance: 'none' }}>
+              {['%','€','Stk.','h','Tage','Punkte','Leads'].map(u=><option key={u} style={{ background: D.card }}>{u}</option>)}
+            </DInput>
+          </DField>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          <Field label="Zielwert"><input className="input" type="number" value={form.target_value ?? 100} onChange={e => set('target_value', parseFloat(e.target.value))} /></Field>
-          <Field label="Ist-Wert"><input className="input" type="number" value={form.current_value ?? 0} onChange={e => set('current_value', parseFloat(e.target.value))} /></Field>
+          <DField label="Zielwert"><DInput type="number" value={f.target_value??100} onChange={e=>s('target_value',parseFloat(e.target.value))} /></DField>
+          <DField label="Ist-Wert"><DInput type="number" value={f.current_value??0} onChange={e=>s('current_value',parseFloat(e.target.value))} /></DField>
         </div>
-        <Field label="Turnus">
-          <select className="input" value={form.frequency || 'monthly'} onChange={e => set('frequency', e.target.value)}>
-            <option value="weekly">Wöchentlich</option>
-            <option value="monthly">Monatlich</option>
-            <option value="quarterly">Quartalsweise</option>
-            <option value="yearly">Jährlich</option>
-          </select>
-        </Field>
+        <DField label="Turnus">
+          <DInput as="select" value={f.frequency||'monthly'} onChange={e=>s('frequency',e.target.value)} style={{ appearance: 'none' }}>
+            <option value="weekly" style={{ background: D.card }}>Wöchentlich</option>
+            <option value="monthly" style={{ background: D.card }}>Monatlich</option>
+            <option value="quarterly" style={{ background: D.card }}>Quartalsweise</option>
+            <option value="yearly" style={{ background: D.card }}>Jährlich</option>
+          </DInput>
+        </DField>
         {teamMembers.length > 0 && (
-          <Field label="Verantwortlich">
-            <select className="input" value={form.owner_id || ''} onChange={e => set('owner_id', e.target.value || null)}>
-              <option value="">Kein Verantwortlicher</option>
-              {teamMembers.map(m => <option key={m.id} value={m.id}>{m.name || m.email}</option>)}
-            </select>
-          </Field>
+          <DField label="Verantwortlich">
+            <DInput as="select" value={f.owner_id||''} onChange={e=>s('owner_id',e.target.value||null)} style={{ appearance: 'none' }}>
+              <option value="" style={{ background: D.card }}>Niemand</option>
+              {teamMembers.map(m=><option key={m.id} value={m.id} style={{ background: D.card }}>{m.name||m.email}</option>)}
+            </DInput>
+          </DField>
         )}
-        <Field label="Beschreibung (optional)">
-          <textarea className="input" rows={2} value={form.description || ''} onChange={e => set('description', e.target.value)} placeholder="Kurze Beschreibung..." />
-        </Field>
+        <DField label="Beschreibung">
+          <DInput as="textarea" rows={2} value={f.description||''} onChange={e=>s('description',e.target.value)} placeholder="Optional..." style={{ resize: 'vertical' }} />
+        </DField>
         <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-          <button type="button" onClick={onClose} className="btn-secondary" style={{ flex: 1, justifyContent: 'center' }}>Abbrechen</button>
-          <button type="submit" className="btn-primary" disabled={loading} style={{ flex: 2, justifyContent: 'center' }}>
-            {loading ? 'Speichern...' : (initial ? 'Aktualisieren' : 'KPI erstellen')}
-          </button>
+          <DBtn variant="ghost" onClick={onClose} style={{ flex: 1 }}>Abbrechen</DBtn>
+          <DBtn type="submit" disabled={loading} style={{ flex: 2 }}>{loading ? 'Speichern...' : initial ? 'Aktualisieren' : 'KPI erstellen'}</DBtn>
         </div>
       </form>
-    </Modal>
+    </DModal>
   );
 }
 
@@ -905,77 +668,66 @@ function TasksTab({ teamMembers }) {
   const qc = useQueryClient();
   const [modalOpen, setModalOpen] = useState(false);
   const [editTask, setEditTask] = useState(null);
-  const [defaultStatus, setDefaultStatus] = useState('open');
+  const [defStatus, setDefStatus] = useState('open');
 
-  const { data: tasks = [], isLoading } = useQuery({
-    queryKey: ['planning-tasks'],
-    queryFn: () => planningApi.listTasks(),
-  });
+  const { data: tasks = [], isLoading } = useQuery({ queryKey: ['planning-tasks'], queryFn: () => planningApi.listTasks() });
 
-  const saveTask = useMutation({
-    mutationFn: (data) => data.id ? planningApi.updateTask(data.id, data) : planningApi.createTask(data),
+  const save = useMutation({
+    mutationFn: d => d.id ? planningApi.updateTask(d.id, d) : planningApi.createTask(d),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['planning-tasks'] }); setModalOpen(false); setEditTask(null); toast.success('Aufgabe gespeichert'); },
-    onError: () => toast.error('Fehler beim Speichern'),
+    onError: () => toast.error('Fehler'),
   });
-
-  const moveTask = useMutation({
-    mutationFn: ({ id, status, ...rest }) => planningApi.updateTask(id, { ...rest, status }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['planning-tasks'] }),
-  });
-
-  const deleteTask = useMutation({
-    mutationFn: planningApi.deleteTask,
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['planning-tasks'] }); toast.success('Aufgabe gelöscht'); },
-  });
+  const move = useMutation({ mutationFn: ({ id, status, ...rest }) => planningApi.updateTask(id, { ...rest, status }), onSuccess: () => qc.invalidateQueries({ queryKey: ['planning-tasks'] }) });
+  const del  = useMutation({ mutationFn: planningApi.deleteTask, onSuccess: () => { qc.invalidateQueries({ queryKey: ['planning-tasks'] }); toast.success('Gelöscht'); } });
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 20 }}>
-        <button onClick={() => { setEditTask(null); setDefaultStatus('open'); setModalOpen(true); }} className="btn-primary" style={{ fontSize: 13 }}>
-          <Plus size={14} /> Aufgabe hinzufügen
-        </button>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 24 }}>
+        <DBtn onClick={() => { setEditTask(null); setDefStatus('open'); setModalOpen(true); }}><Plus size={13} /> Aufgabe hinzufügen</DBtn>
       </div>
 
       {isLoading ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
-          {[1, 2, 3, 4].map(i => <div key={i} className="skeleton" style={{ height: 200, borderRadius: 16 }} />)}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12 }}>
+          {[1,2,3,4].map(i => <Skel key={i} h={180} r={14} />)}
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12, alignItems: 'start' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(210px,1fr))', gap: 14, alignItems: 'start' }}>
           {TASK_COLS.map(col => {
-            const colTasks = tasks.filter(t => t.status === col.id);
+            const items = tasks.filter(t => t.status === col.id);
             return (
               <div key={col.id}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10 }}>
-                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: col.color, flexShrink: 0 }} />
-                  <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    {col.label}
-                  </span>
-                  <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginLeft: 'auto' }}>{colTasks.length}</span>
+                {/* Column header */}
+                <div style={{
+                  padding: '9px 12px 8px', borderRadius: 12, marginBottom: 10,
+                  background: `linear-gradient(90deg, ${col.color}18 0%, transparent 100%)`,
+                  border: `0.5px solid ${col.color}20`,
+                  display: 'flex', alignItems: 'center', gap: 8,
+                }}>
+                  <div style={{ width: 7, height: 7, borderRadius: '50%', background: col.color, boxShadow: `0 0 8px ${col.color}` }} />
+                  <span style={{ fontSize: 11, fontWeight: 800, color: col.color, textTransform: 'uppercase', letterSpacing: '0.07em', flex: 1 }}>{col.label}</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: D.text3 }}>{items.length}</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {colTasks.map(task => (
-                    <TaskCard
-                      key={task.id}
-                      task={task}
-                      colColor={col.color}
+                  {items.map(task => (
+                    <TaskCard key={task.id} task={task} colColor={col.color}
                       onEdit={() => { setEditTask(task); setModalOpen(true); }}
-                      onMove={(newStatus) => moveTask.mutate({ ...task, status: newStatus })}
-                      onDelete={() => { if (confirm('Aufgabe löschen?')) deleteTask.mutate(task.id); }}
+                      onMove={status => move.mutate({ ...task, status })}
+                      onDelete={() => { if (confirm('Löschen?')) del.mutate(task.id); }}
                     />
                   ))}
                   <button
-                    onClick={() => { setEditTask(null); setDefaultStatus(col.id); setModalOpen(true); }}
+                    onClick={() => { setEditTask(null); setDefStatus(col.id); setModalOpen(true); }}
                     style={{
-                      width: '100%', padding: '8px', borderRadius: 10, border: '1px dashed var(--color-border)',
-                      background: 'none', color: 'var(--color-text-tertiary)', cursor: 'pointer',
-                      fontSize: 12, fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
-                      transition: 'border-color 0.15s ease, color 0.15s ease',
+                      width: '100%', padding: '8px', borderRadius: 10,
+                      border: `1px dashed ${D.border}`, background: 'none',
+                      color: D.text3, cursor: 'pointer', fontSize: 12, fontFamily: 'inherit',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
+                      transition: 'border-color 0.15s, color 0.15s',
                     }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--color-text-tertiary)'; e.currentTarget.style.color = 'var(--color-text-secondary)'; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.color = 'var(--color-text-tertiary)'; }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = col.color+'50'; e.currentTarget.style.color = col.color; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = D.border; e.currentTarget.style.color = D.text3; }}
                   >
-                    <Plus size={12} /> Hinzufügen
+                    <Plus size={11} /> Hinzufügen
                   </button>
                 </div>
               </div>
@@ -984,97 +736,50 @@ function TasksTab({ teamMembers }) {
         </div>
       )}
 
-      <TaskModal
-        open={modalOpen}
-        onClose={() => { setModalOpen(false); setEditTask(null); }}
-        onSave={saveTask.mutate}
-        initial={editTask}
-        defaultStatus={defaultStatus}
-        loading={saveTask.isPending}
-        teamMembers={teamMembers || []}
-      />
+      <TaskModal open={modalOpen} onClose={() => { setModalOpen(false); setEditTask(null); }}
+        onSave={save.mutate} initial={editTask} defaultStatus={defStatus}
+        loading={save.isPending} teamMembers={teamMembers||[]} />
     </div>
   );
 }
 
-function TaskCard({ task, colColor, onEdit, onMove, onDelete }) {
-  const nextStatuses = TASK_COLS.filter(c => c.id !== task.status).map(c => c.id);
-  const dueDate = task.due_date ? new Date(task.due_date) : null;
-  const isOverdue = dueDate && dueDate < new Date() && task.status !== 'done';
+function TaskCard({ task, onEdit, onMove, onDelete }) {
+  const p = PRIORITY[task.priority] || PRIORITY.medium;
+  const due = task.due_date ? new Date(task.due_date) : null;
+  const overdue = due && due < new Date() && task.status !== 'done';
+  const others = TASK_COLS.filter(c => c.id !== task.status);
 
   return (
     <div style={{
-      background: 'var(--color-card)', borderRadius: 12,
-      border: '0.5px solid var(--color-border-subtle)',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-      padding: '12px 12px 10px', cursor: 'default',
-      transition: 'box-shadow 0.2s ease',
-      borderLeft: `2.5px solid ${PRIORITY_COLORS[task.priority]}`,
+      background: D.card, borderRadius: 12,
+      border: `0.5px solid ${D.border}`,
+      borderLeft: `2.5px solid ${p.color}`,
+      boxShadow: `0 1px 4px rgba(0,0,0,0.4)`,
+      padding: '11px 12px 10px',
+      transition: 'transform 0.18s cubic-bezier(0.22,1,0.36,1), box-shadow 0.18s ease',
     }}
-    onMouseEnter={e => e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)'}
-    onMouseLeave={e => e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.04)'}
+    onMouseEnter={e => { e.currentTarget.style.transform = 'translateX(2px)'; e.currentTarget.style.boxShadow = `0 4px 16px rgba(0,0,0,0.5), -2px 0 0 ${p.color}60`; }}
+    onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.4)'; }}
     >
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ margin: 0, fontSize: 13, fontWeight: 500, color: 'var(--color-text)', lineHeight: 1.4, letterSpacing: '-0.01em' }}>
-            {task.title}
-          </p>
-          {task.description && (
-            <p style={{ margin: '4px 0 0', fontSize: 11, color: 'var(--color-text-tertiary)', lineHeight: 1.4 }}>{task.description}</p>
-          )}
-        </div>
+        <p style={{ flex: 1, margin: 0, fontSize: 13, fontWeight: 500, color: D.text, lineHeight: 1.4, letterSpacing: '-0.01em' }}>{task.title}</p>
         <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
-          <button onClick={onEdit} style={{ width: 22, height: 22, borderRadius: 5, border: 'none', background: 'var(--color-input-bg)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-secondary)' }}>
-            <Edit3 size={10} />
-          </button>
-          <button onClick={onDelete} style={{ width: 22, height: 22, borderRadius: 5, border: 'none', background: 'var(--color-input-bg)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-tertiary)' }}>
-            <Trash2 size={10} />
-          </button>
+          <button onClick={onEdit} style={{ width: 22, height: 22, borderRadius: 5, border: 'none', background: 'rgba(255,255,255,0.06)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: D.text2 }}><Edit3 size={10} /></button>
+          <button onClick={onDelete} style={{ width: 22, height: 22, borderRadius: 5, border: 'none', background: 'rgba(255,255,255,0.04)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: D.text3 }}><Trash2 size={10} /></button>
         </div>
       </div>
-
+      {task.description && <p style={{ margin: '4px 0 0', fontSize: 11, color: D.text3, lineHeight: 1.4 }}>{task.description}</p>}
       <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-        <span style={{
-          fontSize: 10, fontWeight: 600, padding: '2px 6px', borderRadius: 5,
-          background: `${PRIORITY_COLORS[task.priority]}15`, color: PRIORITY_COLORS[task.priority],
-          letterSpacing: '0.02em',
-        }}>
-          {PRIORITY_LABELS[task.priority]}
-        </span>
-        {task.area && task.area !== 'Allgemein' && (
-          <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-            <AreaDot area={task.area} />
-            <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)' }}>{task.area}</span>
-          </span>
-        )}
-        {dueDate && (
-          <span style={{
-            fontSize: 10, color: isOverdue ? '#FF3B30' : 'var(--color-text-tertiary)',
-            display: 'flex', alignItems: 'center', gap: 3, marginLeft: 'auto',
-          }}>
-            <Calendar size={9} />
-            {dueDate.toLocaleDateString('de-DE', { day: '2-digit', month: 'short' })}
-          </span>
-        )}
-        {task.owner_name && (
-          <Avatar name={task.owner_name} email="" color={task.owner_color} size={16} />
-        )}
+        <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 6px', borderRadius: 5, background: `${p.color}18`, color: p.color }}>{p.label}</span>
+        {due && <span style={{ fontSize: 10, color: overdue ? D.red : D.text3, display: 'flex', alignItems: 'center', gap: 2 }}><Calendar size={9} />{due.toLocaleDateString('de-DE',{day:'2-digit',month:'short'})}</span>}
+        {task.owner_name && <Av name={task.owner_name} email="" color={task.owner_color} size={16} />}
       </div>
-
-      {/* Quick status actions */}
       <div style={{ marginTop: 8, display: 'flex', gap: 4 }}>
-        {TASK_COLS.filter(c => c.id !== task.status).slice(0, 2).map(c => (
-          <button
-            key={c.id}
-            onClick={() => onMove(c.id)}
-            style={{
-              fontSize: 10, padding: '3px 7px', borderRadius: 6, border: 'none', cursor: 'pointer',
-              background: `${c.color}12`, color: c.color, fontFamily: 'inherit', fontWeight: 500,
-              transition: 'background 0.15s ease',
-            }}
-          >
-            → {c.label}
-          </button>
+        {others.slice(0, 2).map(c => (
+          <button key={c.id} onClick={() => onMove(c.id)} style={{
+            fontSize: 10, padding: '3px 7px', borderRadius: 6, border: 'none', cursor: 'pointer',
+            background: `${c.color}14`, color: c.color, fontFamily: 'inherit', fontWeight: 600,
+          }}>→ {c.label}</button>
         ))}
       </div>
     </div>
@@ -1082,73 +787,53 @@ function TaskCard({ task, colColor, onEdit, onMove, onDelete }) {
 }
 
 function TaskModal({ open, onClose, onSave, initial, defaultStatus, loading, teamMembers }) {
-  const [form, setForm] = useState({});
-  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
-
-  useEffect(() => {
-    if (open) setForm(initial ? { ...initial } : { status: defaultStatus || 'open', priority: 'medium', area: 'Allgemein', type: 'task' });
-  }, [open, initial, defaultStatus]);
-
-  const submit = (e) => {
-    e.preventDefault();
-    if (!form.title?.trim()) { toast.error('Titel erforderlich'); return; }
-    onSave(form);
-  };
+  const [f, setF] = useState({});
+  const s = (k, v) => setF(x => ({ ...x, [k]: v }));
+  useEffect(() => { if (open) setF(initial ? {...initial} : { status: defaultStatus||'open', priority: 'medium', area: 'Allgemein', type: 'task' }); }, [open, initial, defaultStatus]);
+  const submit = e => { e.preventDefault(); if (!f.title?.trim()) { toast.error('Titel erforderlich'); return; } onSave(f); };
+  const sel = (v, ...opts) => <DInput as="select" value={v} style={{ appearance: 'none' }}>{opts}</DInput>;
 
   return (
-    <Modal open={open} onClose={onClose} title={initial ? 'Aufgabe bearbeiten' : 'Neue Aufgabe'}>
+    <DModal open={open} onClose={onClose} title={initial ? 'Aufgabe bearbeiten' : 'Neue Aufgabe'}>
       <form onSubmit={submit}>
-        <Field label="Titel"><input className="input" value={form.title || ''} onChange={e => set('title', e.target.value)} placeholder="Was muss getan werden?" required /></Field>
-        <Field label="Beschreibung">
-          <textarea className="input" rows={2} value={form.description || ''} onChange={e => set('description', e.target.value)} placeholder="Details..." />
-        </Field>
+        <DField label="Titel"><DInput value={f.title||''} onChange={e=>s('title',e.target.value)} placeholder="Was muss getan werden?" required /></DField>
+        <DField label="Beschreibung"><DInput as="textarea" rows={2} value={f.description||''} onChange={e=>s('description',e.target.value)} placeholder="Details..." style={{ resize: 'vertical' }} /></DField>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          <Field label="Status">
-            <select className="input" value={form.status || 'open'} onChange={e => set('status', e.target.value)}>
-              {TASK_COLS.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
-            </select>
-          </Field>
-          <Field label="Priorität">
-            <select className="input" value={form.priority || 'medium'} onChange={e => set('priority', e.target.value)}>
-              {Object.entries(PRIORITY_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-            </select>
-          </Field>
+          <DField label="Status">
+            <DInput as="select" value={f.status||'open'} onChange={e=>s('status',e.target.value)} style={{ appearance: 'none' }}>
+              {TASK_COLS.map(c=><option key={c.id} value={c.id} style={{ background: D.card }}>{c.label}</option>)}
+            </DInput>
+          </DField>
+          <DField label="Priorität">
+            <DInput as="select" value={f.priority||'medium'} onChange={e=>s('priority',e.target.value)} style={{ appearance: 'none' }}>
+              {Object.entries(PRIORITY).map(([k,v])=><option key={k} value={k} style={{ background: D.card }}>{v.label}</option>)}
+            </DInput>
+          </DField>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          <Field label="Typ">
-            <select className="input" value={form.type || 'task'} onChange={e => set('type', e.target.value)}>
-              <option value="task">Aufgabe</option>
-              <option value="problem">Problem</option>
-              <option value="goal">Ziel</option>
-            </select>
-          </Field>
-          <Field label="Bereich">
-            <select className="input" value={form.area || 'Allgemein'} onChange={e => set('area', e.target.value)}>
-              {AREAS.map(a => <option key={a}>{a}</option>)}
-            </select>
-          </Field>
+          <DField label="Bereich">
+            <DInput as="select" value={f.area||'Allgemein'} onChange={e=>s('area',e.target.value)} style={{ appearance: 'none' }}>
+              {AREAS.map(a=><option key={a} style={{ background: D.card }}>{a}</option>)}
+            </DInput>
+          </DField>
+          <DField label="Fälligkeitsdatum">
+            <DInput type="date" value={f.due_date||''} onChange={e=>s('due_date',e.target.value||null)} />
+          </DField>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          {teamMembers.length > 0 && (
-            <Field label="Verantwortlich">
-              <select className="input" value={form.owner_id || ''} onChange={e => set('owner_id', e.target.value || null)}>
-                <option value="">Niemand</option>
-                {teamMembers.map(m => <option key={m.id} value={m.id}>{m.name || m.email}</option>)}
-              </select>
-            </Field>
-          )}
-          <Field label="Fälligkeitsdatum">
-            <input className="input" type="date" value={form.due_date || ''} onChange={e => set('due_date', e.target.value || null)} />
-          </Field>
-        </div>
+        {teamMembers.length > 0 && (
+          <DField label="Verantwortlich">
+            <DInput as="select" value={f.owner_id||''} onChange={e=>s('owner_id',e.target.value||null)} style={{ appearance: 'none' }}>
+              <option value="" style={{ background: D.card }}>Niemand</option>
+              {teamMembers.map(m=><option key={m.id} value={m.id} style={{ background: D.card }}>{m.name||m.email}</option>)}
+            </DInput>
+          </DField>
+        )}
         <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-          <button type="button" onClick={onClose} className="btn-secondary" style={{ flex: 1, justifyContent: 'center' }}>Abbrechen</button>
-          <button type="submit" className="btn-primary" disabled={loading} style={{ flex: 2, justifyContent: 'center' }}>
-            {loading ? 'Speichern...' : (initial ? 'Aktualisieren' : 'Aufgabe erstellen')}
-          </button>
+          <DBtn variant="ghost" onClick={onClose} style={{ flex: 1 }}>Abbrechen</DBtn>
+          <DBtn type="submit" disabled={loading} style={{ flex: 2 }}>{loading ? 'Speichern...' : initial ? 'Aktualisieren' : 'Erstellen'}</DBtn>
         </div>
       </form>
-    </Modal>
+    </DModal>
   );
 }
 
@@ -1161,184 +846,129 @@ function DecisionsTab({ teamMembers }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [editDec, setEditDec] = useState(null);
 
-  const { data: decisions = [], isLoading } = useQuery({
-    queryKey: ['planning-decisions'],
-    queryFn: planningApi.listDecisions,
-  });
+  const { data: decisions = [], isLoading } = useQuery({ queryKey: ['planning-decisions'], queryFn: planningApi.listDecisions });
 
-  const saveDec = useMutation({
-    mutationFn: (data) => data.id ? planningApi.updateDecision(data.id, data) : planningApi.createDecision(data),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['planning-decisions'] }); setModalOpen(false); setEditDec(null); toast.success('Entscheidung gespeichert'); },
-    onError: () => toast.error('Fehler beim Speichern'),
+  const save = useMutation({
+    mutationFn: d => d.id ? planningApi.updateDecision(d.id, d) : planningApi.createDecision(d),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['planning-decisions'] }); setModalOpen(false); setEditDec(null); toast.success('Gespeichert'); },
+    onError: () => toast.error('Fehler'),
   });
-
-  const deleteDec = useMutation({
-    mutationFn: planningApi.deleteDecision,
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['planning-decisions'] }); toast.success('Entscheidung gelöscht'); },
-  });
+  const del = useMutation({ mutationFn: planningApi.deleteDecision, onSuccess: () => qc.invalidateQueries({ queryKey: ['planning-decisions'] }) });
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 20 }}>
-        <button onClick={() => { setEditDec(null); setModalOpen(true); }} className="btn-primary" style={{ fontSize: 13 }}>
-          <Plus size={14} /> Entscheidung festhalten
-        </button>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 24 }}>
+        <DBtn onClick={() => { setEditDec(null); setModalOpen(true); }}><Plus size={13} /> Festhalten</DBtn>
       </div>
 
       {isLoading ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {[1, 2, 3].map(i => <div key={i} className="skeleton" style={{ height: 90, borderRadius: 14 }} />)}
+          {[1,2,3].map(i => <Skel key={i} h={88} r={14} />)}
         </div>
       ) : decisions.length === 0 ? (
-        <EmptyState icon={<Lightbulb size={32} />} title="Noch keine Entscheidungen" text="Halte wichtige Business-Entscheidungen fest." />
+        <EmptyState icon={<Lightbulb size={28} />} title="Noch keine Entscheidungen" sub="Halte wichtige Business-Entscheidungen fest." />
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {decisions.map(dec => (
-            <DecisionCard
-              key={dec.id}
-              dec={dec}
+            <DecCard key={dec.id} dec={dec}
               onEdit={() => { setEditDec(dec); setModalOpen(true); }}
-              onDelete={() => { if (confirm('Entscheidung löschen?')) deleteDec.mutate(dec.id); }}
+              onDelete={() => { if (confirm('Löschen?')) del.mutate(dec.id); }}
             />
           ))}
         </div>
       )}
 
-      <DecisionModal
-        open={modalOpen}
-        onClose={() => { setModalOpen(false); setEditDec(null); }}
-        onSave={saveDec.mutate}
-        initial={editDec}
-        loading={saveDec.isPending}
-        teamMembers={teamMembers || []}
-      />
+      <DecModal open={modalOpen} onClose={() => { setModalOpen(false); setEditDec(null); }}
+        onSave={save.mutate} initial={editDec} loading={save.isPending} teamMembers={teamMembers||[]} />
     </div>
   );
 }
 
-function DecisionCard({ dec, onEdit, onDelete }) {
-  const areaColor = AREA_COLORS[dec.area] || AREA_COLORS.Allgemein;
-  const isActive = dec.status === 'active';
+function DecCard({ dec, onEdit, onDelete }) {
+  const t = AREA_THEME[dec.area] || AREA_THEME.Allgemein;
   const date = dec.decided_at ? new Date(dec.decided_at).toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
 
   return (
     <div style={{
-      background: 'var(--color-card)', borderRadius: 14,
-      border: '0.5px solid var(--color-border-subtle)',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-      padding: '14px 16px',
-      borderLeft: `3px solid ${areaColor}`,
-      opacity: isActive ? 1 : 0.6,
-      transition: 'box-shadow 0.2s ease',
+      background: D.card, borderRadius: 14, padding: '14px 16px',
+      border: `0.5px solid ${D.border}`,
+      borderLeft: `3px solid ${t.accent}`,
+      boxShadow: `0 0 20px ${t.glow}, 0 1px 4px rgba(0,0,0,0.4)`,
       display: 'flex', alignItems: 'flex-start', gap: 12,
+      opacity: dec.status === 'active' ? 1 : 0.55,
+      transition: 'transform 0.18s ease, box-shadow 0.18s ease',
     }}
-    onMouseEnter={e => e.currentTarget.style.boxShadow = '0 4px 14px rgba(0,0,0,0.07)'}
-    onMouseLeave={e => e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.04)'}
+    onMouseEnter={e => { e.currentTarget.style.transform = 'translateX(3px)'; }}
+    onMouseLeave={e => { e.currentTarget.style.transform = ''; }}
     >
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
-          <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: 'var(--color-text)', letterSpacing: '-0.015em' }}>
-            {dec.title}
-          </p>
-          {!isActive && (
-            <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 6px', borderRadius: 5, background: 'var(--color-input-bg)', color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+          <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: D.text, letterSpacing: '-0.018em' }}>{dec.title}</p>
+          {dec.status !== 'active' && (
+            <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 6px', borderRadius: 5, background: 'rgba(255,255,255,0.06)', color: D.text3, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               {dec.status === 'completed' ? 'Umgesetzt' : 'Verworfen'}
             </span>
           )}
         </div>
-        {dec.description && (
-          <p style={{ margin: '2px 0 6px', fontSize: 13, color: 'var(--color-text-secondary)', lineHeight: 1.5 }}>{dec.description}</p>
-        )}
-        {dec.impact && (
-          <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--color-text-tertiary)' }}>
-            <strong style={{ color: 'var(--color-text-secondary)' }}>Auswirkung:</strong> {dec.impact}
-          </p>
-        )}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 8, flexWrap: 'wrap' }}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <AreaDot area={dec.area} />
-            <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>{dec.area}</span>
-          </span>
-          {date && <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>{date}</span>}
-          {dec.owner_name && (
-            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-              <Avatar name={dec.owner_name} email="" color={dec.owner_color} size={16} />
-              <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>{dec.owner_name}</span>
-            </span>
-          )}
+        {dec.description && <p style={{ margin: '0 0 6px', fontSize: 13, color: D.text2, lineHeight: 1.5 }}>{dec.description}</p>}
+        {dec.impact && <p style={{ margin: '4px 0 0', fontSize: 12, color: D.text3 }}><span style={{ color: D.text2, fontWeight: 600 }}>Auswirkung:</span> {dec.impact}</p>}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 8 }}>
+          <span style={{ fontSize: 11, color: t.accent, fontWeight: 600 }}>{dec.area}</span>
+          {date && <span style={{ fontSize: 11, color: D.text3 }}>{date}</span>}
+          {dec.owner_name && <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Av name={dec.owner_name} email="" color={dec.owner_color} size={16} /><span style={{ fontSize: 11, color: D.text3 }}>{dec.owner_name}</span></span>}
         </div>
       </div>
       <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
-        <button onClick={onEdit} style={{ width: 26, height: 26, borderRadius: 7, border: 'none', background: 'var(--color-input-bg)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-secondary)' }}>
-          <Edit3 size={12} />
-        </button>
-        <button onClick={onDelete} style={{ width: 26, height: 26, borderRadius: 7, border: 'none', background: 'var(--color-input-bg)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-tertiary)' }}>
-          <Trash2 size={12} />
-        </button>
+        <button onClick={onEdit} style={{ width: 26, height: 26, borderRadius: 7, border: 'none', background: 'rgba(255,255,255,0.07)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: D.text2 }}><Edit3 size={12} /></button>
+        <button onClick={onDelete} style={{ width: 26, height: 26, borderRadius: 7, border: 'none', background: 'rgba(255,255,255,0.04)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: D.text3 }}><Trash2 size={12} /></button>
       </div>
     </div>
   );
 }
 
-function DecisionModal({ open, onClose, onSave, initial, loading, teamMembers }) {
-  const [form, setForm] = useState({});
-  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
-
-  useEffect(() => {
-    if (open) setForm(initial ? { ...initial } : { area: 'Allgemein', status: 'active', decided_at: new Date().toISOString().slice(0, 10) });
-  }, [open, initial]);
-
-  const submit = (e) => {
-    e.preventDefault();
-    if (!form.title?.trim()) { toast.error('Titel erforderlich'); return; }
-    onSave(form);
-  };
+function DecModal({ open, onClose, onSave, initial, loading, teamMembers }) {
+  const [f, setF] = useState({});
+  const s = (k, v) => setF(x => ({ ...x, [k]: v }));
+  useEffect(() => { if (open) setF(initial ? {...initial} : { area: 'Allgemein', status: 'active', decided_at: new Date().toISOString().slice(0,10) }); }, [open, initial]);
+  const submit = e => { e.preventDefault(); if (!f.title?.trim()) { toast.error('Titel erforderlich'); return; } onSave(f); };
 
   return (
-    <Modal open={open} onClose={onClose} title={initial ? 'Entscheidung bearbeiten' : 'Entscheidung festhalten'}>
+    <DModal open={open} onClose={onClose} title={initial ? 'Entscheidung bearbeiten' : 'Entscheidung festhalten'}>
       <form onSubmit={submit}>
-        <Field label="Entscheidung"><input className="input" value={form.title || ''} onChange={e => set('title', e.target.value)} placeholder="Was wurde entschieden?" required /></Field>
-        <Field label="Beschreibung / Begründung">
-          <textarea className="input" rows={3} value={form.description || ''} onChange={e => set('description', e.target.value)} placeholder="Warum wurde diese Entscheidung getroffen?" />
-        </Field>
-        <Field label="Auswirkung">
-          <textarea className="input" rows={2} value={form.impact || ''} onChange={e => set('impact', e.target.value)} placeholder="Welche Auswirkung hat diese Entscheidung?" />
-        </Field>
+        <DField label="Entscheidung"><DInput value={f.title||''} onChange={e=>s('title',e.target.value)} placeholder="Was wurde entschieden?" required /></DField>
+        <DField label="Begründung"><DInput as="textarea" rows={3} value={f.description||''} onChange={e=>s('description',e.target.value)} placeholder="Warum wurde so entschieden?" style={{ resize: 'vertical' }} /></DField>
+        <DField label="Auswirkung"><DInput as="textarea" rows={2} value={f.impact||''} onChange={e=>s('impact',e.target.value)} placeholder="Was verändert sich dadurch?" style={{ resize: 'vertical' }} /></DField>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          <Field label="Bereich">
-            <select className="input" value={form.area || 'Allgemein'} onChange={e => set('area', e.target.value)}>
-              {AREAS.map(a => <option key={a}>{a}</option>)}
-            </select>
-          </Field>
-          <Field label="Status">
-            <select className="input" value={form.status || 'active'} onChange={e => set('status', e.target.value)}>
-              <option value="active">Aktiv</option>
-              <option value="completed">Umgesetzt</option>
-              <option value="cancelled">Verworfen</option>
-            </select>
-          </Field>
+          <DField label="Bereich">
+            <DInput as="select" value={f.area||'Allgemein'} onChange={e=>s('area',e.target.value)} style={{ appearance: 'none' }}>
+              {AREAS.map(a=><option key={a} style={{ background: D.card }}>{a}</option>)}
+            </DInput>
+          </DField>
+          <DField label="Status">
+            <DInput as="select" value={f.status||'active'} onChange={e=>s('status',e.target.value)} style={{ appearance: 'none' }}>
+              <option value="active" style={{ background: D.card }}>Aktiv</option>
+              <option value="completed" style={{ background: D.card }}>Umgesetzt</option>
+              <option value="cancelled" style={{ background: D.card }}>Verworfen</option>
+            </DInput>
+          </DField>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           {teamMembers.length > 0 && (
-            <Field label="Entschieden von">
-              <select className="input" value={form.owner_id || ''} onChange={e => set('owner_id', e.target.value || null)}>
-                <option value="">Niemand</option>
-                {teamMembers.map(m => <option key={m.id} value={m.id}>{m.name || m.email}</option>)}
-              </select>
-            </Field>
+            <DField label="Entschieden von">
+              <DInput as="select" value={f.owner_id||''} onChange={e=>s('owner_id',e.target.value||null)} style={{ appearance: 'none' }}>
+                <option value="" style={{ background: D.card }}>Niemand</option>
+                {teamMembers.map(m=><option key={m.id} value={m.id} style={{ background: D.card }}>{m.name||m.email}</option>)}
+              </DInput>
+            </DField>
           )}
-          <Field label="Datum">
-            <input className="input" type="date" value={form.decided_at?.slice(0, 10) || ''} onChange={e => set('decided_at', e.target.value)} />
-          </Field>
+          <DField label="Datum"><DInput type="date" value={f.decided_at?.slice(0,10)||''} onChange={e=>s('decided_at',e.target.value)} /></DField>
         </div>
         <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-          <button type="button" onClick={onClose} className="btn-secondary" style={{ flex: 1, justifyContent: 'center' }}>Abbrechen</button>
-          <button type="submit" className="btn-primary" disabled={loading} style={{ flex: 2, justifyContent: 'center' }}>
-            {loading ? 'Speichern...' : (initial ? 'Aktualisieren' : 'Festhalten')}
-          </button>
+          <DBtn variant="ghost" onClick={onClose} style={{ flex: 1 }}>Abbrechen</DBtn>
+          <DBtn type="submit" disabled={loading} style={{ flex: 2 }}>{loading ? 'Speichern...' : initial ? 'Aktualisieren' : 'Festhalten'}</DBtn>
         </div>
       </form>
-    </Modal>
+    </DModal>
   );
 }
 
@@ -1347,73 +977,66 @@ function DecisionModal({ open, onClose, onSave, initial, loading, teamMembers })
 // ─────────────────────────────────────────────────────────────────────────────
 
 function OverviewTab({ onTabChange }) {
-  const { data: kpis = [] } = useQuery({ queryKey: ['planning-kpis'], queryFn: planningApi.listKpis });
-  const { data: tasks = [] } = useQuery({ queryKey: ['planning-tasks'], queryFn: () => planningApi.listTasks() });
-  const { data: feedback = [] } = useQuery({ queryKey: ['planning-feedback', getWeekStart()], queryFn: () => planningApi.listFeedback({ week: getWeekStart() }) });
-  const { data: decisions = [] } = useQuery({ queryKey: ['planning-decisions'], queryFn: planningApi.listDecisions });
+  const { data: kpis = [] }      = useQuery({ queryKey: ['planning-kpis'],       queryFn: planningApi.listKpis });
+  const { data: tasks = [] }     = useQuery({ queryKey: ['planning-tasks'],      queryFn: () => planningApi.listTasks() });
+  const { data: feedback = [] }  = useQuery({ queryKey: ['planning-feedback', getWeekStart()], queryFn: () => planningApi.listFeedback({ week: getWeekStart() }) });
+  const { data: decisions = [] } = useQuery({ queryKey: ['planning-decisions'],  queryFn: planningApi.listDecisions });
 
-  const openTasks = tasks.filter(t => t.status === 'open').length;
-  const blockedTasks = tasks.filter(t => t.status === 'blocked').length;
-  const avgRating = feedback.length ? (feedback.reduce((s, e) => s + (e.rating || 0), 0) / feedback.length).toFixed(1) : null;
-  const avgRatingNum = avgRating ? parseFloat(avgRating) : 0;
-  const topKpis = [...kpis].sort((a, b) => (b.current_value / (b.target_value || 1)) - (a.current_value / (a.target_value || 1))).slice(0, 4);
+  const open = tasks.filter(t => t.status === 'open').length;
+  const blocked = tasks.filter(t => t.status === 'blocked').length;
+  const avgR = feedback.length ? (feedback.reduce((s,e) => s+(e.rating||0),0)/feedback.length) : 0;
+  const avgKpi = kpis.length ? Math.round(kpis.reduce((s,k) => s+(k.current_value/(k.target_value||1)*100),0)/kpis.length) : 0;
+  const ratingColor = avgR >= 4 ? D.green : avgR >= 3 ? D.yellow : D.red;
+
+  const metrics = [
+    { label: 'Offene Aufgaben', value: open, sub: blocked>0 ? `${blocked} blockiert` : 'Keine Blockaden', color: D.blue, icon: <CheckSquare size={17} />, tab: 'tasks' },
+    { label: 'Aktive KPIs', value: kpis.length, sub: `Ø ${avgKpi}% Erreichung`, color: D.green, icon: <Target size={17} />, tab: 'kpis' },
+    { label: 'Team-Rating KW', value: avgR ? `${avgR.toFixed(1)}/5` : '–', sub: `${feedback.length} Einträge`, color: ratingColor, icon: <MessageSquare size={17} />, tab: 'feedback' },
+    { label: 'Entscheidungen', value: decisions.filter(d=>d.status==='active').length, sub: `${decisions.length} gesamt`, color: D.purple, icon: <Lightbulb size={17} />, tab: 'decisions' },
+  ];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-      {/* Summary stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
-        <StatCard
-          label="Offene Aufgaben"
-          value={openTasks}
-          sub={blockedTasks > 0 ? `${blockedTasks} blockiert` : 'Keine Blockaden'}
-          color="#007AFF"
-          icon={<CheckSquare size={18} />}
-          onClick={() => onTabChange('tasks')}
-        />
-        <StatCard
-          label="Aktive KPIs"
-          value={kpis.length}
-          sub={`Ø ${kpis.length ? Math.round(kpis.reduce((s, k) => s + (k.current_value / (k.target_value || 1) * 100), 0) / kpis.length) : 0}% Erreichung`}
-          color="#34C759"
-          icon={<Target size={18} />}
-          onClick={() => onTabChange('kpis')}
-        />
-        <StatCard
-          label="Team-Rating KW"
-          value={avgRating ? `${avgRating}/5` : '–'}
-          sub={feedback.length ? `${feedback.length} Einträge diese Woche` : 'Noch kein Feedback'}
-          color={avgRatingNum >= 4 ? '#34C759' : avgRatingNum >= 3 ? '#FF9500' : '#FF3B30'}
-          icon={<MessageSquare size={18} />}
-          onClick={() => onTabChange('feedback')}
-        />
-        <StatCard
-          label="Entscheidungen"
-          value={decisions.filter(d => d.status === 'active').length}
-          sub={`${decisions.length} gesamt`}
-          color="#AF52DE"
-          icon={<Lightbulb size={18} />}
-          onClick={() => onTabChange('decisions')}
-        />
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+      {/* Metric cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(190px,1fr))', gap: 14 }}>
+        {metrics.map(m => (
+          <div key={m.label} onClick={() => onTabChange(m.tab)} style={{
+            background: `linear-gradient(145deg, ${m.color}12 0%, ${D.card} 60%)`,
+            borderRadius: 18, padding: '18px 20px',
+            border: `0.5px solid ${m.color}25`,
+            boxShadow: `0 0 28px ${m.color}14`,
+            cursor: 'pointer',
+            transition: 'transform 0.18s cubic-bezier(0.22,1,0.36,1), box-shadow 0.18s ease',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = `0 8px 32px ${m.color}22`; }}
+          onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = `0 0 28px ${m.color}14`; }}
+          >
+            <div style={{ width: 34, height: 34, borderRadius: 10, background: `${m.color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: m.color, marginBottom: 14 }}>
+              {m.icon}
+            </div>
+            <p style={{ margin: '0 0 2px', fontSize: 28, fontWeight: 800, color: D.text, letterSpacing: '-0.04em', lineHeight: 1 }}>{m.value}</p>
+            <p style={{ margin: '4px 0 2px', fontSize: 12, fontWeight: 700, color: D.text, letterSpacing: '-0.01em' }}>{m.label}</p>
+            <p style={{ margin: 0, fontSize: 11, color: D.text3 }}>{m.sub}</p>
+          </div>
+        ))}
       </div>
 
-      {/* KPI mini-overview */}
-      {topKpis.length > 0 && (
+      {/* KPI bars */}
+      {kpis.length > 0 && (
         <div>
-          <h3 style={{ margin: '0 0 12px', fontSize: 13, fontWeight: 700, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            KPI-Übersicht
-          </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 10 }}>
-            {topKpis.map(kpi => {
-              const pct = kpi.target_value > 0 ? Math.round((kpi.current_value / kpi.target_value) * 100) : 0;
-              const color = AREA_COLORS[kpi.area] || '#007AFF';
+          <p style={{ margin: '0 0 14px', fontSize: 11, fontWeight: 800, color: D.text3, textTransform: 'uppercase', letterSpacing: '0.08em' }}>KPI-Übersicht</p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(200px,1fr))', gap: 10 }}>
+            {kpis.slice(0,6).map(kpi => {
+              const pct = kpi.target_value > 0 ? Math.round((kpi.current_value/kpi.target_value)*100) : 0;
+              const t = AREA_THEME[kpi.area]||AREA_THEME.Allgemein;
               return (
-                <div key={kpi.id} style={{ background: 'var(--color-card)', borderRadius: 12, border: '0.5px solid var(--color-border-subtle)', padding: '12px 14px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                    <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: 'var(--color-text)', letterSpacing: '-0.01em' }}>{kpi.title}</p>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: pct >= 80 ? '#34C759' : color }}>{pct}%</span>
+                <div key={kpi.id} style={{ background: D.card, borderRadius: 12, border: `0.5px solid ${D.border}`, padding: '12px 14px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: D.text, letterSpacing: '-0.01em' }}>{kpi.title}</p>
+                    <span style={{ fontSize: 12, fontWeight: 800, color: pct>=80 ? D.green : t.accent }}>{pct}%</span>
                   </div>
-                  <div style={{ height: 3, background: 'var(--color-input-bg)', borderRadius: 99 }}>
-                    <div style={{ height: '100%', borderRadius: 99, background: pct >= 80 ? '#34C759' : color, width: `${Math.min(pct, 100)}%`, transition: 'width 0.6s cubic-bezier(0.22,1,0.36,1)' }} />
+                  <div style={{ height: 3, background: 'rgba(255,255,255,0.06)', borderRadius: 99 }}>
+                    <div style={{ height: '100%', borderRadius: 99, background: `linear-gradient(90deg,${t.accent}70,${t.accent})`, width: `${Math.min(pct,100)}%`, boxShadow: `0 0 6px ${t.accent}50`, transition: 'width 0.7s cubic-bezier(0.22,1,0.36,1)' }} />
                   </div>
                 </div>
               );
@@ -1423,79 +1046,45 @@ function OverviewTab({ onTabChange }) {
       )}
 
       {/* Recent decisions */}
-      {decisions.slice(0, 3).length > 0 && (
+      {decisions.slice(0,3).length > 0 && (
         <div>
-          <h3 style={{ margin: '0 0 12px', fontSize: 13, fontWeight: 700, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Letzte Entscheidungen
-          </h3>
+          <p style={{ margin: '0 0 14px', fontSize: 11, fontWeight: 800, color: D.text3, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Letzte Entscheidungen</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {decisions.slice(0, 3).map(dec => (
-              <div key={dec.id} style={{
-                background: 'var(--color-card)', borderRadius: 10, padding: '10px 14px',
-                border: '0.5px solid var(--color-border-subtle)',
-                borderLeft: `2.5px solid ${AREA_COLORS[dec.area] || '#8E8E93'}`,
-                display: 'flex', alignItems: 'center', gap: 10,
-              }}>
-                <div style={{ flex: 1 }}>
-                  <p style={{ margin: 0, fontSize: 13, fontWeight: 500, color: 'var(--color-text)' }}>{dec.title}</p>
-                  {dec.description && <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--color-text-tertiary)' }}>{dec.description.slice(0, 80)}{dec.description.length > 80 ? '...' : ''}</p>}
+            {decisions.slice(0,3).map(dec => {
+              const t = AREA_THEME[dec.area]||AREA_THEME.Allgemein;
+              return (
+                <div key={dec.id} style={{ background: D.card, borderRadius: 10, padding: '10px 14px', border: `0.5px solid ${D.border}`, borderLeft: `2.5px solid ${t.accent}`, display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: D.text }}>{dec.title}</p>
+                    {dec.description && <p style={{ margin: '2px 0 0', fontSize: 11, color: D.text3 }}>{dec.description.slice(0,80)}{dec.description.length>80?'...':''}</p>}
+                  </div>
+                  {dec.decided_at && <span style={{ fontSize: 11, color: D.text3, whiteSpace: 'nowrap' }}>{new Date(dec.decided_at).toLocaleDateString('de-DE',{day:'2-digit',month:'short'})}</span>}
                 </div>
-                <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)', whiteSpace: 'nowrap' }}>
-                  {dec.decided_at ? new Date(dec.decided_at).toLocaleDateString('de-DE', { day: '2-digit', month: 'short' }) : ''}
-                </span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
 
-      {kpis.length === 0 && tasks.length === 0 && decisions.length === 0 && (
-        <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--color-text-tertiary)' }}>
-          <Target size={40} style={{ opacity: 0.2, marginBottom: 16 }} />
-          <p style={{ fontSize: 16, fontWeight: 600, color: 'var(--color-text)', margin: '0 0 8px' }}>Noch nichts eingetragen</p>
-          <p style={{ fontSize: 14, margin: 0 }}>Fange mit Feedback, KPIs oder Aufgaben an.</p>
-        </div>
+      {kpis.length===0 && tasks.length===0 && decisions.length===0 && (
+        <EmptyState icon={<Target size={28} />} title="Noch nichts eingetragen" sub="Fange mit Feedback, KPIs oder Aufgaben an." />
       )}
     </div>
   );
 }
 
-function StatCard({ label, value, sub, color, icon, onClick }) {
-  return (
-    <div
-      onClick={onClick}
-      style={{
-        background: 'var(--color-card)', borderRadius: 14, padding: '16px',
-        border: '0.5px solid var(--color-border-subtle)',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-        cursor: onClick ? 'pointer' : 'default',
-        transition: 'box-shadow 0.2s ease, transform 0.2s ease',
-      }}
-      onMouseEnter={e => { if (onClick) { e.currentTarget.style.boxShadow = '0 4px 14px rgba(0,0,0,0.08)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}}
-      onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.04)'; e.currentTarget.style.transform = 'translateY(0)'; }}
-    >
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 10 }}>
-        <div style={{ width: 32, height: 32, borderRadius: 9, background: `${color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', color }}>
-          {icon}
-        </div>
-      </div>
-      <p style={{ margin: '0 0 2px', fontSize: 24, fontWeight: 700, color: 'var(--color-text)', letterSpacing: '-0.03em' }}>{value}</p>
-      <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: 'var(--color-text)', letterSpacing: '-0.01em' }}>{label}</p>
-      {sub && <p style={{ margin: '3px 0 0', fontSize: 11, color: 'var(--color-text-tertiary)' }}>{sub}</p>}
-    </div>
-  );
+// ── Shared UI ─────────────────────────────────────────────────────────────────
+
+function Skel({ h, r = 10 }) {
+  return <div style={{ height: h, borderRadius: r, background: 'linear-gradient(90deg, #111122 25%, #16163A 50%, #111122 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.6s infinite' }} />;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// EMPTY STATE
-// ─────────────────────────────────────────────────────────────────────────────
-
-function EmptyState({ icon, title, text }) {
+function EmptyState({ icon, title, sub }) {
   return (
-    <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--color-text-tertiary)' }}>
-      <div style={{ opacity: 0.25, marginBottom: 14, display: 'flex', justifyContent: 'center' }}>{icon}</div>
-      <p style={{ fontSize: 15, fontWeight: 600, color: 'var(--color-text)', margin: '0 0 6px' }}>{title}</p>
-      <p style={{ fontSize: 13, margin: 0, color: 'var(--color-text-tertiary)' }}>{text}</p>
+    <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14, color: D.text3, opacity: 0.4 }}>{icon}</div>
+      <p style={{ fontSize: 15, fontWeight: 700, color: D.text2, margin: '0 0 6px' }}>{title}</p>
+      {sub && <p style={{ fontSize: 13, margin: 0, color: D.text3 }}>{sub}</p>}
     </div>
   );
 }
@@ -1506,7 +1095,6 @@ function EmptyState({ icon, title, text }) {
 
 export default function Planning() {
   const { user } = useAuth();
-  const { c } = useTheme();
   const [activeTab, setActiveTab] = useState('feedback');
 
   const { data: teamData } = useQuery({
@@ -1516,40 +1104,74 @@ export default function Planning() {
   const teamMembers = teamData || [];
 
   return (
-    <div style={{ padding: '0 24px 48px', maxWidth: 1280, margin: '0 auto' }}>
-      {/* Page header */}
-      <div style={{ padding: '32px 0 20px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: 28, fontWeight: 700, letterSpacing: '-0.03em', color: c.text }}>
-            Planung
-          </h1>
-          <p style={{ margin: '3px 0 0', fontSize: 14, color: c.textSecondary, letterSpacing: '-0.008em' }}>
-            Strategie · KPIs · Feedback · Entscheidungen
-          </p>
-        </div>
-      </div>
+    <div style={{
+      minHeight: '100vh',
+      background: D.bg,
+      backgroundImage: 'linear-gradient(rgba(255,255,255,0.015) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.015) 1px,transparent 1px)',
+      backgroundSize: '48px 48px',
+      padding: '0 0 60px',
+    }}>
+      <div style={{ maxWidth: 1300, margin: '0 auto', padding: '0 28px' }}>
 
-      {/* Segmented control */}
-      <div style={{ marginBottom: 24 }}>
-        <div className="seg-ctrl">
-          {TABS.map(t => (
-            <button
-              key={t.id}
-              className={`seg-btn${activeTab === t.id ? ' seg-btn--active' : ''}`}
-              onClick={() => setActiveTab(t.id)}
-            >
-              {t.label}
-            </button>
-          ))}
+        {/* Header */}
+        <div style={{ padding: '36px 0 24px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+          <div>
+            <p style={{ margin: '0 0 4px', fontSize: 11, fontWeight: 800, color: D.text3, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+              Business Command Center
+            </p>
+            <h1 style={{
+              margin: 0, fontSize: 34, fontWeight: 900, letterSpacing: '-0.04em', lineHeight: 1,
+              background: 'linear-gradient(135deg, #EEEEFF 30%, rgba(155,114,242,0.8) 100%)',
+              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+            }}>
+              Planung
+            </h1>
+          </div>
+          {/* Week badge */}
+          <div style={{ padding: '6px 14px', borderRadius: 99, background: 'rgba(155,114,242,0.1)', border: '0.5px solid rgba(155,114,242,0.25)', fontSize: 12, fontWeight: 600, color: D.purple }}>
+            KW {(() => { const now = new Date(); const start = new Date(now.getFullYear(), 0, 1); return Math.ceil(((now - start) / 86400000 + start.getDay() + 1) / 7); })()}
+            &nbsp;·&nbsp;
+            {new Date().toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric' })}
+          </div>
         </div>
-      </div>
 
-      {/* Tab content */}
-      {activeTab === 'feedback'   && <FeedbackTab teamMembers={teamMembers} currentUser={user} />}
-      {activeTab === 'kpis'       && <KpisTab teamMembers={teamMembers} />}
-      {activeTab === 'tasks'      && <TasksTab teamMembers={teamMembers} />}
-      {activeTab === 'decisions'  && <DecisionsTab teamMembers={teamMembers} />}
-      {activeTab === 'overview'   && <OverviewTab onTabChange={setActiveTab} />}
+        {/* Segmented Control */}
+        <div style={{ marginBottom: 28 }}>
+          <div style={{
+            display: 'inline-flex',
+            background: 'rgba(255,255,255,0.04)',
+            border: `0.5px solid ${D.border}`,
+            borderRadius: 14, padding: 4, gap: 2,
+          }}>
+            {TABS.map(t => {
+              const active = activeTab === t.id;
+              return (
+                <button key={t.id} onClick={() => setActiveTab(t.id)} style={{
+                  padding: '7px 18px', borderRadius: 10, border: 'none', cursor: 'pointer',
+                  fontSize: 13, fontWeight: active ? 700 : 400, fontFamily: 'inherit', letterSpacing: '-0.01em',
+                  background: active ? 'linear-gradient(135deg,#4F46E5,#7C3AED)' : 'transparent',
+                  color: active ? '#fff' : D.text3,
+                  boxShadow: active ? '0 2px 16px rgba(124,58,237,0.45)' : 'none',
+                  transition: 'all 0.2s cubic-bezier(0.22,1,0.36,1)',
+                  whiteSpace: 'nowrap',
+                }}
+                onMouseEnter={e => { if (!active) { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = D.text2; }}}
+                onMouseLeave={e => { if (!active) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = D.text3; }}}
+                >
+                  {t.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Tab Content */}
+        {activeTab === 'feedback'  && <FeedbackTab  teamMembers={teamMembers} currentUser={user} />}
+        {activeTab === 'kpis'      && <KpisTab       teamMembers={teamMembers} />}
+        {activeTab === 'tasks'     && <TasksTab      teamMembers={teamMembers} />}
+        {activeTab === 'decisions' && <DecisionsTab  teamMembers={teamMembers} />}
+        {activeTab === 'overview'  && <OverviewTab   onTabChange={setActiveTab} />}
+      </div>
     </div>
   );
 }
