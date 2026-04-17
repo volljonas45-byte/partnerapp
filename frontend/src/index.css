@@ -554,8 +554,8 @@
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(16px) scale(0.98); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
+  from { opacity: 0; transform: translateY(20px) scale(0.97); filter: blur(3px); }
+  to   { opacity: 1; transform: translateY(0) scale(1);        filter: blur(0); }
 }
 
 @keyframes sheetUp {
@@ -567,3 +567,30 @@
   0%   { background-position: 200% center; }
   100% { background-position: -200% center; }
 }
+
+/* ── Planning: Tab switch + card stagger ─────────────────────────────────── */
+@keyframes tabIn {
+  from { opacity: 0; transform: translateY(14px); filter: blur(4px); }
+  to   { opacity: 1; transform: translateY(0);    filter: blur(0); }
+}
+
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(18px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+
+.anim-grid > *,
+.anim-list > * {
+  animation: cardIn 0.48s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.anim-grid > *:nth-child(1),  .anim-list > *:nth-child(1)  { animation-delay:   0ms; }
+.anim-grid > *:nth-child(2),  .anim-list > *:nth-child(2)  { animation-delay:  55ms; }
+.anim-grid > *:nth-child(3),  .anim-list > *:nth-child(3)  { animation-delay: 110ms; }
+.anim-grid > *:nth-child(4),  .anim-list > *:nth-child(4)  { animation-delay: 165ms; }
+.anim-grid > *:nth-child(5),  .anim-list > *:nth-child(5)  { animation-delay: 220ms; }
+.anim-grid > *:nth-child(6),  .anim-list > *:nth-child(6)  { animation-delay: 275ms; }
+.anim-grid > *:nth-child(7),  .anim-list > *:nth-child(7)  { animation-delay: 330ms; }
+.anim-grid > *:nth-child(8),  .anim-list > *:nth-child(8)  { animation-delay: 385ms; }
+.anim-grid > *:nth-child(9),  .anim-list > *:nth-child(9)  { animation-delay: 440ms; }
+.anim-grid > *:nth-child(10), .anim-list > *:nth-child(10) { animation-delay: 495ms; }

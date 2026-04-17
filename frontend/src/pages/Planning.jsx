@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { planningApi } from '../api/planning';
@@ -279,7 +279,7 @@ function FeedbackTab({ teamMembers, currentUser }) {
           {[1,2,3].map(i => <Skel key={i} h={220} r={18} />)}
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(290px,1fr))', gap: 14 }}>
+        <div className="anim-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(290px,1fr))', gap: 14 }}>
           {entries.map(e => (
             <FbCard key={e.id} entry={e} isMine={String(e.author_id)===String(currentUser?.id)} canEdit={isCurrent} onEdit={() => { setEditEntry(e); setSheetOpen(true); }} />
           ))}
@@ -311,7 +311,7 @@ function FbCard({ entry, isMine, canEdit, onEdit }) {
       borderTop: rating ? `2px solid ${rating.color}` : `2px solid ${D.border}`,
       boxShadow: rating ? `0 0 28px ${rating.color}18` : 'none',
       overflow: 'hidden',
-      transition: 'transform 0.2s cubic-bezier(0.22,1,0.36,1), box-shadow 0.2s ease',
+      transition: 'transform 0.35s cubic-bezier(0.22,1,0.36,1), box-shadow 0.35s cubic-bezier(0.22,1,0.36,1)',
     }}
     onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = rating ? `0 8px 32px ${rating.color}22` : '0 8px 24px rgba(0,0,0,0.4)'; }}
     onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = rating ? `0 0 28px ${rating.color}18` : 'none'; }}
@@ -527,7 +527,7 @@ function KpisTab({ teamMembers }) {
               <div style={{ width: 8, height: 8, borderRadius: '50%', background: AREA_THEME[area]?.accent || D.text3, boxShadow: `0 0 8px ${AREA_THEME[area]?.accent}80` }} />
               <span style={{ fontSize: 11, fontWeight: 800, color: AREA_THEME[area]?.accent || D.text3, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{area}</span>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(240px,1fr))', gap: 12 }}>
+            <div className="anim-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(240px,1fr))', gap: 12 }}>
               {items.map(kpi => (
                 <KpiCard key={kpi.id} kpi={kpi}
                   onEdit={() => { setEditKpi(kpi); setModalOpen(true); }}
@@ -557,7 +557,7 @@ function KpiCard({ kpi, onEdit, onDelete }) {
       border: `0.5px solid ${t.accent}25`,
       boxShadow: `0 0 32px ${t.glow}, 0 1px 3px rgba(0,0,0,0.4)`,
       padding: '18px 18px 14px',
-      transition: 'transform 0.2s cubic-bezier(0.22,1,0.36,1), box-shadow 0.2s ease',
+      transition: 'transform 0.35s cubic-bezier(0.22,1,0.36,1), box-shadow 0.35s cubic-bezier(0.22,1,0.36,1)',
     }}
     onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = `0 8px 40px ${t.glow}, 0 4px 16px rgba(0,0,0,0.5)`; }}
     onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = `0 0 32px ${t.glow}, 0 1px 3px rgba(0,0,0,0.4)`; }}
@@ -691,7 +691,7 @@ function TasksTab({ teamMembers }) {
           {[1,2,3,4].map(i => <Skel key={i} h={180} r={14} />)}
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(210px,1fr))', gap: 14, alignItems: 'start' }}>
+        <div className="anim-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(210px,1fr))', gap: 14, alignItems: 'start' }}>
           {TASK_COLS.map(col => {
             const items = tasks.filter(t => t.status === col.id);
             return (
@@ -756,7 +756,7 @@ function TaskCard({ task, onEdit, onMove, onDelete }) {
       borderLeft: `2.5px solid ${p.color}`,
       boxShadow: `0 1px 4px rgba(0,0,0,0.4)`,
       padding: '11px 12px 10px',
-      transition: 'transform 0.18s cubic-bezier(0.22,1,0.36,1), box-shadow 0.18s ease',
+      transition: 'transform 0.35s cubic-bezier(0.22,1,0.36,1), box-shadow 0.35s cubic-bezier(0.22,1,0.36,1)',
     }}
     onMouseEnter={e => { e.currentTarget.style.transform = 'translateX(2px)'; e.currentTarget.style.boxShadow = `0 4px 16px rgba(0,0,0,0.5), -2px 0 0 ${p.color}60`; }}
     onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.4)'; }}
@@ -868,7 +868,7 @@ function DecisionsTab({ teamMembers }) {
       ) : decisions.length === 0 ? (
         <EmptyState icon={<Lightbulb size={28} />} title="Noch keine Entscheidungen" sub="Halte wichtige Business-Entscheidungen fest." />
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div className="anim-list" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {decisions.map(dec => (
             <DecCard key={dec.id} dec={dec}
               onEdit={() => { setEditDec(dec); setModalOpen(true); }}
@@ -896,7 +896,7 @@ function DecCard({ dec, onEdit, onDelete }) {
       boxShadow: `0 0 20px ${t.glow}, 0 1px 4px rgba(0,0,0,0.4)`,
       display: 'flex', alignItems: 'flex-start', gap: 12,
       opacity: dec.status === 'active' ? 1 : 0.55,
-      transition: 'transform 0.18s ease, box-shadow 0.18s ease',
+      transition: 'transform 0.35s cubic-bezier(0.22,1,0.36,1), box-shadow 0.35s cubic-bezier(0.22,1,0.36,1)',
     }}
     onMouseEnter={e => { e.currentTarget.style.transform = 'translateX(3px)'; }}
     onMouseLeave={e => { e.currentTarget.style.transform = ''; }}
@@ -998,7 +998,7 @@ function OverviewTab({ onTabChange }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
       {/* Metric cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(190px,1fr))', gap: 14 }}>
+      <div className="anim-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(190px,1fr))', gap: 14 }}>
         {metrics.map(m => (
           <div key={m.label} onClick={() => onTabChange(m.tab)} style={{
             background: `linear-gradient(145deg, ${m.color}12 0%, ${D.card} 60%)`,
@@ -1006,7 +1006,7 @@ function OverviewTab({ onTabChange }) {
             border: `0.5px solid ${m.color}25`,
             boxShadow: `0 0 28px ${m.color}14`,
             cursor: 'pointer',
-            transition: 'transform 0.18s cubic-bezier(0.22,1,0.36,1), box-shadow 0.18s ease',
+            transition: 'transform 0.35s cubic-bezier(0.22,1,0.36,1), box-shadow 0.35s cubic-bezier(0.22,1,0.36,1)',
           }}
           onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = `0 8px 32px ${m.color}22`; }}
           onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = `0 0 28px ${m.color}14`; }}
@@ -1093,6 +1093,66 @@ function EmptyState({ icon, title, sub }) {
 // MAIN PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ── Sliding Segmented Control ─────────────────────────────────────────────────
+
+function SegCtrl({ tabs, active, onChange }) {
+  const containerRef = useRef(null);
+  const btnRefs = useRef({});
+  const [pill, setPill] = useState({ left: 0, width: 0, ready: false });
+
+  useLayoutEffect(() => {
+    const el = btnRefs.current[active];
+    if (el) setPill({ left: el.offsetLeft, width: el.offsetWidth, ready: true });
+  }, [active]);
+
+  return (
+    <div ref={containerRef} style={{
+      position: 'relative', display: 'inline-flex',
+      background: 'rgba(255,255,255,0.04)',
+      border: `0.5px solid ${D.border}`,
+      borderRadius: 14, padding: 4, gap: 0,
+    }}>
+      {/* Sliding pill */}
+      <div style={{
+        position: 'absolute',
+        top: 4, height: 'calc(100% - 8px)',
+        left: pill.left,
+        width: pill.width,
+        background: 'linear-gradient(135deg,#4F46E5 0%,#7C3AED 100%)',
+        borderRadius: 10,
+        boxShadow: '0 2px 20px rgba(124,58,237,0.5), 0 0 0 0.5px rgba(255,255,255,0.1) inset',
+        opacity: pill.ready ? 1 : 0,
+        transition: 'left 0.38s cubic-bezier(0.22,1,0.36,1), width 0.38s cubic-bezier(0.22,1,0.36,1), opacity 0.2s ease',
+        pointerEvents: 'none',
+      }} />
+      {tabs.map(t => {
+        const isActive = active === t.id;
+        return (
+          <button
+            key={t.id}
+            ref={el => { btnRefs.current[t.id] = el; }}
+            onClick={() => onChange(t.id)}
+            style={{
+              position: 'relative', zIndex: 1,
+              padding: '7px 18px', borderRadius: 10, border: 'none', cursor: 'pointer',
+              fontSize: 13, fontWeight: isActive ? 700 : 400,
+              fontFamily: 'inherit', letterSpacing: '-0.01em',
+              background: 'transparent',
+              color: isActive ? '#fff' : D.text3,
+              transition: 'color 0.28s cubic-bezier(0.22,1,0.36,1)',
+              whiteSpace: 'nowrap',
+            }}
+            onMouseEnter={e => { if (!isActive) e.currentTarget.style.color = D.text2; }}
+            onMouseLeave={e => { if (!isActive) e.currentTarget.style.color = D.text3; }}
+          >
+            {t.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function Planning() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('feedback');
@@ -1127,7 +1187,6 @@ export default function Planning() {
               Planung
             </h1>
           </div>
-          {/* Week badge */}
           <div style={{ padding: '6px 14px', borderRadius: 99, background: 'rgba(155,114,242,0.1)', border: '0.5px solid rgba(155,114,242,0.25)', fontSize: 12, fontWeight: 600, color: D.purple }}>
             KW {(() => { const now = new Date(); const start = new Date(now.getFullYear(), 0, 1); return Math.ceil(((now - start) / 86400000 + start.getDay() + 1) / 7); })()}
             &nbsp;·&nbsp;
@@ -1137,40 +1196,17 @@ export default function Planning() {
 
         {/* Segmented Control */}
         <div style={{ marginBottom: 28 }}>
-          <div style={{
-            display: 'inline-flex',
-            background: 'rgba(255,255,255,0.04)',
-            border: `0.5px solid ${D.border}`,
-            borderRadius: 14, padding: 4, gap: 2,
-          }}>
-            {TABS.map(t => {
-              const active = activeTab === t.id;
-              return (
-                <button key={t.id} onClick={() => setActiveTab(t.id)} style={{
-                  padding: '7px 18px', borderRadius: 10, border: 'none', cursor: 'pointer',
-                  fontSize: 13, fontWeight: active ? 700 : 400, fontFamily: 'inherit', letterSpacing: '-0.01em',
-                  background: active ? 'linear-gradient(135deg,#4F46E5,#7C3AED)' : 'transparent',
-                  color: active ? '#fff' : D.text3,
-                  boxShadow: active ? '0 2px 16px rgba(124,58,237,0.45)' : 'none',
-                  transition: 'all 0.2s cubic-bezier(0.22,1,0.36,1)',
-                  whiteSpace: 'nowrap',
-                }}
-                onMouseEnter={e => { if (!active) { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = D.text2; }}}
-                onMouseLeave={e => { if (!active) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = D.text3; }}}
-                >
-                  {t.label}
-                </button>
-              );
-            })}
-          </div>
+          <SegCtrl tabs={TABS} active={activeTab} onChange={setActiveTab} />
         </div>
 
-        {/* Tab Content */}
-        {activeTab === 'feedback'  && <FeedbackTab  teamMembers={teamMembers} currentUser={user} />}
-        {activeTab === 'kpis'      && <KpisTab       teamMembers={teamMembers} />}
-        {activeTab === 'tasks'     && <TasksTab      teamMembers={teamMembers} />}
-        {activeTab === 'decisions' && <DecisionsTab  teamMembers={teamMembers} />}
-        {activeTab === 'overview'  && <OverviewTab   onTabChange={setActiveTab} />}
+        {/* Tab Content — key forces remount → triggers entry animation */}
+        <div key={activeTab} style={{ animation: 'tabIn 0.42s cubic-bezier(0.22,1,0.36,1) both' }}>
+          {activeTab === 'feedback'  && <FeedbackTab  teamMembers={teamMembers} currentUser={user} />}
+          {activeTab === 'kpis'      && <KpisTab       teamMembers={teamMembers} />}
+          {activeTab === 'tasks'     && <TasksTab      teamMembers={teamMembers} />}
+          {activeTab === 'decisions' && <DecisionsTab  teamMembers={teamMembers} />}
+          {activeTab === 'overview'  && <OverviewTab   onTabChange={setActiveTab} />}
+        </div>
       </div>
     </div>
   );
