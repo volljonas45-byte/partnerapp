@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Zap } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { authApi } from '../api/auth';
 import { useAuth } from '../context/AuthContext';
@@ -59,15 +58,19 @@ export default function Login() {
           display: 'flex', flexDirection: 'column',
           alignItems: 'center', marginBottom: 36,
         }}>
-          <div style={{
-            width: 56, height: 56,
-            background: `linear-gradient(135deg, ${c.blue}, ${isDark ? '#0064D1' : '#0055B8'})`,
-            borderRadius: 14,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            marginBottom: 16,
-          }}>
-            <Zap size={24} color="#fff" strokeWidth={2.5} />
-          </div>
+          <img
+            src="/Logo-SM-JR.png"
+            alt="Vecturo"
+            style={{
+              width: 56, height: 56,
+              borderRadius: 14,
+              objectFit: 'cover',
+              marginBottom: 16,
+              boxShadow: isDark
+                ? '0 8px 24px rgba(0,0,0,0.4), 0 0 0 0.5px rgba(255,255,255,0.08)'
+                : '0 8px 24px rgba(0,0,0,0.12), 0 0 0 0.5px rgba(0,0,0,0.04)',
+            }}
+          />
           <h1 style={{
             fontSize: 24, fontWeight: 700,
             color: c.text, letterSpacing: '-0.032em',

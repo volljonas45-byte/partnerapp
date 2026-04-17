@@ -1,8 +1,8 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Users, FileText, ClipboardList, Settings, LogOut,
-  Zap, Layers, ClipboardCheck, PackageCheck,
-  UserCog, Clock, BarChart2, CalendarDays, Plus, CalendarRange, FolderKanban, Flame, BarChart3,
+  Layers, ClipboardCheck, PackageCheck,
+  UserCog, Clock, BarChart2, CalendarDays, Plus, CalendarRange, FolderKanban, Flame, BarChart3, Target,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
@@ -31,6 +31,7 @@ export default function Sidebar() {
         { to: '/time-tracking', icon: Clock,           label: 'Zeiterfassung' },
         { to: '/timeline',      icon: CalendarRange,   label: 'Timeline'      },
         { to: '/team-dashboard',icon: BarChart2,       label: 'Team'          },
+        { to: '/planning',      icon: Target,          label: 'Planung'       },
       ],
     },
     {
@@ -58,9 +59,9 @@ export default function Sidebar() {
     {
       label: 'Verwaltung',
       items: [
-        { to: '/clients', icon: Users,   label: 'Kunden'        },
-        { to: '/team',    icon: UserCog, label: 'Team'          },
-        ...(isAdmin ? [{ to: '/settings', icon: Settings, label: 'Einstellungen' }] : []),
+        { to: '/clients',  icon: Users,    label: 'Kunden'        },
+        { to: '/team',     icon: UserCog,  label: 'Team'          },
+        { to: '/settings', icon: Settings, label: 'Einstellungen' },
       ],
     },
   ];
@@ -93,13 +94,17 @@ export default function Sidebar() {
       {/* Logo */}
       <div style={{ padding: '18px 20px 6px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{
-            width: 30, height: 30, borderRadius: 8,
-            background: `linear-gradient(135deg, ${c.blue}, ${isDark ? '#0064D1' : '#0055B8'})`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <Zap size={14} color="#fff" strokeWidth={2.5} />
-          </div>
+          <img
+            src="/Logo-SM-JR.png"
+            alt="Vecturo"
+            style={{
+              width: 30, height: 30, borderRadius: 8,
+              objectFit: 'cover', flexShrink: 0,
+              boxShadow: isDark
+                ? '0 1px 2px rgba(0,0,0,0.4)'
+                : '0 1px 2px rgba(0,0,0,0.08)',
+            }}
+          />
           <span style={{
             fontSize: 15, fontWeight: 600, color: c.text,
             letterSpacing: '-0.02em',
