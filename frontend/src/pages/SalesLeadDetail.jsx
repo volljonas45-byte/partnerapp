@@ -139,8 +139,8 @@ export default function SalesLeadDetail() {
     if (outcome === 'reached' || outcome === 'callback') setShowFollowup(true);
   }
 
-  function handleFollowupSave(leadId, date, note) {
-    updateLeadMut.mutate({ next_followup_date: date, next_followup_note: note });
+  function handleFollowupSave(leadId, date, note, type) {
+    updateLeadMut.mutate({ next_followup_date: date, next_followup_note: note, next_followup_type: type || 'anruf' });
     setShowFollowup(false);
     toast.success('Follow-up geplant');
   }
@@ -457,7 +457,7 @@ export default function SalesLeadDetail() {
 
       {/* Overlays */}
       {activeCall && <CallInProgressSheet callId={activeCall.callId} clientName={activeCall.clientName} phone={activeCall.phone} onEnd={handleCallEnd} onClose={() => setActiveCall(null)} />}
-      {showFollowup && <FollowupScheduler leadId={Number(id)} currentDate={lead.next_followup_date} onSave={handleFollowupSave} onClose={() => setShowFollowup(false)} />}
+      {showFollowup && <FollowupScheduler leadId={Number(id)} currentDate={lead.next_followup_date} currentType={lead.next_followup_type} onSave={handleFollowupSave} onClose={() => setShowFollowup(false)} />}
     </div>
   );
 }

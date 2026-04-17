@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Flame, FolderKanban, FileText, MoreHorizontal } from 'lucide-react';
+import { LayoutDashboard, Flame, FolderKanban, FileText, MoreHorizontal, Mail } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { salesApi } from '../api/sales';
 
@@ -18,6 +18,7 @@ export default function BottomNav({ onMoreClick }) {
   });
 
   const followupsDue = stats?.followups_due || 0;
+  const emailDue = stats?.email_followups_due || 0;
 
   return (
     <div style={{
@@ -78,6 +79,21 @@ export default function BottomNav({ onMoreClick }) {
                       border: '1.5px solid rgba(22,22,24,0.88)',
                     }}>
                       {followupsDue > 99 ? '99+' : followupsDue}
+                    </span>
+                  )}
+                  {to === '/sales' && emailDue > 0 && (
+                    <span style={{
+                      position: 'absolute', bottom: -4, right: -6,
+                      minWidth: 14, height: 14, borderRadius: 99,
+                      background: '#AF52DE', color: '#fff',
+                      fontSize: 7, fontWeight: 700,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      padding: '0 3px',
+                      border: '1.5px solid rgba(22,22,24,0.88)',
+                      gap: 1,
+                    }}>
+                      <Mail size={7} />
+                      {emailDue > 9 ? '9+' : emailDue}
                     </span>
                   )}
                 </div>

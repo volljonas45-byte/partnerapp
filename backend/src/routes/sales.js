@@ -355,7 +355,7 @@ router.put('/leads/:id', async (req, res) => {
     if (!lead) return res.status(404).json({ error: 'Lead nicht gefunden' });
 
     const {
-      status, notes, priority, next_followup_date, next_followup_note, deal_value,
+      status, notes, priority, next_followup_date, next_followup_note, next_followup_type, deal_value,
       company_name, contact_person, phone, email, branch, city, website_status, domain,
       address, owner_id,
     } = req.body;
@@ -372,6 +372,7 @@ router.put('/leads/:id', async (req, res) => {
     if (priority        !== undefined) { updates.push('priority = ?');             params.push(priority); }
     if (next_followup_date !== undefined) { updates.push('next_followup_date = ?'); params.push(next_followup_date || null); }
     if (next_followup_note !== undefined) { updates.push('next_followup_note = ?'); params.push(next_followup_note); }
+    if (next_followup_type !== undefined) { updates.push('next_followup_type = ?'); params.push(next_followup_type || 'anruf'); }
     if (deal_value      !== undefined) { updates.push('deal_value = ?');           params.push(deal_value); }
     if (company_name    !== undefined) { updates.push('company_name = ?');         params.push(company_name); }
     if (contact_person  !== undefined) { updates.push('contact_person = ?');       params.push(contact_person); }
@@ -578,6 +579,13 @@ router.get('/stats', async (req, res) => {
         AND status NOT IN ('gewonnen', 'abgeschlossen', 'verloren', 'kein_interesse')
     `, [...leadParams, today]);
 
+    const emailFollowupsDue = await getOne(`
+      SELECT COUNT(*)::int AS count FROM sales_leads
+      WHERE ${leadFilter} AND next_followup_date IS NOT NULL AND next_followup_date <= ?
+        AND COALESCE(next_followup_type, 'anruf') = 'email'
+        AND status NOT IN ('gewonnen', 'abgeschlossen', 'verloren', 'kein_interesse')
+    `, [...leadParams, today]);
+
     const demosActive = await getOne(`
       SELECT COUNT(*)::int AS count FROM sales_leads
       WHERE ${leadFilter} AND status = 'demo'
@@ -617,6 +625,7 @@ router.get('/stats', async (req, res) => {
         weekly_closings: targets.weekly_closings,
       },
       followups_due: followupsDue?.count || 0,
+      email_followups_due: emailFollowupsDue?.count || 0,
       demos_active:  demosActive?.count  || 0,
       motivation: motivation(callsTotal, callsReached, closings, targets),
     });

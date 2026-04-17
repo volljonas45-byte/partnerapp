@@ -217,7 +217,12 @@ function LeadRow({ lead, isSelected, onClick, onCall, showOwner = false }) {
       {/* Rechts: Follow-up + Anzahl + Anruf-Button */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3, flexShrink: 0 }}>
         {fu ? (
-          <span style={{ fontSize: 10, fontWeight: 700, color: fu.color, whiteSpace: 'nowrap' }}>{fu.label}</span>
+          <span style={{ fontSize: 10, fontWeight: 700, color: fu.color, whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 3 }}>
+            {lead.next_followup_type === 'email'
+              ? <Mail size={9} />
+              : null}
+            {fu.label}
+          </span>
         ) : <span style={{ fontSize: 10, color: c.border }}>—</span>}
         <span style={{ fontSize: 10, color: c.textTertiary }}>
           {lead.total_calls ? `${lead.total_calls}x angerufen` : 'noch kein Anruf'}
@@ -450,8 +455,8 @@ export default function SalesEngine() {
     }
   }
 
-  function handleFollowupSave(leadId, date, note) {
-    updateLeadMut.mutate({ id: leadId, data: { next_followup_date: date, next_followup_note: note } });
+  function handleFollowupSave(leadId, date, note, type) {
+    updateLeadMut.mutate({ id: leadId, data: { next_followup_date: date, next_followup_note: note, next_followup_type: type || 'anruf' } });
     setFollowupFor(null);
     toast.success('Follow-up geplant');
   }
@@ -1117,7 +1122,7 @@ export default function SalesEngine() {
 
         {/* Overlays */}
         {activeCall && <CallInProgressSheet callId={activeCall.callId} clientName={activeCall.clientName} phone={activeCall.phone} onEnd={handleCallEnd} onClose={() => setActiveCall(null)} />}
-        {followupFor && <FollowupScheduler leadId={followupFor.leadId} currentDate={selectedLead?.next_followup_date} onSave={handleFollowupSave} onClose={() => setFollowupFor(null)} />}
+        {followupFor && <FollowupScheduler leadId={followupFor.leadId} currentDate={selectedLead?.next_followup_date} currentType={selectedLead?.next_followup_type} onSave={handleFollowupSave} onClose={() => setFollowupFor(null)} />}
         {showAddLead && <CreateLeadModal onClose={() => setShowAddLead(false)} onCreate={data => createLeadMut.mutate(data)} isCreating={createLeadMut.isPending} />}
         {showExcelImport && <ExcelImportModal onClose={() => setShowExcelImport(false)} onImport={handleImport} isImporting={importLeadsMut.isPending} />}
         {showTargets && stats?.targets && <SalesTargetModal targets={stats.targets} onSave={data => updateTargetsMut.mutate(data)} onClose={() => setShowTargets(false)} isPending={updateTargetsMut.isPending} />}
@@ -1844,6 +1849,7 @@ export default function SalesEngine() {
         <FollowupScheduler
           leadId={followupFor.leadId}
           currentDate={selectedLead?.next_followup_date}
+          currentType={selectedLead?.next_followup_type}
           onSave={handleFollowupSave}
           onClose={() => setFollowupFor(null)}
         />

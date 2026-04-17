@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CalendarDays, X } from 'lucide-react';
+import { CalendarDays, X, Phone, Mail } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 
 function toISO(d) { return d.toISOString().slice(0, 10); }
@@ -19,14 +19,15 @@ const QUICK = [
   { label: 'Nächste Woche', days: 7 },
 ];
 
-export default function FollowupScheduler({ leadId, currentDate, onSave, onClose }) {
+export default function FollowupScheduler({ leadId, currentDate, currentType, onSave, onClose }) {
   const { c } = useTheme();
   const [date, setDate] = useState(currentDate || defaultDate());
   const [note, setNote] = useState('');
+  const [type, setType] = useState(currentType || 'anruf');
 
   function handleSave() {
     if (!date) return;
-    onSave(leadId, date, note);
+    onSave(leadId, date, note, type);
   }
 
   return (
@@ -51,16 +52,37 @@ export default function FollowupScheduler({ leadId, currentDate, onSave, onClose
         <style>{`@keyframes modalIn { from { opacity: 0; transform: translateY(16px) scale(0.97); } to { opacity: 1; transform: none; } }`}</style>
 
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 34, height: 34, borderRadius: 9, background: 'rgba(0,122,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <CalendarDays size={16} color="#007AFF" />
+            <div style={{ width: 34, height: 34, borderRadius: 9, background: type === 'email' ? 'rgba(175,82,222,0.1)' : 'rgba(0,122,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.2s' }}>
+              {type === 'email' ? <Mail size={16} color="#AF52DE" /> : <CalendarDays size={16} color="#007AFF" />}
             </div>
             <span style={{ fontSize: 16, fontWeight: 700, color: c.text }}>Follow-up planen</span>
           </div>
           <button onClick={onClose} style={{ background: c.inputBg, border: 'none', cursor: 'pointer', color: c.textTertiary, padding: 0, width: 28, height: 28, borderRadius: 99, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <X size={15} />
           </button>
+        </div>
+
+        {/* Type toggle */}
+        <div style={{ display: 'flex', gap: 6, marginBottom: 14, background: c.inputBg, borderRadius: 10, padding: 4 }}>
+          {[{ key: 'anruf', label: 'Anruf', Icon: Phone }, { key: 'email', label: 'E-Mail', Icon: Mail }].map(({ key, label, Icon }) => (
+            <button
+              key={key}
+              onClick={() => setType(key)}
+              style={{
+                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                padding: '7px 0', borderRadius: 7, fontSize: 13, fontWeight: 600, border: 'none',
+                background: type === key ? c.card : 'transparent',
+                color: type === key ? (key === 'email' ? '#AF52DE' : c.blue) : c.textTertiary,
+                cursor: 'pointer', transition: 'all 0.15s',
+                boxShadow: type === key ? '0 1px 4px rgba(0,0,0,0.12)' : 'none',
+              }}
+            >
+              <Icon size={13} />
+              {label}
+            </button>
+          ))}
         </div>
 
         {/* Quick chips */}
