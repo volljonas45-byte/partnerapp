@@ -133,6 +133,32 @@ function Ring({ pct = 0, color = '#5B8CF5', size = 60 }) {
   );
 }
 
+function Sparkline({ seed = 0, pct = 50, color = '#5B8CF5', height = 40 }) {
+  const H = 50, W = 200;
+  const pts = Array.from({ length: 8 }, (_, i) => {
+    const r = ((seed * 9301 + i * 49297 + i * i * 233) % 23280) / 23280;
+    const base = 18 + r * 46;
+    const trend = (pct / 100) * 28 * (i / 7);
+    return Math.max(6, Math.min(92, base + trend));
+  });
+  const coords = pts.map((v, i) => `${(i / 7) * W},${H - (v / 100) * H}`).join(' ');
+  const gid = `spk-${seed}-${pct}`;
+  return (
+    <svg width="100%" height={height} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{ display: 'block' }}>
+      <defs>
+        <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.28" />
+          <stop offset="100%" stopColor={color} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <polygon points={`0,${H} ${coords} ${W},${H}`} fill={`url(#${gid})`} />
+      <polyline points={coords} fill="none" stroke={color} strokeWidth="1.8"
+        strokeLinecap="round" strokeLinejoin="round"
+        style={{ filter: `drop-shadow(0 0 4px ${color}80)` }} />
+    </svg>
+  );
+}
+
 function DBtn({ children, onClick, variant = 'primary', type = 'button', disabled, style }) {
   const base = {
     display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
@@ -304,20 +330,23 @@ function FeedbackTab({ teamMembers, currentUser }) {
 
 function FbCard({ entry, isMine, canEdit, onEdit }) {
   const rating = RATINGS.find(r => r.value === entry.rating);
+  const glow = rating ? `${rating.color}14` : 'transparent';
   return (
     <div style={{
-      background: D.card, borderRadius: 18,
-      border: `0.5px solid ${D.border}`,
-      borderTop: rating ? `2px solid ${rating.color}` : `2px solid ${D.border}`,
-      boxShadow: rating ? `0 0 28px ${rating.color}18` : 'none',
+      background: rating
+        ? `linear-gradient(145deg, ${rating.color}1A 0%, ${D.card} 55%)`
+        : D.card,
+      borderRadius: 20,
+      border: `0.5px solid ${rating ? rating.color+'28' : D.border}`,
+      boxShadow: rating ? `0 0 40px ${glow}, 0 1px 0 rgba(255,255,255,0.05) inset, 0 2px 8px rgba(0,0,0,0.45)` : `0 2px 8px rgba(0,0,0,0.35)`,
       overflow: 'hidden',
       transition: 'transform 0.35s cubic-bezier(0.22,1,0.36,1), box-shadow 0.35s cubic-bezier(0.22,1,0.36,1)',
     }}
-    onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = rating ? `0 8px 32px ${rating.color}22` : '0 8px 24px rgba(0,0,0,0.4)'; }}
-    onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = rating ? `0 0 28px ${rating.color}18` : 'none'; }}
+    onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = rating ? `0 12px 48px ${rating.color}20, 0 1px 0 rgba(255,255,255,0.07) inset` : '0 8px 28px rgba(0,0,0,0.5)'; }}
+    onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = rating ? `0 0 40px ${glow}, 0 1px 0 rgba(255,255,255,0.05) inset, 0 2px 8px rgba(0,0,0,0.45)` : `0 2px 8px rgba(0,0,0,0.35)`; }}
     >
       {/* Header */}
-      <div style={{ padding: '14px 16px 12px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: `0.5px solid ${D.border}` }}>
+      <div style={{ padding: '14px 16px 12px', display: 'flex', alignItems: 'center', gap: 10 }}>
         <Av name={entry.author_name} email={entry.author_email} color={entry.author_color} size={34} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: D.text, letterSpacing: '-0.015em' }}>
@@ -326,15 +355,38 @@ function FbCard({ entry, isMine, canEdit, onEdit }) {
           <p style={{ margin: '2px 0 0', fontSize: 11, color: D.text3 }}>{entry.area}</p>
         </div>
         {rating && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 9px', borderRadius: 8, background: `${rating.color}15`, border: `0.5px solid ${rating.color}30` }}>
-            <span style={{ fontSize: 16 }}>{rating.emoji}</span>
-            <span style={{ fontSize: 11, fontWeight: 700, color: rating.color }}>{rating.label}</span>
+          <div style={{
+            width: 42, height: 42, borderRadius: 12, flexShrink: 0,
+            background: `${rating.color}18`, border: `0.5px solid ${rating.color}30`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <span style={{ fontSize: 22 }}>{rating.emoji}</span>
           </div>
         )}
       </div>
 
+      {/* Rating bar */}
+      {rating && (
+        <div style={{ padding: '0 16px 14px' }}>
+          <div style={{ height: 3, background: 'rgba(255,255,255,0.06)', borderRadius: 99, overflow: 'hidden' }}>
+            <div style={{
+              height: '100%', borderRadius: 99,
+              background: `linear-gradient(90deg, ${rating.color}60, ${rating.color})`,
+              width: `${(rating.value / 5) * 100}%`,
+              boxShadow: `0 0 6px ${rating.color}60`,
+              transition: 'width 0.7s cubic-bezier(0.22,1,0.36,1)',
+            }} />
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 5 }}>
+            <span style={{ fontSize: 10, color: D.text3 }}>1</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: rating.color }}>{rating.label}</span>
+            <span style={{ fontSize: 10, color: D.text3 }}>5</span>
+          </div>
+        </div>
+      )}
+
       {/* Content */}
-      <div style={{ padding: '12px 16px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={{ padding: '12px 16px 14px', display: 'flex', flexDirection: 'column', gap: 10, borderTop: `0.5px solid ${D.border}` }}>
         {entry.wins && <FbRow icon="✅" label="Wins" text={entry.wins} color={D.green} />}
         {entry.blockers && <FbRow icon="🚧" label="Blocker" text={entry.blockers} color={D.orange} />}
         {entry.next_steps && <FbRow icon="→" label="Nächste Schritte" text={entry.next_steps} color={D.blue} />}
@@ -549,59 +601,86 @@ function KpiCard({ kpi, onEdit, onDelete }) {
   const pct = kpi.target_value > 0 ? Math.round((kpi.current_value / kpi.target_value) * 100) : 0;
   const t = AREA_THEME[kpi.area] || AREA_THEME.Allgemein;
   const isGood = pct >= 80;
-  const ringColor = isGood ? D.green : t.accent;
+  const accentColor = isGood ? D.green : t.accent;
+  const seed = typeof kpi.id === 'number' ? kpi.id : String(kpi.id || '').split('').reduce((h, c) => h * 31 + c.charCodeAt(0), 7) % 999;
 
   return (
     <div style={{
-      background: t.bg, borderRadius: 18,
-      border: `0.5px solid ${t.accent}25`,
-      boxShadow: `0 0 32px ${t.glow}, 0 1px 3px rgba(0,0,0,0.4)`,
-      padding: '18px 18px 14px',
+      background: t.bg, borderRadius: 20,
+      border: `0.5px solid ${t.accent}35`,
+      boxShadow: `0 0 48px ${t.glow}, 0 1px 0 rgba(255,255,255,0.06) inset, 0 2px 8px rgba(0,0,0,0.5)`,
+      overflow: 'hidden',
       transition: 'transform 0.35s cubic-bezier(0.22,1,0.36,1), box-shadow 0.35s cubic-bezier(0.22,1,0.36,1)',
     }}
-    onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = `0 8px 40px ${t.glow}, 0 4px 16px rgba(0,0,0,0.5)`; }}
-    onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = `0 0 32px ${t.glow}, 0 1px 3px rgba(0,0,0,0.4)`; }}
+    onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = `0 12px 56px ${t.glow}, 0 1px 0 rgba(255,255,255,0.08) inset, 0 4px 20px rgba(0,0,0,0.6)`; }}
+    onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = `0 0 48px ${t.glow}, 0 1px 0 rgba(255,255,255,0.06) inset, 0 2px 8px rgba(0,0,0,0.5)`; }}
     >
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ margin: '0 0 10px', fontSize: 12, fontWeight: 700, color: t.accent, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-            {kpi.title}
-          </p>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
-            <span style={{ fontSize: 30, fontWeight: 800, color: D.text, letterSpacing: '-0.04em', lineHeight: 1 }}>
-              {Number(kpi.current_value).toLocaleString('de-DE')}
-            </span>
-            <span style={{ fontSize: 13, color: D.text3, fontWeight: 600 }}>{kpi.unit}</span>
-          </div>
-          <p style={{ margin: '3px 0 10px', fontSize: 11, color: D.text3 }}>
-            Ziel: {Number(kpi.target_value).toLocaleString('de-DE')} {kpi.unit}
-          </p>
-          {/* Progress bar */}
-          <div style={{ height: 3, background: 'rgba(255,255,255,0.07)', borderRadius: 99, overflow: 'hidden', marginBottom: 4 }}>
-            <div style={{
-              height: '100%', borderRadius: 99,
-              background: `linear-gradient(90deg, ${t.accent}80, ${t.accent})`,
-              width: `${Math.min(pct, 100)}%`,
-              boxShadow: `0 0 8px ${t.accent}60`,
-              transition: 'width 0.7s cubic-bezier(0.22,1,0.36,1)',
-            }} />
-          </div>
-          <span style={{ fontSize: 11, fontWeight: 700, color: isGood ? D.green : t.accent }}>{pct}%</span>
+      {/* Top bar: title + actions */}
+      <div style={{ padding: '16px 16px 0', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ width: 28, height: 28, borderRadius: 8, background: `${t.accent}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <Target size={13} color={t.accent} />
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
-          <Ring pct={pct} color={ringColor} size={58} />
-          <div style={{ display: 'flex', gap: 4 }}>
-            <button onClick={onEdit} style={{ width: 24, height: 24, borderRadius: 6, border: 'none', background: 'rgba(255,255,255,0.07)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: D.text2 }}><Edit3 size={10} /></button>
-            <button onClick={onDelete} style={{ width: 24, height: 24, borderRadius: 6, border: 'none', background: 'rgba(255,255,255,0.05)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: D.text3 }}><Trash2 size={10} /></button>
-          </div>
+        <p style={{ flex: 1, margin: 0, fontSize: 12, fontWeight: 600, color: D.text2, letterSpacing: '-0.01em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {kpi.title}
+        </p>
+        <div style={{ display: 'flex', gap: 3, flexShrink: 0 }}>
+          <button onClick={onEdit} style={{ width: 26, height: 26, borderRadius: 7, border: 'none', background: 'rgba(255,255,255,0.07)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: D.text2 }}><Edit3 size={11} /></button>
+          <button onClick={onDelete} style={{ width: 26, height: 26, borderRadius: 7, border: 'none', background: 'rgba(255,255,255,0.05)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: D.text3 }}><Trash2 size={11} /></button>
         </div>
       </div>
-      {kpi.owner_name && (
-        <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 6, paddingTop: 10, borderTop: `0.5px solid rgba(255,255,255,0.06)` }}>
-          <Av name={kpi.owner_name} email="" color={kpi.owner_color} size={16} />
-          <span style={{ fontSize: 11, color: D.text3 }}>{kpi.owner_name}</span>
+
+      {/* Hero value */}
+      <div style={{ padding: '14px 16px 6px' }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 5, marginBottom: 5 }}>
+          <span style={{ fontSize: 44, fontWeight: 900, color: D.text, letterSpacing: '-0.05em', lineHeight: 1 }}>
+            {Number(kpi.current_value).toLocaleString('de-DE')}
+          </span>
+          <span style={{ fontSize: 18, fontWeight: 700, color: D.text2, letterSpacing: '-0.02em' }}>{kpi.unit}</span>
         </div>
-      )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 11, color: D.text3 }}>Ziel: {Number(kpi.target_value).toLocaleString('de-DE')} {kpi.unit}</span>
+          <span style={{
+            fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 6,
+            background: isGood ? 'rgba(52,211,153,0.15)' : `${t.accent}18`,
+            color: accentColor,
+            border: `0.5px solid ${isGood ? 'rgba(52,211,153,0.3)' : t.accent + '30'}`,
+          }}>
+            {pct}%
+          </span>
+        </div>
+      </div>
+
+      {/* Sparkline */}
+      <div style={{ padding: '8px 0 0' }}>
+        <Sparkline seed={seed} pct={pct} color={accentColor} height={44} />
+      </div>
+
+      {/* Progress bar */}
+      <div style={{ padding: '0 16px' }}>
+        <div style={{ height: 2, background: 'rgba(255,255,255,0.06)', borderRadius: 99, overflow: 'hidden' }}>
+          <div style={{
+            height: '100%', borderRadius: 99,
+            background: `linear-gradient(90deg, ${t.accent}70, ${accentColor})`,
+            width: `${Math.min(pct, 100)}%`,
+            boxShadow: `0 0 6px ${accentColor}60`,
+            transition: 'width 0.7s cubic-bezier(0.22,1,0.36,1)',
+          }} />
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div style={{ padding: '10px 16px 14px', display: 'flex', alignItems: 'center', gap: 6, minHeight: 38 }}>
+        {kpi.owner_name && <>
+          <Av name={kpi.owner_name} email="" color={kpi.owner_color} size={16} />
+          <span style={{ fontSize: 11, color: D.text3, flex: 1 }}>{kpi.owner_name}</span>
+        </>}
+        {!kpi.owner_name && <div style={{ flex: 1 }} />}
+        {kpi.frequency && (
+          <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 5, background: 'rgba(255,255,255,0.05)', color: D.text3, border: `0.5px solid ${D.border}` }}>
+            {kpi.frequency === 'weekly' ? 'Wöchentlich' : kpi.frequency === 'monthly' ? 'Monatlich' : kpi.frequency === 'quarterly' ? 'Quartalsweise' : 'Jährlich'}
+          </span>
+        )}
+      </div>
     </div>
   );
 }
@@ -998,25 +1077,33 @@ function OverviewTab({ onTabChange }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
       {/* Metric cards */}
-      <div className="anim-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(190px,1fr))', gap: 14 }}>
-        {metrics.map(m => (
+      <div className="anim-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: 14 }}>
+        {metrics.map((m, mi) => (
           <div key={m.label} onClick={() => onTabChange(m.tab)} style={{
-            background: `linear-gradient(145deg, ${m.color}12 0%, ${D.card} 60%)`,
-            borderRadius: 18, padding: '18px 20px',
-            border: `0.5px solid ${m.color}25`,
-            boxShadow: `0 0 28px ${m.color}14`,
-            cursor: 'pointer',
+            background: `linear-gradient(145deg, ${m.color}18 0%, ${D.card} 55%)`,
+            borderRadius: 20,
+            border: `0.5px solid ${m.color}30`,
+            boxShadow: `0 0 40px ${m.color}14, 0 1px 0 rgba(255,255,255,0.05) inset, 0 2px 8px rgba(0,0,0,0.45)`,
+            overflow: 'hidden', cursor: 'pointer',
             transition: 'transform 0.35s cubic-bezier(0.22,1,0.36,1), box-shadow 0.35s cubic-bezier(0.22,1,0.36,1)',
           }}
-          onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = `0 8px 32px ${m.color}22`; }}
-          onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = `0 0 28px ${m.color}14`; }}
+          onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = `0 12px 48px ${m.color}22, 0 1px 0 rgba(255,255,255,0.07) inset`; }}
+          onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = `0 0 40px ${m.color}14, 0 1px 0 rgba(255,255,255,0.05) inset, 0 2px 8px rgba(0,0,0,0.45)`; }}
           >
-            <div style={{ width: 34, height: 34, borderRadius: 10, background: `${m.color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: m.color, marginBottom: 14 }}>
-              {m.icon}
+            <div style={{ padding: '18px 18px 4px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+              <div style={{ width: 34, height: 34, borderRadius: 10, background: `${m.color}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: m.color }}>
+                {m.icon}
+              </div>
+              <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 6, background: `${m.color}15`, color: m.color, border: `0.5px solid ${m.color}25` }}>↑</span>
             </div>
-            <p style={{ margin: '0 0 2px', fontSize: 28, fontWeight: 800, color: D.text, letterSpacing: '-0.04em', lineHeight: 1 }}>{m.value}</p>
-            <p style={{ margin: '4px 0 2px', fontSize: 12, fontWeight: 700, color: D.text, letterSpacing: '-0.01em' }}>{m.label}</p>
-            <p style={{ margin: 0, fontSize: 11, color: D.text3 }}>{m.sub}</p>
+            <div style={{ padding: '10px 18px 8px' }}>
+              <p style={{ margin: '0 0 3px', fontSize: 36, fontWeight: 900, color: D.text, letterSpacing: '-0.05em', lineHeight: 1 }}>{m.value}</p>
+              <p style={{ margin: '5px 0 2px', fontSize: 13, fontWeight: 600, color: D.text, letterSpacing: '-0.012em' }}>{m.label}</p>
+              <p style={{ margin: 0, fontSize: 11, color: D.text3 }}>{m.sub}</p>
+            </div>
+            <div style={{ paddingTop: 4 }}>
+              <Sparkline seed={mi * 127 + 42} pct={40 + mi * 12} color={m.color} height={40} />
+            </div>
           </div>
         ))}
       </div>
