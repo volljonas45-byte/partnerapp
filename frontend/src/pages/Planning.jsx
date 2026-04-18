@@ -1212,7 +1212,7 @@ function SegCtrl({ tabs, active, onChange }) {
             ref={el => { btnRefs.current[t.id] = el; }}
             onClick={() => onChange(t.id)}
             style={{
-              position: 'relative', zIndex: 1,
+              position: 'relative',
               padding: '7px 18px', borderRadius: 10, border: 'none', cursor: 'pointer',
               fontSize: 13, fontWeight: isActive ? 700 : 400,
               fontFamily: 'inherit', letterSpacing: '-0.01em',

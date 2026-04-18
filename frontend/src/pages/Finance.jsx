@@ -172,7 +172,7 @@ function SegCtrl({ tabs, active, onChange }) {
     <div style={{ position: 'relative', display: 'inline-flex', background: 'rgba(255,255,255,0.04)', border: `0.5px solid ${D.border}`, borderRadius: 14, padding: 4 }}>
       <div style={{ position: 'absolute', top: 4, height: 'calc(100% - 8px)', left: pill.left, width: pill.width, background: 'linear-gradient(135deg,#4F46E5 0%,#7C3AED 100%)', borderRadius: 10, boxShadow: '0 2px 20px rgba(124,58,237,0.5)', opacity: pill.ready ? 1 : 0, transition: 'left 0.38s cubic-bezier(0.22,1,0.36,1), width 0.38s cubic-bezier(0.22,1,0.36,1)', pointerEvents: 'none' }} />
       {tabs.map(t => (
-        <button key={t.id} ref={el => { btnRefs.current[t.id] = el; }} onClick={() => onChange(t.id)} style={{ position: 'relative', zIndex: 1, padding: '7px 18px', borderRadius: 10, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: active === t.id ? 700 : 400, background: 'transparent', color: active === t.id ? '#fff' : D.text3, transition: 'color 0.28s cubic-bezier(0.22,1,0.36,1)', letterSpacing: '-0.008em' }}>
+        <button key={t.id} ref={el => { btnRefs.current[t.id] = el; }} onClick={() => onChange(t.id)} style={{ position: 'relative', padding: '7px 18px', borderRadius: 10, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: active === t.id ? 700 : 400, background: 'transparent', color: active === t.id ? '#fff' : D.text3, transition: 'color 0.28s cubic-bezier(0.22,1,0.36,1)', letterSpacing: '-0.008em' }}>
           {t.label}
         </button>
       ))}
@@ -1587,7 +1587,7 @@ export default function Finance() {
         }
         @keyframes tabIn {
           from { opacity: 0; transform: translateY(14px); filter: blur(4px); }
-          to   { opacity: 1; transform: translateY(0); filter: blur(0); }
+          to   { opacity: 1; transform: none; filter: none; }
         }
         .anim-grid > * { animation: cardIn 0.38s cubic-bezier(0.22,1,0.36,1) both; }
         .anim-grid > *:nth-child(1) { animation-delay: 0ms; }
