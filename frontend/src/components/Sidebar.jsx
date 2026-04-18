@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Users, FileText, ClipboardList, Settings, LogOut,
   Layers, ClipboardCheck, PackageCheck,
-  UserCog, Clock, BarChart2, CalendarDays, Plus, CalendarRange, FolderKanban, Flame, BarChart3, Target,
+  UserCog, Clock, BarChart2, CalendarDays, Plus, CalendarRange, FolderKanban, Flame, BarChart3, Target, TrendingUp,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
@@ -52,6 +52,7 @@ export default function Sidebar() {
     ...(isAdmin || isPM ? [{
       label: 'Finanzen',
       items: [
+        { to: '/finance',  icon: TrendingUp,    label: 'Finanzen'   },
         { to: '/invoices', icon: FileText,      label: 'Rechnungen' },
         { to: '/quotes',   icon: ClipboardList, label: 'Angebote'   },
       ],

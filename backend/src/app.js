@@ -23,6 +23,7 @@ const calendarRoutes = require('./routes/calendar');
 const salesRoutes    = require('./routes/sales');
 const webhookRoutes  = require('./routes/webhook');
 const planningRoutes = require('./routes/planning');
+const financeRoutes  = require('./routes/finance');
 
 const app = express();
 
@@ -101,6 +102,7 @@ app.use('/api/calendar', calendarRoutes);
 app.use('/api/sales',    salesRoutes);
 app.use('/api/webhook',  webhookRoutes);
 app.use('/api/planning', planningRoutes);
+app.use('/api/finance',  financeRoutes);
 
 
 // 404 handler for unknown API routes

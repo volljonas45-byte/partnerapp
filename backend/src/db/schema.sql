@@ -624,3 +624,55 @@ CREATE TABLE IF NOT EXISTS planning_feedback (
   updated_at       TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(user_id, author_id, week_start)
 );
+
+-- ── FINANCE MODULE ────────────────────────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS finance_setup (
+  id                  SERIAL PRIMARY KEY,
+  workspace_owner_id  INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  legal_form          VARCHAR(20) DEFAULT 'gbr',
+  partners            JSONB DEFAULT '[]',
+  founded_date        DATE,
+  tax_mode            VARCHAR(20) DEFAULT 'regular',
+  vat_rate            NUMERIC(5,2) DEFAULT 19,
+  tax_number          VARCHAR(50) DEFAULT '',
+  finanzamt           VARCHAR(100) DEFAULT '',
+  fiscal_year_start   INTEGER DEFAULT 1,
+  opening_balance     NUMERIC(12,2) DEFAULT 0,
+  open_receivables    NUMERIC(12,2) DEFAULT 0,
+  monthly_fixed_costs NUMERIC(12,2) DEFAULT 0,
+  industry            TEXT DEFAULT '',
+  revenue_goal        NUMERIC(12,2) DEFAULT 0,
+  profit_goal         NUMERIC(12,2) DEFAULT 0,
+  tax_reserve_pct     NUMERIC(5,2) DEFAULT 30,
+  created_at          TIMESTAMPTZ DEFAULT NOW(),
+  updated_at          TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(workspace_owner_id)
+);
+
+CREATE TABLE IF NOT EXISTS finance_categories (
+  id                  SERIAL PRIMARY KEY,
+  workspace_owner_id  INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  name                VARCHAR(100) NOT NULL,
+  type                VARCHAR(10) NOT NULL CHECK (type IN ('income','expense')),
+  color               VARCHAR(20) DEFAULT '#9090B8',
+  is_default          BOOLEAN DEFAULT FALSE
+);
+
+CREATE TABLE IF NOT EXISTS finance_transactions (
+  id                  SERIAL PRIMARY KEY,
+  workspace_owner_id  INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  type                VARCHAR(10) NOT NULL CHECK (type IN ('income','expense')),
+  date                DATE NOT NULL,
+  description         TEXT NOT NULL,
+  amount_net          NUMERIC(12,2) NOT NULL,
+  vat_amount          NUMERIC(12,2) DEFAULT 0,
+  amount_gross        NUMERIC(12,2) NOT NULL,
+  category_id         INTEGER REFERENCES finance_categories(id) ON DELETE SET NULL,
+  notes               TEXT DEFAULT '',
+  receipt_data        TEXT DEFAULT '',
+  receipt_filename    TEXT DEFAULT '',
+  receipt_mime        VARCHAR(50) DEFAULT '',
+  created_at          TIMESTAMPTZ DEFAULT NOW(),
+  updated_at          TIMESTAMPTZ DEFAULT NOW()
+);
