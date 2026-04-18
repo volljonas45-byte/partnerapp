@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useLayoutEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { financeApi } from '../api/finance';
 import toast from 'react-hot-toast';
@@ -162,28 +162,20 @@ function DModal({ open, onClose, title, children, width = 520 }) {
 }
 
 function SegCtrl({ tabs, active, onChange }) {
+  const btnRefs = useRef({});
+  const [pill, setPill] = useState({ left: 0, width: 0, ready: false });
+  useLayoutEffect(() => {
+    const el = btnRefs.current[active];
+    if (el) setPill({ left: el.offsetLeft, width: el.offsetWidth, ready: true });
+  }, [active]);
   return (
-    <div style={{ display: 'inline-flex', background: 'rgba(255,255,255,0.05)', borderRadius: 12, padding: 3, gap: 2 }}>
-      {tabs.map(t => {
-        const isActive = t.id === active;
-        return (
-          <button
-            key={t.id}
-            onClick={() => onChange(t.id)}
-            style={{
-              padding: '6px 14px', borderRadius: 9, border: 'none', cursor: 'pointer',
-              fontSize: 13, fontWeight: isActive ? 600 : 400,
-              letterSpacing: '-0.008em',
-              color: isActive ? D.text : D.text2,
-              background: isActive ? D.card2 : 'transparent',
-              boxShadow: isActive ? '0 1px 4px rgba(0,0,0,0.3), 0 0 0 0.5px rgba(0,0,0,0.1)' : 'none',
-              transition: 'all 0.18s cubic-bezier(0.22,1,0.36,1)',
-            }}
-          >
-            {t.label}
-          </button>
-        );
-      })}
+    <div style={{ position: 'relative', display: 'inline-flex', background: 'rgba(255,255,255,0.04)', border: `0.5px solid ${D.border}`, borderRadius: 14, padding: 4 }}>
+      <div style={{ position: 'absolute', top: 4, height: 'calc(100% - 8px)', left: pill.left, width: pill.width, background: 'linear-gradient(135deg,#4F46E5 0%,#7C3AED 100%)', borderRadius: 10, boxShadow: '0 2px 20px rgba(124,58,237,0.5)', opacity: pill.ready ? 1 : 0, transition: 'left 0.38s cubic-bezier(0.22,1,0.36,1), width 0.38s cubic-bezier(0.22,1,0.36,1)', pointerEvents: 'none' }} />
+      {tabs.map(t => (
+        <button key={t.id} ref={el => { btnRefs.current[t.id] = el; }} onClick={() => onChange(t.id)} style={{ position: 'relative', zIndex: 1, padding: '7px 18px', borderRadius: 10, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: active === t.id ? 700 : 400, background: 'transparent', color: active === t.id ? '#fff' : D.text3, transition: 'color 0.28s cubic-bezier(0.22,1,0.36,1)', letterSpacing: '-0.008em' }}>
+          {t.label}
+        </button>
+      ))}
     </div>
   );
 }
@@ -226,6 +218,64 @@ function MetricCard({ icon: Icon, label, value, sub, color, trend }) {
         <div style={{ fontSize: 13, fontWeight: 600, color: D.text, letterSpacing: '-0.01em', marginBottom: 3 }}>{label}</div>
         {sub && <div style={{ fontSize: 11, color: D.text3 }}>{sub}</div>}
       </div>
+    </div>
+  );
+}
+
+// ── SVG CHARTS ───────────────────────────────────────────────────────────────
+function BarChart({ data, height = 140 }) {
+  if (!data || data.length === 0) return (
+    <div style={{ height, display: 'flex', alignItems: 'center', justifyContent: 'center', color: D.text3, fontSize: 12 }}>Noch keine Daten</div>
+  );
+  const maxVal = Math.max(...data.map(m => Math.max(parseFloat(m.income || 0), parseFloat(m.expense || 0))), 1);
+  const barW = 10;
+  const groupGap = 8;
+  const barGap = 3;
+  const svgW = data.length * (barW * 2 + barGap + groupGap);
+  return (
+    <div>
+      <svg width="100%" viewBox={`0 0 ${svgW} ${height + 20}`} preserveAspectRatio="xMidYMid meet" style={{ display: 'block', overflow: 'visible' }}>
+        <defs>
+          <linearGradient id="fBarGreen" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={D.green} stopOpacity="1" />
+            <stop offset="100%" stopColor={D.green} stopOpacity="0.35" />
+          </linearGradient>
+          <linearGradient id="fBarRed" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={D.red} stopOpacity="1" />
+            <stop offset="100%" stopColor={D.red} stopOpacity="0.35" />
+          </linearGradient>
+        </defs>
+        {data.map((m, i) => {
+          const gx = i * (barW * 2 + barGap + groupGap) + groupGap / 2;
+          const incH = Math.max(2, (parseFloat(m.income || 0) / maxVal) * height);
+          const expH = Math.max(2, (parseFloat(m.expense || 0) / maxVal) * height);
+          const label = m.label || (m.month ? m.month.slice(0, 3) : '');
+          return (
+            <g key={i}>
+              <rect x={gx} y={height - incH} width={barW} height={incH} fill="url(#fBarGreen)" rx={3}>
+                <title>{m.month || label}: {new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR'}).format(m.income||0)}</title>
+              </rect>
+              <rect x={gx + barW + barGap} y={height - expH} width={barW} height={expH} fill="url(#fBarRed)" rx={3}>
+                <title>{m.month || label}: {new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR'}).format(m.expense||0)}</title>
+              </rect>
+              <text x={gx + barW} y={height + 14} textAnchor="middle" fontSize={9} fill={D.text3}>{label}</text>
+            </g>
+          );
+        })}
+      </svg>
+      <div style={{ display: 'flex', gap: 16, marginTop: 6 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}><div style={{ width: 8, height: 8, borderRadius: 2, background: D.green }} /><span style={{ fontSize: 11, color: D.text3 }}>Einnahmen</span></div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}><div style={{ width: 8, height: 8, borderRadius: 2, background: D.red }} /><span style={{ fontSize: 11, color: D.text3 }}>Ausgaben</span></div>
+      </div>
+    </div>
+  );
+}
+
+function HBar({ value, max, color, height = 5 }) {
+  const pct = max > 0 ? Math.min(100, (value / max) * 100) : 0;
+  return (
+    <div style={{ height, background: 'rgba(255,255,255,0.06)', borderRadius: 99, overflow: 'hidden' }}>
+      <div style={{ width: `${pct}%`, height: '100%', background: `linear-gradient(90deg,${color},${color}99)`, borderRadius: 99, boxShadow: `0 0 8px ${color}50`, transition: 'width 0.55s cubic-bezier(0.22,1,0.36,1)' }} />
     </div>
   );
 }
@@ -801,55 +851,50 @@ function OverviewTab({ setup }) {
           </div>
         )}
         {revenueGoal > 0 && (
-          <div style={{ background: D.card2, borderRadius: 12, padding: '14px 16px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: 13, color: D.text2 }}>
-              <span>Umsatzziel {new Date().getFullYear()}</span>
-              <span style={{ fontWeight: 600, color: D.text }}>{revPct}%</span>
+          <div style={{ background: `linear-gradient(145deg,${ACCENT}0F 0%,${D.card} 55%)`, borderRadius: 16, padding: '16px 18px', border: `0.5px solid ${ACCENT}25`, boxShadow: `0 0 30px ${ACCENT}08` }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+              <div>
+                <p style={{ margin: 0, fontSize: 11, fontWeight: 800, color: ACCENT, textTransform: 'uppercase', letterSpacing: '0.1em' }}>UMSATZZIEL {new Date().getFullYear()}</p>
+                <p style={{ margin: '2px 0 0', fontSize: 13, color: D.text2 }}>{fmt(income)} von {fmt(revenueGoal)} erreicht</p>
+              </div>
+              <span style={{ fontSize: 26, fontWeight: 900, color: D.text, letterSpacing: '-0.04em' }}>{revPct}<span style={{ fontSize: 14, color: D.text3 }}>%</span></span>
             </div>
-            <div style={{ height: 6, background: 'rgba(255,255,255,0.06)', borderRadius: 99, overflow: 'hidden' }}>
-              <div style={{ width: `${revPct}%`, height: '100%', background: `linear-gradient(90deg,${ACCENT},#22a677)`, borderRadius: 99, transition: 'width 0.6s cubic-bezier(0.22,1,0.36,1)' }} />
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, fontSize: 11, color: D.text3 }}>
-              <span>{fmt(income)} erreicht</span>
-              <span>Ziel: {fmt(revenueGoal)}</span>
-            </div>
+            <HBar value={income} max={revenueGoal} color={ACCENT} height={6} />
           </div>
         )}
       </div>
 
-      {/* Cashflow sparkline + recent */}
+      {/* Cashflow chart + recent transactions */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-        <div style={{ background: D.card, borderRadius: 16, padding: '20px 22px', border: `0.5px solid ${D.border}` }}>
-          <h3 style={{ margin: '0 0 16px', fontSize: 14, fontWeight: 600, color: D.text }}>Cashflow-Trend</h3>
-          {sparkPoints.length > 0 ? (
-            <svg width="100%" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{ display: 'block', height: 60 }}>
-              <polyline points={pts} fill="none" stroke={ACCENT} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              <polyline points={`0,${H} ${pts} ${W},${H}`} fill={`${ACCENT}18`} stroke="none" />
-            </svg>
-          ) : (
-            <div style={{ height: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', color: D.text3, fontSize: 12 }}>Noch keine Daten</div>
-          )}
+        <div style={{ background: 'linear-gradient(145deg,#060F0B 0%,#0A2018 100%)', borderRadius: 20, padding: '20px 22px', border: `0.5px solid ${D.green}25`, boxShadow: `0 0 40px ${D.green}0A, 0 1px 0 rgba(255,255,255,0.04) inset` }}>
+          <p style={{ margin: '0 0 2px', fontSize: 11, fontWeight: 800, color: D.green, textTransform: 'uppercase', letterSpacing: '0.1em' }}>CASHFLOW-TREND</p>
+          <h3 style={{ margin: '0 0 16px', fontSize: 16, fontWeight: 700, color: D.text, letterSpacing: '-0.02em' }}>Einnahmen vs. Ausgaben</h3>
+          <BarChart data={monthlyData.map(m => ({ ...m, label: m.month?.slice(0,3) || '' }))} height={130} />
         </div>
 
-        <div style={{ background: D.card, borderRadius: 16, padding: '20px 22px', border: `0.5px solid ${D.border}` }}>
-          <h3 style={{ margin: '0 0 12px', fontSize: 14, fontWeight: 600, color: D.text }}>Letzte Transaktionen</h3>
+        <div style={{ background: `linear-gradient(145deg,${D.blue}0D 0%,${D.card} 55%)`, borderRadius: 20, padding: '20px 22px', border: `0.5px solid ${D.blue}25`, boxShadow: `0 0 40px ${D.blue}08, 0 1px 0 rgba(255,255,255,0.04) inset` }}>
+          <p style={{ margin: '0 0 2px', fontSize: 11, fontWeight: 800, color: D.blue, textTransform: 'uppercase', letterSpacing: '0.1em' }}>LETZTE BUCHUNGEN</p>
+          <h3 style={{ margin: '0 0 14px', fontSize: 16, fontWeight: 700, color: D.text, letterSpacing: '-0.02em' }}>Transaktionen</h3>
           {isLoading ? (
             <div style={{ color: D.text3, fontSize: 12 }}>Laden…</div>
           ) : (stats?.recent || []).length === 0 ? (
-            <div style={{ color: D.text3, fontSize: 12 }}>Noch keine Transaktionen</div>
+            <div style={{ color: D.text3, fontSize: 12, padding: '20px 0', textAlign: 'center' }}>Noch keine Transaktionen</div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {(stats?.recent || []).map(tx => (
-                <div key={tx.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: tx.type === 'income' ? D.green : D.red, flexShrink: 0 }} />
-                    <span style={{ fontSize: 12, color: D.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tx.description}</span>
+              {(stats?.recent || []).map(tx => {
+                const col = tx.type === 'income' ? D.green : D.red;
+                return (
+                  <div key={tx.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, background: `${col}0D`, borderRadius: 10, padding: '8px 12px', border: `0.5px solid ${col}20` }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                      <div style={{ width: 6, height: 6, borderRadius: '50%', background: col, flexShrink: 0, boxShadow: `0 0 6px ${col}` }} />
+                      <span style={{ fontSize: 12, color: D.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tx.description}</span>
+                    </div>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: col, flexShrink: 0 }}>
+                      {tx.type === 'income' ? '+' : '-'}{fmt(tx.amount_gross)}
+                    </span>
                   </div>
-                  <span style={{ fontSize: 12, fontWeight: 600, color: tx.type === 'income' ? D.green : D.red, flexShrink: 0 }}>
-                    {tx.type === 'income' ? '+' : '-'}{fmt(tx.amount_gross)}
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -930,15 +975,15 @@ function TransactionsTab({ categories, setup }) {
           { label: 'Ausgaben', val: totalExpense, color: D.red },
           { label: 'Saldo', val: totalIncome - totalExpense, color: totalIncome - totalExpense >= 0 ? D.blue : D.red },
         ].map(item => (
-          <div key={item.label} style={{ background: D.card, borderRadius: 12, padding: '14px 16px', border: `0.5px solid ${D.border}`, textAlign: 'center' }}>
-            <div style={{ fontSize: 18, fontWeight: 700, color: item.color }}>{fmt(item.val)}</div>
-            <div style={{ fontSize: 11, color: D.text3, marginTop: 3 }}>{item.label}</div>
+          <div key={item.label} style={{ background: `linear-gradient(145deg,${item.color}18 0%,${D.card} 55%)`, borderRadius: 16, padding: '16px 18px', border: `0.5px solid ${item.color}30`, boxShadow: `0 0 30px ${item.color}0A, 0 1px 0 rgba(255,255,255,0.04) inset`, textAlign: 'center' }}>
+            <div style={{ fontSize: 22, fontWeight: 900, color: item.color, letterSpacing: '-0.04em', lineHeight: 1 }}>{fmt(item.val)}</div>
+            <div style={{ fontSize: 11, color: D.text3, marginTop: 5, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{item.label}</div>
           </div>
         ))}
       </div>
 
       {/* Table */}
-      <div style={{ background: D.card, borderRadius: 16, border: `0.5px solid ${D.border}`, overflow: 'hidden' }}>
+      <div style={{ background: D.card, borderRadius: 18, border: `0.5px solid ${D.border}`, overflow: 'hidden' }}>
         {isLoading ? (
           <div style={{ padding: 40, textAlign: 'center', color: D.text3 }}>Laden…</div>
         ) : txs.length === 0 ? (
@@ -961,17 +1006,20 @@ function TransactionsTab({ categories, setup }) {
               <span />
             </div>
             <div className="anim-grid">
-              {txs.map(tx => (
+              {txs.map(tx => {
+                const txCol = tx.type === 'income' ? D.green : D.red;
+                return (
                 <div
                   key={tx.id}
                   style={{
                     display: 'grid', gridTemplateColumns: '100px 1fr 140px 100px 100px 80px', gap: 12,
                     padding: '12px 20px', borderBottom: `1px solid ${D.border}`,
-                    transition: 'background 0.12s',
+                    background: `linear-gradient(90deg,${txCol}06 0%,transparent 60%)`,
+                    transition: 'background 0.15s cubic-bezier(0.22,1,0.36,1)',
                     alignItems: 'center',
                   }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                  onMouseEnter={e => e.currentTarget.style.background = `linear-gradient(90deg,${txCol}12 0%,rgba(255,255,255,0.02) 60%)`}
+                  onMouseLeave={e => e.currentTarget.style.background = `linear-gradient(90deg,${txCol}06 0%,transparent 60%)`}
                 >
                   <span style={{ fontSize: 12, color: D.text3 }}>{fmtShortDate(tx.date)}</span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
@@ -1001,7 +1049,8 @@ function TransactionsTab({ categories, setup }) {
                     </button>
                   </div>
                 </div>
-              ))}
+              );
+              })}
             </div>
           </div>
         )}
@@ -1054,9 +1103,9 @@ function TaxTab({ setup }) {
 
         {/* USt Card */}
         {!isKlein ? (
-          <div style={{ background: D.card, borderRadius: 16, padding: '20px 22px', border: `0.5px solid ${D.border}` }}>
+          <div style={{ background: `linear-gradient(145deg,${D.orange}14 0%,${D.card} 55%)`, borderRadius: 20, padding: '20px 22px', border: `0.5px solid ${D.orange}28`, boxShadow: `0 0 40px ${D.orange}0A, 0 1px 0 rgba(255,255,255,0.04) inset` }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: `${D.orange}1A`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: `${D.orange}22`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Percent size={18} color={D.orange} />
               </div>
               <div>
@@ -1099,9 +1148,9 @@ function TaxTab({ setup }) {
             )}
           </div>
         ) : (
-          <div style={{ background: D.card, borderRadius: 16, padding: '20px 22px', border: `0.5px solid ${D.border}` }}>
+          <div style={{ background: `linear-gradient(145deg,${D.green}14 0%,${D.card} 55%)`, borderRadius: 20, padding: '20px 22px', border: `0.5px solid ${D.green}28`, boxShadow: `0 0 40px ${D.green}0A, 0 1px 0 rgba(255,255,255,0.04) inset` }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: `${D.green}1A`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: `${D.green}22`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <CheckCircle size={18} color={D.green} />
               </div>
               <div>
@@ -1113,9 +1162,9 @@ function TaxTab({ setup }) {
         )}
 
         {/* EÜR Card */}
-        <div style={{ background: D.card, borderRadius: 16, padding: '20px 22px', border: `0.5px solid ${D.border}` }}>
+        <div style={{ background: `linear-gradient(145deg,${D.blue}14 0%,${D.card} 55%)`, borderRadius: 20, padding: '20px 22px', border: `0.5px solid ${D.blue}28`, boxShadow: `0 0 40px ${D.blue}0A, 0 1px 0 rgba(255,255,255,0.04) inset` }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: `${D.blue}1A`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: `${D.blue}22`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <FileText size={18} color={D.blue} />
             </div>
             <div>
@@ -1156,9 +1205,9 @@ function TaxTab({ setup }) {
         </div>
 
         {/* Gewerbesteuer Card */}
-        <div style={{ background: D.card, borderRadius: 16, padding: '20px 22px', border: `0.5px solid ${D.border}` }}>
+        <div style={{ background: `linear-gradient(145deg,${D.purple}14 0%,${D.card} 55%)`, borderRadius: 20, padding: '20px 22px', border: `0.5px solid ${D.purple}28`, boxShadow: `0 0 40px ${D.purple}0A, 0 1px 0 rgba(255,255,255,0.04) inset` }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: `${D.purple}1A`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: `${D.purple}22`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Building2 size={18} color={D.purple} />
             </div>
             <div>
@@ -1196,21 +1245,28 @@ function TaxTab({ setup }) {
 
       {/* Quarterly breakdown */}
       {!isLoading && qData.length > 0 && (
-        <div style={{ background: D.card, borderRadius: 16, padding: '20px 22px', border: `0.5px solid ${D.border}` }}>
-          <h3 style={{ margin: '0 0 16px', fontSize: 14, fontWeight: 600, color: D.text }}>Quartalsübersicht {year}</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12 }}>
-            {qData.map(qItem => (
-              <div key={qItem.q} style={{ background: D.card2, borderRadius: 12, padding: '14px 16px', border: `1px solid ${qItem.q === q ? ACCENT + '44' : D.border}` }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: qItem.q === q ? ACCENT : D.text3, marginBottom: 10 }}>Q{qItem.q}</div>
-                <div style={{ fontSize: 11, color: D.text3, marginBottom: 3 }}>Einnahmen</div>
-                <div style={{ fontSize: 13, color: D.green, fontWeight: 600, marginBottom: 8 }}>{fmt(qItem.income)}</div>
-                <div style={{ fontSize: 11, color: D.text3, marginBottom: 3 }}>Ausgaben</div>
-                <div style={{ fontSize: 13, color: D.red, fontWeight: 600, marginBottom: 8 }}>{fmt(qItem.expense)}</div>
-                <div style={{ height: 1, background: D.border, marginBottom: 8 }} />
-                <div style={{ fontSize: 11, color: D.text3, marginBottom: 3 }}>Gewinn</div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: qItem.profit >= 0 ? D.blue : D.red }}>{fmt(qItem.profit)}</div>
-              </div>
-            ))}
+        <div style={{ background: `linear-gradient(145deg,${ACCENT}08 0%,${D.card} 55%)`, borderRadius: 20, padding: '20px 22px', border: `0.5px solid ${ACCENT}20` }}>
+          <p style={{ margin: '0 0 2px', fontSize: 11, fontWeight: 800, color: ACCENT, textTransform: 'uppercase', letterSpacing: '0.1em' }}>QUARTALSBERICHT</p>
+          <h3 style={{ margin: '0 0 16px', fontSize: 16, fontWeight: 700, color: D.text, letterSpacing: '-0.02em' }}>Quartalsübersicht {year}</h3>
+          <div className="anim-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12 }}>
+            {qData.map(qItem => {
+              const isCurrentQ = qItem.q === q;
+              const qCol = isCurrentQ ? ACCENT : D.blue;
+              return (
+                <div key={qItem.q} style={{ background: `linear-gradient(145deg,${qCol}12 0%,${D.card2} 60%)`, borderRadius: 14, padding: '14px 16px', border: `0.5px solid ${qCol}30`, boxShadow: isCurrentQ ? `0 0 24px ${qCol}18` : 'none' }}>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: qCol, marginBottom: 12, letterSpacing: '-0.01em' }}>Q{qItem.q}{isCurrentQ && <span style={{ fontSize: 9, background: `${qCol}22`, padding: '2px 6px', borderRadius: 6, marginLeft: 6 }}>Aktuell</span>}</div>
+                  <div style={{ fontSize: 11, color: D.text3, marginBottom: 3 }}>Einnahmen</div>
+                  <div style={{ fontSize: 14, color: D.green, fontWeight: 700, marginBottom: 10 }}>{fmt(qItem.income)}</div>
+                  <HBar value={qItem.income} max={Math.max(...qData.map(x => x.income), 1)} color={D.green} height={3} />
+                  <div style={{ fontSize: 11, color: D.text3, marginBottom: 3, marginTop: 10 }}>Ausgaben</div>
+                  <div style={{ fontSize: 14, color: D.red, fontWeight: 700, marginBottom: 10 }}>{fmt(qItem.expense)}</div>
+                  <HBar value={qItem.expense} max={Math.max(...qData.map(x => x.income), 1)} color={D.red} height={3} />
+                  <div style={{ height: 1, background: D.border, margin: '10px 0 8px' }} />
+                  <div style={{ fontSize: 11, color: D.text3, marginBottom: 3 }}>Gewinn</div>
+                  <div style={{ fontSize: 16, fontWeight: 900, color: qItem.profit >= 0 ? D.green : D.red, letterSpacing: '-0.03em' }}>{fmt(qItem.profit)}</div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
@@ -1259,113 +1315,94 @@ function ReportsTab() {
       ) : (
         <>
           {reportType === 'pnl' && (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-              {[
-                { title: 'Einnahmen nach Kategorie', items: data.incomeCategories || [], total: data.totalIncome, color: D.green },
-                { title: 'Ausgaben nach Kategorie', items: data.expenseCategories || [], total: data.totalExpense, color: D.red },
-              ].map(section => (
-                <div key={section.title} style={{ background: D.card, borderRadius: 16, padding: '20px 22px', border: `0.5px solid ${D.border}` }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 14 }}>
-                    <h3 style={{ margin: 0, fontSize: 14, fontWeight: 600, color: D.text }}>{section.title}</h3>
-                    <span style={{ fontSize: 14, fontWeight: 700, color: section.color }}>{fmt(section.total)}</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                {[
+                  { title: 'Einnahmen nach Kategorie', items: data.incomeCategories || [], total: data.totalIncome, color: D.green },
+                  { title: 'Ausgaben nach Kategorie', items: data.expenseCategories || [], total: data.totalExpense, color: D.red },
+                ].map(section => (
+                  <div key={section.title} style={{ background: `linear-gradient(145deg,${section.color}10 0%,${D.card} 55%)`, borderRadius: 20, padding: '20px 22px', border: `0.5px solid ${section.color}25`, boxShadow: `0 0 30px ${section.color}08` }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+                      <div>
+                        <p style={{ margin: 0, fontSize: 11, fontWeight: 800, color: section.color, textTransform: 'uppercase', letterSpacing: '0.1em' }}>{section.color === D.green ? 'EINNAHMEN' : 'AUSGABEN'}</p>
+                        <h3 style={{ margin: '3px 0 0', fontSize: 15, fontWeight: 700, color: D.text, letterSpacing: '-0.02em' }}>{section.title}</h3>
+                      </div>
+                      <span style={{ fontSize: 18, fontWeight: 900, color: section.color, letterSpacing: '-0.03em' }}>{fmt(section.total)}</span>
+                    </div>
+                    {section.items.length === 0 ? (
+                      <div style={{ fontSize: 12, color: D.text3 }}>Keine Daten</div>
+                    ) : (
+                      section.items.map((item, i) => {
+                        const pct = section.total > 0 ? (parseFloat(item.total) / section.total) * 100 : 0;
+                        return (
+                          <div key={i} style={{ marginBottom: 14 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 13 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <div style={{ width: 8, height: 8, borderRadius: 2, background: item.color || section.color, flexShrink: 0 }} />
+                                <span style={{ color: D.text }}>{item.name}</span>
+                              </div>
+                              <span style={{ color: D.text2 }}>{fmt(item.total)} <span style={{ color: D.text3, fontSize: 11 }}>({pct.toFixed(0)}%)</span></span>
+                            </div>
+                            <HBar value={parseFloat(item.total)} max={section.total} color={item.color || section.color} height={5} />
+                          </div>
+                        );
+                      })
+                    )}
                   </div>
-                  {section.items.length === 0 ? (
-                    <div style={{ fontSize: 12, color: D.text3 }}>Keine Daten</div>
-                  ) : (
-                    section.items.map((item, i) => {
-                      const pct = section.total > 0 ? (parseFloat(item.total) / section.total) * 100 : 0;
-                      return (
-                        <div key={i} style={{ marginBottom: 12 }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, fontSize: 13 }}>
-                            <span style={{ color: D.text }}>{item.name}</span>
-                            <span style={{ color: D.text2 }}>{fmt(item.total)} <span style={{ color: D.text3, fontSize: 11 }}>({pct.toFixed(0)}%)</span></span>
-                          </div>
-                          <div style={{ height: 4, background: 'rgba(255,255,255,0.06)', borderRadius: 99, overflow: 'hidden' }}>
-                            <div style={{ width: `${pct}%`, height: '100%', background: item.color || section.color, borderRadius: 99, transition: 'width 0.5s cubic-bezier(0.22,1,0.36,1)' }} />
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-              ))}
-              <div style={{ background: D.card, borderRadius: 16, padding: '20px 22px', border: `0.5px solid ${D.border}`, gridColumn: '1 / -1' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
-                  <span style={{ color: D.text, fontWeight: 600 }}>Jahresgewinn</span>
-                  <span style={{ fontWeight: 700, fontSize: 18, color: data.profit >= 0 ? D.green : D.red }}>{fmt(data.profit)}</span>
+                ))}
+              </div>
+              <div style={{ background: `linear-gradient(145deg,${data.profit >= 0 ? D.green : D.red}14 0%,${D.card} 55%)`, borderRadius: 20, padding: '20px 24px', border: `0.5px solid ${data.profit >= 0 ? D.green : D.red}28`, boxShadow: `0 0 40px ${data.profit >= 0 ? D.green : D.red}0A` }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <p style={{ margin: 0, fontSize: 11, fontWeight: 800, color: data.profit >= 0 ? D.green : D.red, textTransform: 'uppercase', letterSpacing: '0.1em' }}>JAHRESERGEBNIS</p>
+                    <span style={{ fontSize: 14, color: D.text2 }}>Gewinn / Verlust {year}</span>
+                  </div>
+                  <span style={{ fontWeight: 900, fontSize: 28, color: data.profit >= 0 ? D.green : D.red, letterSpacing: '-0.04em' }}>{fmt(data.profit)}</span>
                 </div>
               </div>
             </div>
           )}
 
           {reportType === 'cashflow' && (
-            <div style={{ background: D.card, borderRadius: 16, padding: '20px 22px', border: `0.5px solid ${D.border}` }}>
-              <h3 style={{ margin: '0 0 20px', fontSize: 14, fontWeight: 600, color: D.text }}>Monatlicher Cashflow {year}</h3>
-              {(data.months || []).length === 0 ? (
-                <div style={{ color: D.text3, fontSize: 12, padding: '20px 0' }}>Keine Daten</div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {(data.months || []).map((m, i) => {
-                    const maxVal = Math.max(...data.months.map(x => Math.max(parseFloat(x.income), parseFloat(x.expense))), 1);
-                    const incPct = (parseFloat(m.income) / maxVal) * 100;
-                    const expPct = (parseFloat(m.expense) / maxVal) * 100;
-                    return (
-                      <div key={i}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, fontSize: 12 }}>
-                          <span style={{ color: D.text2 }}>{m.month}</span>
-                          <span style={{ color: parseFloat(m.income) - parseFloat(m.expense) >= 0 ? D.green : D.red, fontWeight: 600 }}>
-                            {fmt(parseFloat(m.income) - parseFloat(m.expense))}
-                          </span>
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                          <div style={{ height: 6, background: 'rgba(255,255,255,0.05)', borderRadius: 99, overflow: 'hidden' }}>
-                            <div style={{ width: `${incPct}%`, height: '100%', background: D.green, borderRadius: 99 }} />
-                          </div>
-                          <div style={{ height: 6, background: 'rgba(255,255,255,0.05)', borderRadius: 99, overflow: 'hidden' }}>
-                            <div style={{ width: `${expPct}%`, height: '100%', background: D.red, borderRadius: 99 }} />
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                  <div style={{ display: 'flex', gap: 16, marginTop: 8 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}><div style={{ width: 10, height: 10, borderRadius: 2, background: D.green }} /><span style={{ fontSize: 11, color: D.text3 }}>Einnahmen</span></div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}><div style={{ width: 10, height: 10, borderRadius: 2, background: D.red }} /><span style={{ fontSize: 11, color: D.text3 }}>Ausgaben</span></div>
-                  </div>
-                </div>
-              )}
+            <div style={{ background: 'linear-gradient(145deg,#060F0B 0%,#0A2018 100%)', borderRadius: 20, padding: '20px 22px', border: `0.5px solid ${D.green}25`, boxShadow: `0 0 40px ${D.green}0A, 0 1px 0 rgba(255,255,255,0.04) inset` }}>
+              <p style={{ margin: '0 0 2px', fontSize: 11, fontWeight: 800, color: D.green, textTransform: 'uppercase', letterSpacing: '0.1em' }}>CASHFLOW BERICHT</p>
+              <h3 style={{ margin: '0 0 20px', fontSize: 16, fontWeight: 700, color: D.text, letterSpacing: '-0.02em' }}>Monatlicher Cashflow {year}</h3>
+              <BarChart
+                data={(data.months || []).map(m => ({ ...m, label: (m.month || '').slice(0, 3) }))}
+                height={160}
+              />
             </div>
           )}
 
           {reportType === 'categories' && (
-            <div style={{ background: D.card, borderRadius: 16, padding: '20px 22px', border: `0.5px solid ${D.border}` }}>
-              <h3 style={{ margin: '0 0 20px', fontSize: 14, fontWeight: 600, color: D.text }}>Ausgaben nach Kategorie</h3>
+            <div style={{ background: `linear-gradient(145deg,${D.red}0D 0%,${D.card} 55%)`, borderRadius: 20, padding: '20px 22px', border: `0.5px solid ${D.red}20`, boxShadow: `0 0 30px ${D.red}08` }}>
+              <p style={{ margin: '0 0 2px', fontSize: 11, fontWeight: 800, color: D.red, textTransform: 'uppercase', letterSpacing: '0.1em' }}>AUSGABENSTRUKTUR</p>
+              <h3 style={{ margin: '0 0 20px', fontSize: 16, fontWeight: 700, color: D.text, letterSpacing: '-0.02em' }}>Ausgaben nach Kategorie</h3>
               {(data.categories || []).filter(c => c.type === 'expense').length === 0 ? (
                 <div style={{ color: D.text3, fontSize: 12 }}>Keine Daten</div>
-              ) : (
-                (data.categories || []).filter(c => c.type === 'expense').map((c, i) => {
-                  const allExp = data.categories.filter(x => x.type === 'expense').reduce((s,x) => s + parseFloat(x.total), 0);
+              ) : (() => {
+                const expCats = (data.categories || []).filter(c => c.type === 'expense');
+                const allExp = expCats.reduce((s, x) => s + parseFloat(x.total), 0);
+                return expCats.map((c, i) => {
                   const pct = allExp > 0 ? (parseFloat(c.total) / allExp) * 100 : 0;
                   return (
-                    <div key={i} style={{ marginBottom: 14 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5, fontSize: 13 }}>
+                    <div key={i} style={{ marginBottom: 16 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 7, fontSize: 13 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <div style={{ width: 10, height: 10, borderRadius: 2, background: c.color }} />
-                          <span style={{ color: D.text }}>{c.name}</span>
-                          <span style={{ fontSize: 11, color: D.text3 }}>({c.count}x)</span>
+                          <div style={{ width: 10, height: 10, borderRadius: 3, background: c.color, boxShadow: `0 0 6px ${c.color}` }} />
+                          <span style={{ color: D.text, fontWeight: 500 }}>{c.name}</span>
+                          <span style={{ fontSize: 10, color: D.text3, background: 'rgba(255,255,255,0.05)', padding: '1px 6px', borderRadius: 99 }}>{c.count}x</span>
                         </div>
-                        <div style={{ display: 'flex', gap: 12 }}>
+                        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
                           <span style={{ color: D.text3, fontSize: 11 }}>{pct.toFixed(1)}%</span>
-                          <span style={{ color: D.red, fontWeight: 600 }}>{fmt(c.total)}</span>
+                          <span style={{ color: D.red, fontWeight: 700, fontSize: 14 }}>{fmt(c.total)}</span>
                         </div>
                       </div>
-                      <div style={{ height: 6, background: 'rgba(255,255,255,0.05)', borderRadius: 99, overflow: 'hidden' }}>
-                        <div style={{ width: `${pct}%`, height: '100%', background: c.color, borderRadius: 99, transition: 'width 0.5s cubic-bezier(0.22,1,0.36,1)' }} />
-                      </div>
+                      <HBar value={parseFloat(c.total)} max={allExp} color={c.color} height={5} />
                     </div>
                   );
-                })
-              )}
+                });
+              })()}
             </div>
           )}
         </>
@@ -1398,9 +1435,12 @@ function SettingsTab({ setup, categories, onSetupEdit }) {
       <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: D.text }}>Einstellungen</h2>
 
       {/* Company info */}
-      <div style={{ background: D.card, borderRadius: 16, padding: '20px 22px', border: `0.5px solid ${D.border}` }}>
+      <div style={{ background: `linear-gradient(145deg,${D.cyan}10 0%,${D.card} 55%)`, borderRadius: 20, padding: '20px 22px', border: `0.5px solid ${D.cyan}22`, boxShadow: `0 0 40px ${D.cyan}08, 0 1px 0 rgba(255,255,255,0.04) inset` }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <h3 style={{ margin: 0, fontSize: 14, fontWeight: 600, color: D.text }}>Unternehmensinfo</h3>
+          <div>
+            <p style={{ margin: 0, fontSize: 11, fontWeight: 800, color: D.cyan, textTransform: 'uppercase', letterSpacing: '0.1em' }}>UNTERNEHMENSINFO</p>
+            <h3 style={{ margin: '3px 0 0', fontSize: 15, fontWeight: 700, color: D.text, letterSpacing: '-0.02em' }}>Stammdaten</h3>
+          </div>
           <DBtn variant="ghost" onClick={onSetupEdit}><Edit2 size={12} /> Bearbeiten</DBtn>
         </div>
         {setup ? (
@@ -1437,9 +1477,12 @@ function SettingsTab({ setup, categories, onSetupEdit }) {
       </div>
 
       {/* Categories */}
-      <div style={{ background: D.card, borderRadius: 16, padding: '20px 22px', border: `0.5px solid ${D.border}` }}>
+      <div style={{ background: `linear-gradient(145deg,${D.purple}10 0%,${D.card} 55%)`, borderRadius: 20, padding: '20px 22px', border: `0.5px solid ${D.purple}22`, boxShadow: `0 0 30px ${D.purple}08` }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <h3 style={{ margin: 0, fontSize: 14, fontWeight: 600, color: D.text }}>Kategorien</h3>
+          <div>
+            <p style={{ margin: 0, fontSize: 11, fontWeight: 800, color: D.purple, textTransform: 'uppercase', letterSpacing: '0.1em' }}>KATEGORIEN</p>
+            <h3 style={{ margin: '3px 0 0', fontSize: 15, fontWeight: 700, color: D.text, letterSpacing: '-0.02em' }}>Buchungskategorien</h3>
+          </div>
           <DBtn variant="ghost" onClick={() => { setEditCat(null); setCatForm({ name: '', type: 'expense', color: '#9090B8' }); setCatModal(true); }}>
             <Plus size={12} /> Neu
           </DBtn>
@@ -1451,9 +1494,9 @@ function SettingsTab({ setup, categories, onSetupEdit }) {
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {categories.filter(c => c.type === type).map(c => (
-                <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 10px 4px 8px', background: D.card2, borderRadius: 99, border: `1px solid ${D.border}` }}>
-                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: c.color }} />
-                  <span style={{ fontSize: 12, color: D.text }}>{c.name}</span>
+                <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px 5px 10px', background: `${c.color}15`, borderRadius: 99, border: `0.5px solid ${c.color}35` }}>
+                  <div style={{ width: 7, height: 7, borderRadius: '50%', background: c.color, boxShadow: `0 0 5px ${c.color}` }} />
+                  <span style={{ fontSize: 12, color: D.text, fontWeight: 500 }}>{c.name}</span>
                   {!c.is_default && (
                     <div style={{ display: 'flex', gap: 2 }}>
                       <button onClick={() => { setEditCat(c); setCatForm({ name: c.name, type: c.type, color: c.color }); setCatModal(true); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: D.text3, padding: 2, borderRadius: 4 }}>
@@ -1542,6 +1585,10 @@ export default function Finance() {
           from { opacity: 0; transform: translateY(18px) scale(0.97); }
           to   { opacity: 1; transform: translateY(0) scale(1); }
         }
+        @keyframes tabIn {
+          from { opacity: 0; transform: translateY(14px); filter: blur(4px); }
+          to   { opacity: 1; transform: translateY(0); filter: blur(0); }
+        }
         .anim-grid > * { animation: cardIn 0.38s cubic-bezier(0.22,1,0.36,1) both; }
         .anim-grid > *:nth-child(1) { animation-delay: 0ms; }
         .anim-grid > *:nth-child(2) { animation-delay: 55ms; }
@@ -1565,18 +1612,12 @@ export default function Finance() {
       )}
 
       {/* Page header */}
-      <div style={{ marginBottom: 28 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 6 }}>
-          <div style={{ width: 44, height: 44, borderRadius: 14, background: `${ACCENT}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: `0 0 24px ${ACCENT_GLOW}` }}>
-            <TrendingUp size={22} color={ACCENT} />
-          </div>
-          <div>
-            <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: D.text, letterSpacing: '-0.02em' }}>Finanzen</h1>
-            <p style={{ margin: 0, fontSize: 13, color: D.text3 }}>
-              {setup ? `${setup.legal_form?.toUpperCase()} · ${setup.tax_mode === 'kleinunternehmer' ? 'Kleinunternehmer §19' : `USt ${setup.vat_rate}%`}` : 'Setup ausstehend'}
-            </p>
-          </div>
-        </div>
+      <div style={{ marginBottom: 32 }}>
+        <p style={{ margin: '0 0 4px', fontSize: 11, fontWeight: 800, color: D.text3, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Unternehmensfinanzen</p>
+        <h1 style={{ margin: '0 0 4px', fontSize: 34, fontWeight: 900, letterSpacing: '-0.04em', background: 'linear-gradient(135deg,#EEEEFF 30%,rgba(52,211,153,0.8) 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1.1 }}>Finanzen</h1>
+        <p style={{ margin: 0, fontSize: 13, color: D.text3 }}>
+          {setup ? `${setup.legal_form?.toUpperCase()} · ${setup.tax_mode === 'kleinunternehmer' ? 'Kleinunternehmer §19' : `USt ${setup.vat_rate}%`}` : 'Setup ausstehend'}
+        </p>
       </div>
 
       {/* Tab navigation */}
@@ -1585,7 +1626,7 @@ export default function Finance() {
       </div>
 
       {/* Tab content */}
-      <div key={tab} style={{ animation: 'cardIn 0.3s cubic-bezier(0.22,1,0.36,1)' }}>
+      <div key={tab} style={{ animation: 'tabIn 0.42s cubic-bezier(0.22,1,0.36,1) both' }}>
         {tab === 'overview'     && <OverviewTab setup={setup} />}
         {tab === 'transactions' && <TransactionsTab categories={categories} setup={setup} />}
         {tab === 'tax'          && <TaxTab setup={setup} />}
