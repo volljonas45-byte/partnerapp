@@ -195,32 +195,37 @@ const fmtShortDate = d => d ? new Date(d).toLocaleDateString('de-DE', { day: '2-
 
 // ── METRIC CARD ───────────────────────────────────────────────────────────────
 function MetricCard({ icon: Icon, label, value, sub, color, trend }) {
+  const shadow = `0 0 40px ${color}14, 0 1px 0 rgba(255,255,255,0.05) inset, 0 2px 8px rgba(0,0,0,0.45)`;
   return (
     <div
       style={{
-        background: D.card, borderRadius: 16, padding: '20px 22px',
-        border: `0.5px solid ${D.border}`,
-        boxShadow: `0 0 0 0.5px rgba(0,0,0,0.06), 0 4px 24px rgba(0,0,0,0.15), 0 0 48px ${ACCENT_GLOW}`,
-        transition: 'all 0.2s cubic-bezier(0.22,1,0.36,1)',
+        background: `linear-gradient(145deg, ${color}18 0%, ${D.card} 55%)`,
+        borderRadius: 20,
+        border: `0.5px solid ${color}30`,
+        boxShadow: shadow,
+        overflow: 'hidden',
+        transition: 'transform 0.35s cubic-bezier(0.22,1,0.36,1), box-shadow 0.35s cubic-bezier(0.22,1,0.36,1)',
         cursor: 'default',
       }}
-      onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = `0 12px 48px rgba(0,0,0,0.3), 0 0 48px ${ACCENT_GLOW}`; }}
-      onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = `0 0 0 0.5px rgba(0,0,0,0.06), 0 4px 24px rgba(0,0,0,0.15), 0 0 48px ${ACCENT_GLOW}`; }}
+      onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = `0 12px 48px ${color}22, 0 1px 0 rgba(255,255,255,0.07) inset`; }}
+      onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = shadow; }}
     >
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 14 }}>
-        <div style={{ width: 36, height: 36, borderRadius: 10, background: `${color}1A`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ padding: '18px 20px 4px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+        <div style={{ width: 36, height: 36, borderRadius: 10, background: `${color}20`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Icon size={18} color={color} strokeWidth={1.8} />
         </div>
         {trend !== undefined && (
-          <span style={{ fontSize: 12, fontWeight: 500, color: trend >= 0 ? D.green : D.red, display: 'flex', alignItems: 'center', gap: 2 }}>
-            {trend >= 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
+          <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 6, background: `${trend >= 0 ? D.green : D.red}15`, color: trend >= 0 ? D.green : D.red, border: `0.5px solid ${trend >= 0 ? D.green : D.red}25`, display: 'flex', alignItems: 'center', gap: 2 }}>
+            {trend >= 0 ? <ArrowUpRight size={11} /> : <ArrowDownRight size={11} />}
             {Math.abs(trend)}%
           </span>
         )}
       </div>
-      <div style={{ fontSize: 22, fontWeight: 700, color: D.text, letterSpacing: '-0.02em', marginBottom: 4 }}>{value}</div>
-      <div style={{ fontSize: 12, color: D.text2 }}>{label}</div>
-      {sub && <div style={{ fontSize: 11, color: D.text3, marginTop: 3 }}>{sub}</div>}
+      <div style={{ padding: '10px 20px 18px' }}>
+        <div style={{ fontSize: 32, fontWeight: 900, color: D.text, letterSpacing: '-0.04em', lineHeight: 1, marginBottom: 6 }}>{value}</div>
+        <div style={{ fontSize: 13, fontWeight: 600, color: D.text, letterSpacing: '-0.01em', marginBottom: 3 }}>{label}</div>
+        {sub && <div style={{ fontSize: 11, color: D.text3 }}>{sub}</div>}
+      </div>
     </div>
   );
 }
