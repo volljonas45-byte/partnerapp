@@ -650,11 +650,6 @@ function KpiCard({ kpi, onEdit, onDelete }) {
         </div>
       </div>
 
-      {/* Sparkline */}
-      <div style={{ padding: '8px 0 0' }}>
-        <Sparkline seed={seed} pct={pct} color={accentColor} height={44} />
-      </div>
-
       {/* Progress bar */}
       <div style={{ padding: '0 16px' }}>
         <div style={{ height: 2, background: 'rgba(255,255,255,0.06)', borderRadius: 99, overflow: 'hidden' }}>
@@ -830,34 +825,34 @@ function TaskCard({ task, onEdit, onMove, onDelete }) {
 
   return (
     <div style={{
-      background: D.card, borderRadius: 12,
-      border: `0.5px solid ${D.border}`,
-      borderLeft: `2.5px solid ${p.color}`,
-      boxShadow: `0 1px 4px rgba(0,0,0,0.4)`,
-      padding: '11px 12px 10px',
+      background: `linear-gradient(145deg, ${p.color}14 0%, ${D.card} 55%)`,
+      borderRadius: 16,
+      border: `0.5px solid ${p.color}28`,
+      boxShadow: `0 0 28px ${p.color}10, 0 1px 0 rgba(255,255,255,0.04) inset, 0 2px 6px rgba(0,0,0,0.4)`,
+      padding: '12px 13px 11px',
       transition: 'transform 0.35s cubic-bezier(0.22,1,0.36,1), box-shadow 0.35s cubic-bezier(0.22,1,0.36,1)',
     }}
-    onMouseEnter={e => { e.currentTarget.style.transform = 'translateX(2px)'; e.currentTarget.style.boxShadow = `0 4px 16px rgba(0,0,0,0.5), -2px 0 0 ${p.color}60`; }}
-    onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.4)'; }}
+    onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = `0 8px 28px ${p.color}18, 0 1px 0 rgba(255,255,255,0.06) inset`; }}
+    onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = `0 0 28px ${p.color}10, 0 1px 0 rgba(255,255,255,0.04) inset, 0 2px 6px rgba(0,0,0,0.4)`; }}
     >
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
-        <p style={{ flex: 1, margin: 0, fontSize: 13, fontWeight: 500, color: D.text, lineHeight: 1.4, letterSpacing: '-0.01em' }}>{task.title}</p>
+        <p style={{ flex: 1, margin: 0, fontSize: 13, fontWeight: 600, color: D.text, lineHeight: 1.4, letterSpacing: '-0.01em' }}>{task.title}</p>
         <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
-          <button onClick={onEdit} style={{ width: 22, height: 22, borderRadius: 5, border: 'none', background: 'rgba(255,255,255,0.06)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: D.text2 }}><Edit3 size={10} /></button>
-          <button onClick={onDelete} style={{ width: 22, height: 22, borderRadius: 5, border: 'none', background: 'rgba(255,255,255,0.04)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: D.text3 }}><Trash2 size={10} /></button>
+          <button onClick={onEdit} style={{ width: 22, height: 22, borderRadius: 6, border: 'none', background: 'rgba(255,255,255,0.07)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: D.text2 }}><Edit3 size={10} /></button>
+          <button onClick={onDelete} style={{ width: 22, height: 22, borderRadius: 6, border: 'none', background: 'rgba(255,255,255,0.05)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: D.text3 }}><Trash2 size={10} /></button>
         </div>
       </div>
       {task.description && <p style={{ margin: '4px 0 0', fontSize: 11, color: D.text3, lineHeight: 1.4 }}>{task.description}</p>}
-      <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-        <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 6px', borderRadius: 5, background: `${p.color}18`, color: p.color }}>{p.label}</span>
+      <div style={{ marginTop: 9, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+        <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 5, background: `${p.color}18`, color: p.color, border: `0.5px solid ${p.color}30` }}>{p.label}</span>
         {due && <span style={{ fontSize: 10, color: overdue ? D.red : D.text3, display: 'flex', alignItems: 'center', gap: 2 }}><Calendar size={9} />{due.toLocaleDateString('de-DE',{day:'2-digit',month:'short'})}</span>}
         {task.owner_name && <Av name={task.owner_name} email="" color={task.owner_color} size={16} />}
       </div>
       <div style={{ marginTop: 8, display: 'flex', gap: 4 }}>
         {others.slice(0, 2).map(c => (
           <button key={c.id} onClick={() => onMove(c.id)} style={{
-            fontSize: 10, padding: '3px 7px', borderRadius: 6, border: 'none', cursor: 'pointer',
-            background: `${c.color}14`, color: c.color, fontFamily: 'inherit', fontWeight: 600,
+            fontSize: 10, padding: '3px 7px', borderRadius: 6, border: `0.5px solid ${c.color}25`, cursor: 'pointer',
+            background: `${c.color}12`, color: c.color, fontFamily: 'inherit', fontWeight: 600,
           }}>→ {c.label}</button>
         ))}
       </div>
@@ -969,16 +964,16 @@ function DecCard({ dec, onEdit, onDelete }) {
 
   return (
     <div style={{
-      background: D.card, borderRadius: 14, padding: '14px 16px',
-      border: `0.5px solid ${D.border}`,
-      borderLeft: `3px solid ${t.accent}`,
-      boxShadow: `0 0 20px ${t.glow}, 0 1px 4px rgba(0,0,0,0.4)`,
+      background: `linear-gradient(145deg, ${t.accent}12 0%, ${D.card} 55%)`,
+      borderRadius: 18, padding: '14px 16px',
+      border: `0.5px solid ${t.accent}28`,
+      boxShadow: `0 0 36px ${t.glow}, 0 1px 0 rgba(255,255,255,0.05) inset, 0 2px 8px rgba(0,0,0,0.4)`,
       display: 'flex', alignItems: 'flex-start', gap: 12,
-      opacity: dec.status === 'active' ? 1 : 0.55,
+      opacity: dec.status === 'active' ? 1 : 0.5,
       transition: 'transform 0.35s cubic-bezier(0.22,1,0.36,1), box-shadow 0.35s cubic-bezier(0.22,1,0.36,1)',
     }}
-    onMouseEnter={e => { e.currentTarget.style.transform = 'translateX(3px)'; }}
-    onMouseLeave={e => { e.currentTarget.style.transform = ''; }}
+    onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = `0 10px 40px ${t.glow}, 0 1px 0 rgba(255,255,255,0.07) inset`; }}
+    onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = `0 0 36px ${t.glow}, 0 1px 0 rgba(255,255,255,0.05) inset, 0 2px 8px rgba(0,0,0,0.4)`; }}
     >
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
@@ -1096,13 +1091,10 @@ function OverviewTab({ onTabChange }) {
               </div>
               <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 6, background: `${m.color}15`, color: m.color, border: `0.5px solid ${m.color}25` }}>↑</span>
             </div>
-            <div style={{ padding: '10px 18px 8px' }}>
+            <div style={{ padding: '10px 18px 18px' }}>
               <p style={{ margin: '0 0 3px', fontSize: 36, fontWeight: 900, color: D.text, letterSpacing: '-0.05em', lineHeight: 1 }}>{m.value}</p>
               <p style={{ margin: '5px 0 2px', fontSize: 13, fontWeight: 600, color: D.text, letterSpacing: '-0.012em' }}>{m.label}</p>
               <p style={{ margin: 0, fontSize: 11, color: D.text3 }}>{m.sub}</p>
-            </div>
-            <div style={{ paddingTop: 4 }}>
-              <Sparkline seed={mi * 127 + 42} pct={40 + mi * 12} color={m.color} height={40} />
             </div>
           </div>
         ))}
