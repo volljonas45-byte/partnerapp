@@ -470,7 +470,7 @@ function FeedbackSheet({ open, onClose, onSave, initial, loading, weekLabel }) {
         border: `0.5px solid ${D.borderB}`, borderBottom: 'none',
         boxShadow: '0 -12px 60px rgba(0,0,0,0.7)',
         maxHeight: '92vh', overflowY: 'auto',
-        animation: 'sheetUp 0.3s cubic-bezier(0.22,1,0.36,1)',
+        animation: 'sheetUp 0.3s cubic-bezier(0.22,1,0.36,1) backwards',
       }}>
         <div style={{ display: 'flex', justifyContent: 'center', padding: '14px 0 0' }}>
           <div style={{ width: 40, height: 4, borderRadius: 99, background: D.border }} />
