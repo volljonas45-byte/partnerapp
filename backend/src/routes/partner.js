@@ -2,10 +2,82 @@ const express = require('express');
 const router  = express.Router();
 const bcrypt  = require('bcryptjs');
 const jwt     = require('jsonwebtoken');
+const { OAuth2Client } = require('google-auth-library');
 const { getOne, getAll, run } = require('../db/pg');
 const authenticate = require('../middleware/auth');
 
 // ── PUBLIC ────────────────────────────────────────────────────────────────────
+
+// Google OAuth login/register
+router.post('/google-auth', async (req, res) => {
+  const { access_token, workspace_owner_id } = req.body;
+  if (!access_token) return res.status(400).json({ error: 'Token fehlt.' });
+
+  try {
+    // Fetch user info from Google
+    const gRes = await fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${access_token}`);
+    if (!gRes.ok) return res.status(401).json({ error: 'Ungültiger Google-Token.' });
+    const { email, name, sub: googleId } = await gRes.json();
+
+    // Check if partner already exists
+    let user = await getOne(
+      `SELECT u.id, u.name, u.email, u.role,
+              p.id AS partner_id, p.workspace_owner_id, p.status AS partner_status,
+              p.commission_rate_pool, p.commission_rate_own
+       FROM users u JOIN partners p ON p.user_id = u.id
+       WHERE u.email = ? AND u.role = 'partner'`,
+      [email]
+    );
+
+    if (user) {
+      // Existing partner — return JWT
+      const token = jwt.sign(
+        { userId: user.id, partnerId: user.partner_id, workspaceOwnerId: user.workspace_owner_id },
+        process.env.JWT_SECRET, { expiresIn: '30d' }
+      );
+      return res.json({
+        token,
+        partnerStatus: user.partner_status,
+        user: {
+          id: user.id, name: user.name, email: user.email, role: user.role,
+          partnerId: user.partner_id, workspaceOwnerId: user.workspace_owner_id,
+          partnerStatus: user.partner_status,
+          commissionRatePool: user.commission_rate_pool,
+          commissionRateOwn: user.commission_rate_own,
+        },
+      });
+    }
+
+    // New user — create pending partner
+    const wid = workspace_owner_id || 1;
+    const newUser = await getOne(
+      `INSERT INTO users (name, email, role) VALUES (?, ?, 'partner') RETURNING id, name, email`,
+      [name, email]
+    );
+    await run(
+      `INSERT INTO partners (user_id, workspace_owner_id, status) VALUES (?, ?, 'pending')`,
+      [newUser.id, wid]
+    );
+
+    return res.json({
+      partnerStatus: 'new',
+      user: { id: newUser.id, name: newUser.name, email: newUser.email, partnerStatus: 'new' },
+    });
+  } catch (err) {
+    console.error('Google auth error:', err.message);
+    res.status(500).json({ error: 'Anmeldung fehlgeschlagen.' });
+  }
+});
+
+// Update partner profile (phone + message after Google signup)
+router.put('/profile', authenticatePartner, async (req, res) => {
+  const { phone, application_message } = req.body;
+  await run(
+    `UPDATE partners SET phone = COALESCE(?, phone), application_message = COALESCE(?, application_message) WHERE id = ?`,
+    [phone || null, application_message || null, req.partnerId]
+  );
+  res.json({ ok: true });
+});
 
 // Submit partner application (no auth required)
 router.post('/apply', async (req, res) => {

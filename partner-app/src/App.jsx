@@ -10,6 +10,7 @@ import MyLeads from './pages/MyLeads';
 import LeadPool from './pages/LeadPool';
 import Appointments from './pages/Appointments';
 import Earnings from './pages/Earnings';
+import CompleteProfile from './pages/CompleteProfile';
 
 const qc = new QueryClient();
 
@@ -39,7 +40,8 @@ function AppRoutes() {
     <Routes>
       <Route path="/login"   element={isAuthenticated && isApproved ? <Navigate to="/" replace /> : <Login />} />
       <Route path="/apply"   element={isAuthenticated && isApproved ? <Navigate to="/" replace /> : <Apply />} />
-      <Route path="/pending" element={<Pending />} />
+      <Route path="/pending"          element={<Pending />} />
+      <Route path="/complete-profile" element={<CompleteProfile />} />
 
       <Route path="/"             element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/leads/mine"   element={<ProtectedRoute><MyLeads /></ProtectedRoute>} />
