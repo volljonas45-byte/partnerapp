@@ -178,6 +178,45 @@ async function authenticatePartner(req, res, next) {
 
 // ── PARTNER ENDPOINTS ─────────────────────────────────────────────────────────
 
+// Status check — works for pending partners too (no approved check)
+router.get('/status', async (req, res) => {
+  const header = req.headers['authorization'];
+  const token  = header && header.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'Kein Token.' });
+  try {
+    const payload = jwt.verify(token, process.env.JWT_SECRET);
+    const partner = await getOne(
+      `SELECT p.status, p.id, u.name, u.email, p.workspace_owner_id,
+              p.commission_rate_pool, p.commission_rate_own
+       FROM partners p JOIN users u ON u.id = p.user_id WHERE p.id = ?`,
+      [payload.partnerId]
+    );
+    if (!partner) return res.status(404).json({ error: 'Nicht gefunden.' });
+
+    let responseToken = null;
+    if (partner.status === 'approved') {
+      // Issue fresh token so frontend can proceed without re-login
+      responseToken = jwt.sign(
+        { userId: payload.userId, partnerId: payload.partnerId, workspaceOwnerId: partner.workspace_owner_id },
+        process.env.JWT_SECRET, { expiresIn: '30d' }
+      );
+    }
+    res.json({
+      partnerStatus: partner.status,
+      token: responseToken,
+      user: {
+        id: payload.userId, name: partner.name, email: partner.email,
+        partnerId: partner.id, workspaceOwnerId: partner.workspace_owner_id,
+        partnerStatus: partner.status,
+        commissionRatePool: partner.commission_rate_pool,
+        commissionRateOwn: partner.commission_rate_own,
+      },
+    });
+  } catch {
+    res.status(401).json({ error: 'Ungültiger Token.' });
+  }
+});
+
 router.get('/me', authenticatePartner, async (req, res) => {
   const partner = await getOne(
     `SELECT p.*, u.name, u.email FROM partners p JOIN users u ON u.id = p.user_id WHERE p.id = ?`,
