@@ -10,14 +10,26 @@ const authenticate = require('../middleware/auth');
 
 // Google OAuth login/register
 router.post('/google-auth', async (req, res) => {
-  const { access_token, workspace_owner_id } = req.body;
-  if (!access_token) return res.status(400).json({ error: 'Token fehlt.' });
+  const { access_token, credential, workspace_owner_id } = req.body;
+  if (!access_token && !credential) return res.status(400).json({ error: 'Token fehlt.' });
 
   try {
-    // Fetch user info from Google
-    const gRes = await fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${access_token}`);
-    if (!gRes.ok) return res.status(401).json({ error: 'Ungültiger Google-Token.' });
-    const { email, name, sub: googleId } = await gRes.json();
+    let email, name;
+    if (credential) {
+      // ID token flow (GoogleLogin button) — verify via tokeninfo endpoint
+      const gRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`);
+      const payload = await gRes.json();
+      if (payload.error || !payload.email) return res.status(401).json({ error: 'Ungültiger Google-Token.' });
+      email = payload.email;
+      name = payload.name;
+    } else {
+      // Access token flow (fallback)
+      const gRes = await fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${access_token}`);
+      if (!gRes.ok) return res.status(401).json({ error: 'Ungültiger Google-Token.' });
+      const data = await gRes.json();
+      email = data.email;
+      name = data.name;
+    }
 
     // Check if partner already exists
     let user = await getOne(
