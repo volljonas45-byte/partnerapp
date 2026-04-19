@@ -356,6 +356,17 @@ function requireAdmin(req, res, next) {
 
 router.use('/admin', authenticate, requireAdmin);
 
+// Temp: delete partner by email (admin only)
+router.delete('/admin/partner-by-email', async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ error: 'Email required' });
+  const user = await getOne('SELECT id FROM users WHERE email = ? AND role = \'partner\'', [email]);
+  if (!user) return res.status(404).json({ error: 'Not found' });
+  await run('DELETE FROM partners WHERE user_id = ?', [user.id]);
+  await run('DELETE FROM users WHERE id = ?', [user.id]);
+  res.json({ ok: true, deleted: email });
+});
+
 // Stats overview
 router.get('/admin/stats', async (req, res) => {
   const wid = req.workspaceUserId;
