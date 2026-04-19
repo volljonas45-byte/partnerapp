@@ -35,6 +35,10 @@ async function migrate() {
     `CREATE TABLE IF NOT EXISTS partner_call_log (id SERIAL PRIMARY KEY, lead_id INTEGER NOT NULL REFERENCES partner_leads(id) ON DELETE CASCADE, partner_id INTEGER NOT NULL REFERENCES partners(id), called_at TIMESTAMPTZ DEFAULT NOW(), outcome TEXT DEFAULT '', notes TEXT DEFAULT '')`,
     `CREATE TABLE IF NOT EXISTS partner_appointments (id SERIAL PRIMARY KEY, workspace_owner_id INTEGER NOT NULL REFERENCES users(id), partner_id INTEGER NOT NULL REFERENCES partners(id), lead_id INTEGER REFERENCES partner_leads(id), scheduled_at TIMESTAMPTZ NOT NULL, industry TEXT DEFAULT '', demo_goal TEXT DEFAULT '', google_meet_link TEXT DEFAULT '', status TEXT DEFAULT 'scheduled', created_at TIMESTAMPTZ DEFAULT NOW())`,
     `CREATE TABLE IF NOT EXISTS partner_commissions (id SERIAL PRIMARY KEY, workspace_owner_id INTEGER NOT NULL REFERENCES users(id), partner_id INTEGER NOT NULL REFERENCES partners(id), lead_id INTEGER REFERENCES partner_leads(id), appointment_id INTEGER REFERENCES partner_appointments(id), amount NUMERIC NOT NULL, rate NUMERIC NOT NULL, deal_value NUMERIC, type TEXT DEFAULT 'appointment', status TEXT DEFAULT 'open', paid_at TIMESTAMPTZ, notes TEXT DEFAULT '', created_at TIMESTAMPTZ DEFAULT NOW())`,
+    `UPDATE partners SET workspace_owner_id = 2 WHERE workspace_owner_id = 1`,
+    `UPDATE partner_leads SET workspace_owner_id = 2 WHERE workspace_owner_id = 1`,
+    `UPDATE partner_appointments SET workspace_owner_id = 2 WHERE workspace_owner_id = 1`,
+    `UPDATE partner_commissions SET workspace_owner_id = 2 WHERE workspace_owner_id = 1`,
   ];
   const client2 = await pool.connect();
   try {
