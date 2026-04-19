@@ -46,6 +46,7 @@ import SalesAnalytics          from './pages/SalesAnalytics';
 import SalesLeadDetail         from './pages/SalesLeadDetail';
 import Planning                from './pages/Planning';
 import Finance                 from './pages/Finance';
+import AdminPartners           from './pages/AdminPartners';
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated, loading } = useAuth();
@@ -112,6 +113,7 @@ function AppRoutes() {
       <Route path="/sales/leads/:id"  element={<ProtectedRoute><SalesLeadDetail /></ProtectedRoute>} />
       <Route path="/planning"         element={<ProtectedRoute><Planning /></ProtectedRoute>} />
       <Route path="/finance"          element={<ProtectedRoute><Finance /></ProtectedRoute>} />
+      <Route path="/admin/partners"   element={<ProtectedRoute><AdminPartners /></ProtectedRoute>} />
       <Route path="/wizard"              element={<ProtectedRoute><Wizard /></ProtectedRoute>} />
       <Route path="/wizard/branding"     element={<ProtectedRoute><BrandingWizard /></ProtectedRoute>} />
       <Route path="/wizard/social-media" element={<ProtectedRoute><SocialMediaWizard /></ProtectedRoute>} />

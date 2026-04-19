@@ -676,3 +676,80 @@ CREATE TABLE IF NOT EXISTS finance_transactions (
   created_at          TIMESTAMPTZ DEFAULT NOW(),
   updated_at          TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- ── PARTNER PROGRAM ───────────────────────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS partners (
+  id                    SERIAL PRIMARY KEY,
+  user_id               INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  workspace_owner_id    INTEGER NOT NULL REFERENCES users(id),
+  status                TEXT    DEFAULT 'pending',
+  phone                 TEXT    DEFAULT '',
+  commission_rate_pool  NUMERIC DEFAULT 20,
+  commission_rate_own   NUMERIC DEFAULT 25,
+  application_message   TEXT    DEFAULT '',
+  approved_at           TIMESTAMPTZ,
+  created_at            TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS partner_leads (
+  id                 SERIAL PRIMARY KEY,
+  workspace_owner_id INTEGER NOT NULL REFERENCES users(id),
+  partner_id         INTEGER REFERENCES partners(id),
+  company            TEXT NOT NULL,
+  contact_person     TEXT DEFAULT '',
+  phone              TEXT DEFAULT '',
+  email              TEXT DEFAULT '',
+  website            TEXT DEFAULT '',
+  address            TEXT DEFAULT '',
+  city               TEXT DEFAULT '',
+  industry           TEXT DEFAULT '',
+  source             TEXT DEFAULT 'pool',
+  source_proof       TEXT DEFAULT '',
+  status             TEXT DEFAULT 'anrufen',
+  priority           TEXT DEFAULT 'medium',
+  deal_value         NUMERIC,
+  notes              TEXT DEFAULT '',
+  follow_up_date     DATE,
+  commission_rate    NUMERIC,
+  created_at         TIMESTAMPTZ DEFAULT NOW(),
+  updated_at         TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS partner_call_log (
+  id         SERIAL PRIMARY KEY,
+  lead_id    INTEGER NOT NULL REFERENCES partner_leads(id) ON DELETE CASCADE,
+  partner_id INTEGER NOT NULL REFERENCES partners(id),
+  called_at  TIMESTAMPTZ DEFAULT NOW(),
+  outcome    TEXT DEFAULT '',
+  notes      TEXT DEFAULT ''
+);
+
+CREATE TABLE IF NOT EXISTS partner_appointments (
+  id                 SERIAL PRIMARY KEY,
+  workspace_owner_id INTEGER NOT NULL REFERENCES users(id),
+  partner_id         INTEGER NOT NULL REFERENCES partners(id),
+  lead_id            INTEGER REFERENCES partner_leads(id),
+  scheduled_at       TIMESTAMPTZ NOT NULL,
+  industry           TEXT DEFAULT '',
+  demo_goal          TEXT DEFAULT '',
+  google_meet_link   TEXT DEFAULT '',
+  status             TEXT DEFAULT 'scheduled',
+  created_at         TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS partner_commissions (
+  id                 SERIAL PRIMARY KEY,
+  workspace_owner_id INTEGER NOT NULL REFERENCES users(id),
+  partner_id         INTEGER NOT NULL REFERENCES partners(id),
+  lead_id            INTEGER REFERENCES partner_leads(id),
+  appointment_id     INTEGER REFERENCES partner_appointments(id),
+  amount             NUMERIC NOT NULL,
+  rate               NUMERIC NOT NULL,
+  deal_value         NUMERIC,
+  type               TEXT DEFAULT 'appointment',
+  status             TEXT DEFAULT 'open',
+  paid_at            TIMESTAMPTZ,
+  notes              TEXT DEFAULT '',
+  created_at         TIMESTAMPTZ DEFAULT NOW()
+);

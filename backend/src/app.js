@@ -24,6 +24,7 @@ const salesRoutes    = require('./routes/sales');
 const webhookRoutes  = require('./routes/webhook');
 const planningRoutes = require('./routes/planning');
 const financeRoutes  = require('./routes/finance');
+const partnerRoutes  = require('./routes/partner');
 
 const app = express();
 
@@ -45,6 +46,7 @@ app.get('/api/health', (req, res) => {
 const allowedOrigins = [
   ...(process.env.FRONTEND_URL || '').split(',').map(o => o.trim()).filter(Boolean),
   'http://localhost:5173',
+  'http://localhost:5174',
   'http://localhost:3000',
 ];
 
@@ -103,6 +105,7 @@ app.use('/api/sales',    salesRoutes);
 app.use('/api/webhook',  webhookRoutes);
 app.use('/api/planning', planningRoutes);
 app.use('/api/finance',  financeRoutes);
+app.use('/api/partner',  partnerRoutes);
 
 
 // 404 handler for unknown API routes

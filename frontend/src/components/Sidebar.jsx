@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Users, FileText, ClipboardList, Settings, LogOut,
   Layers, ClipboardCheck, PackageCheck,
-  UserCog, Clock, BarChart2, CalendarDays, Plus, CalendarRange, FolderKanban, Flame, BarChart3, Target, TrendingUp,
+  UserCog, Clock, BarChart2, CalendarDays, Plus, CalendarRange, FolderKanban, Flame, BarChart3, Target, TrendingUp, Handshake,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
@@ -60,9 +60,10 @@ export default function Sidebar() {
     {
       label: 'Verwaltung',
       items: [
-        { to: '/clients',  icon: Users,    label: 'Kunden'        },
-        { to: '/team',     icon: UserCog,  label: 'Team'          },
-        { to: '/settings', icon: Settings, label: 'Einstellungen' },
+        { to: '/clients',          icon: Users,      label: 'Kunden'          },
+        { to: '/team',             icon: UserCog,    label: 'Team'            },
+        ...(isAdmin ? [{ to: '/admin/partners', icon: Handshake, label: 'Partner' }] : []),
+        { to: '/settings',         icon: Settings,   label: 'Einstellungen'   },
       ],
     },
   ];
