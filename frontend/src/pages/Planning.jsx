@@ -467,11 +467,12 @@ function FeedbackSheet({ open, onClose, onSave, initial, loading, weekLabel }) {
     <>
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 8990, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(10px)', animation: 'fadeIn 0.2s ease' }} />
       <div style={{
-        position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 9000,
-        background: D.card, borderRadius: '24px 24px 0 0',
-        border: `0.5px solid ${D.borderB}`, borderBottom: 'none',
-        boxShadow: '0 -12px 60px rgba(0,0,0,0.7)',
-        maxHeight: '92vh', overflowY: 'auto',
+        position: 'fixed', bottom: 16, left: '50%', transform: 'translateX(-50%)',
+        width: 'calc(100% - 32px)', maxWidth: 500, zIndex: 9000,
+        background: D.card, borderRadius: 24,
+        border: `0.5px solid ${D.borderB}`,
+        boxShadow: '0 8px 80px rgba(0,0,0,0.75)',
+        maxHeight: '90vh', overflowY: 'auto',
         animation: 'sheetUp 0.3s cubic-bezier(0.22,1,0.36,1) backwards',
       }}>
         <div style={{ display: 'flex', justifyContent: 'center', padding: '14px 0 0' }}>
