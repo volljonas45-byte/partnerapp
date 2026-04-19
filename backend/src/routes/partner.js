@@ -63,7 +63,7 @@ router.post('/google-auth', async (req, res) => {
     // New user — create pending partner
     const wid = workspace_owner_id || 1;
     const newUser = await getOne(
-      `INSERT INTO users (name, email, role) VALUES (?, ?, 'partner') RETURNING id, name, email`,
+      `INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, '', 'partner') RETURNING id, name, email`,
       [name, email]
     );
     await run(
