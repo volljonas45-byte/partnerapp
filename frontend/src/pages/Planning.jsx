@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useLayoutEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { planningApi } from '../api/planning';
@@ -215,9 +216,9 @@ function DModal({ open, onClose, title, children, width = 480 }) {
     return () => { document.body.style.overflow = ''; };
   }, [open]);
   if (!open) return null;
-  return (
+  return createPortal(
     <div onClick={onClose} style={{
-      position: 'fixed', inset: 0, zIndex: 1000,
+      position: 'fixed', inset: 0, zIndex: 9000,
       background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(12px)',
       display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
       animation: 'fadeIn 0.18s ease',
@@ -239,7 +240,8 @@ function DModal({ open, onClose, title, children, width = 480 }) {
         </div>
         <div style={{ padding: '16px 20px 20px', maxHeight: '80vh', overflowY: 'auto' }}>{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -461,11 +463,11 @@ function FeedbackSheet({ open, onClose, onSave, initial, loading, weekLabel }) {
 
   const submit = e => { e.preventDefault(); if (!rating) { toast.error('Bitte wähle eine Bewertung'); return; } onSave({ area, rating, wins, blockers, next_steps: nextSteps, improvement_goal: goal }); };
 
-  return (
+  return createPortal(
     <>
-      <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 990, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(10px)', animation: 'fadeIn 0.2s ease' }} />
+      <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 8990, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(10px)', animation: 'fadeIn 0.2s ease' }} />
       <div style={{
-        position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 1000,
+        position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 9000,
         background: D.card, borderRadius: '24px 24px 0 0',
         border: `0.5px solid ${D.borderB}`, borderBottom: 'none',
         boxShadow: '0 -12px 60px rgba(0,0,0,0.7)',
@@ -536,7 +538,8 @@ function FeedbackSheet({ open, onClose, onSave, initial, loading, weekLabel }) {
           </div>
         </form>
       </div>
-    </>
+    </>,
+    document.body
   );
 }
 

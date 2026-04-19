@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useLayoutEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { financeApi } from '../api/finance';
 import toast from 'react-hot-toast';
@@ -130,11 +131,11 @@ function DField({ label, children }) {
 
 function DModal({ open, onClose, title, children, width = 520 }) {
   if (!open) return null;
-  return (
+  return createPortal(
     <div
       onClick={onClose}
       style={{
-        position: 'fixed', inset: 0, zIndex: 1000,
+        position: 'fixed', inset: 0, zIndex: 9000,
         background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(12px)',
         display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
       }}
@@ -157,7 +158,8 @@ function DModal({ open, onClose, title, children, width = 520 }) {
         </div>
         <div style={{ padding: '0 24px 24px' }}>{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
