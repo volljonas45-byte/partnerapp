@@ -356,6 +356,12 @@ function requireAdmin(req, res, next) {
 
 router.use('/admin', authenticate, requireAdmin);
 
+// Temp: debug all partners (no workspace filter)
+router.get('/admin/debug-all', async (req, res) => {
+  const rows = await getAll(`SELECT p.id, p.workspace_owner_id, p.status, u.email FROM partners p JOIN users u ON u.id = p.user_id`);
+  res.json(rows);
+});
+
 // Temp: delete partner by email (admin only)
 router.delete('/admin/partner-by-email', async (req, res) => {
   const { email } = req.body;
