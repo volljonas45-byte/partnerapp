@@ -1,5 +1,5 @@
 const express = require('express');
-const router  = express.Router();
+const router  = express.Router(); // v2
 const bcrypt  = require('bcryptjs');
 const jwt     = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
