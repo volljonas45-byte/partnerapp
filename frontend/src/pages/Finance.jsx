@@ -1577,7 +1577,8 @@ export default function Finance() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: D.bg, padding: '32px 32px 64px', maxWidth: 1200, margin: '0 auto' }}>
+    <div style={{ minHeight: '100vh', background: D.bg }}>
+    <div style={{ padding: '32px 32px 64px', maxWidth: 1200, margin: '0 auto' }}>
       <style>{`
         @keyframes slideUp {
           from { opacity: 0; transform: translateY(20px) scale(0.97); filter: blur(3px); }
@@ -1635,6 +1636,7 @@ export default function Finance() {
         {tab === 'reports'      && <ReportsTab />}
         {tab === 'settings'     && <SettingsTab setup={setup} categories={categories} onSetupEdit={() => setShowSetup(true)} />}
       </div>
+    </div>
     </div>
   );
 }
