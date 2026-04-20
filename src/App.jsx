@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Sidebar from './components/Sidebar';
+import ChatBubble from './components/ChatBubble';
 import Login from './pages/Login';
 import Apply from './pages/Apply';
 import Pending from './pages/Pending';
@@ -11,27 +12,37 @@ import LeadPool from './pages/LeadPool';
 import Appointments from './pages/Appointments';
 import Earnings from './pages/Earnings';
 import CompleteProfile from './pages/CompleteProfile';
+import AiChat from './pages/AiChat';
 
 const qc = new QueryClient();
 
 const BG = '#0D0D12';
 
-function Layout({ children }) {
+function Layout({ children, fixed = false }) {
   return (
     <div style={{ display: 'flex', height: '100vh', background: BG, overflow: 'hidden' }}>
       <Sidebar />
-      <main style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', minWidth: 0, height: '100%' }}>
+      <main style={{
+        flex: 1, minWidth: 0,
+        overflow: fixed ? 'hidden' : undefined,
+        overflowY: fixed ? undefined : 'auto',
+        overflowX: fixed ? undefined : 'hidden',
+        height: '100%',
+        display: fixed ? 'flex' : undefined,
+        flexDirection: fixed ? 'column' : undefined,
+      }}>
         {children}
       </main>
+      <ChatBubble />
     </div>
   );
 }
 
-function ProtectedRoute({ children }) {
+function ProtectedRoute({ children, fixed = false }) {
   const { isAuthenticated, isApproved } = useAuth();
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (!isApproved) return <Navigate to="/pending" replace />;
-  return <Layout>{children}</Layout>;
+  return <Layout fixed={fixed}>{children}</Layout>;
 }
 
 function AppRoutes() {
@@ -48,6 +59,7 @@ function AppRoutes() {
       <Route path="/leads/pool"   element={<ProtectedRoute><LeadPool /></ProtectedRoute>} />
       <Route path="/appointments" element={<ProtectedRoute><Appointments /></ProtectedRoute>} />
       <Route path="/earnings"     element={<ProtectedRoute><Earnings /></ProtectedRoute>} />
+      <Route path="/ai-chat"      element={<ProtectedRoute fixed><AiChat /></ProtectedRoute>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

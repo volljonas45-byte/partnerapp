@@ -1,11 +1,12 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Briefcase, Users, Calendar, DollarSign, LogOut } from 'lucide-react';
+import { LayoutDashboard, Briefcase, Users, Calendar, DollarSign, LogOut, Sparkles } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const D = {
   bg: '#0D0D12', border: 'rgba(255,255,255,0.07)',
   text: '#F2F2F7', text2: '#AEAEB2', text3: '#636366',
   blue: '#5B8CF5', blueL: '#5B8CF514',
+  violet: '#a78bfa', violetL: 'rgba(167,139,250,0.08)',
   card: '#16161E',
 };
 
@@ -15,6 +16,7 @@ const NAV = [
   { to: '/leads/pool',  icon: Users,           label: 'Lead-Pool'    },
   { to: '/appointments',icon: Calendar,        label: 'Termine'      },
   { to: '/earnings',    icon: DollarSign,      label: 'Verdienste'   },
+  { to: '/ai-chat',     icon: Sparkles,        label: 'KI-Assistent', accent: true },
 ];
 
 export default function Sidebar() {
@@ -35,16 +37,16 @@ export default function Sidebar() {
       </div>
 
       <nav style={{ flex: 1, padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: 1 }}>
-        {NAV.map(({ to, icon: Icon, label }) => (
+        {NAV.map(({ to, icon: Icon, label, accent }) => (
           <NavLink key={to} to={to} end={to === '/'} style={{ textDecoration: 'none' }}>
             {({ isActive }) => (
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px',
                 borderRadius: 9, fontSize: 13, cursor: 'pointer',
-                background: isActive ? D.blueL : 'transparent',
-                color: isActive ? D.blue : D.text2,
+                background: isActive ? (accent ? D.violetL : D.blueL) : 'transparent',
+                color: isActive ? (accent ? D.violet : D.blue) : D.text2,
                 fontWeight: isActive ? 600 : 400,
                 transition: 'background 0.15s, color 0.15s' }}>
-                <Icon size={16} color={isActive ? D.blue : D.text3} strokeWidth={isActive ? 2 : 1.5} />
+                <Icon size={16} color={isActive ? (accent ? D.violet : D.blue) : D.text3} strokeWidth={isActive ? 2 : 1.5} />
                 {label}
               </div>
             )}

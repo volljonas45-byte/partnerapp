@@ -20,4 +20,5 @@ export const partnerApi = {
   listCommissions:    () => api.get('/partner/commissions').then(r => r.data),
   updateProfile:      (d) => api.put('/partner/profile', d).then(r => r.data),
   screenshotImport:   (image) => api.post('/partner/screenshot-import', { image }).then(r => r.data),
+  aiChat:             (messages) => api.post('/partner/ai-chat', { messages }).then(r => r.data),
 };
