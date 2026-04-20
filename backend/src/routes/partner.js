@@ -416,13 +416,12 @@ router.delete('/admin/partner-by-email', async (req, res) => {
 
 // Stats overview
 router.get('/admin/stats', async (req, res) => {
-  const wid = req.workspaceUserId;
   const [pending, active, leads, appts, openComm] = await Promise.all([
-    getOne(`SELECT COUNT(*)::int AS cnt FROM partners WHERE workspace_owner_id = ? AND status = 'pending'`, [wid]),
-    getOne(`SELECT COUNT(*)::int AS cnt FROM partners WHERE workspace_owner_id = ? AND status = 'approved'`, [wid]),
-    getOne(`SELECT COUNT(*)::int AS cnt FROM partner_leads WHERE workspace_owner_id = ?`, [wid]),
-    getOne(`SELECT COUNT(*)::int AS cnt FROM partner_appointments WHERE workspace_owner_id = ? AND status = 'scheduled'`, [wid]),
-    getOne(`SELECT COALESCE(SUM(amount),0) AS total FROM partner_commissions WHERE workspace_owner_id = ? AND status = 'open'`, [wid]),
+    getOne(`SELECT COUNT(*)::int AS cnt FROM partners WHERE status = 'pending'`),
+    getOne(`SELECT COUNT(*)::int AS cnt FROM partners WHERE status = 'approved'`),
+    getOne(`SELECT COUNT(*)::int AS cnt FROM partner_leads`),
+    getOne(`SELECT COUNT(*)::int AS cnt FROM partner_appointments WHERE status = 'scheduled'`),
+    getOne(`SELECT COALESCE(SUM(amount),0) AS total FROM partner_commissions WHERE status = 'open'`),
   ]);
   res.json({
     pendingApplications: pending.cnt,
@@ -442,17 +441,15 @@ router.get('/admin/partners', async (req, res) => {
             (SELECT COUNT(*)::int FROM partner_appointments pa WHERE pa.partner_id = p.id) AS appt_count,
             (SELECT COALESCE(SUM(amount),0) FROM partner_commissions pc WHERE pc.partner_id = p.id AND pc.status = 'paid') AS total_paid
      FROM partners p JOIN users u ON u.id = p.user_id
-     WHERE p.workspace_owner_id = ?
-       ${status ? `AND p.status = '${status}'` : ''}
-     ORDER BY p.created_at DESC`,
-    [req.workspaceUserId]
+     ${status ? `WHERE p.status = '${status}'` : ''}
+     ORDER BY p.created_at DESC`
   );
   res.json(rows);
 });
 
 router.put('/admin/partners/:id', async (req, res) => {
   const { status, commission_rate_pool, commission_rate_own } = req.body;
-  const partner = await getOne('SELECT id FROM partners WHERE id = ? AND workspace_owner_id = ?', [req.params.id, req.workspaceUserId]);
+  const partner = await getOne('SELECT id FROM partners WHERE id = ?', [req.params.id]);
   if (!partner) return res.status(404).json({ error: 'Partner nicht gefunden.' });
   const updated = await getOne(
     `UPDATE partners SET
@@ -469,16 +466,18 @@ router.put('/admin/partners/:id', async (req, res) => {
 // Pool leads management
 router.get('/admin/leads', async (req, res) => {
   const { partner_id, status } = req.query;
+  const conditions = [];
+  const params = [];
+  if (partner_id) { conditions.push(`l.partner_id = ${parseInt(partner_id)}`); }
+  if (status)     { conditions.push(`l.status = '${status}'`); }
+  const where = conditions.length ? 'WHERE ' + conditions.join(' AND ') : '';
   const rows = await getAll(
     `SELECT l.*, p.id AS p_id,
             (SELECT u.name FROM users u JOIN partners pp ON pp.user_id = u.id WHERE pp.id = l.partner_id) AS partner_name
      FROM partner_leads l
      LEFT JOIN partners p ON p.id = l.partner_id
-     WHERE l.workspace_owner_id = ?
-       ${partner_id ? `AND l.partner_id = ${parseInt(partner_id)}` : ''}
-       ${status ? `AND l.status = '${status}'` : ''}
-     ORDER BY l.created_at DESC`,
-    [req.workspaceUserId]
+     ${where}
+     ORDER BY l.created_at DESC`
   );
   res.json(rows);
 });
@@ -496,7 +495,7 @@ router.post('/admin/leads', async (req, res) => {
 });
 
 router.put('/admin/leads/:id', async (req, res) => {
-  const lead = await getOne('SELECT id FROM partner_leads WHERE id = ? AND workspace_owner_id = ?', [req.params.id, req.workspaceUserId]);
+  const lead = await getOne('SELECT id FROM partner_leads WHERE id = ?', [req.params.id]);
   if (!lead) return res.status(404).json({ error: 'Lead nicht gefunden.' });
   const fields = ['company','contact_person','phone','email','website','city','industry','status','priority','deal_value','notes'];
   const sets = fields.filter(f => req.body[f] !== undefined).map(f => `${f} = ?`).join(', ');
@@ -510,7 +509,7 @@ router.put('/admin/leads/:id', async (req, res) => {
 });
 
 router.delete('/admin/leads/:id', async (req, res) => {
-  await run('DELETE FROM partner_leads WHERE id = ? AND workspace_owner_id = ?', [req.params.id, req.workspaceUserId]);
+  await run('DELETE FROM partner_leads WHERE id = ?', [req.params.id]);
   res.json({ ok: true });
 });
 
@@ -523,15 +522,13 @@ router.get('/admin/appointments', async (req, res) => {
      LEFT JOIN partner_leads l ON l.id = a.lead_id
      LEFT JOIN partners p ON p.id = a.partner_id
      LEFT JOIN users u ON u.id = p.user_id
-     WHERE a.workspace_owner_id = ?
-     ORDER BY a.scheduled_at`,
-    [req.workspaceUserId]
+     ORDER BY a.scheduled_at`
   );
   res.json(rows);
 });
 
 router.put('/admin/appointments/:id', async (req, res) => {
-  const appt = await getOne('SELECT id FROM partner_appointments WHERE id = ? AND workspace_owner_id = ?', [req.params.id, req.workspaceUserId]);
+  const appt = await getOne('SELECT id FROM partner_appointments WHERE id = ?', [req.params.id]);
   if (!appt) return res.status(404).json({ error: 'Termin nicht gefunden.' });
   const updated = await getOne(
     `UPDATE partner_appointments SET
@@ -547,31 +544,31 @@ router.put('/admin/appointments/:id', async (req, res) => {
 // Commissions
 router.get('/admin/commissions', async (req, res) => {
   const { partner_id, status } = req.query;
+  const conditions = [];
+  if (partner_id) { conditions.push(`c.partner_id = ${parseInt(partner_id)}`); }
+  if (status)     { conditions.push(`c.status = '${status}'`); }
+  const where = conditions.length ? 'WHERE ' + conditions.join(' AND ') : '';
   const rows = await getAll(
     `SELECT c.*, l.company, u.name AS partner_name
      FROM partner_commissions c
      LEFT JOIN partner_leads l ON l.id = c.lead_id
      LEFT JOIN partners p ON p.id = c.partner_id
      LEFT JOIN users u ON u.id = p.user_id
-     WHERE c.workspace_owner_id = ?
-       ${partner_id ? `AND c.partner_id = ${parseInt(partner_id)}` : ''}
-       ${status ? `AND c.status = '${status}'` : ''}
-     ORDER BY c.created_at DESC`,
-    [req.workspaceUserId]
+     ${where}
+     ORDER BY c.created_at DESC`
   );
   const totals = await getOne(
     `SELECT
        COALESCE(SUM(CASE WHEN status='paid' THEN amount END),0)    AS paid,
        COALESCE(SUM(CASE WHEN status='pending' THEN amount END),0) AS pending,
        COALESCE(SUM(CASE WHEN status='open' THEN amount END),0)    AS open
-     FROM partner_commissions WHERE workspace_owner_id = ?`,
-    [req.workspaceUserId]
+     FROM partner_commissions`
   );
   res.json({ commissions: rows, totals });
 });
 
 router.put('/admin/commissions/:id', async (req, res) => {
-  const comm = await getOne('SELECT id FROM partner_commissions WHERE id = ? AND workspace_owner_id = ?', [req.params.id, req.workspaceUserId]);
+  const comm = await getOne('SELECT id FROM partner_commissions WHERE id = ?', [req.params.id]);
   if (!comm) return res.status(404).json({ error: 'Provision nicht gefunden.' });
   const updated = await getOne(
     `UPDATE partner_commissions SET
@@ -723,9 +720,7 @@ router.get('/admin/lead-requests', async (req, res) => {
      FROM partner_lead_requests lr
      JOIN partners p ON p.id = lr.partner_id
      JOIN users u ON u.id = p.user_id
-     WHERE lr.workspace_owner_id = ?
-     ORDER BY lr.created_at DESC`,
-    [req.workspaceUserId]
+     ORDER BY lr.created_at DESC`
   );
   res.json(rows);
 });
@@ -733,8 +728,8 @@ router.get('/admin/lead-requests', async (req, res) => {
 router.put('/admin/lead-requests/:id', async (req, res) => {
   const { status } = req.body;
   const updated = await getOne(
-    `UPDATE partner_lead_requests SET status = ? WHERE id = ? AND workspace_owner_id = ? RETURNING *`,
-    [status, req.params.id, req.workspaceUserId]
+    `UPDATE partner_lead_requests SET status = ? WHERE id = ? RETURNING *`,
+    [status, req.params.id]
   );
   if (!updated) return res.status(404).json({ error: 'Nicht gefunden.' });
   res.json(updated);
