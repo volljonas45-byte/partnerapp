@@ -671,25 +671,23 @@ export default function MyLeads() {
         </div>
 
         {/* Action buttons */}
-        <motion.div style={{ display: 'flex', flexDirection: 'column', gap: 6, width: 250, flexShrink: 0, alignItems: 'flex-end' }} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
-          <div style={{ display: 'flex', gap: 6 }}>
-            <button onClick={() => setShowLeadRequest(true)} style={{
-              display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', borderRadius: 8,
-              fontSize: 11, fontWeight: 600, background: D.purpleL, color: D.purple,
-              border: `1px solid rgba(191,90,242,0.2)`, cursor: 'pointer',
-            }}>
-              <Inbox size={12} /> Leads anfragen
-            </button>
-            <button onClick={() => setShowScreenshot(true)} style={{
-              display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', borderRadius: 8,
-              fontSize: 11, fontWeight: 600, background: D.orangeL, color: D.orange,
-              border: `1px solid rgba(255,159,10,0.2)`, cursor: 'pointer', lineHeight: 1,
-            }}>
-              <Camera size={12} /> Screenshot
-            </button>
-          </div>
+        <motion.div style={{ display: 'flex', flexDirection: 'row', gap: 6, flexShrink: 0, alignItems: 'center' }} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
+          <button onClick={() => setShowLeadRequest(true)} style={{
+            display: 'flex', alignItems: 'center', gap: 4, padding: '7px 12px', borderRadius: 9,
+            fontSize: 12, fontWeight: 600, background: D.purpleL, color: D.purple,
+            border: `1px solid rgba(191,90,242,0.2)`, cursor: 'pointer',
+          }}>
+            <Inbox size={13} /> Leads anfragen
+          </button>
+          <button onClick={() => setShowScreenshot(true)} style={{
+            display: 'flex', alignItems: 'center', gap: 4, padding: '7px 12px', borderRadius: 9,
+            fontSize: 12, fontWeight: 600, background: D.orangeL, color: D.orange,
+            border: `1px solid rgba(255,159,10,0.2)`, cursor: 'pointer', lineHeight: 1,
+          }}>
+            <Camera size={13} /> Screenshot
+          </button>
           <button onClick={() => setShowAddLead(true)} style={{
-            display: 'flex', alignItems: 'center', gap: 5, padding: '7px 18px', borderRadius: 10,
+            display: 'flex', alignItems: 'center', gap: 5, padding: '7px 18px', borderRadius: 9,
             fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer',
             background: `linear-gradient(135deg, ${D.blue}, #7B9FF5)`,
             color: '#fff', boxShadow: '0 4px 16px rgba(91,140,245,0.3)',
