@@ -54,9 +54,12 @@ function fmtDuration(sec) {
   return m > 0 ? `${m}m ${s}s` : `${s}s`;
 }
 
-function followupInfo(dateStr) {
+function followupInfo(dateStr, lastCallAt) {
   if (!dateStr) return null;
   const diff = Math.round((new Date(dateStr) - Date.now()) / 86400000);
+  if (diff < 0 && lastCallAt && new Date(lastCallAt) >= new Date(dateStr)) {
+    return { color: '#FF9500', label: 'Heute', urgent: true };
+  }
   if (diff < 0) return { color: '#FF3B30', label: `${Math.abs(diff)}T überfällig`, urgent: true };
   if (diff === 0) return { color: '#FF9500', label: 'Heute', urgent: true };
   if (diff <= 2) return { color: '#FF9500', label: `in ${diff}T`, urgent: false };
@@ -158,7 +161,7 @@ function KpiCard({ icon: Icon, label, value, sub, color, target }) {
 
 function LeadRow({ lead, isSelected, onClick, onCall, showOwner = false }) {
   const { c } = useTheme();
-  const fu = followupInfo(lead.next_followup_date);
+  const fu = followupInfo(lead.next_followup_date, lead.last_call_at);
   const ws = WEBSITE_STATUS_CFG[lead.website_status];
   const pc = PRIORITY_CFG[lead.priority ?? 0];
   const s  = LEAD_STATUSES[lead.status] || LEAD_STATUSES.neu;
@@ -525,7 +528,7 @@ export default function SalesEngine() {
   const targets = stats?.targets || {};
   const mot     = stats?.motivation;
   const isConverted = !!selectedLead?.client_id;
-  const fwInfo  = followupInfo(selectedLead?.next_followup_date);
+  const fwInfo  = followupInfo(selectedLead?.next_followup_date, selectedLead?.last_call_at);
   const selWS   = WEBSITE_STATUS_CFG[selectedLead?.website_status];
   const isMobile = useMobile();
 
@@ -899,7 +902,7 @@ export default function SalesEngine() {
           ) : (
             leads.map(lead => {
               const ls = LEAD_STATUSES[lead.status] || LEAD_STATUSES.neu;
-              const fu = followupInfo(lead.next_followup_date);
+              const fu = followupInfo(lead.next_followup_date, lead.last_call_at);
               const ws = WEBSITE_STATUS_CFG[lead.website_status];
               const pc = PRIORITY_CFG[lead.priority ?? 0];
               return (
