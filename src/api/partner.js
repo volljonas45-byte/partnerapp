@@ -17,6 +17,7 @@ export const partnerApi = {
   createAppointment: (d)     => api.post('/partner/appointments', d).then(r => r.data),
   updateAppointment: (id, d) => api.put(`/partner/appointments/${id}`, d).then(r => r.data),
 
-  listCommissions:  () => api.get('/partner/commissions').then(r => r.data),
-  updateProfile:    (d) => api.put('/partner/profile', d).then(r => r.data),
+  listCommissions:    () => api.get('/partner/commissions').then(r => r.data),
+  updateProfile:      (d) => api.put('/partner/profile', d).then(r => r.data),
+  screenshotImport:   (image) => api.post('/partner/screenshot-import', { image }).then(r => r.data),
 };

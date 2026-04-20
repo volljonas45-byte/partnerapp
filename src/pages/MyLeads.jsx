@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Phone, Search, Plus, X, ChevronDown, MapPin, Mail, Globe,
-  MousePointerClick, CalendarDays, Building2, CheckCircle2, PhoneCall,
+  MousePointerClick, CalendarDays, Building2, CheckCircle2, PhoneCall, Camera,
 } from 'lucide-react';
 import { partnerApi } from '../api/partner';
 
@@ -55,6 +55,149 @@ function relTime(iso) {
   const h = Math.floor(diff / 60);
   if (h < 24) return `vor ${h}h`;
   return `vor ${Math.floor(h / 24)}T`;
+}
+
+// ── Screenshot Import Modal ───────────────────────────────────────────────────
+
+function ScreenshotImportModal({ onClose, onCreate }) {
+  const [preview, setPreview] = useState(null);
+  const [imageData, setImageData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [extracted, setExtracted] = useState(null);
+  const fileRef = useRef(null);
+
+  function handleFile(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      setImageData(ev.target.result);
+      setPreview(ev.target.result);
+      setExtracted(null);
+      setError('');
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function handleAnalyze() {
+    if (!imageData) return;
+    setLoading(true);
+    setError('');
+    try {
+      const data = await partnerApi.screenshotImport(imageData);
+      setExtracted(data);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Analyse fehlgeschlagen');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const f = (k, v) => setExtracted(p => ({ ...p, [k]: v }));
+
+  return createPortal(
+    <div style={{ position: 'fixed', inset: 0, zIndex: 9000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)' }} />
+      <div style={{
+        position: 'relative', background: D.card, borderRadius: 20, padding: 26,
+        width: '100%', maxWidth: 540, maxHeight: '90vh', overflowY: 'auto',
+        border: `0.5px solid ${D.border}`, boxShadow: '0 32px 64px rgba(0,0,0,0.5)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+          <div>
+            <h2 style={{ fontSize: 17, fontWeight: 700, color: D.text, margin: 0 }}>Maps Screenshot importieren</h2>
+            <p style={{ fontSize: 12, color: D.text3, margin: '4px 0 0' }}>Gemini AI extrahiert automatisch die Firmendaten</p>
+          </div>
+          <button onClick={onClose} style={{ width: 28, height: 28, borderRadius: 99, border: 'none', background: D.card2, color: D.text2, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <X size={14} />
+          </button>
+        </div>
+
+        {/* Upload area */}
+        <div
+          onClick={() => fileRef.current?.click()}
+          style={{
+            border: `1.5px dashed ${preview ? D.blue : D.border}`, borderRadius: 14,
+            padding: preview ? 0 : '32px 0', cursor: 'pointer', overflow: 'hidden',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            marginBottom: 14, background: preview ? 'none' : D.card2,
+            transition: 'border-color 0.2s',
+          }}
+        >
+          {preview ? (
+            <img src={preview} alt="Screenshot" style={{ width: '100%', maxHeight: 260, objectFit: 'contain', display: 'block' }} />
+          ) : (
+            <div style={{ textAlign: 'center' }}>
+              <Camera size={32} color={D.text3} style={{ marginBottom: 10 }} />
+              <p style={{ fontSize: 13, fontWeight: 600, color: D.text2, margin: '0 0 4px' }}>Screenshot auswählen</p>
+              <p style={{ fontSize: 11.5, color: D.text3, margin: 0 }}>PNG, JPG · Google Maps Screenshot</p>
+            </div>
+          )}
+        </div>
+        <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} style={{ display: 'none' }} />
+
+        {error && (
+          <div style={{ padding: '10px 14px', borderRadius: 10, background: D.redL, border: `0.5px solid ${D.red}30`, marginBottom: 14 }}>
+            <p style={{ fontSize: 13, color: D.red, margin: 0 }}>{error}</p>
+          </div>
+        )}
+
+        {/* Analyze button */}
+        {preview && !extracted && (
+          <button
+            onClick={handleAnalyze}
+            disabled={loading}
+            style={{ width: '100%', padding: '11px', borderRadius: 11, border: 'none', background: D.blue, color: '#fff', cursor: loading ? 'not-allowed' : 'pointer', fontSize: 14, fontWeight: 700, marginBottom: 14, opacity: loading ? 0.7 : 1 }}
+          >
+            {loading ? 'Analysiere...' : 'Daten extrahieren'}
+          </button>
+        )}
+
+        {/* Extracted form */}
+        {extracted && (
+          <>
+            <div style={{ fontSize: 11, fontWeight: 800, color: D.green, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+              ✓ Erkannte Daten — bitte prüfen
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
+              {[
+                { k: 'company', l: 'Firma *' },
+                { k: 'contact_person', l: 'Ansprechpartner' },
+                { k: 'phone', l: 'Telefon' },
+                { k: 'email', l: 'E-Mail' },
+                { k: 'industry', l: 'Branche' },
+                { k: 'city', l: 'Stadt' },
+                { k: 'website', l: 'Website' },
+                { k: 'address', l: 'Adresse' },
+              ].map(({ k, l }) => (
+                <div key={k}>
+                  <label style={{ fontSize: 11, fontWeight: 600, color: D.text2, display: 'block', marginBottom: 4 }}>{l}</label>
+                  <input
+                    value={extracted[k] || ''}
+                    onChange={e => f(k, e.target.value)}
+                    style={{ width: '100%', padding: '7px 10px', borderRadius: 8, fontSize: 13, border: `1.5px solid ${extracted[k] ? D.blue + '60' : D.border}`, outline: 'none', boxSizing: 'border-box', background: D.inputBg, color: D.text }}
+                  />
+                </div>
+              ))}
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={() => { setExtracted(null); setPreview(null); setImageData(null); }}
+                style={{ flex: 1, padding: 10, borderRadius: 10, border: `0.5px solid ${D.border}`, background: 'none', color: D.text2, cursor: 'pointer', fontSize: 13 }}>
+                Neu
+              </button>
+              <button
+                onClick={() => { onCreate(extracted); onClose(); }}
+                disabled={!extracted.company}
+                style={{ flex: 2, padding: 10, borderRadius: 10, border: 'none', background: D.green, color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 700 }}>
+                Lead anlegen
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>, document.body
+  );
 }
 
 // ── Create / Edit Lead Modal ──────────────────────────────────────────────────
@@ -313,6 +456,7 @@ export default function MyLeads() {
   const [search, setSearch]                 = useState('');
   const [selectedLeadId, setSelectedLeadId] = useState(null);
   const [showAddLead, setShowAddLead]       = useState(false);
+  const [showScreenshot, setShowScreenshot] = useState(false);
   const [showStatusMenu, setShowStatusMenu] = useState(false);
   const [callLogLead, setCallLogLead]       = useState(null);
   const [apptLead, setApptLead]             = useState(null);
@@ -435,12 +579,21 @@ export default function MyLeads() {
           ))}
         </div>
 
-        <button
-          onClick={() => setShowAddLead(true)}
-          style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 9, fontSize: 12, fontWeight: 600, background: D.blue, color: '#fff', border: 'none', cursor: 'pointer', flexShrink: 0 }}
-        >
-          <Plus size={13} /> Lead
-        </button>
+        <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+          <button
+            onClick={() => setShowScreenshot(true)}
+            title="Google Maps Screenshot importieren"
+            style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 12px', borderRadius: 9, fontSize: 12, fontWeight: 600, background: D.orangeL, color: D.orange, border: `1px solid ${D.orange}30`, cursor: 'pointer' }}
+          >
+            <Camera size={13} /> Screenshot
+          </button>
+          <button
+            onClick={() => setShowAddLead(true)}
+            style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 9, fontSize: 12, fontWeight: 600, background: D.blue, color: '#fff', border: 'none', cursor: 'pointer' }}
+          >
+            <Plus size={13} /> Lead
+          </button>
+        </div>
       </div>
 
       {/* ── 3-Panel Grid ── */}
@@ -790,6 +943,12 @@ export default function MyLeads() {
       </div>
 
       {/* ── Modals / Sheets ── */}
+      {showScreenshot && (
+        <ScreenshotImportModal
+          onClose={() => setShowScreenshot(false)}
+          onCreate={data => createLead.mutate(data)}
+        />
+      )}
       {showAddLead && (
         <LeadModal
           onClose={() => setShowAddLead(false)}
