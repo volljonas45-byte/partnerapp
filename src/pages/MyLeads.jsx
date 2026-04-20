@@ -629,10 +629,10 @@ export default function MyLeads() {
       </div>
 
       {/* ── Top bar ── */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexShrink: 0, position: 'relative', zIndex: 1 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0, position: 'relative', zIndex: 1 }}>
 
         {/* Title */}
-        <motion.div style={{ flexShrink: 0 }} initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+        <motion.div style={{ width: 360, flexShrink: 0 }} initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
           <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 4px' }}>
             Vertrieb
           </p>
@@ -669,7 +669,7 @@ export default function MyLeads() {
         </div>
 
         {/* Action buttons */}
-        <motion.div style={{ display: 'flex', gap: 8, flexShrink: 0 }} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
+        <motion.div style={{ display: 'flex', gap: 8, width: 250, flexShrink: 0, justifyContent: 'flex-end' }} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
           <button onClick={() => setShowLeadRequest(true)} style={{
             display: 'flex', alignItems: 'center', gap: 5, padding: '7px 12px', borderRadius: 10,
             fontSize: 12, fontWeight: 600, background: D.purpleL, color: D.purple,
