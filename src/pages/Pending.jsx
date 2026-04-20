@@ -1,3 +1,5 @@
+import { useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Clock } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -8,7 +10,22 @@ const D = {
 };
 
 export default function Pending() {
-  const { logout } = useAuth();
+  const { logout, refreshStatus } = useAuth();
+  const nav = useNavigate();
+  const interval = useRef(null);
+
+  useEffect(() => {
+    interval.current = setInterval(async () => {
+      const status = await refreshStatus();
+      if (status === 'approved') {
+        clearInterval(interval.current);
+        nav('/');
+      }
+    }, 10000); // alle 10 Sekunden prüfen
+
+    return () => clearInterval(interval.current);
+  }, []);
+
   return (
     <div style={{ minHeight: '100vh', background: D.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div style={{ maxWidth: 420, textAlign: 'center' }}>
@@ -19,8 +36,11 @@ export default function Pending() {
         <h1 style={{ fontSize: 24, fontWeight: 800, color: D.text, margin: '0 0 12px', letterSpacing: '-0.03em' }}>
           Bewerbung eingereicht
         </h1>
-        <p style={{ fontSize: 15, color: D.text2, lineHeight: 1.6, margin: '0 0 28px' }}>
-          Deine Bewerbung wird geprüft. Du erhältst eine Benachrichtigung, sobald dein Konto freigeschaltet wurde.
+        <p style={{ fontSize: 15, color: D.text2, lineHeight: 1.6, margin: '0 0 12px' }}>
+          Deine Bewerbung wird geprüft. Du wirst automatisch weitergeleitet, sobald dein Konto freigeschaltet wurde.
+        </p>
+        <p style={{ fontSize: 13, color: D.text3, margin: '0 0 28px' }}>
+          Diese Seite prüft automatisch alle 10 Sekunden.
         </p>
         <button onClick={logout}
           style={{ padding: '10px 22px', borderRadius: 10, border: `0.5px solid ${D.border}`,

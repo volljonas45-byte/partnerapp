@@ -20,7 +20,7 @@ function Layout({ children }) {
   return (
     <div style={{ display: 'flex', height: '100vh', background: BG, overflow: 'hidden' }}>
       <Sidebar />
-      <main style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', minWidth: 0 }}>
+      <main style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', minWidth: 0, height: '100%' }}>
         {children}
       </main>
     </div>
@@ -35,10 +35,10 @@ function ProtectedRoute({ children }) {
 }
 
 function AppRoutes() {
-  const { isAuthenticated, isApproved } = useAuth();
+  const { isAuthenticated, isApproved, isPending } = useAuth();
   return (
     <Routes>
-      <Route path="/login"   element={isAuthenticated && isApproved ? <Navigate to="/" replace /> : <Login />} />
+      <Route path="/login"   element={isAuthenticated && isApproved ? <Navigate to="/" replace /> : isAuthenticated && isPending ? <Navigate to="/pending" replace /> : <Login />} />
       <Route path="/apply"   element={isAuthenticated && isApproved ? <Navigate to="/" replace /> : <Apply />} />
       <Route path="/pending"          element={<Pending />} />
       <Route path="/complete-profile" element={<CompleteProfile />} />
