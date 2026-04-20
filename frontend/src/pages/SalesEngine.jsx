@@ -54,6 +54,17 @@ function fmtDuration(sec) {
   return m > 0 ? `${m}m ${s}s` : `${s}s`;
 }
 
+function berlinDayKey(d) {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Berlin', year: 'numeric', month: '2-digit', day: '2-digit',
+  }).format(new Date(d));
+}
+
+function isCalledToday(lastCallAt) {
+  if (!lastCallAt) return false;
+  return berlinDayKey(lastCallAt) === berlinDayKey(Date.now());
+}
+
 function followupInfo(dateStr, lastCallAt) {
   if (!dateStr) return null;
   const berlinDay = d => {
@@ -176,6 +187,9 @@ function LeadRow({ lead, isSelected, onClick, onCall, showOwner = false }) {
   const ws = WEBSITE_STATUS_CFG[lead.website_status];
   const pc = PRIORITY_CFG[lead.priority ?? 0];
   const s  = LEAD_STATUSES[lead.status] || LEAD_STATUSES.neu;
+  const calledToday = isCalledToday(lead.last_call_at);
+  const baseBg = isSelected ? c.blueLight : (calledToday ? 'rgba(52,199,89,0.12)' : 'transparent');
+  const hoverBg = calledToday ? 'rgba(52,199,89,0.2)' : c.cardSecondary;
 
   return (
     <div
@@ -183,12 +197,12 @@ function LeadRow({ lead, isSelected, onClick, onCall, showOwner = false }) {
       style={{
         display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px',
         borderBottom: `1px solid ${c.borderSubtle}`, cursor: 'pointer',
-        background: isSelected ? c.blueLight : 'transparent',
+        background: baseBg,
         borderLeft: isSelected ? `3px solid ${c.blue}` : '3px solid transparent',
         transition: 'background 0.1s',
       }}
-      onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = c.cardSecondary; }}
-      onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = 'transparent'; }}
+      onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = hoverBg; }}
+      onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = baseBg; }}
     >
       {/* Priority dot + optional owner ring */}
       <div style={{ position: 'relative', width: 7, height: 7, flexShrink: 0, marginTop: 1 }}>
@@ -333,8 +347,8 @@ export default function SalesEngine() {
   });
 
   const { data: recentCalls = [] } = useQuery({
-    queryKey: ['sales-calls-recent'],
-    queryFn: () => salesApi.listCalls({ limit: 8 }),
+    queryKey: ['sales-calls-recent', ownerParam],
+    queryFn: () => salesApi.listCalls({ limit: 8, ...(ownerParam ? { owner_id: ownerParam } : {}) }),
   });
 
   const isKundenTab = tab === 'kunden';
@@ -351,11 +365,24 @@ export default function SalesEngine() {
     return p;
   }, [tab, search, isKundenTab, ownerParam]);
 
-  const { data: leads = [], isLoading: leadsLoading } = useQuery({
+  const { data: rawLeads = [], isLoading: leadsLoading } = useQuery({
     queryKey: ['sales-leads', leadsParams],
     queryFn: () => salesApi.listLeads(leadsParams),
     enabled: !isKundenTab,
   });
+
+  // For "Heute"-Tab: nicht-erreichte Anrufe von heute ans Ende schieben
+  const leads = useMemo(() => {
+    if (tab !== 'due') return rawLeads;
+    const demoted = [];
+    const kept = [];
+    rawLeads.forEach(l => {
+      const calledToday = isCalledToday(l.last_call_at);
+      if (calledToday && l.last_call_outcome === 'not_reached') demoted.push(l);
+      else kept.push(l);
+    });
+    return [...kept, ...demoted];
+  }, [rawLeads, tab]);
 
   const { data: salesClients = [], isLoading: clientsLoading } = useQuery({
     queryKey: ['sales-clients', search],
@@ -916,13 +943,15 @@ export default function SalesEngine() {
               const fu = followupInfo(lead.next_followup_date, lead.last_call_at);
               const ws = WEBSITE_STATUS_CFG[lead.website_status];
               const pc = PRIORITY_CFG[lead.priority ?? 0];
+              const calledToday = isCalledToday(lead.last_call_at);
               return (
                 <div
                   key={lead.id}
                   onClick={() => setSelectedLeadId(lead.id)}
                   style={{
                     display: 'flex', alignItems: 'center', gap: 12,
-                    padding: '13px 16px', background: c.card,
+                    padding: '13px 16px',
+                    background: calledToday ? 'rgba(52,199,89,0.12)' : c.card,
                     borderBottom: `1px solid ${c.borderSubtle}`, cursor: 'pointer',
                   }}
                 >
@@ -1175,11 +1204,14 @@ export default function SalesEngine() {
         </div>
 
         {/* KPI cards row */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(160px, 220px))', gap: 10, flex: 1 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: `repeat(${stats?.email_followups_due > 0 ? 5 : 4}, minmax(140px, 220px))`, gap: 10, flex: 1 }}>
           <KpiCard icon={PhoneCall}    label="Anrufe heute"      value={t.calls_total || 0}   color="#007AFF" target={targets.daily_calls} />
           <KpiCard icon={Phone}        label="Gespräche"          value={t.calls_reached || 0} color="#34C759" sub={`${t.connect_rate || 0}%`} target={targets.daily_connects} />
           <KpiCard icon={CheckCircle2} label="Abschlüsse"         value={t.closings || 0}      color="#7C3AED" target={targets.daily_closings} />
           <KpiCard icon={Clock}        label="Follow-ups fällig"  value={stats?.followups_due || 0} color="#FF9500" />
+          {stats?.email_followups_due > 0 && (
+            <KpiCard icon={Mail}       label="E-Mails offen"      value={stats.email_followups_due} color="#5856D6" />
+          )}
         </div>
 
         {/* Action buttons */}

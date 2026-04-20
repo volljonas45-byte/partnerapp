@@ -1,7 +1,7 @@
 import api from './client';
 
 export const teamApi = {
-  list:   ()           => api.get('/api/team'),
+  list:   (params)     => api.get('/api/team', { params }),
   stats:  ()           => api.get('/api/team/stats').then(r => r.data),
   invite: (data)       => api.post('/api/team/invite', data),
   update: (id, data)   => api.put(`/api/team/${id}`, data),

@@ -384,8 +384,8 @@ function TeamSettings() {
   const qc = useQueryClient();
 
   const { data: members = [], isLoading } = useQuery({
-    queryKey: ['team'],
-    queryFn: () => teamApi.list().then(r => r.data),
+    queryKey: ['team', 'all'],
+    queryFn: () => teamApi.list({ include_hidden: 1 }).then(r => r.data),
   });
 
   const updateMutation = useMutation({

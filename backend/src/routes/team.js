@@ -17,10 +17,12 @@ const PRIVILEGED  = ['ceo', 'admin'];
 router.get('/', async (req, res) => {
   try {
     const wsId = req.workspaceUserId;
+    const includeHidden = req.query.include_hidden === '1';
+    const visibilityFilter = includeHidden ? '' : ' AND show_in_dashboard = TRUE';
     const members = await getAll(`
       SELECT id, email, name, color, role, workspace_owner_id, show_in_dashboard, created_at
       FROM users
-      WHERE id = ? OR workspace_owner_id = ?
+      WHERE (id = ? OR workspace_owner_id = ?)${visibilityFilter}
       ORDER BY id ASC
     `, [wsId, wsId]);
     res.json(members);

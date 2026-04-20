@@ -105,6 +105,11 @@ const LEAD_SELECT = `
      WHERE sc.user_id = sl.user_id
        AND (sc.lead_id = sl.id OR (sl.client_id IS NOT NULL AND sc.client_id = sl.client_id))
     ) AS last_call_at,
+    (SELECT sc.outcome FROM sales_calls sc
+     WHERE sc.user_id = sl.user_id
+       AND (sc.lead_id = sl.id OR (sl.client_id IS NOT NULL AND sc.client_id = sl.client_id))
+     ORDER BY sc.started_at DESC LIMIT 1
+    ) AS last_call_outcome,
     (SELECT COUNT(*)
      FROM sales_calls sc
      WHERE sc.user_id = sl.user_id
@@ -435,7 +440,7 @@ router.delete('/leads/:id', async (req, res) => {
 // GET /api/sales/calls
 router.get('/calls', async (req, res) => {
   try {
-    const { client_id, lead_id, from, to, limit } = req.query;
+    const { client_id, lead_id, from, to, limit, owner_id } = req.query;
     let sql = `
       SELECT sc.*,
              COALESCE(sl.company_name, c.company_name)   AS company_name,
@@ -446,6 +451,11 @@ router.get('/calls', async (req, res) => {
       WHERE sc.user_id = ?
     `;
     const params = [req.workspaceUserId];
+
+    // Owner filter: 'all' = no filter, specific id = that user, undefined = me
+    const ownerFilterId = owner_id === 'all' ? null
+      : (owner_id ? parseInt(owner_id, 10) : req.userId);
+    if (ownerFilterId) { sql += ' AND sc.owner_id = ?'; params.push(ownerFilterId); }
 
     if (client_id) { sql += ' AND sc.client_id = ?';          params.push(client_id); }
     if (lead_id)   { sql += ' AND sc.lead_id = ?';            params.push(lead_id); }
