@@ -683,9 +683,9 @@ export default function MyLeads() {
             <button onClick={() => setShowScreenshot(true)} style={{
               display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', borderRadius: 8,
               fontSize: 11, fontWeight: 600, background: D.orangeL, color: D.orange,
-              border: `1px solid rgba(255,159,10,0.2)`, cursor: 'pointer',
+              border: `1px solid rgba(255,159,10,0.2)`, cursor: 'pointer', lineHeight: 1,
             }}>
-              <Camera size={12} /> Screenshot
+              <Camera size={12} style={{ display: 'block' }} /> Screenshot
             </button>
           </div>
           <button onClick={() => setShowAddLead(true)} style={{
