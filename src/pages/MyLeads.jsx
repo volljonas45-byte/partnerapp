@@ -640,7 +640,7 @@ export default function MyLeads() {
               style={{ ...glass, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
               {/* Detail header */}
-              <div style={{ padding: '16px 20px 14px', borderBottom: `1px solid ${D.borderSubtle}`, flexShrink: 0 }}>
+              <div style={{ padding: '16px 20px 14px', flexShrink: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 10 }}>
                   <div style={{ minWidth: 0 }}>
                     <div style={{ fontSize: 18, fontWeight: 700, color: D.text, letterSpacing: '-0.4px', marginBottom: 6 }}>
