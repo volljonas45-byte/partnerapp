@@ -8,16 +8,25 @@ export function AuthProvider({ children }) {
     try { return JSON.parse(localStorage.getItem('partner_user') || 'null'); } catch { return null; }
   });
 
-  // Verify token on mount (stay logged in)
+  // Verify token on mount — only clear session on 401, keep existing user otherwise
   useEffect(() => {
     const token = localStorage.getItem('partner_token');
     if (!token) return;
     api.get('/partner/me').then(res => {
-      const u = res.data.user;
+      const p = res.data;
+      const u = {
+        id: p.user_id,
+        name: p.name,
+        email: p.email,
+        partnerId: p.id,
+        workspaceOwnerId: p.workspace_owner_id,
+        partnerStatus: p.status,
+        commissionRatePool: p.commission_rate_pool,
+        commissionRateOwn: p.commission_rate_own,
+      };
       localStorage.setItem('partner_user', JSON.stringify(u));
       setUser(u);
     }).catch(() => {
-      // Token invalid — clear session
       localStorage.removeItem('partner_token');
       localStorage.removeItem('partner_user');
       setUser(null);
