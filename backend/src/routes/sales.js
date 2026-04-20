@@ -125,7 +125,7 @@ const LEAD_SELECT = `
 // GET /api/sales/leads
 router.get('/leads', async (req, res) => {
   try {
-    const { status, due_today, due_tomorrow, due_week, search, owner_id } = req.query;
+    const { status, due_today, due_tomorrow, due_week, due_email, search, owner_id } = req.query;
     let sql = LEAD_SELECT + ' WHERE sl.user_id = ?';
     const params = [req.workspaceUserId];
     const TERMINAL = "('gewonnen', 'abgeschlossen', 'verloren', 'kein_interesse', 'nicht_existent')";
@@ -161,6 +161,11 @@ router.get('/leads', async (req, res) => {
       sql += ' AND sl.next_followup_date IS NOT NULL AND sl.next_followup_date >= ? AND sl.next_followup_date <= ?';
       params.push(weekStartStr(), weekEndStr());
       sql += ` AND sl.status NOT IN ${TERMINAL}`;
+    } else if (due_email === '1') {
+      sql += ` AND sl.next_followup_date IS NOT NULL AND sl.next_followup_date <= ?
+               AND COALESCE(sl.next_followup_type, 'anruf') = 'email'
+               AND sl.status NOT IN ${TERMINAL}`;
+      params.push(todayStr());
     } else {
       // "Alle" tab: hide archived/terminal leads
       sql += " AND sl.status NOT IN ('verloren', 'kein_interesse', 'nicht_existent')";

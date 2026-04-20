@@ -116,6 +116,7 @@ const TAB_GROUPS = [
       { key: 'due',       label: 'Heute' },
       { key: 'tomorrow',  label: 'Morgen' },
       { key: 'week',      label: 'Diese Woche' },
+      { key: 'emails',    label: 'E-Mails' },
     ],
   },
   {
@@ -188,8 +189,14 @@ function LeadRow({ lead, isSelected, onClick, onCall, showOwner = false }) {
   const pc = PRIORITY_CFG[lead.priority ?? 0];
   const s  = LEAD_STATUSES[lead.status] || LEAD_STATUSES.neu;
   const calledToday = isCalledToday(lead.last_call_at);
-  const baseBg = isSelected ? c.blueLight : (calledToday ? 'rgba(52,199,89,0.12)' : 'transparent');
-  const hoverBg = calledToday ? 'rgba(52,199,89,0.2)' : c.cardSecondary;
+  const needsEmail  = lead.next_followup_type === 'email' && fu; // hat offenen Email-Followup
+  const baseBg = isSelected ? c.blueLight
+    : needsEmail ? 'rgba(175,82,222,0.14)'
+    : calledToday ? 'rgba(52,199,89,0.12)'
+    : 'transparent';
+  const hoverBg = needsEmail ? 'rgba(175,82,222,0.22)'
+    : calledToday ? 'rgba(52,199,89,0.2)'
+    : c.cardSecondary;
 
   return (
     <div
@@ -360,6 +367,7 @@ export default function SalesEngine() {
     if (tab === 'due') p.due_today = '1';
     else if (tab === 'tomorrow') p.due_tomorrow = '1';
     else if (tab === 'week') p.due_week = '1';
+    else if (tab === 'emails') p.due_email = '1';
     else if (tab !== 'all') p.status = tab;
     if (search) p.search = search;
     return p;
@@ -371,17 +379,19 @@ export default function SalesEngine() {
     enabled: !isKundenTab,
   });
 
-  // For "Heute"-Tab: nicht-erreichte Anrufe von heute ans Ende schieben
+  // "Heute"-Tab: Email-Follow-ups nach oben, nicht erreichte Anrufe ans Ende
   const leads = useMemo(() => {
     if (tab !== 'due') return rawLeads;
-    const demoted = [];
+    const emails = [];
     const kept = [];
+    const demoted = [];
     rawLeads.forEach(l => {
       const calledToday = isCalledToday(l.last_call_at);
-      if (calledToday && l.last_call_outcome === 'not_reached') demoted.push(l);
+      if (l.next_followup_type === 'email') emails.push(l);
+      else if (calledToday && l.last_call_outcome === 'not_reached') demoted.push(l);
       else kept.push(l);
     });
-    return [...kept, ...demoted];
+    return [...emails, ...kept, ...demoted];
   }, [rawLeads, tab]);
 
   const { data: salesClients = [], isLoading: clientsLoading } = useQuery({
@@ -950,6 +960,7 @@ export default function SalesEngine() {
               const ws = WEBSITE_STATUS_CFG[lead.website_status];
               const pc = PRIORITY_CFG[lead.priority ?? 0];
               const calledToday = isCalledToday(lead.last_call_at);
+              const needsEmail  = lead.next_followup_type === 'email' && fu;
               return (
                 <div
                   key={lead.id}
@@ -957,7 +968,9 @@ export default function SalesEngine() {
                   style={{
                     display: 'flex', alignItems: 'center', gap: 12,
                     padding: '13px 16px',
-                    background: calledToday ? 'rgba(52,199,89,0.12)' : c.card,
+                    background: needsEmail ? 'rgba(175,82,222,0.14)'
+                      : calledToday ? 'rgba(52,199,89,0.12)'
+                      : c.card,
                     borderBottom: `1px solid ${c.borderSubtle}`, cursor: 'pointer',
                   }}
                 >
