@@ -56,8 +56,19 @@ function fmtDuration(sec) {
 
 function followupInfo(dateStr, lastCallAt) {
   if (!dateStr) return null;
-  const diff = Math.round((new Date(dateStr) - Date.now()) / 86400000);
-  if (diff < 0 && lastCallAt && new Date(lastCallAt) >= new Date(dateStr)) {
+  const berlinDay = d => {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Europe/Berlin', year: 'numeric', month: '2-digit', day: '2-digit',
+    }).formatToParts(new Date(d));
+    const y = +parts.find(p => p.type === 'year').value;
+    const m = +parts.find(p => p.type === 'month').value;
+    const dd = +parts.find(p => p.type === 'day').value;
+    return Date.UTC(y, m - 1, dd);
+  };
+  const today = berlinDay(Date.now());
+  const due   = berlinDay(dateStr);
+  const diff  = Math.round((due - today) / 86400000);
+  if (diff < 0 && lastCallAt && berlinDay(lastCallAt) >= due) {
     return { color: '#FF9500', label: 'Heute', urgent: true };
   }
   if (diff < 0) return { color: '#FF3B30', label: `${Math.abs(diff)}T überfällig`, urgent: true };
