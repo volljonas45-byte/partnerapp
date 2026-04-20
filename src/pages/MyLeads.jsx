@@ -133,7 +133,7 @@ function ScreenshotImportModal({ onClose, onCreate }) {
             <img src={preview} alt="Screenshot" style={{ width: '100%', maxHeight: 260, objectFit: 'contain', display: 'block' }} />
           ) : (
             <div style={{ textAlign: 'center' }}>
-              <Camera size={32} color={D.text3} style={{ marginBottom: 10 }} />
+              <Camera size={32} color={D.text3} style={{ display: 'block', margin: '0 auto 10px' }} />
               <p style={{ fontSize: 13, fontWeight: 600, color: D.text2, margin: '0 0 4px' }}>Screenshot auswählen</p>
               <p style={{ fontSize: 11.5, color: D.text3, margin: 0 }}>PNG, JPG · Google Maps Screenshot</p>
             </div>
@@ -685,7 +685,7 @@ export default function MyLeads() {
               fontSize: 11, fontWeight: 600, background: D.orangeL, color: D.orange,
               border: `1px solid rgba(255,159,10,0.2)`, cursor: 'pointer', lineHeight: 1,
             }}>
-              <Camera size={12} style={{ display: 'block' }} /> Screenshot
+              <Camera size={12} /> Screenshot
             </button>
           </div>
           <button onClick={() => setShowAddLead(true)} style={{
