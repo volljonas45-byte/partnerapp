@@ -615,10 +615,10 @@ export default function MyLeads() {
   const TABS = [{ key: 'alle', label: 'Alle' }, ...STATUSES.map(s => ({ key: s, label: STATUS_LABEL[s] }))];
 
   const KPI_CARDS = [
-    { label: 'Gesamt',          value: counts.alle,           color: D.blue,   glow: 'rgba(91,140,245,0.15)',   icon: PhoneCall },
-    { label: 'Zu anrufen',      value: counts.anrufen,        color: D.orange, glow: 'rgba(255,159,10,0.15)',   icon: Phone },
-    { label: 'Termine gesetzt', value: counts.termin_gesetzt, color: D.purple, glow: 'rgba(191,90,242,0.15)',   icon: CalendarDays },
-    { label: 'Gewonnen',        value: counts.gewonnen,       color: D.green,  glow: 'rgba(52,211,153,0.15)',   icon: CheckCircle2 },
+    { label: 'Gesamt',          value: counts.alle,           color: D.blue   },
+    { label: 'Zu anrufen',      value: counts.anrufen,        color: D.orange },
+    { label: 'Termine gesetzt', value: counts.termin_gesetzt, color: D.purple },
+    { label: 'Gewonnen',        value: counts.gewonnen,       color: D.green  },
   ];
 
   return (
@@ -635,54 +635,53 @@ export default function MyLeads() {
 
         {/* Title */}
         <motion.div style={{ width: 360, flexShrink: 0 }} initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-          <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 4px' }}>
-            Vertrieb
-          </p>
+          <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 3px' }}>Vertrieb</p>
           <h1 style={{
-            margin: '0 0 2px', fontSize: 26, fontWeight: 700, letterSpacing: '-0.03em',
+            margin: 0, fontSize: 24, fontWeight: 700, letterSpacing: '-0.03em',
             background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.5) 100%)',
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
           }}>Meine Leads</h1>
-          <p style={{ margin: 0, fontSize: 11.5, color: 'rgba(255,255,255,0.3)' }}>
-            {counts.anrufen} zu anrufen · {counts.termin_gesetzt} Termine · {counts.gewonnen} gewonnen
-          </p>
         </motion.div>
 
-        {/* KPI cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(110px, 170px))', gap: 10, flex: 1 }}>
-          {KPI_CARDS.map(({ label, value, color, glow, icon: Icon }, i) => (
-            <motion.div key={label} custom={i} variants={cardVariants} initial="hidden" animate="show"
-              style={{ ...glass, padding: '12px 14px', boxShadow: `0 0 30px ${glow}`, display: 'flex', alignItems: 'center', gap: 10 }}
-              whileHover={{ y: -2, boxShadow: `0 6px 30px ${glow}`, transition: { duration: 0.2 } }}
-            >
-              <div style={{ width: 32, height: 32, borderRadius: 9, background: `${color}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: `1px solid ${color}30` }}>
-                <Icon size={15} color={color} />
-              </div>
+        {/* KPI strip */}
+        <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.4 }}
+          style={{
+            flex: 1, display: 'flex', alignItems: 'center',
+            backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+            background: 'rgba(255,255,255,0.03)',
+            border: '1px solid rgba(255,255,255,0.06)',
+            borderRadius: 14, overflow: 'hidden', height: 54,
+          }}>
+          {KPI_CARDS.map(({ label, value, color }, i) => (
+            <div key={label} style={{
+              flex: 1, display: 'flex', alignItems: 'center', gap: 10, padding: '0 18px',
+              borderRight: i < KPI_CARDS.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none',
+              height: '100%',
+            }}>
+              <div style={{ width: 3, height: 28, borderRadius: 99, background: color, opacity: 0.7, flexShrink: 0 }} />
               <div>
                 <div style={{
-                  fontSize: 22, fontWeight: 700, lineHeight: 1, letterSpacing: '-0.04em',
-                  background: `linear-gradient(135deg, ${color} 0%, ${color}80 100%)`,
-                  WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+                  fontSize: 20, fontWeight: 700, lineHeight: 1, letterSpacing: '-0.04em', color,
                 }}>{value}</div>
-                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>{label}</div>
+                <div style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.35)', marginTop: 1, whiteSpace: 'nowrap' }}>{label}</div>
               </div>
-            </motion.div>
+            </div>
           ))}
-        </div>
+        </motion.div>
 
         {/* Action buttons */}
-        <motion.div style={{ display: 'flex', gap: 8, width: 250, flexShrink: 0, justifyContent: 'flex-end' }} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
+        <motion.div style={{ display: 'flex', gap: 8, width: 250, flexShrink: 0, justifyContent: 'flex-end' }} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}>
           <button onClick={() => setShowLeadRequest(true)} style={{
             display: 'flex', alignItems: 'center', gap: 5, padding: '7px 12px', borderRadius: 10,
             fontSize: 12, fontWeight: 600, background: D.purpleL, color: D.purple,
-            border: `1px solid rgba(191,90,242,0.2)`, cursor: 'pointer', backdropFilter: 'blur(8px)',
+            border: `1px solid rgba(191,90,242,0.2)`, cursor: 'pointer',
           }}>
             <Inbox size={13} /> Leads anfragen
           </button>
           <button onClick={() => setShowScreenshot(true)} style={{
             display: 'flex', alignItems: 'center', gap: 5, padding: '7px 12px', borderRadius: 10,
             fontSize: 12, fontWeight: 600, background: D.orangeL, color: D.orange,
-            border: `1px solid rgba(255,159,10,0.2)`, cursor: 'pointer', backdropFilter: 'blur(8px)',
+            border: `1px solid rgba(255,159,10,0.2)`, cursor: 'pointer',
           }}>
             <Camera size={13} /> Screenshot
           </button>
@@ -690,7 +689,7 @@ export default function MyLeads() {
             display: 'flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 10,
             fontSize: 12, fontWeight: 600, border: 'none', cursor: 'pointer',
             background: `linear-gradient(135deg, ${D.blue}, #7B9FF5)`,
-            color: '#fff', boxShadow: '0 4px 16px rgba(91,140,245,0.35)',
+            color: '#fff', boxShadow: '0 4px 16px rgba(91,140,245,0.3)',
           }}>
             <Plus size={13} /> Lead
           </button>
