@@ -654,7 +654,7 @@ Wenn ein Feld nicht erkennbar ist, setze null. Telefonnummer immer mit Vorwahl.`
 });
 
 // ── AI CHAT ───────────────────────────────────────────────────────────────────
-router.post('/ai-chat', authenticate, async (req, res) => {
+router.post('/ai-chat', authenticatePartner, async (req, res) => {
   const { messages } = req.body;
   if (!Array.isArray(messages) || !messages.length) {
     return res.status(400).json({ error: 'messages required' });
