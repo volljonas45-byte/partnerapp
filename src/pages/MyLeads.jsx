@@ -360,22 +360,24 @@ function AppointmentModal({ lead, onClose }) {
 // ── Lead Row ──────────────────────────────────────────────────────────────────
 
 function LeadRow({ lead, isSelected, onClick, onCall, index }) {
+  const [hovered, setHovered] = useState(false);
   const sc = STATUS_COLOR[lead.status] || D.blue;
   const sb = STATUS_BG[lead.status] || D.blueL;
   return (
     <motion.div
       onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       initial={{ opacity: 0, x: -8 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: index * 0.03, duration: 0.25 }}
       style={{
         display: 'flex', alignItems: 'center', gap: 8, padding: '9px 14px',
         borderBottom: `1px solid ${D.borderSubtle}`, cursor: 'pointer',
-        background: isSelected ? 'rgba(91,140,245,0.08)' : 'transparent',
+        background: isSelected ? 'rgba(91,140,245,0.08)' : hovered ? 'rgba(255,255,255,0.025)' : 'transparent',
         borderLeft: isSelected ? `3px solid ${D.blue}` : '3px solid transparent',
         transition: 'background 0.15s',
       }}
-      whileHover={{ background: isSelected ? 'rgba(91,140,245,0.08)' : 'rgba(255,255,255,0.025)' }}
     >
       <div style={{ width: 7, height: 7, borderRadius: '50%', background: sc, flexShrink: 0, boxShadow: `0 0 6px ${sc}80` }} />
       <div style={{ flex: 1, minWidth: 0 }}>
