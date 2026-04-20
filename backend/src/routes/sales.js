@@ -54,7 +54,7 @@ async function getNextAvailableDay(workspaceUserId, ownerId) {
      FROM sales_leads
      WHERE user_id = ? AND owner_id = ?
        AND next_followup_date >= ?
-       AND status NOT IN ('verloren', 'kein_interesse', 'gewonnen', 'abgeschlossen')
+       AND status NOT IN ('verloren', 'kein_interesse', 'nicht_existent', 'gewonnen', 'abgeschlossen')
      GROUP BY next_followup_date
      ORDER BY next_followup_date`,
     [workspaceUserId, ownerId, todayStr()]
@@ -128,7 +128,7 @@ router.get('/leads', async (req, res) => {
     const { status, due_today, due_tomorrow, due_week, search, owner_id } = req.query;
     let sql = LEAD_SELECT + ' WHERE sl.user_id = ?';
     const params = [req.workspaceUserId];
-    const TERMINAL = "('gewonnen', 'abgeschlossen', 'verloren', 'kein_interesse')";
+    const TERMINAL = "('gewonnen', 'abgeschlossen', 'verloren', 'kein_interesse', 'nicht_existent')";
 
     // Owner filtering: default = my leads
     if (owner_id === 'all') {
@@ -144,7 +144,7 @@ router.get('/leads', async (req, res) => {
     if (status) {
       // "verloren" tab shows both verloren and kein_interesse
       if (status === 'verloren') {
-        sql += " AND sl.status IN ('verloren', 'kein_interesse')";
+        sql += " AND sl.status IN ('verloren', 'kein_interesse', 'nicht_existent')";
       } else {
         sql += ' AND sl.status = ?';
         params.push(status);
@@ -163,7 +163,7 @@ router.get('/leads', async (req, res) => {
       sql += ` AND sl.status NOT IN ${TERMINAL}`;
     } else {
       // "Alle" tab: hide archived/terminal leads
-      sql += " AND sl.status NOT IN ('verloren', 'kein_interesse')";
+      sql += " AND sl.status NOT IN ('verloren', 'kein_interesse', 'nicht_existent')";
     }
 
     if (search) {
@@ -597,14 +597,14 @@ router.get('/stats', async (req, res) => {
     const followupsDue = await getOne(`
       SELECT COUNT(*)::int AS count FROM sales_leads
       WHERE ${leadFilter} AND next_followup_date IS NOT NULL AND next_followup_date <= ?
-        AND status NOT IN ('gewonnen', 'abgeschlossen', 'verloren', 'kein_interesse')
+        AND status NOT IN ('gewonnen', 'abgeschlossen', 'verloren', 'kein_interesse', 'nicht_existent')
     `, [...leadParams, today]);
 
     const emailFollowupsDue = await getOne(`
       SELECT COUNT(*)::int AS count FROM sales_leads
       WHERE ${leadFilter} AND next_followup_date IS NOT NULL AND next_followup_date <= ?
         AND COALESCE(next_followup_type, 'anruf') = 'email'
-        AND status NOT IN ('gewonnen', 'abgeschlossen', 'verloren', 'kein_interesse')
+        AND status NOT IN ('gewonnen', 'abgeschlossen', 'verloren', 'kein_interesse', 'nicht_existent')
     `, [...leadParams, today]);
 
     const demosActive = await getOne(`
@@ -728,10 +728,10 @@ router.get('/stats/analytics', async (req, res) => {
         COUNT(*)::int AS total_leads,
         COUNT(*) FILTER (WHERE sl.status IN ('demo','gewonnen','abgeschlossen'))::int AS reached_demo,
         COUNT(*) FILTER (WHERE sl.status IN ('gewonnen','abgeschlossen'))::int AS won,
-        COUNT(*) FILTER (WHERE sl.status IN ('verloren','kein_interesse'))::int AS lost,
+        COUNT(*) FILTER (WHERE sl.status IN ('verloren','kein_interesse','nicht_existent'))::int AS lost,
         COALESCE(SUM(sl.deal_value) FILTER (WHERE sl.status IN ('gewonnen','abgeschlossen')), 0)::real AS revenue_won,
         COALESCE(AVG(sl.deal_value) FILTER (WHERE sl.status IN ('gewonnen','abgeschlossen')), 0)::real AS avg_deal_value,
-        COALESCE(SUM(sl.deal_value) FILTER (WHERE sl.status NOT IN ('gewonnen','abgeschlossen','verloren','kein_interesse')), 0)::real AS pipeline_value
+        COALESCE(SUM(sl.deal_value) FILTER (WHERE sl.status NOT IN ('gewonnen','abgeschlossen','verloren','kein_interesse','nicht_existent')), 0)::real AS pipeline_value
       FROM sales_leads sl WHERE ${lf}`, lp),
 
       // 3 — Call performance (period)
@@ -782,7 +782,7 @@ router.get('/stats/analytics', async (req, res) => {
         u.name AS owner_name, u.color AS owner_color
       FROM sales_leads sl LEFT JOIN users u ON u.id = sl.owner_id
       WHERE ${lf} AND sl.next_followup_date IS NOT NULL AND sl.next_followup_date < ?
-        AND sl.status NOT IN ('gewonnen','abgeschlossen','verloren','kein_interesse')
+        AND sl.status NOT IN ('gewonnen','abgeschlossen','verloren','kein_interesse','nicht_existent')
       ORDER BY sl.next_followup_date ASC LIMIT 20`, [...lp, today]),
 
       // 11 — Stale leads (no call in 7+ days)
@@ -792,7 +792,7 @@ router.get('/stats/analytics', async (req, res) => {
       FROM sales_leads sl
       LEFT JOIN sales_calls sc ON sc.lead_id = sl.id AND sc.user_id = sl.user_id
       LEFT JOIN users u ON u.id = sl.owner_id
-      WHERE ${lf} AND sl.status NOT IN ('gewonnen','abgeschlossen','verloren','kein_interesse')
+      WHERE ${lf} AND sl.status NOT IN ('gewonnen','abgeschlossen','verloren','kein_interesse','nicht_existent')
       GROUP BY sl.id, sl.company_name, sl.status, sl.created_at, sl.owner_id, u.name, u.color
       HAVING EXTRACT(DAY FROM (NOW() - COALESCE(MAX(sc.started_at), sl.created_at))) > 7
       ORDER BY days_inactive DESC LIMIT 20`, lp),
@@ -800,18 +800,18 @@ router.get('/stats/analytics', async (req, res) => {
       // 12 — Loss analysis by branch
       getAll(`SELECT COALESCE(sl.branch, 'Unbekannt') AS branch,
         COUNT(*)::int AS total,
-        COUNT(*) FILTER (WHERE sl.status IN ('verloren','kein_interesse'))::int AS lost,
+        COUNT(*) FILTER (WHERE sl.status IN ('verloren','kein_interesse','nicht_existent'))::int AS lost,
         COUNT(*) FILTER (WHERE sl.status IN ('gewonnen','abgeschlossen'))::int AS won
       FROM sales_leads sl WHERE ${lf}
       GROUP BY COALESCE(sl.branch, 'Unbekannt') HAVING COUNT(*) >= 2
-      ORDER BY COUNT(*) FILTER (WHERE sl.status IN ('verloren','kein_interesse'))::float / NULLIF(COUNT(*), 0) DESC NULLS LAST
+      ORDER BY COUNT(*) FILTER (WHERE sl.status IN ('verloren','kein_interesse','nicht_existent'))::float / NULLIF(COUNT(*), 0) DESC NULLS LAST
       LIMIT 15`, lp),
 
       // 13 — Team comparison (only when all)
       !ownerId ? getAll(`SELECT sl.owner_id, u.name AS owner_name, u.color AS owner_color,
         COUNT(*)::int AS total_leads,
         COUNT(*) FILTER (WHERE sl.status IN ('gewonnen','abgeschlossen'))::int AS won,
-        COUNT(*) FILTER (WHERE sl.status IN ('verloren','kein_interesse'))::int AS lost,
+        COUNT(*) FILTER (WHERE sl.status IN ('verloren','kein_interesse','nicht_existent'))::int AS lost,
         COALESCE(SUM(sl.deal_value) FILTER (WHERE sl.status IN ('gewonnen','abgeschlossen')), 0)::real AS revenue
       FROM sales_leads sl JOIN users u ON u.id = sl.owner_id
       WHERE sl.user_id = ? GROUP BY sl.owner_id, u.name, u.color ORDER BY revenue DESC`, [wsId]) : Promise.resolve([]),

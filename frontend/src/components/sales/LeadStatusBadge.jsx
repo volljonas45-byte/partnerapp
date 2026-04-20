@@ -9,6 +9,7 @@ const STATUS = {
   kein_interesse:  { label: 'Kein Interesse',  color: '#FF3B30', bg: 'rgba(255,59,48,0.08)' },
   spaeter:         { label: 'Später',          color: 'var(--color-text-secondary)', bg: 'rgba(142,142,147,0.10)' },
   verloren:        { label: 'Verloren',        color: 'var(--color-text-secondary)', bg: 'rgba(142,142,147,0.10)' },
+  nicht_existent:  { label: 'Existiert nicht mehr', color: 'var(--color-text-secondary)', bg: 'rgba(142,142,147,0.10)' },
 };
 
 export { STATUS as LEAD_STATUSES };

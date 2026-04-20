@@ -2,12 +2,19 @@ import { useState } from 'react';
 import { CalendarDays, X, Phone, Mail } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 
-function toISO(d) { return d.toISOString().slice(0, 10); }
+// YYYY-MM-DD in Europe/Berlin
+function berlinISO(d) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Berlin', year: 'numeric', month: '2-digit', day: '2-digit',
+  }).formatToParts(d);
+  const y = parts.find(p => p.type === 'year').value;
+  const m = parts.find(p => p.type === 'month').value;
+  const dd = parts.find(p => p.type === 'day').value;
+  return `${y}-${m}-${dd}`;
+}
 
 function offsetDate(days) {
-  const d = new Date();
-  d.setDate(d.getDate() + days);
-  return toISO(d);
+  return berlinISO(new Date(Date.now() + days * 86400000));
 }
 
 function defaultDate() { return offsetDate(2); }

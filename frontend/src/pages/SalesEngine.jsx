@@ -519,10 +519,16 @@ export default function SalesEngine() {
   function handleStatusChange(status) {
     updateLeadMut.mutate({ id: selectedLeadId, data: { status } });
     setShowStatusMenu(false);
-    const archiveStatuses = ['verloren', 'spaeter'];
+    const archiveStatuses = ['verloren', 'spaeter', 'nicht_existent', 'kein_interesse'];
     if (archiveStatuses.includes(status)) {
       setSelectedLeadId(null);
-      toast.success(status === 'verloren' ? 'Lead als Verloren markiert' : 'Lead auf Später verschoben');
+      const MSG = {
+        verloren: 'Lead als Verloren markiert',
+        spaeter: 'Lead auf Später verschoben',
+        nicht_existent: 'Lead als nicht mehr existent markiert',
+        kein_interesse: 'Lead als Kein Interesse markiert',
+      };
+      toast.success(MSG[status] || 'Status aktualisiert');
     } else {
       toast.success('Status aktualisiert');
     }
