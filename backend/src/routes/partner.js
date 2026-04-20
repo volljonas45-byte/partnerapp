@@ -1,5 +1,6 @@
 const express = require('express');
 const router  = express.Router(); // v2
+const gemini  = require('../services/gemini');
 const bcrypt  = require('bcryptjs');
 const jwt     = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
@@ -649,6 +650,21 @@ Wenn ein Feld nicht erkennbar ist, setze null. Telefonnummer immer mit Vorwahl.`
   } catch (err) {
     console.error('[partner/screenshot-import]', err);
     res.status(500).json({ error: 'Fehler bei der Screenshot-Analyse' });
+  }
+});
+
+// ── AI CHAT ───────────────────────────────────────────────────────────────────
+router.post('/ai-chat', authenticate, async (req, res) => {
+  const { messages } = req.body;
+  if (!Array.isArray(messages) || !messages.length) {
+    return res.status(400).json({ error: 'messages required' });
+  }
+  try {
+    const reply = await gemini.chat(messages);
+    res.json({ reply });
+  } catch (err) {
+    console.error('[partner/ai-chat]', err);
+    res.status(500).json({ error: 'KI-Anfrage fehlgeschlagen.' });
   }
 });
 
