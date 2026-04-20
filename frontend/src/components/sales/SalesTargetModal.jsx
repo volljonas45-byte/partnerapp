@@ -64,7 +64,8 @@ export default function SalesTargetModal({ targets, onSave, onClose, isPending }
                 onChange={e => set(f.key, e.target.value)}
                 style={{
                   width: '100%', padding: '10px 12px', borderRadius: 10, fontSize: 14,
-                  border: '1.5px solid #E5E5EA', outline: 'none', boxSizing: 'border-box',
+                  border: '1.5px solid var(--color-border-subtle)', outline: 'none', boxSizing: 'border-box',
+                  background: 'var(--color-card-secondary)', color: 'var(--color-text)',
                 }}
               />
             </div>
@@ -76,7 +77,7 @@ export default function SalesTargetModal({ targets, onSave, onClose, isPending }
             onClick={onClose}
             style={{
               flex: 1, padding: '10px', borderRadius: 10, fontSize: 14, fontWeight: 600,
-              border: '1.5px solid #E5E5EA', background: 'var(--color-card)', color: 'var(--color-text-tertiary)', cursor: 'pointer',
+              border: '1.5px solid var(--color-border-subtle)', background: 'var(--color-card)', color: 'var(--color-text-tertiary)', cursor: 'pointer',
             }}
           >
             Abbrechen
