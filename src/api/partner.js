@@ -21,4 +21,6 @@ export const partnerApi = {
   updateProfile:      (d) => api.put('/partner/profile', d).then(r => r.data),
   screenshotImport:   (image) => api.post('/partner/screenshot-import', { image }).then(r => r.data),
   aiChat:             (messages) => api.post('/partner/ai-chat', { messages }).then(r => r.data),
+  createLeadRequest:  (d) => api.post('/partner/lead-requests', d).then(r => r.data),
+  listLeadRequests:   () => api.get('/partner/lead-requests').then(r => r.data),
 };
