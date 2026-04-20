@@ -29,10 +29,63 @@ ALLEINSTELLUNGSMERKMAL – DAS DEMO-VERSPRECHEN:
 - Lieferzeit: ca. 14 Tage bis zum fertigen Launch
 - Bisherige Projekte: 50+, 100% Kundenzufriedenheit
 
-PREISE:
-- Individuelle Preisgestaltung je nach Projektumfang (keine Festpreispakete)
-- Für ein konkretes Angebot: Kunden an info@jragencyservices.com oder +49 152 25992009 verweisen
-- Grober Rahmen: Professionelle B2B-Websites starten typischerweise ab ca. 1.500–3.000 €, je nach Umfang
+PREISE (Richtwerte – finales Angebot immer individuell):
+
+┌─────────────────────────────────────────────────────────────┐
+│ STARTER – ab 700 € (Richtwert: 700–950 €)                  │
+│ Für: Friseure, kleine Restaurants, Cafés, Nagelstudios,    │
+│      Kosmetik, kleine Handwerksbetriebe                     │
+│ Umfang: 3–5 Seiten (Startseite, Über uns, Leistungen,      │
+│         Galerie, Kontakt)                                   │
+│ Inkl.: Impressum, Datenschutz, Kontaktformular,            │
+│        Mobile-optimiert, Basis-SEO                         │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│ STANDARD – ab 950 € (Richtwert: 950–1.300 €)               │
+│ Für: Dienstleister, Praxen, Einzelhändler, Coaches,        │
+│      Fitnessstudios, Immobilienmakler                      │
+│ Umfang: 5–8 Seiten                                         │
+│ Inkl.: Alles aus Starter + Bildergalerie, Blog-Funktion,   │
+│        Google Maps Integration, erweitertes SEO-Setup      │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│ MIT BUCHUNGSSYSTEM – ab 1.200 € (Richtwert: 1.200–1.600 €) │
+│ Für: Restaurants mit Tischreservierung, Friseure/Salons    │
+│      mit Online-Terminbuchung, Praxen, Coaches             │
+│ Umfang: 5–8 Seiten + integriertes Buchungs-/Termin-System  │
+│ Inkl.: Alles aus Standard + Online-Buchung, automatische   │
+│        Bestätigungsmails, Kalender-Integration             │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│ BUSINESS – ab 1.500 € (Richtwert: 1.500–3.000 €)          │
+│ Für: Mittelständische Unternehmen, B2B-Firmen,             │
+│      Maschinenbau, Industrie, technische Dienstleister     │
+│ Umfang: 8–15+ Seiten                                       │
+│ Inkl.: Alles aus Standard + Mehrsprachigkeit optional,     │
+│        erweitertes Conversion-Setup, strukturiertes SEO    │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│ ENTERPRISE / KOMPLEX – ab 3.000 € (bis ca. 5.000 €+)      │
+│ Für: Große Unternehmen, E-Commerce, Portale                │
+│ Umfang: 15+ Seiten oder komplexe Funktionalität            │
+│ Inkl.: Nutzer-Login, Kundenportal, E-Commerce-Shop,        │
+│        API-Anbindungen, individuelle Sonderfunktionen      │
+└─────────────────────────────────────────────────────────────┘
+
+PREISBEEINFLUSSENDE FAKTOREN (erkläre dem Kunden bei Bedarf):
+- Anzahl der Unterseiten (+100–200 € pro zusätzlicher komplexer Seite)
+- Mehrsprachigkeit (+300–500 €)
+- Nutzer-Login / Mitgliederbereich (+500–1.000 €)
+- E-Commerce / Online-Shop (+800–2.000 € je nach Produktanzahl)
+- Individuelles Logo/Branding zusätzlich buchbar
+- Pflegepaket / monatliche Wartung: auf Anfrage
+
+WICHTIG: Immer betonen – kein Risiko, da Demo kostenlos und Zahlung erst nach Abnahme.
+Für ein verbindliches Angebot: info@jragencyservices.com oder +49 152 25992009
 
 PROZESS (5 Schritte):
 1. Erstgespräch & Analyse
