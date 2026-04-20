@@ -502,6 +502,15 @@ router.post('/calls', async (req, res) => {
       [req.workspaceUserId, req.userId, client_id || null, resolvedLeadId, outcome || 'reached', notes || '', duration_sec || null]
     );
 
+    // Auto-Status: "neu" → "anrufen" sobald erster Anruf erfasst wird
+    if (resolvedLeadId) {
+      await run(
+        `UPDATE sales_leads SET status = 'anrufen', updated_at = NOW()
+         WHERE id = ? AND user_id = ? AND status = 'neu'`,
+        [resolvedLeadId, req.workspaceUserId]
+      );
+    }
+
     const created = await getOne('SELECT * FROM sales_calls WHERE id = ?', [result.lastInsertRowid]);
     res.status(201).json(created);
   } catch (err) {
