@@ -7,30 +7,41 @@ router.use(authenticate);
 
 // ── HELPERS ──────────────────────────────────────────────────────────────────
 
+const TZ = 'Europe/Berlin';
+
+// Returns YYYY-MM-DD in Europe/Berlin, optionally offset by N days
+function berlinDateStr(offsetDays = 0) {
+  const now = new Date(Date.now() + offsetDays * 86400000);
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit',
+  }).formatToParts(now);
+  const y = parts.find(p => p.type === 'year').value;
+  const m = parts.find(p => p.type === 'month').value;
+  const d = parts.find(p => p.type === 'day').value;
+  return `${y}-${m}-${d}`;
+}
+
+// Returns weekday number (Mon=1..Sun=7) in Berlin
+function berlinWeekday() {
+  const wd = new Intl.DateTimeFormat('en-US', { timeZone: TZ, weekday: 'short' })
+    .format(new Date());
+  return { Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6, Sun: 7 }[wd];
+}
+
 function todayStr() {
-  return new Date().toISOString().slice(0, 10);
+  return berlinDateStr(0);
 }
 
 function tomorrowStr() {
-  const d = new Date();
-  d.setDate(d.getDate() + 1);
-  return d.toISOString().slice(0, 10);
+  return berlinDateStr(1);
 }
 
 function weekStartStr() {
-  const now = new Date();
-  const day = now.getDay() || 7;
-  const mon = new Date(now);
-  mon.setDate(now.getDate() - day + 1);
-  return mon.toISOString().slice(0, 10);
+  return berlinDateStr(1 - berlinWeekday());
 }
 
 function weekEndStr() {
-  const now = new Date();
-  const day = now.getDay() || 7;
-  const sun = new Date(now);
-  sun.setDate(now.getDate() + (7 - day));
-  return sun.toISOString().slice(0, 10);
+  return berlinDateStr(7 - berlinWeekday());
 }
 
 const MAX_LEADS_PER_DAY = 20;
@@ -546,7 +557,7 @@ router.get('/stats', async (req, res) => {
         COUNT(*) FILTER (WHERE outcome = 'reached')::int AS calls_reached,
         COUNT(*) FILTER (WHERE outcome = 'not_reached')::int AS calls_not_reached
       FROM sales_calls
-      WHERE ${callFilter} AND started_at::date = ?::date
+      WHERE ${callFilter} AND (started_at AT TIME ZONE 'Europe/Berlin')::date = ?::date
     `, [...callParams, today]);
 
     // Lead stats — filter by owner_id
@@ -557,7 +568,7 @@ router.get('/stats', async (req, res) => {
 
     const todayClosings = await getOne(`
       SELECT COUNT(*)::int AS count FROM sales_leads
-      WHERE ${leadFilter} AND (won_at::date = ?::date)
+      WHERE ${leadFilter} AND ((won_at AT TIME ZONE 'Europe/Berlin')::date = ?::date)
     `, [...leadParams, today]);
 
     const weekStats = await getOne(`
@@ -565,12 +576,12 @@ router.get('/stats', async (req, res) => {
         COUNT(*)::int AS calls_total,
         COUNT(*) FILTER (WHERE outcome = 'reached')::int AS calls_reached
       FROM sales_calls
-      WHERE ${callFilter} AND started_at::date >= ?::date
+      WHERE ${callFilter} AND (started_at AT TIME ZONE 'Europe/Berlin')::date >= ?::date
     `, [...callParams, weekStart]);
 
     const weekClosings = await getOne(`
       SELECT COUNT(*)::int AS count FROM sales_leads
-      WHERE ${leadFilter} AND won_at::date >= ?::date
+      WHERE ${leadFilter} AND (won_at AT TIME ZONE 'Europe/Berlin')::date >= ?::date
     `, [...leadParams, weekStart]);
 
     const followupsDue = await getOne(`
@@ -649,13 +660,13 @@ router.get('/stats/chart', async (req, res) => {
 
     const rows = await getAll(`
       SELECT
-        started_at::date AS date,
+        (started_at AT TIME ZONE 'Europe/Berlin')::date AS date,
         COUNT(*)::int AS calls,
         COUNT(*) FILTER (WHERE outcome = 'reached')::int AS reached,
         COUNT(*) FILTER (WHERE outcome = 'not_reached')::int AS not_reached
       FROM sales_calls
       WHERE ${filter} AND started_at >= NOW() - INTERVAL '1 day' * ?
-      GROUP BY started_at::date
+      GROUP BY (started_at AT TIME ZONE 'Europe/Berlin')::date
       ORDER BY date ASC
     `, [...filterParams, days]);
 
@@ -734,21 +745,21 @@ router.get('/stats/analytics', async (req, res) => {
       GROUP BY hour ORDER BY hour`, [...cp, period]),
 
       // 6 — Daily calls trend
-      getAll(`SELECT sc.started_at::date AS date, COUNT(*)::int AS calls,
+      getAll(`SELECT (sc.started_at AT TIME ZONE 'Europe/Berlin')::date AS date, COUNT(*)::int AS calls,
         COUNT(*) FILTER (WHERE sc.outcome = 'reached')::int AS reached
       FROM sales_calls sc WHERE ${cf} AND sc.started_at >= NOW() - INTERVAL '1 day' * ?
-      GROUP BY sc.started_at::date ORDER BY date ASC`, [...cp, period]),
+      GROUP BY (sc.started_at AT TIME ZONE 'Europe/Berlin')::date ORDER BY date ASC`, [...cp, period]),
 
       // 7 — Daily closings trend
-      getAll(`SELECT sl.won_at::date AS date, COUNT(*)::int AS closings,
+      getAll(`SELECT (sl.won_at AT TIME ZONE 'Europe/Berlin')::date AS date, COUNT(*)::int AS closings,
         COALESCE(SUM(sl.deal_value), 0)::real AS revenue
       FROM sales_leads sl WHERE ${lf} AND sl.won_at IS NOT NULL AND sl.won_at >= NOW() - INTERVAL '1 day' * ?
-      GROUP BY sl.won_at::date ORDER BY date ASC`, [...lp, period]),
+      GROUP BY (sl.won_at AT TIME ZONE 'Europe/Berlin')::date ORDER BY date ASC`, [...lp, period]),
 
       // 8 — Daily leads created
-      getAll(`SELECT sl.created_at::date AS date, COUNT(*)::int AS created
+      getAll(`SELECT (sl.created_at AT TIME ZONE 'Europe/Berlin')::date AS date, COUNT(*)::int AS created
       FROM sales_leads sl WHERE ${lf} AND sl.created_at >= NOW() - INTERVAL '1 day' * ?
-      GROUP BY sl.created_at::date ORDER BY date ASC`, [...lp, period]),
+      GROUP BY (sl.created_at AT TIME ZONE 'Europe/Berlin')::date ORDER BY date ASC`, [...lp, period]),
 
       // 9 — Avg response time (hours to first call)
       getOne(`SELECT COALESCE(AVG(EXTRACT(EPOCH FROM (fc.first_call - sl.created_at)) / 3600), 0)::real AS avg_hours
