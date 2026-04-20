@@ -584,4 +584,72 @@ router.put('/admin/commissions/:id', async (req, res) => {
   res.json(updated);
 });
 
+// ── Screenshot Import (Gemini) ─────────────────────────────────────────────────
+
+router.post('/screenshot-import', authenticatePartner, async (req, res) => {
+  try {
+    const { image } = req.body;
+    if (!image) return res.status(400).json({ error: 'Kein Bild übergeben' });
+
+    const allKeys = (process.env.GEMINI_API_KEY || '').split(',').map(k => k.trim()).filter(Boolean);
+    if (allKeys.length === 0) return res.status(500).json({ error: 'GEMINI_API_KEY nicht konfiguriert' });
+
+    const base64 = image.replace(/^data:image\/\w+;base64,/, '');
+    const mimeType = image.match(/^data:(image\/\w+);/)?.[1] || 'image/png';
+
+    const payload = {
+      contents: [{
+        parts: [
+          {
+            text: `Analysiere diesen Google Maps Screenshot und extrahiere die Firmendaten.
+Antworte NUR mit einem JSON-Objekt (kein Markdown, kein Text drumrum). Felder:
+{
+  "company": "Firmenname",
+  "contact_person": null,
+  "phone": "Telefonnummer oder null",
+  "email": null,
+  "industry": "Branche/Kategorie oder null",
+  "city": "Stadt oder null",
+  "website": "Website-URL oder null",
+  "address": "Vollständige Adresse oder null"
+}
+Wenn ein Feld nicht erkennbar ist, setze null. Telefonnummer immer mit Vorwahl.`
+          },
+          { inline_data: { mime_type: mimeType, data: base64 } }
+        ]
+      }],
+      generationConfig: { temperature: 0, maxOutputTokens: 500 },
+    };
+
+    const models = ['gemini-2.5-flash-lite', 'gemini-2.0-flash-lite', 'gemini-2.0-flash'];
+    const fetchOpts = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) };
+
+    let response;
+    outer:
+    for (const key of allKeys) {
+      for (const model of models) {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+        response = await fetch(url, fetchOpts);
+        if (response.status !== 429) break outer;
+      }
+    }
+
+    if (response.status === 429) return res.status(429).json({ error: 'API-Limit erreicht. Bitte 30 Sekunden warten.' });
+    if (!response.ok) return res.status(502).json({ error: 'Fehler bei der Bildanalyse' });
+
+    const result = await response.json();
+    const text = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return res.status(422).json({ error: 'Konnte keine Daten aus dem Bild extrahieren' });
+
+    const extracted = JSON.parse(jsonMatch[0]);
+    if (!extracted.company) return res.status(422).json({ error: 'Kein Firmenname erkannt' });
+
+    res.json(extracted);
+  } catch (err) {
+    console.error('[partner/screenshot-import]', err);
+    res.status(500).json({ error: 'Fehler bei der Screenshot-Analyse' });
+  }
+});
+
 module.exports = router;
