@@ -716,6 +716,30 @@ router.get('/lead-requests', authenticatePartner, async (req, res) => {
   }
 });
 
+// ── ADMIN: LEAD REQUESTS ──────────────────────────────────────────────────────
+router.get('/admin/lead-requests', async (req, res) => {
+  const rows = await getAll(
+    `SELECT lr.*, u.name AS partner_name, u.email AS partner_email
+     FROM partner_lead_requests lr
+     JOIN partners p ON p.id = lr.partner_id
+     JOIN users u ON u.id = p.user_id
+     WHERE lr.workspace_owner_id = ?
+     ORDER BY lr.created_at DESC`,
+    [req.workspaceUserId]
+  );
+  res.json(rows);
+});
+
+router.put('/admin/lead-requests/:id', async (req, res) => {
+  const { status } = req.body;
+  const updated = await getOne(
+    `UPDATE partner_lead_requests SET status = ? WHERE id = ? AND workspace_owner_id = ? RETURNING *`,
+    [status, req.params.id, req.workspaceUserId]
+  );
+  if (!updated) return res.status(404).json({ error: 'Nicht gefunden.' });
+  res.json(updated);
+});
+
 // ── AI CHAT ───────────────────────────────────────────────────────────────────
 router.post('/ai-chat', authenticatePartner, async (req, res) => {
   const { messages } = req.body;

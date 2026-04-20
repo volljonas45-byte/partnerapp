@@ -149,7 +149,7 @@ function LeadModal({ lead, onClose, onSave }) {
 }
 
 // ── Main Component ────────────────────────────────────────────────────────────
-const TABS = ['Übersicht', 'Partner', 'Lead-Pool', 'Termine', 'Provisionen'];
+const TABS = ['Übersicht', 'Partner', 'Lead-Pool', 'Termine', 'Provisionen', 'Lead-Anfragen'];
 
 export default function AdminPartners() {
   const D = useD();
@@ -162,6 +162,7 @@ export default function AdminPartners() {
   const { data: leadsData = [] } = useQuery({ queryKey: ['partner-admin-leads'], queryFn: () => partnerApi.adminListLeads() });
   const { data: appts = [] } = useQuery({ queryKey: ['partner-admin-appts'], queryFn: partnerApi.adminListAppointments });
   const { data: commData } = useQuery({ queryKey: ['partner-admin-comms'], queryFn: () => partnerApi.adminListCommissions() });
+  const { data: leadRequests = [] } = useQuery({ queryKey: ['partner-admin-lead-requests'], queryFn: partnerApi.adminListLeadRequests });
 
   const updatePartner = useMutation({
     mutationFn: ({ id, data }) => partnerApi.adminUpdatePartner(id, data),
@@ -182,6 +183,10 @@ export default function AdminPartners() {
   const updateComm = useMutation({
     mutationFn: ({ id, data }) => partnerApi.adminUpdateCommission(id, data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['partner-admin-comms'] }),
+  });
+  const updateLeadRequest = useMutation({
+    mutationFn: ({ id, data }) => partnerApi.adminUpdateLeadRequest(id, data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['partner-admin-lead-requests'] }),
   });
 
   const fmt = (n) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(n || 0);
@@ -448,6 +453,51 @@ export default function AdminPartners() {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* ── LEAD-ANFRAGEN ── */}
+          {activeTab === 'Lead-Anfragen' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {leadRequests.length === 0 && (
+                <div style={{ textAlign: 'center', padding: '60px 20px', color: D.text3 }}>
+                  Noch keine Lead-Anfragen.
+                </div>
+              )}
+              {leadRequests.map(r => (
+                <div key={r.id} style={{ background: D.card, borderRadius: 16,
+                  border: `0.5px solid ${D.border}`, padding: '16px 20px',
+                  display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ margin: 0, fontWeight: 600, fontSize: 14, color: D.text }}>
+                      {r.partner_name} <span style={{ fontWeight: 400, color: D.text3, fontSize: 12 }}>({r.partner_email})</span>
+                    </p>
+                    <p style={{ margin: '3px 0 0', fontSize: 13, color: D.text2 }}>
+                      Branche: <strong>{r.industry}</strong> · Anzahl: <strong>{r.quantity}</strong>
+                    </p>
+                    {r.message && <p style={{ margin: '6px 0 0', fontSize: 12, color: D.text2,
+                      padding: '8px 12px', background: D.card2, borderRadius: 8,
+                      borderLeft: `3px solid ${D.purple}` }}>
+                      "{r.message}"
+                    </p>}
+                    <p style={{ margin: '4px 0 0', fontSize: 11, color: D.text3 }}>
+                      {new Date(r.created_at).toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </div>
+                  <span style={{ padding: '3px 10px', borderRadius: 99, fontSize: 11, fontWeight: 600,
+                    background: r.status === 'pending' ? D.orangeL : r.status === 'fulfilled' ? D.greenL : D.card2,
+                    color: r.status === 'pending' ? D.orange : r.status === 'fulfilled' ? D.green : D.text3 }}>
+                    {r.status === 'pending' ? 'Offen' : r.status === 'fulfilled' ? 'Erledigt' : r.status}
+                  </span>
+                  {r.status === 'pending' && (
+                    <button onClick={() => updateLeadRequest.mutate({ id: r.id, data: { status: 'fulfilled' } })}
+                      style={{ padding: '5px 12px', borderRadius: 8, border: 'none',
+                        background: D.greenL, color: D.green, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
+                      Als erledigt markieren
+                    </button>
+                  )}
+                </div>
+              ))}
             </div>
           )}
 

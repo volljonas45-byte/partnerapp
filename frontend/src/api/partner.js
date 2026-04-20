@@ -11,6 +11,8 @@ export const partnerApi = {
   adminDeleteLead:       (id)     => api.delete(`/api/partner/admin/leads/${id}`).then(r => r.data),
   adminListAppointments: ()       => api.get('/api/partner/admin/appointments').then(r => r.data),
   adminUpdateAppointment:(id, d)  => api.put(`/api/partner/admin/appointments/${id}`, d).then(r => r.data),
-  adminListCommissions:  (params) => api.get('/api/partner/admin/commissions', { params }).then(r => r.data),
-  adminUpdateCommission: (id, d)  => api.put(`/api/partner/admin/commissions/${id}`, d).then(r => r.data),
+  adminListCommissions:   (params) => api.get('/api/partner/admin/commissions', { params }).then(r => r.data),
+  adminUpdateCommission:  (id, d)  => api.put(`/api/partner/admin/commissions/${id}`, d).then(r => r.data),
+  adminListLeadRequests:  ()       => api.get('/api/partner/admin/lead-requests').then(r => r.data),
+  adminUpdateLeadRequest: (id, d)  => api.put(`/api/partner/admin/lead-requests/${id}`, d).then(r => r.data),
 };
