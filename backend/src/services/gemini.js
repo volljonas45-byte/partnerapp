@@ -53,7 +53,12 @@ async function chat(history) {
   });
 
   const lastMsg = history[history.length - 1];
-  const prevHistory = history.slice(0, -1);
+  let prevHistory = history.slice(0, -1);
+
+  // Gemini requires history to start with a user turn
+  const firstUserIdx = prevHistory.findIndex(m => m.role === 'user');
+  if (firstUserIdx > 0) prevHistory = prevHistory.slice(firstUserIdx);
+  else if (firstUserIdx === -1) prevHistory = [];
 
   const chatSession = model.startChat({ history: prevHistory });
   const result = await chatSession.sendMessage(lastMsg.parts[0].text);
