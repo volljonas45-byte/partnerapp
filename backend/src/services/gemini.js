@@ -1,14 +1,5 @@
-const { GoogleGenerativeAI } = require('@google/generative-ai');
-
-const keys = (process.env.GEMINI_API_KEY || '').split(',').map(k => k.trim()).filter(Boolean);
-let idx = 0;
-
-function nextClient() {
-  if (!keys.length) throw new Error('GEMINI_API_KEY not configured');
-  const key = keys[idx % keys.length];
-  idx++;
-  return new GoogleGenerativeAI(key);
-}
+const KEYS = (process.env.GEMINI_API_KEY || '').split(',').map(k => k.trim()).filter(Boolean);
+const MODELS = ['gemini-2.5-flash-lite', 'gemini-2.0-flash-lite', 'gemini-2.0-flash', 'gemini-2.5-flash'];
 
 const SYSTEM_PROMPT = `Du bist der KI-Assistent von Vecturo – einem modernen Partner-Programm für Vertriebspartner.
 
@@ -32,7 +23,7 @@ Provisionsmodell:
 - Pool-Leads: Standard-Provision (commission_rate_pool)
 - Provisionen werden nach Deal-Abschluss durch den Workspace-Inhaber bestätigt
 
-Onboarding-Prozess:
+Onboarding:
 1. Partner bewirbt sich über /apply
 2. Status "pending" – wartet auf Genehmigung
 3. Nach Genehmigung: Profil vervollständigen und Portal nutzen
@@ -40,29 +31,49 @@ Onboarding-Prozess:
 Verhalten:
 - Antworte auf Deutsch, freundlich und professionell
 - Halte Antworten kurz und konkret
-- Bei technischen Problemen (Login, Fehler) empfehle eine E-Mail an den Support
-- Du hast keinen Zugriff auf individuelle Lead-Daten oder Kontoinformationen
-`;
+- Bei technischen Problemen empfehle eine E-Mail an den Support
+- Du hast keinen Zugriff auf individuelle Lead-Daten`;
 
 async function chat(history) {
-  // history: [{role: 'user'|'model', parts: [{text: string}]}]
-  const client = nextClient();
-  const model = client.getGenerativeModel({
-    model: 'gemini-2.0-flash',
-    systemInstruction: SYSTEM_PROMPT,
-  });
+  if (!KEYS.length) throw new Error('GEMINI_API_KEY not configured');
 
-  const lastMsg = history[history.length - 1];
-  let prevHistory = history.slice(0, -1);
+  // history: [{role: 'user'|'model', parts: [{text}]}]
+  // Ensure history starts with user turn (Gemini requirement)
+  const firstUser = history.findIndex(m => m.role === 'user');
+  const safeHistory = firstUser > 0 ? history.slice(firstUser) : history;
 
-  // Gemini requires history to start with a user turn
-  const firstUserIdx = prevHistory.findIndex(m => m.role === 'user');
-  if (firstUserIdx > 0) prevHistory = prevHistory.slice(firstUserIdx);
-  else if (firstUserIdx === -1) prevHistory = [];
+  const payload = {
+    system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+    contents: safeHistory,
+    generationConfig: { temperature: 0.7, maxOutputTokens: 1024 },
+  };
 
-  const chatSession = model.startChat({ history: prevHistory });
-  const result = await chatSession.sendMessage(lastMsg.parts[0].text);
-  return result.response.text();
+  let lastError = null;
+  for (const key of KEYS) {
+    for (const model of MODELS) {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.status === 429) { lastError = '429'; continue; }
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        lastError = err.error?.message || res.status;
+        continue;
+      }
+
+      const data = await res.json();
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (text) return text;
+    }
+  }
+
+  if (lastError === '429') throw new Error('QUOTA_EXCEEDED');
+  throw new Error(`Gemini error: ${lastError}`);
 }
 
 module.exports = { chat };

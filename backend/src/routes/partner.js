@@ -663,7 +663,10 @@ router.post('/ai-chat', authenticate, async (req, res) => {
     const reply = await gemini.chat(messages);
     res.json({ reply });
   } catch (err) {
-    console.error('[partner/ai-chat]', err);
+    console.error('[partner/ai-chat]', err.message);
+    if (err.message === 'QUOTA_EXCEEDED') {
+      return res.status(429).json({ error: 'API-Limit erreicht. Bitte neue Gemini-Keys hinterlegen.' });
+    }
     res.status(500).json({ error: 'KI-Anfrage fehlgeschlagen.' });
   }
 });
