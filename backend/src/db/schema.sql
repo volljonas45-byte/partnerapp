@@ -738,6 +738,17 @@ CREATE TABLE IF NOT EXISTS partner_appointments (
   created_at         TIMESTAMPTZ DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS partner_lead_requests (
+  id                 SERIAL PRIMARY KEY,
+  partner_id         INTEGER NOT NULL REFERENCES partners(id),
+  workspace_owner_id INTEGER NOT NULL,
+  industry           TEXT NOT NULL,
+  quantity           INTEGER NOT NULL DEFAULT 1,
+  message            TEXT,
+  status             TEXT NOT NULL DEFAULT 'pending',
+  created_at         TIMESTAMPTZ DEFAULT NOW()
+);
+
 CREATE TABLE IF NOT EXISTS partner_commissions (
   id                 SERIAL PRIMARY KEY,
   workspace_owner_id INTEGER NOT NULL REFERENCES users(id),

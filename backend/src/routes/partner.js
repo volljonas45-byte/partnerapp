@@ -653,6 +653,69 @@ Wenn ein Feld nicht erkennbar ist, setze null. Telefonnummer immer mit Vorwahl.`
   }
 });
 
+// ── LEAD REQUESTS ─────────────────────────────────────────────────────────────
+
+router.post('/lead-requests', authenticatePartner, async (req, res) => {
+  const { industry, quantity, message } = req.body;
+  if (!industry || !quantity) return res.status(400).json({ error: 'Branche und Anzahl erforderlich.' });
+
+  try {
+    const request = await getOne(
+      `INSERT INTO partner_lead_requests (partner_id, workspace_owner_id, industry, quantity, message)
+       VALUES (?, ?, ?, ?, ?) RETURNING *`,
+      [req.partnerId, req.workspaceOwnerId, industry, parseInt(quantity), message || null]
+    );
+
+    // Notify workspace owner via email
+    const [partner, owner] = await Promise.all([
+      getOne(`SELECT u.name, u.email FROM users u JOIN partners p ON p.user_id = u.id WHERE p.id = ?`, [req.partnerId]),
+      getOne(`SELECT email, name FROM users WHERE id = ?`, [req.workspaceOwnerId]),
+    ]);
+
+    if (owner?.email) {
+      const nodemailer = require('nodemailer');
+      const transporter = nodemailer.createTransport({
+        host: process.env.EMAIL_HOST, port: parseInt(process.env.EMAIL_PORT || '587'),
+        secure: process.env.EMAIL_SECURE === 'true',
+        auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
+      });
+      await transporter.sendMail({
+        from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+        to: owner.email,
+        subject: `🔔 Neue Lead-Anfrage von ${partner?.name || 'Partner'}`,
+        html: `
+          <div style="font-family:sans-serif;max-width:480px;margin:0 auto;background:#0D0D12;color:#F2F2F7;border-radius:16px;padding:32px;">
+            <h2 style="margin:0 0 8px;font-size:20px;color:#ffffff;">Neue Lead-Anfrage</h2>
+            <p style="color:#AEAEB2;margin:0 0 24px;font-size:14px;">Ein Partner möchte Leads aus eurem Pool erhalten.</p>
+            <table style="width:100%;border-collapse:collapse;">
+              <tr><td style="padding:8px 0;color:#636366;font-size:13px;">Partner</td><td style="padding:8px 0;color:#F2F2F7;font-size:13px;font-weight:600;">${partner?.name || '—'}</td></tr>
+              <tr><td style="padding:8px 0;color:#636366;font-size:13px;">Branche</td><td style="padding:8px 0;color:#5B8CF5;font-size:13px;font-weight:600;">${industry}</td></tr>
+              <tr><td style="padding:8px 0;color:#636366;font-size:13px;">Anzahl</td><td style="padding:8px 0;color:#BF5AF2;font-size:13px;font-weight:600;">${quantity} Leads</td></tr>
+              ${message ? `<tr><td style="padding:8px 0;color:#636366;font-size:13px;vertical-align:top;">Nachricht</td><td style="padding:8px 0;color:#AEAEB2;font-size:13px;">${message}</td></tr>` : ''}
+            </table>
+          </div>`,
+      }).catch(err => console.error('[lead-request email]', err.message));
+    }
+
+    res.json(request);
+  } catch (err) {
+    console.error('[partner/lead-requests POST]', err.message);
+    res.status(500).json({ error: 'Anfrage fehlgeschlagen.' });
+  }
+});
+
+router.get('/lead-requests', authenticatePartner, async (req, res) => {
+  try {
+    const requests = await getAll(
+      `SELECT * FROM partner_lead_requests WHERE partner_id = ? ORDER BY created_at DESC`,
+      [req.partnerId]
+    );
+    res.json(requests);
+  } catch (err) {
+    res.status(500).json({ error: 'Fehler beim Laden.' });
+  }
+});
+
 // ── AI CHAT ───────────────────────────────────────────────────────────────────
 router.post('/ai-chat', authenticatePartner, async (req, res) => {
   const { messages } = req.body;

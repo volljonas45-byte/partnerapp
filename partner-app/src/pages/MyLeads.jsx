@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Phone, Search, Plus, X, ChevronDown, MapPin, Mail, Globe,
-  MousePointerClick, CalendarDays, Building2, CheckCircle2, PhoneCall, Camera,
+  MousePointerClick, CalendarDays, Building2, CheckCircle2, PhoneCall, Camera, Inbox,
 } from 'lucide-react';
 import { partnerApi } from '../api/partner';
 
@@ -428,6 +428,116 @@ function EmptyDetail() {
   );
 }
 
+// ── Lead Request Modal ────────────────────────────────────────────────────────
+
+function LeadRequestModal({ onClose }) {
+  const qc = useQueryClient();
+  const [industry, setIndustry] = useState('');
+  const [quantity, setQuantity] = useState(5);
+  const [message, setMessage]   = useState('');
+  const [success, setSuccess]   = useState(false);
+
+  const submit = useMutation({
+    mutationFn: () => partnerApi.createLeadRequest({ industry, quantity, message }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['lead-requests'] });
+      setSuccess(true);
+    },
+  });
+
+  return createPortal(
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      style={{ position: 'fixed', inset: 0, zIndex: 9000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div onClick={onClose} style={modalBackdrop} />
+      <motion.div initial={{ scale: 0.96, y: 16 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.96, opacity: 0 }}
+        style={{ ...modalBox, padding: 28, width: '100%', maxWidth: 460, margin: 16 }}>
+
+        {success ? (
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+            style={{ textAlign: 'center', padding: '16px 0' }}>
+            <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(52,211,153,0.15)', border: '1px solid rgba(52,211,153,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+              <CheckCircle2 size={26} color={D.green} />
+            </div>
+            <h3 style={{ fontSize: 18, fontWeight: 700, color: D.text, margin: '0 0 8px' }}>Anfrage gesendet!</h3>
+            <p style={{ fontSize: 13, color: D.text3, margin: '0 0 24px', lineHeight: 1.5 }}>
+              Wir wurden benachrichtigt und melden uns bei dir sobald Leads verfügbar sind.
+            </p>
+            <button onClick={onClose} style={{ padding: '10px 24px', borderRadius: 10, border: 'none', background: `linear-gradient(135deg, ${D.green}, #22D37A)`, color: '#000', fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>
+              Schließen
+            </button>
+          </motion.div>
+        ) : (
+          <>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+              <div>
+                <h2 style={{ fontSize: 17, fontWeight: 700, color: D.text, margin: '0 0 4px' }}>Leads anfragen</h2>
+                <p style={{ fontSize: 12, color: D.text3, margin: 0 }}>Wir weisen dir passende Leads aus unserem Pool zu</p>
+              </div>
+              <button onClick={onClose} style={{ width: 30, height: 30, borderRadius: 99, border: `1px solid ${D.border}`, background: 'rgba(255,255,255,0.04)', color: D.text2, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <X size={14} />
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div>
+                <label style={{ fontSize: 11, fontWeight: 600, color: D.text2, display: 'block', marginBottom: 6 }}>Branche *</label>
+                <input
+                  value={industry} onChange={e => setIndustry(e.target.value)}
+                  placeholder="z.B. Gastronomie, Handwerk, Industrie..."
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: 10, fontSize: 14, border: `1px solid ${industry ? D.blue + '60' : D.border}`, outline: 'none', boxSizing: 'border-box', background: D.inputBg, color: D.text, fontFamily: 'inherit', transition: 'border-color 0.15s' }}
+                  onFocus={e => e.target.style.borderColor = D.blue}
+                  onBlur={e => e.target.style.borderColor = industry ? D.blue + '60' : D.border}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: 11, fontWeight: 600, color: D.text2, display: 'block', marginBottom: 6 }}>
+                  Anzahl gewünschter Leads: <span style={{ color: D.purple, fontWeight: 700 }}>{quantity}</span>
+                </label>
+                <input
+                  type="range" min={1} max={50} step={1} value={quantity}
+                  onChange={e => setQuantity(Number(e.target.value))}
+                  style={{ width: '100%', accentColor: D.purple, cursor: 'pointer' }}
+                />
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: D.text3, marginTop: 4 }}>
+                  <span>1</span><span>25</span><span>50</span>
+                </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: 11, fontWeight: 600, color: D.text2, display: 'block', marginBottom: 6 }}>Nachricht (optional)</label>
+                <textarea
+                  value={message} onChange={e => setMessage(e.target.value)}
+                  placeholder="z.B. bevorzugte Region, Unternehmensgröße, spezifische Anforderungen..."
+                  rows={3}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: 10, fontSize: 13, border: `1px solid ${D.border}`, outline: 'none', boxSizing: 'border-box', background: D.inputBg, color: D.text, resize: 'none', fontFamily: 'inherit', lineHeight: 1.5 }}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 8, marginTop: 20 }}>
+              <button onClick={onClose} style={{ flex: 1, padding: 10, borderRadius: 10, border: `1px solid ${D.border}`, background: 'none', color: D.text2, cursor: 'pointer', fontSize: 13 }}>Abbrechen</button>
+              <button
+                onClick={() => submit.mutate()}
+                disabled={!industry.trim() || submit.isPending}
+                style={{
+                  flex: 2, padding: 10, borderRadius: 10, border: 'none', cursor: industry.trim() ? 'pointer' : 'not-allowed',
+                  background: industry.trim() ? `linear-gradient(135deg, ${D.purple}, #D070FF)` : 'rgba(255,255,255,0.05)',
+                  color: industry.trim() ? '#fff' : D.text3, fontSize: 13, fontWeight: 600,
+                  boxShadow: industry.trim() ? '0 4px 16px rgba(191,90,242,0.3)' : 'none',
+                  opacity: submit.isPending ? 0.7 : 1,
+                }}
+              >
+                {submit.isPending ? 'Senden...' : 'Anfrage senden'}
+              </button>
+            </div>
+          </>
+        )}
+      </motion.div>
+    </motion.div>, document.body
+  );
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 export default function MyLeads() {
@@ -435,8 +545,9 @@ export default function MyLeads() {
   const [tab, setTab]                       = useState('alle');
   const [search, setSearch]                 = useState('');
   const [selectedLeadId, setSelectedLeadId] = useState(null);
-  const [showAddLead, setShowAddLead]       = useState(false);
-  const [showScreenshot, setShowScreenshot] = useState(false);
+  const [showAddLead, setShowAddLead]         = useState(false);
+  const [showScreenshot, setShowScreenshot]   = useState(false);
+  const [showLeadRequest, setShowLeadRequest] = useState(false);
   const [showStatusMenu, setShowStatusMenu] = useState(false);
   const [callLogLead, setCallLogLead]       = useState(null);
   const [apptLead, setApptLead]             = useState(null);
@@ -559,6 +670,13 @@ export default function MyLeads() {
 
         {/* Action buttons */}
         <motion.div style={{ display: 'flex', gap: 8, flexShrink: 0 }} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
+          <button onClick={() => setShowLeadRequest(true)} style={{
+            display: 'flex', alignItems: 'center', gap: 5, padding: '7px 12px', borderRadius: 10,
+            fontSize: 12, fontWeight: 600, background: D.purpleL, color: D.purple,
+            border: `1px solid rgba(191,90,242,0.2)`, cursor: 'pointer', backdropFilter: 'blur(8px)',
+          }}>
+            <Inbox size={13} /> Leads anfragen
+          </button>
           <button onClick={() => setShowScreenshot(true)} style={{
             display: 'flex', alignItems: 'center', gap: 5, padding: '7px 12px', borderRadius: 10,
             fontSize: 12, fontWeight: 600, background: D.orangeL, color: D.orange,
@@ -837,6 +955,7 @@ export default function MyLeads() {
 
       {/* ── Modals ── */}
       <AnimatePresence>
+        {showLeadRequest && <LeadRequestModal onClose={() => setShowLeadRequest(false)} />}
         {showScreenshot && <ScreenshotImportModal onClose={() => setShowScreenshot(false)} onCreate={data => createLead.mutate(data)} />}
         {showAddLead && <LeadModal onClose={() => setShowAddLead(false)} onSave={data => createLead.mutate(data)} />}
         {callLogLead && <CallLogSheet lead={callLogLead} onClose={() => setCallLogLead(null)} />}
