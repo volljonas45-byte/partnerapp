@@ -68,7 +68,7 @@ router.get('/entries', async (req, res) => {
 router.post('/entries', async (req, res) => {
   try {
     const userId = req.userId;
-    const { project_id, description, start_time, end_time, duration } = req.body;
+    const { project_id, description, start_time, end_time, duration, activity_tag } = req.body;
 
     if (!start_time) return res.status(400).json({ error: 'start_time is required' });
 
@@ -79,9 +79,9 @@ router.post('/entries', async (req, res) => {
     }
 
     const result = await run(`
-      INSERT INTO time_entries (user_id, project_id, description, start_time, end_time, duration)
-      VALUES (?, ?, ?, ?, ?, ?) RETURNING id
-    `, [userId, project_id || null, description || '', start_time, end_time || null, dur || null]);
+      INSERT INTO time_entries (user_id, project_id, description, start_time, end_time, duration, activity_tag)
+      VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id
+    `, [userId, project_id || null, description || '', start_time, end_time || null, dur || null, activity_tag || null]);
 
     const entry = await getOne(`
       SELECT te.*, p.name AS project_name
@@ -103,7 +103,7 @@ router.put('/entries/:id', async (req, res) => {
   try {
     const userId = req.userId;
     const { id } = req.params;
-    const { project_id, description, start_time, end_time, duration } = req.body;
+    const { project_id, description, start_time, end_time, duration, activity_tag } = req.body;
 
     const entry = await getOne('SELECT * FROM time_entries WHERE id = ? AND user_id = ?', [id, userId]);
     if (!entry) return res.status(404).json({ error: 'Not found' });
@@ -115,7 +115,7 @@ router.put('/entries/:id', async (req, res) => {
 
     await run(`
       UPDATE time_entries
-      SET project_id = ?, description = ?, start_time = ?, end_time = ?, duration = ?
+      SET project_id = ?, description = ?, start_time = ?, end_time = ?, duration = ?, activity_tag = ?
       WHERE id = ? AND user_id = ?
     `, [
       project_id !== undefined ? project_id : entry.project_id,
@@ -123,6 +123,7 @@ router.put('/entries/:id', async (req, res) => {
       start_time || entry.start_time,
       end_time !== undefined ? end_time : entry.end_time,
       dur !== undefined ? dur : entry.duration,
+      activity_tag !== undefined ? (activity_tag || null) : entry.activity_tag,
       id, userId,
     ]);
 
@@ -199,13 +200,13 @@ router.post('/timer/start', async (req, res) => {
       );
     }
 
-    const { project_id, description } = req.body;
+    const { project_id, description, activity_tag } = req.body;
     const startTime = new Date().toISOString();
 
     const result = await run(`
-      INSERT INTO time_entries (user_id, project_id, description, start_time)
-      VALUES (?, ?, ?, ?) RETURNING id
-    `, [userId, project_id || null, description || '', startTime]);
+      INSERT INTO time_entries (user_id, project_id, description, start_time, activity_tag)
+      VALUES (?, ?, ?, ?, ?) RETURNING id
+    `, [userId, project_id || null, description || '', startTime, activity_tag || null]);
 
     const entry = await getOne(`
       SELECT te.*, p.name AS project_name
@@ -278,7 +279,7 @@ router.get('/summary', async (req, res) => {
     const weekStartStr = `${weekStart.getFullYear()}-${pad(weekStart.getMonth() + 1)}-${pad(weekStart.getDate())}`;
 
     const entries = await getAll(`
-      SELECT te.duration, te.project_id, p.name AS project_name,
+      SELECT te.duration, te.project_id, te.activity_tag, p.name AS project_name,
              TO_CHAR(te.start_time AT TIME ZONE 'Europe/Berlin', 'YYYY-MM-DD') AS entry_date,
              TO_CHAR(te.start_time AT TIME ZONE 'Europe/Berlin', 'YYYY-MM') AS entry_month
       FROM time_entries te
@@ -288,6 +289,7 @@ router.get('/summary', async (req, res) => {
 
     let today_sec = 0, week_sec = 0, month_sec = 0;
     const byProjectMap = {};
+    const byActivityMap = {};
 
     for (const e of entries) {
       const dur = e.duration || 0;
@@ -301,13 +303,21 @@ router.get('/summary', async (req, res) => {
         }
         byProjectMap[e.project_id].total_sec += dur;
       }
+
+      if (e.activity_tag) {
+        if (!byActivityMap[e.activity_tag]) {
+          byActivityMap[e.activity_tag] = { activity_tag: e.activity_tag, total_sec: 0 };
+        }
+        byActivityMap[e.activity_tag].total_sec += dur;
+      }
     }
 
     res.json({
       today_sec,
       week_sec,
       month_sec,
-      byProject: Object.values(byProjectMap).sort((a, b) => b.total_sec - a.total_sec),
+      byProject:  Object.values(byProjectMap).sort((a, b) => b.total_sec - a.total_sec),
+      byActivity: Object.values(byActivityMap).sort((a, b) => b.total_sec - a.total_sec),
     });
   } catch (err) {
     console.error('[time GET /summary]', err);
@@ -470,6 +480,52 @@ router.post('/migrate-project', async (req, res) => {
     return res.json({ action: 'migrated', updated: result.changes, from: from_name, to: to_name });
   } catch (err) {
     console.error('[time POST /migrate-project]', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * POST /api/time/migrate-to-activity-tags
+ * Converts time entries belonging to "activity-type" projects (Cold Call, Leads, etc.)
+ * into activity_tag entries with project_id = null.
+ * Body: { project_names: ['Cold Call', 'Leads'] }
+ */
+router.post('/migrate-to-activity-tags', async (req, res) => {
+  try {
+    const userId = req.userId;
+    const { project_names = [] } = req.body;
+    if (!project_names.length) return res.json({ migrated: 0 });
+
+    let totalMigrated = 0;
+    const deletedProjects = [];
+
+    for (const name of project_names) {
+      const project = await getOne(
+        'SELECT id, name FROM projects WHERE LOWER(name) = LOWER(?) AND user_id = ?',
+        [name.trim(), userId]
+      );
+      if (!project) continue;
+
+      const result = await run(
+        'UPDATE time_entries SET activity_tag = ?, project_id = NULL WHERE project_id = ? AND user_id = ?',
+        [project.name, project.id, userId]
+      );
+      totalMigrated += result.changes;
+
+      // Delete the project if it now has no entries
+      const remaining = await getOne(
+        'SELECT COUNT(*)::int AS count FROM time_entries WHERE project_id = ? AND user_id = ?',
+        [project.id, userId]
+      );
+      if ((remaining?.count || 0) === 0) {
+        await run('DELETE FROM projects WHERE id = ? AND user_id = ?', [project.id, userId]);
+        deletedProjects.push(project.name);
+      }
+    }
+
+    res.json({ migrated: totalMigrated, deletedProjects });
+  } catch (err) {
+    console.error('[time POST /migrate-to-activity-tags]', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

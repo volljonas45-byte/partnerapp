@@ -11,7 +11,8 @@ export const timeApi = {
   timerStop:   (id)          => api.post('/api/time/timer/stop', { id }).then(r => r.data),
 
   summary:        ()                   => api.get('/api/time/summary').then(r => r.data),
-  migrateProject: (from_name, to_name) => api.post('/api/time/migrate-project', { from_name, to_name }).then(r => r.data),
+  migrateProject:        (from_name, to_name)  => api.post('/api/time/migrate-project', { from_name, to_name }).then(r => r.data),
+  migrateToActivityTags: (project_names)       => api.post('/api/time/migrate-to-activity-tags', { project_names }).then(r => r.data),
 };
 
 export const fahrtenbuchApi = {

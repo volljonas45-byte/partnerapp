@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Clock, Play, Square, Plus, Trash2, Pencil, X, Check,
@@ -73,22 +74,41 @@ function glass(isDark) {
 
 const ACCENT = ['#5B8CF5', '#BF5AF2', '#34D399', '#FF9F0A', '#FF453A', '#FF6B35'];
 
+const ACTIVITY_TAGS = [
+  { tag: 'Cold Call', emoji: '📞', color: '#5B8CF5', bg: 'rgba(91,140,245,0.12)' },
+  { tag: 'Leads',     emoji: '🎯', color: '#34D399', bg: 'rgba(52,211,153,0.12)' },
+];
+
 // ── Project Picker ─────────────────────────────────────────────────────────────
 
-const QUICK_NAMES = ['cold call', 'cold calls', 'leads', 'lead'];
 
-function ProjectPicker({ value, onChange, projects, placeholder = 'Kein Projekt', isDark, c, quickProjects = [] }) {
+function ProjectPicker({ value, onChange, projects, placeholder = 'Kein Projekt', isDark, c }) {
   const [open, setOpen] = useState(false);
-  const ref = useRef(null);
+  const [pos, setPos] = useState({ top: 0, left: 0 });
+  const btnRef = useRef(null);
+  const dropRef = useRef(null);
 
   useEffect(() => {
-    const h = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    const h = e => {
+      if (
+        btnRef.current && !btnRef.current.contains(e.target) &&
+        dropRef.current && !dropRef.current.contains(e.target)
+      ) setOpen(false);
+    };
     document.addEventListener('mousedown', h);
     return () => document.removeEventListener('mousedown', h);
   }, []);
 
+  const handleOpen = () => {
+    if (!onChange) return;
+    if (!open && btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect();
+      setPos({ top: r.bottom + 4, left: r.right });
+    }
+    setOpen(o => !o);
+  };
+
   const selected = projects.find(p => p.id === value);
-  const restProjects = projects.filter(p => !quickProjects.find(q => q.id === p.id));
 
   const rowStyle = (isSelected) => ({
     display: 'block', width: '100%', textAlign: 'left',
@@ -99,11 +119,47 @@ function ProjectPicker({ value, onChange, projects, placeholder = 'Kein Projekt'
     whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
   });
 
+  const dropdown = open && createPortal(
+    <div ref={dropRef} style={{
+      position: 'fixed',
+      top: pos.top,
+      left: pos.left,
+      transform: 'translateX(-100%)',
+      zIndex: 99999,
+      backdropFilter: 'blur(20px)',
+      WebkitBackdropFilter: 'blur(20px)',
+      background: isDark ? 'rgba(18,18,28,0.96)' : 'rgba(255,255,255,0.96)',
+      border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)'}`,
+      borderRadius: 14,
+      minWidth: 260, maxHeight: 320, overflowY: 'auto',
+      boxShadow: isDark ? '0 12px 48px rgba(0,0,0,0.7)' : '0 8px 32px rgba(0,0,0,0.15)',
+    }}>
+      <button onClick={() => { onChange(null); setOpen(false); }}
+        style={{ display: 'block', width: '100%', textAlign: 'left', padding: '9px 14px', border: 'none', background: 'none', fontSize: 13, cursor: 'pointer', color: c.textTertiary, fontFamily: 'inherit' }}
+        onMouseEnter={e => e.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'}
+        onMouseLeave={e => e.currentTarget.style.background = 'none'}
+      >
+        Kein Projekt
+      </button>
+      {projects.map(p => (
+        <button key={p.id} onClick={() => { onChange(p.id); setOpen(false); }}
+          style={rowStyle(value === p.id)}
+          onMouseEnter={e => e.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'}
+          onMouseLeave={e => e.currentTarget.style.background = 'none'}
+        >
+          {p.name}
+        </button>
+      ))}
+    </div>,
+    document.body
+  );
+
   return (
-    <div ref={ref} style={{ position: 'relative' }}>
+    <div style={{ position: 'relative' }}>
       <button
+        ref={btnRef}
         type="button"
-        onClick={() => onChange && setOpen(o => !o)}
+        onClick={handleOpen}
         disabled={!onChange}
         style={{
           display: 'flex', alignItems: 'center', gap: 6,
@@ -121,63 +177,17 @@ function ProjectPicker({ value, onChange, projects, placeholder = 'Kein Projekt'
         {selected ? selected.name : placeholder}
         {onChange && <ChevronDown size={12} style={{ color: c.textTertiary }} />}
       </button>
-      {open && (
-        <div style={{
-          position: 'absolute', top: '100%', right: 0, marginTop: 4, zIndex: 200,
-          ...glass(isDark), borderRadius: 14,
-          minWidth: 260, maxHeight: 320, overflowY: 'auto',
-          boxShadow: isDark ? '0 8px 40px rgba(0,0,0,0.5)' : '0 8px 32px rgba(0,0,0,0.12)',
-        }}>
-          {/* Quick-select section */}
-          {quickProjects.length > 0 && (
-            <>
-              <div style={{ padding: '7px 14px 4px', fontSize: 10, fontWeight: 700, color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                ⚡ Schnellauswahl
-              </div>
-              {quickProjects.map(p => (
-                <button key={p.id} onClick={() => { onChange(p.id); setOpen(false); }}
-                  style={{ ...rowStyle(value === p.id), paddingLeft: 14, display: 'flex', alignItems: 'center', gap: 8 }}
-                  onMouseEnter={e => e.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'none'}
-                >
-                  <span style={{ fontSize: 14 }}>{p.name.toLowerCase().includes('lead') ? '🎯' : '📞'}</span>
-                  <span>{p.name}</span>
-                </button>
-              ))}
-              <div style={{ height: 1, background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)', margin: '4px 0' }} />
-            </>
-          )}
-
-          {/* No project */}
-          <button onClick={() => { onChange(null); setOpen(false); }}
-            style={{ display: 'block', width: '100%', textAlign: 'left', padding: '9px 14px', border: 'none', background: 'none', fontSize: 13, cursor: 'pointer', color: c.textTertiary, fontFamily: 'inherit' }}
-            onMouseEnter={e => e.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'none'}
-          >
-            Kein Projekt
-          </button>
-
-          {/* Rest of projects */}
-          {restProjects.map(p => (
-            <button key={p.id} onClick={() => { onChange(p.id); setOpen(false); }}
-              style={rowStyle(value === p.id)}
-              onMouseEnter={e => e.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'none'}
-            >
-              {p.name}
-            </button>
-          ))}
-        </div>
-      )}
+      {dropdown}
     </div>
   );
 }
 
 // ── Timer Bar ──────────────────────────────────────────────────────────────────
 
-function TimerBar({ activeTimer, projects, onStart, onStop, isDark, c, quickProjects }) {
+function TimerBar({ activeTimer, projects, onStart, onStop, isDark, c }) {
   const [desc, setDesc] = useState('');
   const [projectId, setProjectId] = useState(null);
+  const [activityTag, setActivityTag] = useState(null);
   const [elapsed, setElapsed] = useState(0);
 
   useEffect(() => {
@@ -197,9 +207,12 @@ function TimerBar({ activeTimer, projects, onStart, onStop, isDark, c, quickProj
     : `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 
   const handleStart = () => {
-    onStart({ project_id: projectId, description: desc });
-    setDesc('');
+    onStart({ project_id: projectId, description: desc, activity_tag: activityTag });
+    setDesc(''); setActivityTag(null);
   };
+
+  const activeActivity = isRunning && ACTIVITY_TAGS.find(a => a.tag === activeTimer.activity_tag);
+  const runningAccent = activeActivity ? activeActivity.color : '#5B8CF5';
 
   return (
     <div style={{
@@ -207,7 +220,7 @@ function TimerBar({ activeTimer, projects, onStart, onStop, isDark, c, quickProj
       padding: '16px 20px',
       marginBottom: 24,
       boxShadow: isRunning
-        ? `0 0 0 1px rgba(91,140,245,0.25), 0 0 48px rgba(91,140,245,${isDark ? '0.14' : '0.09'}), 0 4px 24px rgba(0,0,0,${isDark ? '0.35' : '0.08'})`
+        ? `0 0 0 1px ${runningAccent}40, 0 0 48px ${runningAccent}22, 0 4px 24px rgba(0,0,0,${isDark ? '0.35' : '0.08'})`
         : (isDark ? '0 4px 24px rgba(0,0,0,0.3)' : '0 2px 16px rgba(0,0,0,0.06)'),
       transition: 'box-shadow 0.5s ease',
       position: 'relative',
@@ -215,7 +228,7 @@ function TimerBar({ activeTimer, projects, onStart, onStop, isDark, c, quickProj
       {isRunning && (
         <div style={{
           position: 'absolute', inset: 0, pointerEvents: 'none',
-          background: 'radial-gradient(ellipse at 40% 0%, rgba(91,140,245,0.1) 0%, transparent 65%)',
+          background: `radial-gradient(ellipse at 40% 0%, ${runningAccent}18 0%, transparent 65%)`,
         }} />
       )}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, position: 'relative' }}>
@@ -223,7 +236,9 @@ function TimerBar({ activeTimer, projects, onStart, onStop, isDark, c, quickProj
           <div style={{
             fontVariantNumeric: 'tabular-nums', fontSize: 30, fontWeight: 700,
             letterSpacing: '-0.04em', minWidth: 108, lineHeight: 1,
-            background: 'linear-gradient(135deg, #5B8CF5, #BF5AF2)',
+            background: activeActivity
+              ? `linear-gradient(135deg, ${activeActivity.color}, ${activeActivity.color}aa)`
+              : 'linear-gradient(135deg, #5B8CF5, #BF5AF2)',
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
             animation: 'timerPulse 2.5s ease-in-out infinite',
           }}>
@@ -239,13 +254,46 @@ function TimerBar({ activeTimer, projects, onStart, onStop, isDark, c, quickProj
           onKeyDown={e => { if (e.key === 'Enter' && !isRunning) handleStart(); }}
           style={{ flex: 1, fontSize: 14, background: isRunning ? 'transparent' : undefined, border: isRunning ? 'none' : undefined }}
         />
-        <ProjectPicker
-          value={isRunning ? activeTimer.project_id : projectId}
-          onChange={isRunning ? undefined : setProjectId}
-          projects={projects}
-          quickProjects={isRunning ? [] : quickProjects}
-          isDark={isDark} c={c}
-        />
+
+        {/* Activity tag chips — only when not running */}
+        {!isRunning && (
+          <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+            {ACTIVITY_TAGS.map(a => {
+              const active = activityTag === a.tag;
+              return (
+                <button key={a.tag}
+                  type="button"
+                  onClick={() => { setActivityTag(active ? null : a.tag); if (!active) setProjectId(null); }}
+                  title={a.tag}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 5, padding: '6px 11px',
+                    borderRadius: 980, border: `1px solid ${active ? a.color + '60' : (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)')}`,
+                    background: active ? a.bg : 'transparent',
+                    color: active ? a.color : c.textSecondary,
+                    fontSize: 12, fontWeight: active ? 700 : 500, cursor: 'pointer', fontFamily: 'inherit',
+                    transition: 'all 0.18s',
+                  }}
+                  onMouseEnter={e => { if (!active) e.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'; }}
+                  onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent'; }}
+                >
+                  <span style={{ fontSize: 13 }}>{a.emoji}</span>
+                  <span>{a.tag}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Project picker — hidden when activity tag is selected */}
+        {!isRunning && !activityTag && (
+          <ProjectPicker
+            value={projectId}
+            onChange={setProjectId}
+            projects={projects}
+            isDark={isDark} c={c}
+          />
+        )}
+
         {isRunning ? (
           <button
             onClick={() => onStop(activeTimer.id)}
@@ -267,7 +315,9 @@ function TimerBar({ activeTimer, projects, onStart, onStop, isDark, c, quickProj
             style={{
               display: 'flex', alignItems: 'center', gap: 6, padding: '10px 22px',
               borderRadius: 980, border: 'none', cursor: 'pointer',
-              background: 'linear-gradient(135deg, #5B8CF5, #7B5AF5)',
+              background: activityTag
+                ? `linear-gradient(135deg, ${ACTIVITY_TAGS.find(a => a.tag === activityTag)?.color}, ${ACTIVITY_TAGS.find(a => a.tag === activityTag)?.color}cc)`
+                : 'linear-gradient(135deg, #5B8CF5, #7B5AF5)',
               color: '#fff', fontSize: 14, fontWeight: 600, whiteSpace: 'nowrap', fontFamily: 'inherit',
               boxShadow: '0 4px 16px rgba(91,140,245,0.4)',
               transition: 'all 0.18s',
@@ -279,9 +329,10 @@ function TimerBar({ activeTimer, projects, onStart, onStop, isDark, c, quickProj
           </button>
         )}
       </div>
-      {isRunning && activeTimer.project_name && (
-        <div style={{ marginTop: 8, fontSize: 12, color: '#5B8CF5', fontWeight: 600, paddingLeft: 120 }}>
-          {activeTimer.project_name}
+      {isRunning && (activeTimer.project_name || activeTimer.activity_tag) && (
+        <div style={{ marginTop: 8, fontSize: 12, fontWeight: 600, paddingLeft: 120, color: activeActivity ? activeActivity.color : '#5B8CF5', display: 'flex', alignItems: 'center', gap: 5 }}>
+          {activeActivity && <span>{activeActivity.emoji}</span>}
+          {activeTimer.activity_tag || activeTimer.project_name}
         </div>
       )}
     </div>
@@ -518,14 +569,22 @@ function StatsSection({ entries, summary, isDark, c }) {
   const projectBreakdown = useMemo(() => {
     const t = {};
     for (const e of entries) {
-      const k = e.project_name || 'Kein Projekt';
-      t[k] = (t[k] || 0) + (e.duration || 0);
+      if (e.activity_tag || !e.project_name) continue;
+      t[e.project_name] = (t[e.project_name] || 0) + (e.duration || 0);
     }
     return Object.entries(t).map(([name, sec]) => ({ name, hours: Math.round(sec / 360) / 10 }))
       .sort((a, b) => b.hours - a.hours).slice(0, 6);
   }, [entries]);
 
   const maxPH = projectBreakdown[0]?.hours || 1;
+
+  const activityBreakdown = useMemo(() => {
+    return (summary?.byActivity || []).map(a => ({
+      tag: a.activity_tag,
+      hours: Math.round((a.total_sec || 0) / 360) / 10,
+      meta: ACTIVITY_TAGS.find(x => x.tag === a.activity_tag),
+    }));
+  }, [summary]);
 
   const [dailyGoal, setDailyGoal] = useState(() => parseInt(localStorage.getItem('vecturo-daily-goal') || '8', 10));
   const [editGoal, setEditGoal] = useState(false);
@@ -646,6 +705,29 @@ function StatsSection({ entries, summary, isDark, c }) {
           </div>
         </div>
       </div>
+
+      {/* Activity breakdown */}
+      {activityBreakdown.length > 0 && (
+        <div style={{ ...glass(isDark), padding: '16px 20px' }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: c.text, marginBottom: 14 }}>Aktivitäten</div>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            {activityBreakdown.map(({ tag, hours, meta }) => (
+              <div key={tag} style={{
+                display: 'flex', alignItems: 'center', gap: 10, padding: '12px 18px',
+                borderRadius: 14, flex: '1 1 160px',
+                background: meta ? meta.bg : 'rgba(91,140,245,0.1)',
+                border: `1px solid ${meta ? meta.color + '30' : 'rgba(91,140,245,0.2)'}`,
+              }}>
+                <span style={{ fontSize: 22 }}>{meta?.emoji || '⏱'}</span>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: meta?.color || '#5B8CF5', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>{tag}</div>
+                  <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.04em', color: meta?.color || '#5B8CF5', fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>{hours}h</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -797,7 +879,16 @@ function EntryRow({ entry, onDelete, onEdit, isDark, c }) {
         <div style={{ fontSize: 14, color: c.text }}>
           {entry.description || <span style={{ color: c.textTertiary, fontStyle: 'italic' }}>Keine Beschreibung</span>}
         </div>
-        {entry.project_name && (
+        {entry.activity_tag && (() => {
+          const a = ACTIVITY_TAGS.find(x => x.tag === entry.activity_tag);
+          return (
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 3, padding: '2px 8px', borderRadius: 6, background: a ? a.bg : 'rgba(91,140,245,0.12)', fontSize: 11, fontWeight: 700, color: a ? a.color : '#5B8CF5' }}>
+              {a && <span>{a.emoji}</span>}
+              {entry.activity_tag}
+            </div>
+          );
+        })()}
+        {!entry.activity_tag && entry.project_name && (
           <div style={{ fontSize: 12, color: '#5B8CF5', marginTop: 2, fontWeight: 600 }}>{entry.project_name}</div>
         )}
       </div>
@@ -880,15 +971,16 @@ function FahrtRow({ f, isLast, onEdit, onDelete, isDark, c }) {
 
 // ── Manual Entry Form ──────────────────────────────────────────────────────────
 
-function ManualEntryForm({ projects, onSave, onCancel, initial = null, isDark, c, quickProjects = [] }) {
+function ManualEntryForm({ projects, onSave, onCancel, initial = null, isDark, c }) {
   const today = nowLocalDatetime().slice(0, 10);
   const [form, setForm] = useState(initial ? {
-    project_id: initial.project_id || null,
-    description: initial.description || '',
-    date: new Date(initial.start_time).toISOString().slice(0, 10),
+    project_id:   initial.project_id   || null,
+    activity_tag: initial.activity_tag || null,
+    description:  initial.description  || '',
+    date:  new Date(initial.start_time).toISOString().slice(0, 10),
     start: fmtTime(initial.start_time),
-    end: initial.end_time ? fmtTime(initial.end_time) : '',
-  } : { project_id: null, description: '', date: today, start: '', end: '' });
+    end:   initial.end_time ? fmtTime(initial.end_time) : '',
+  } : { project_id: null, activity_tag: null, description: '', date: today, start: '', end: '' });
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
@@ -897,7 +989,7 @@ function ManualEntryForm({ projects, onSave, onCancel, initial = null, isDark, c
     const startTime = new Date(`${form.date}T${form.start}:00`).toISOString();
     const endTime = form.end ? new Date(`${form.date}T${form.end}:00`).toISOString() : null;
     if (endTime && new Date(endTime) <= new Date(startTime)) { toast.error('Endzeit muss nach Startzeit liegen'); return; }
-    onSave({ project_id: form.project_id, description: form.description, start_time: startTime, end_time: endTime });
+    onSave({ project_id: form.project_id, activity_tag: form.activity_tag, description: form.description, start_time: startTime, end_time: endTime });
   };
 
   const labelStyle = { fontSize: 11, fontWeight: 700, color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 5 };
@@ -912,14 +1004,37 @@ function ManualEntryForm({ projects, onSave, onCancel, initial = null, isDark, c
           </div>
         ))}
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 10, marginBottom: 14, alignItems: 'end' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 10, marginBottom: 10, alignItems: 'end' }}>
         <div>
           <label style={labelStyle}>Beschreibung</label>
           <input className="input" placeholder="Woran gearbeitet?" value={form.description} onChange={e => set('description', e.target.value)} style={{ fontSize: 13 }} />
         </div>
         <div>
           <label style={labelStyle}>Projekt</label>
-          <ProjectPicker value={form.project_id} onChange={v => set('project_id', v)} projects={projects} quickProjects={quickProjects} isDark={isDark} c={c} />
+          <ProjectPicker value={form.activity_tag ? null : form.project_id} onChange={v => { set('project_id', v); set('activity_tag', null); }} projects={projects} isDark={isDark} c={c} />
+        </div>
+      </div>
+      {/* Activity tag row */}
+      <div style={{ marginBottom: 14 }}>
+        <label style={labelStyle}>Aktivität</label>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {ACTIVITY_TAGS.map(a => {
+            const active = form.activity_tag === a.tag;
+            return (
+              <button key={a.tag} type="button"
+                onClick={() => { set('activity_tag', active ? null : a.tag); if (!active) set('project_id', null); }}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px',
+                  borderRadius: 980, border: `1px solid ${active ? a.color + '60' : (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)')}`,
+                  background: active ? a.bg : 'transparent',
+                  color: active ? a.color : c.textSecondary,
+                  fontSize: 12, fontWeight: active ? 700 : 500, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s',
+                }}
+              >
+                <span>{a.emoji}</span><span>{a.tag}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
       <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
@@ -932,7 +1047,7 @@ function ManualEntryForm({ projects, onSave, onCancel, initial = null, isDark, c
 
 // ── Fahrt Form ─────────────────────────────────────────────────────────────────
 
-function FahrtForm({ projects, onSave, onCancel, initial = null, isDark, c, quickProjects = [] }) {
+function FahrtForm({ projects, onSave, onCancel, initial = null, isDark, c }) {
   const [form, setForm] = useState(initial || { project_id: null, date: todayISO(), from_loc: '', to_loc: '', distance_km: '', purpose: '', notes: '' });
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
   const labelStyle = { fontSize: 11, fontWeight: 700, color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 5 };
@@ -962,7 +1077,7 @@ function FahrtForm({ projects, onSave, onCancel, initial = null, isDark, c, quic
         ))}
         <div>
           <label style={labelStyle}>Projekt</label>
-          <ProjectPicker value={form.project_id} onChange={v => set('project_id', v)} projects={projects} quickProjects={quickProjects} isDark={isDark} c={c} />
+          <ProjectPicker value={form.project_id} onChange={v => set('project_id', v)} projects={projects} isDark={isDark} c={c} />
         </div>
       </div>
       <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
@@ -989,26 +1104,23 @@ export default function TimeTracking() {
 
   const { data: projects = [] } = useQuery({ queryKey: ['projects'], queryFn: () => projectsApi.list().then(r => r.data) });
 
-  const quickProjects = useMemo(
-    () => projects.filter(p => QUICK_NAMES.some(n => p.name.toLowerCase().includes(n))),
-    [projects]
-  );
-
-  // One-time migration: rename "Anrufe Maschinenbau" → "Cold Call"
+  // One-time migration: convert "Cold Call" / "Leads" projects → activity_tag entries
   useEffect(() => {
-    const MIGRATION_KEY = 'vecturo-migration-anrufe-coldcall-done';
-    if (localStorage.getItem(MIGRATION_KEY)) return;
+    const KEY = 'vecturo-migration-activity-tags-v1';
+    if (localStorage.getItem(KEY)) return;
     if (projects.length === 0) return;
-    const needsMigration = projects.some(p => p.name.toLowerCase().includes('anrufe maschinenbau'));
-    if (!needsMigration) { localStorage.setItem(MIGRATION_KEY, '1'); return; }
+    const names = ['Cold Call', 'Leads', 'Anrufe Maschinenbau'].filter(n =>
+      projects.some(p => p.name.toLowerCase() === n.toLowerCase())
+    );
+    if (names.length === 0) { localStorage.setItem(KEY, '1'); return; }
 
-    timeApi.migrateProject('Anrufe Maschinenbau', 'Cold Call').then(result => {
-      localStorage.setItem(MIGRATION_KEY, '1');
-      if (result.updated > 0) {
+    timeApi.migrateToActivityTags(names).then(result => {
+      localStorage.setItem(KEY, '1');
+      if (result.migrated > 0) {
         qc.invalidateQueries({ queryKey: ['projects'] });
         qc.invalidateQueries({ queryKey: ['time-entries'] });
         qc.invalidateQueries({ queryKey: ['time-summary'] });
-        toast.success(`✅ ${result.updated} Einträge → "Cold Call" migriert`);
+        toast.success(`✅ ${result.migrated} Einträge zu Aktivitäts-Tags migriert`);
       }
     }).catch(() => {});
   }, [projects, qc]);
@@ -1095,7 +1207,7 @@ export default function TimeTracking() {
           activeTimer={activeTimer} projects={projects}
           onStart={data => startTimer.mutate(data)}
           onStop={id => stopTimer.mutate(id)}
-          isDark={isDark} c={c} quickProjects={quickProjects}
+          isDark={isDark} c={c}
         />
 
         {/* Tabs */}
@@ -1139,8 +1251,8 @@ export default function TimeTracking() {
                   <Plus size={14} /> Manuell eintragen
                 </button>
               )}
-              {showManual && <ManualEntryForm projects={projects} quickProjects={quickProjects} onSave={d => createEntry.mutate(d)} onCancel={() => setShowManual(false)} isDark={isDark} c={c} />}
-              {editEntry && <ManualEntryForm projects={projects} quickProjects={quickProjects} initial={editEntry} onSave={d => updateEntry.mutate({ id: editEntry.id, data: d })} onCancel={() => setEditEntry(null)} isDark={isDark} c={c} />}
+              {showManual && <ManualEntryForm projects={projects} onSave={d => createEntry.mutate(d)} onCancel={() => setShowManual(false)} isDark={isDark} c={c} />}
+              {editEntry && <ManualEntryForm projects={projects} initial={editEntry} onSave={d => updateEntry.mutate({ id: editEntry.id, data: d })} onCancel={() => setEditEntry(null)} isDark={isDark} c={c} />}
 
               {loadingEntries ? (
                 <div style={{ ...glass(isDark), overflow: 'hidden' }}>
@@ -1249,8 +1361,8 @@ export default function TimeTracking() {
                 )}
               </div>
 
-              {showFahrForm && <FahrtForm projects={projects} quickProjects={quickProjects} onSave={d => createFahr.mutate(d)} onCancel={() => setShowFahrForm(false)} isDark={isDark} c={c} />}
-              {editFahr && <FahrtForm projects={projects} quickProjects={quickProjects} initial={editFahr} onSave={d => updateFahr.mutate({ id: editFahr.id, data: d })} onCancel={() => setEditFahr(null)} isDark={isDark} c={c} />}
+              {showFahrForm && <FahrtForm projects={projects} onSave={d => createFahr.mutate(d)} onCancel={() => setShowFahrForm(false)} isDark={isDark} c={c} />}
+              {editFahr && <FahrtForm projects={projects} initial={editFahr} onSave={d => updateFahr.mutate({ id: editFahr.id, data: d })} onCancel={() => setEditFahr(null)} isDark={isDark} c={c} />}
 
               {loadingFahrten ? (
                 <div style={{ ...glass(isDark), overflow: 'hidden' }}>

@@ -40,6 +40,7 @@ async function migrate() {
     `UPDATE partner_appointments SET workspace_owner_id = 2 WHERE workspace_owner_id = 1`,
     `UPDATE partner_commissions SET workspace_owner_id = 2 WHERE workspace_owner_id = 1`,
     `CREATE TABLE IF NOT EXISTS partner_lead_requests (id SERIAL PRIMARY KEY, partner_id INTEGER NOT NULL REFERENCES partners(id), workspace_owner_id INTEGER NOT NULL, industry TEXT NOT NULL, quantity INTEGER NOT NULL DEFAULT 1, message TEXT, status TEXT NOT NULL DEFAULT 'pending', created_at TIMESTAMPTZ DEFAULT NOW())`,
+    `ALTER TABLE time_entries ADD COLUMN IF NOT EXISTS activity_tag TEXT DEFAULT NULL`,
   ];
   const client2 = await pool.connect();
   try {
