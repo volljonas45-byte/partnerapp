@@ -430,4 +430,48 @@ router.delete('/fahrtenbuch/:id', async (req, res) => {
   }
 });
 
+/**
+ * POST /api/time/migrate-project
+ * Renames a project OR moves all time entries from one project to another.
+ * Body: { from_name, to_name }
+ */
+router.post('/migrate-project', async (req, res) => {
+  try {
+    const userId = req.userId;
+    const { from_name, to_name } = req.body;
+    if (!from_name || !to_name) return res.status(400).json({ error: 'from_name and to_name required' });
+
+    const fromProject = await getOne(
+      'SELECT id, name FROM projects WHERE LOWER(name) = LOWER(?) AND user_id = ?',
+      [from_name.trim(), userId]
+    );
+    if (!fromProject) return res.json({ updated: 0, message: 'Source project not found' });
+
+    const toProject = await getOne(
+      'SELECT id, name FROM projects WHERE LOWER(name) = LOWER(?) AND user_id = ?',
+      [to_name.trim(), userId]
+    );
+
+    if (!toProject) {
+      // No target project exists — just rename the source project
+      await run('UPDATE projects SET name = ? WHERE id = ?', [to_name.trim(), fromProject.id]);
+      const { count } = await getOne(
+        'SELECT COUNT(*)::int AS count FROM time_entries WHERE project_id = ? AND user_id = ?',
+        [fromProject.id, userId]
+      );
+      return res.json({ action: 'renamed', updated: count, from: from_name, to: to_name });
+    }
+
+    // Target exists — move all entries from source project to target
+    const result = await run(
+      'UPDATE time_entries SET project_id = ? WHERE project_id = ? AND user_id = ?',
+      [toProject.id, fromProject.id, userId]
+    );
+    return res.json({ action: 'migrated', updated: result.changes, from: from_name, to: to_name });
+  } catch (err) {
+    console.error('[time POST /migrate-project]', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 module.exports = router;

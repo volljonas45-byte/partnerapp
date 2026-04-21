@@ -75,7 +75,9 @@ const ACCENT = ['#5B8CF5', '#BF5AF2', '#34D399', '#FF9F0A', '#FF453A', '#FF6B35'
 
 // ── Project Picker ─────────────────────────────────────────────────────────────
 
-function ProjectPicker({ value, onChange, projects, placeholder = 'Kein Projekt', isDark, c }) {
+const QUICK_NAMES = ['cold call', 'cold calls', 'leads', 'lead'];
+
+function ProjectPicker({ value, onChange, projects, placeholder = 'Kein Projekt', isDark, c, quickProjects = [] }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -86,6 +88,15 @@ function ProjectPicker({ value, onChange, projects, placeholder = 'Kein Projekt'
   }, []);
 
   const selected = projects.find(p => p.id === value);
+  const restProjects = projects.filter(p => !quickProjects.find(q => q.id === p.id));
+
+  const rowStyle = (isSelected) => ({
+    display: 'block', width: '100%', textAlign: 'left',
+    padding: '9px 14px', border: 'none', background: 'none',
+    fontSize: 13, cursor: 'pointer', fontFamily: 'inherit',
+    color: isSelected ? '#5B8CF5' : c.text,
+    fontWeight: isSelected ? '600' : '400',
+  });
 
   return (
     <div ref={ref} style={{ position: 'relative' }}>
@@ -113,22 +124,42 @@ function ProjectPicker({ value, onChange, projects, placeholder = 'Kein Projekt'
         <div style={{
           position: 'absolute', top: '100%', left: 0, marginTop: 4, zIndex: 200,
           ...glass(isDark), borderRadius: 14,
-          minWidth: 200, maxHeight: 260, overflowY: 'auto',
+          minWidth: 220, maxHeight: 300, overflowY: 'auto',
           boxShadow: isDark ? '0 8px 40px rgba(0,0,0,0.5)' : '0 8px 32px rgba(0,0,0,0.12)',
         }}>
-          <button
-            onClick={() => { onChange(null); setOpen(false); }}
-            style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 14px', border: 'none', background: 'none', fontSize: 13, cursor: 'pointer', color: c.textTertiary, fontFamily: 'inherit' }}
+          {/* Quick-select section */}
+          {quickProjects.length > 0 && (
+            <>
+              <div style={{ padding: '7px 14px 4px', fontSize: 10, fontWeight: 700, color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                ⚡ Schnellauswahl
+              </div>
+              {quickProjects.map(p => (
+                <button key={p.id} onClick={() => { onChange(p.id); setOpen(false); }}
+                  style={{ ...rowStyle(value === p.id), paddingLeft: 14, display: 'flex', alignItems: 'center', gap: 8 }}
+                  onMouseEnter={e => e.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                >
+                  <span style={{ fontSize: 14 }}>{p.name.toLowerCase().includes('lead') ? '🎯' : '📞'}</span>
+                  <span>{p.name}</span>
+                </button>
+              ))}
+              <div style={{ height: 1, background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)', margin: '4px 0' }} />
+            </>
+          )}
+
+          {/* No project */}
+          <button onClick={() => { onChange(null); setOpen(false); }}
+            style={{ display: 'block', width: '100%', textAlign: 'left', padding: '9px 14px', border: 'none', background: 'none', fontSize: 13, cursor: 'pointer', color: c.textTertiary, fontFamily: 'inherit' }}
             onMouseEnter={e => e.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'}
             onMouseLeave={e => e.currentTarget.style.background = 'none'}
           >
             Kein Projekt
           </button>
-          {projects.map(p => (
-            <button
-              key={p.id}
-              onClick={() => { onChange(p.id); setOpen(false); }}
-              style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 14px', border: 'none', background: 'none', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', color: value === p.id ? '#5B8CF5' : c.text, fontWeight: value === p.id ? '600' : '400' }}
+
+          {/* Rest of projects */}
+          {restProjects.map(p => (
+            <button key={p.id} onClick={() => { onChange(p.id); setOpen(false); }}
+              style={rowStyle(value === p.id)}
               onMouseEnter={e => e.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'}
               onMouseLeave={e => e.currentTarget.style.background = 'none'}
             >
@@ -143,7 +174,7 @@ function ProjectPicker({ value, onChange, projects, placeholder = 'Kein Projekt'
 
 // ── Timer Bar ──────────────────────────────────────────────────────────────────
 
-function TimerBar({ activeTimer, projects, onStart, onStop, isDark, c }) {
+function TimerBar({ activeTimer, projects, onStart, onStop, isDark, c, quickProjects }) {
   const [desc, setDesc] = useState('');
   const [projectId, setProjectId] = useState(null);
   const [elapsed, setElapsed] = useState(0);
@@ -211,6 +242,7 @@ function TimerBar({ activeTimer, projects, onStart, onStop, isDark, c }) {
           value={isRunning ? activeTimer.project_id : projectId}
           onChange={isRunning ? undefined : setProjectId}
           projects={projects}
+          quickProjects={isRunning ? [] : quickProjects}
           isDark={isDark} c={c}
         />
         {isRunning ? (
@@ -847,7 +879,7 @@ function FahrtRow({ f, isLast, onEdit, onDelete, isDark, c }) {
 
 // ── Manual Entry Form ──────────────────────────────────────────────────────────
 
-function ManualEntryForm({ projects, onSave, onCancel, initial = null, isDark, c }) {
+function ManualEntryForm({ projects, onSave, onCancel, initial = null, isDark, c, quickProjects = [] }) {
   const today = nowLocalDatetime().slice(0, 10);
   const [form, setForm] = useState(initial ? {
     project_id: initial.project_id || null,
@@ -886,7 +918,7 @@ function ManualEntryForm({ projects, onSave, onCancel, initial = null, isDark, c
         </div>
         <div>
           <label style={labelStyle}>Projekt</label>
-          <ProjectPicker value={form.project_id} onChange={v => set('project_id', v)} projects={projects} isDark={isDark} c={c} />
+          <ProjectPicker value={form.project_id} onChange={v => set('project_id', v)} projects={projects} quickProjects={quickProjects} isDark={isDark} c={c} />
         </div>
       </div>
       <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
@@ -899,7 +931,7 @@ function ManualEntryForm({ projects, onSave, onCancel, initial = null, isDark, c
 
 // ── Fahrt Form ─────────────────────────────────────────────────────────────────
 
-function FahrtForm({ projects, onSave, onCancel, initial = null, isDark, c }) {
+function FahrtForm({ projects, onSave, onCancel, initial = null, isDark, c, quickProjects = [] }) {
   const [form, setForm] = useState(initial || { project_id: null, date: todayISO(), from_loc: '', to_loc: '', distance_km: '', purpose: '', notes: '' });
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
   const labelStyle = { fontSize: 11, fontWeight: 700, color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 5 };
@@ -929,7 +961,7 @@ function FahrtForm({ projects, onSave, onCancel, initial = null, isDark, c }) {
         ))}
         <div>
           <label style={labelStyle}>Projekt</label>
-          <ProjectPicker value={form.project_id} onChange={v => set('project_id', v)} projects={projects} isDark={isDark} c={c} />
+          <ProjectPicker value={form.project_id} onChange={v => set('project_id', v)} projects={projects} quickProjects={quickProjects} isDark={isDark} c={c} />
         </div>
       </div>
       <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
@@ -955,6 +987,30 @@ export default function TimeTracking() {
   const [collapsedDays, setCollapsedDays] = useState({});
 
   const { data: projects = [] } = useQuery({ queryKey: ['projects'], queryFn: () => projectsApi.list().then(r => r.data) });
+
+  const quickProjects = useMemo(
+    () => projects.filter(p => QUICK_NAMES.some(n => p.name.toLowerCase().includes(n))),
+    [projects]
+  );
+
+  // One-time migration: rename "Anrufe Maschinenbau" → "Cold Call"
+  useEffect(() => {
+    const MIGRATION_KEY = 'vecturo-migration-anrufe-coldcall-done';
+    if (localStorage.getItem(MIGRATION_KEY)) return;
+    if (projects.length === 0) return;
+    const needsMigration = projects.some(p => p.name.toLowerCase().includes('anrufe maschinenbau'));
+    if (!needsMigration) { localStorage.setItem(MIGRATION_KEY, '1'); return; }
+
+    timeApi.migrateProject('Anrufe Maschinenbau', 'Cold Call').then(result => {
+      localStorage.setItem(MIGRATION_KEY, '1');
+      if (result.updated > 0) {
+        qc.invalidateQueries({ queryKey: ['projects'] });
+        qc.invalidateQueries({ queryKey: ['time-entries'] });
+        qc.invalidateQueries({ queryKey: ['time-summary'] });
+        toast.success(`✅ ${result.updated} Einträge → "Cold Call" migriert`);
+      }
+    }).catch(() => {});
+  }, [projects, qc]);
   const { data: activeTimer } = useQuery({ queryKey: ['timer-active'], queryFn: timeApi.timerActive, refetchInterval: 30000 });
   const { data: entries = [], isLoading: loadingEntries } = useQuery({ queryKey: ['time-entries'], queryFn: () => timeApi.list() });
   const { data: summary } = useQuery({ queryKey: ['time-summary'], queryFn: timeApi.summary });
@@ -1038,7 +1094,7 @@ export default function TimeTracking() {
           activeTimer={activeTimer} projects={projects}
           onStart={data => startTimer.mutate(data)}
           onStop={id => stopTimer.mutate(id)}
-          isDark={isDark} c={c}
+          isDark={isDark} c={c} quickProjects={quickProjects}
         />
 
         {/* Tabs */}
@@ -1082,8 +1138,8 @@ export default function TimeTracking() {
                   <Plus size={14} /> Manuell eintragen
                 </button>
               )}
-              {showManual && <ManualEntryForm projects={projects} onSave={d => createEntry.mutate(d)} onCancel={() => setShowManual(false)} isDark={isDark} c={c} />}
-              {editEntry && <ManualEntryForm projects={projects} initial={editEntry} onSave={d => updateEntry.mutate({ id: editEntry.id, data: d })} onCancel={() => setEditEntry(null)} isDark={isDark} c={c} />}
+              {showManual && <ManualEntryForm projects={projects} quickProjects={quickProjects} onSave={d => createEntry.mutate(d)} onCancel={() => setShowManual(false)} isDark={isDark} c={c} />}
+              {editEntry && <ManualEntryForm projects={projects} quickProjects={quickProjects} initial={editEntry} onSave={d => updateEntry.mutate({ id: editEntry.id, data: d })} onCancel={() => setEditEntry(null)} isDark={isDark} c={c} />}
 
               {loadingEntries ? (
                 <div style={{ ...glass(isDark), overflow: 'hidden' }}>
@@ -1192,8 +1248,8 @@ export default function TimeTracking() {
                 )}
               </div>
 
-              {showFahrForm && <FahrtForm projects={projects} onSave={d => createFahr.mutate(d)} onCancel={() => setShowFahrForm(false)} isDark={isDark} c={c} />}
-              {editFahr && <FahrtForm projects={projects} initial={editFahr} onSave={d => updateFahr.mutate({ id: editFahr.id, data: d })} onCancel={() => setEditFahr(null)} isDark={isDark} c={c} />}
+              {showFahrForm && <FahrtForm projects={projects} quickProjects={quickProjects} onSave={d => createFahr.mutate(d)} onCancel={() => setShowFahrForm(false)} isDark={isDark} c={c} />}
+              {editFahr && <FahrtForm projects={projects} quickProjects={quickProjects} initial={editFahr} onSave={d => updateFahr.mutate({ id: editFahr.id, data: d })} onCancel={() => setEditFahr(null)} isDark={isDark} c={c} />}
 
               {loadingFahrten ? (
                 <div style={{ ...glass(isDark), overflow: 'hidden' }}>
