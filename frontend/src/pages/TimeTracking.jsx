@@ -96,6 +96,7 @@ function ProjectPicker({ value, onChange, projects, placeholder = 'Kein Projekt'
     fontSize: 13, cursor: 'pointer', fontFamily: 'inherit',
     color: isSelected ? '#5B8CF5' : c.text,
     fontWeight: isSelected ? '600' : '400',
+    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
   });
 
   return (
@@ -122,9 +123,9 @@ function ProjectPicker({ value, onChange, projects, placeholder = 'Kein Projekt'
       </button>
       {open && (
         <div style={{
-          position: 'absolute', top: '100%', left: 0, marginTop: 4, zIndex: 200,
+          position: 'absolute', top: '100%', right: 0, marginTop: 4, zIndex: 200,
           ...glass(isDark), borderRadius: 14,
-          minWidth: 220, maxHeight: 300, overflowY: 'auto',
+          minWidth: 260, maxHeight: 320, overflowY: 'auto',
           boxShadow: isDark ? '0 8px 40px rgba(0,0,0,0.5)' : '0 8px 32px rgba(0,0,0,0.12)',
         }}>
           {/* Quick-select section */}
