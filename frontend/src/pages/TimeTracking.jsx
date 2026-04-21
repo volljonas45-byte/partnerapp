@@ -178,7 +178,7 @@ function TimerBar({ activeTimer, projects, onStart, onStop, isDark, c }) {
         ? `0 0 0 1px rgba(91,140,245,0.25), 0 0 48px rgba(91,140,245,${isDark ? '0.14' : '0.09'}), 0 4px 24px rgba(0,0,0,${isDark ? '0.35' : '0.08'})`
         : (isDark ? '0 4px 24px rgba(0,0,0,0.3)' : '0 2px 16px rgba(0,0,0,0.06)'),
       transition: 'box-shadow 0.5s ease',
-      position: 'relative', overflow: 'hidden',
+      position: 'relative',
     }}>
       {isRunning && (
         <div style={{
