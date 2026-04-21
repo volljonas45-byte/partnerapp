@@ -19,6 +19,7 @@ import SalesTargetModal from '../components/sales/SalesTargetModal';
 import ExcelImportModal from '../components/sales/ExcelImportModal';
 import CreateLeadModal from '../components/sales/CreateLeadModal';
 import ScreenshotImportModal from '../components/sales/ScreenshotImportModal';
+import CallLogbookModal from '../components/sales/CallLogbookModal';
 import { useMobile } from '../hooks/useMobile';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
@@ -323,6 +324,7 @@ export default function SalesEngine() {
   const [activeCall, setActiveCall]         = useState(null);
   const [followupFor, setFollowupFor]       = useState(null);
   const [showStatusMenu, setShowStatusMenu] = useState(false);
+  const [showCallLogbook, setShowCallLogbook] = useState(false);
 
   // Detail-panel local state
   const [notes, setNotes]         = useState('');
@@ -1911,6 +1913,20 @@ export default function SalesEngine() {
                     </div>
                   );
                 })}
+                <button
+                  onClick={() => setShowCallLogbook(true)}
+                  style={{
+                    width: '100%', marginTop: 10, padding: '8px 0',
+                    background: 'none', border: `1px solid ${c.borderSubtle}`,
+                    borderRadius: 9, cursor: 'pointer',
+                    fontSize: 12, fontWeight: 600, color: c.textSecondary,
+                    transition: 'background 0.15s',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = c.borderSubtle}
+                  onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                >
+                  Mehr anzeigen
+                </button>
               </div>
             )}
           </div>
@@ -1967,6 +1983,9 @@ export default function SalesEngine() {
       )}
       {showEmailModal && selectedLead && (
         <LeadEmailModal lead={selectedLead} onClose={() => setShowEmailModal(false)} />
+      )}
+      {showCallLogbook && (
+        <CallLogbookModal ownerParam={ownerParam} onClose={() => setShowCallLogbook(false)} />
       )}
     </div>
   );
