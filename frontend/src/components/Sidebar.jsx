@@ -1,13 +1,192 @@
+import { useState, useEffect, useRef } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Users, FileText, ClipboardList, Settings, LogOut,
   Layers, ClipboardCheck, PackageCheck,
   UserCog, Clock, BarChart2, CalendarDays, Plus, CalendarRange, FolderKanban, Flame, BarChart3, Target, TrendingUp, Handshake,
+  Play, Square, RotateCcw,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { intakeApi } from '../api/intake';
+import toast from 'react-hot-toast';
+
+const POMO_CFG = {
+  work:       { label: 'Fokus',  color: '#FF453A', glow: 'rgba(255,69,58,0.2)',  icon: '🍅', default: 25 },
+  shortBreak: { label: 'Pause',  color: '#34D399', glow: 'rgba(52,211,153,0.2)', icon: '☕', default: 5  },
+};
+
+function todayISO() { return new Date().toISOString().slice(0, 10); }
+
+function MiniPomodoro({ isDark, c }) {
+  const KEY = `vecturo-pomo-${todayISO()}`;
+  const [durations] = useState(() => {
+    const s = localStorage.getItem('vecturo-pomo-settings');
+    return s ? JSON.parse(s) : { work: 25, shortBreak: 5 };
+  });
+  const [mode, setMode] = useState('work');
+  const [timeLeft, setTimeLeft] = useState(() => {
+    const s = localStorage.getItem('vecturo-pomo-settings');
+    const d = s ? JSON.parse(s) : { work: 25 };
+    return (d.work || 25) * 60;
+  });
+  const [running, setRunning] = useState(false);
+  const [sessions, setSessions] = useState(() => parseInt(localStorage.getItem(KEY) || '0', 10));
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const h = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, []);
+
+  useEffect(() => {
+    if (!running || timeLeft <= 0) return;
+    const id = setTimeout(() => {
+      const next = timeLeft - 1;
+      setTimeLeft(next);
+      if (next <= 0) {
+        setRunning(false);
+        if (mode === 'work') {
+          setSessions(s => { const n = s + 1; localStorage.setItem(KEY, String(n)); return n; });
+          toast.success('🍅 Pomodoro fertig! Verdiene dir eine Pause.', { duration: 4000 });
+        } else {
+          toast.success('🎯 Pause vorbei! Weiter geht\'s.', { duration: 3000 });
+        }
+      }
+    }, 1000);
+    return () => clearTimeout(id);
+  }, [running, timeLeft, mode, KEY]);
+
+  const switchMode = m => { setMode(m); setRunning(false); setTimeLeft((durations[m] || POMO_CFG[m].default) * 60); };
+  const reset = () => { setRunning(false); setTimeLeft((durations[mode] || POMO_CFG[mode].default) * 60); };
+
+  const cfg = POMO_CFG[mode] || POMO_CFG.work;
+  const total = (durations[mode] || cfg.default) * 60;
+  const mins = Math.floor(timeLeft / 60);
+  const secs = timeLeft % 60;
+  const progress = total > 0 ? (total - timeLeft) / total : 0;
+  const cyclePos = sessions % 4;
+
+  return (
+    <div ref={ref} style={{ position: 'relative', flexShrink: 0 }}>
+      {/* Trigger */}
+      <button
+        onClick={() => setOpen(o => !o)}
+        title="Pomodoro Timer"
+        style={{
+          display: 'flex', alignItems: 'center', gap: 4,
+          padding: '4px 8px', borderRadius: 7, border: 'none', cursor: 'pointer',
+          background: running
+            ? (isDark ? 'rgba(255,69,58,0.15)' : 'rgba(255,69,58,0.1)')
+            : (isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)'),
+          color: running ? '#FF453A' : c.textTertiary,
+          fontSize: 11, fontWeight: 700, fontVariantNumeric: 'tabular-nums',
+          letterSpacing: '0.01em', fontFamily: 'inherit',
+          transition: 'all 0.2s',
+          animation: running ? 'timerPulse 2.5s ease-in-out infinite' : 'none',
+        }}
+        onMouseEnter={e => !running && (e.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.09)')}
+        onMouseLeave={e => !running && (e.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)')}
+      >
+        🍅{running && ` ${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`}
+      </button>
+
+      {/* Popover */}
+      {open && (
+        <div style={{
+          position: 'absolute', top: 'calc(100% + 8px)', right: 0,
+          width: 210, zIndex: 200,
+          backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+          background: isDark ? 'rgba(22,22,26,0.95)' : 'rgba(255,255,255,0.95)',
+          border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'}`,
+          borderRadius: 16,
+          boxShadow: isDark ? '0 12px 48px rgba(0,0,0,0.55)' : '0 8px 36px rgba(0,0,0,0.14)',
+          padding: '14px 16px',
+          animation: 'slideUp 0.2s ease',
+        }}>
+          {/* Mode tabs */}
+          <div style={{ display: 'flex', gap: 4, marginBottom: 14, background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)', borderRadius: 9, padding: 3 }}>
+            {Object.entries(POMO_CFG).map(([key, m]) => (
+              <button key={key} onClick={() => switchMode(key)}
+                style={{
+                  flex: 1, padding: '5px 0', borderRadius: 7, border: 'none', cursor: 'pointer',
+                  fontFamily: 'inherit', fontSize: 11, fontWeight: 600,
+                  background: mode === key ? m.color : 'transparent',
+                  color: mode === key ? '#fff' : c.textTertiary,
+                  boxShadow: mode === key ? `0 1px 8px ${m.glow}` : 'none',
+                  transition: 'all 0.18s',
+                }}>
+                {m.icon} {m.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Time + progress */}
+          <div style={{ textAlign: 'center', marginBottom: 10 }}>
+            <div style={{
+              fontSize: 38, fontWeight: 700, letterSpacing: '-0.05em',
+              fontVariantNumeric: 'tabular-nums', lineHeight: 1,
+              color: running ? cfg.color : c.text, transition: 'color 0.3s',
+            }}>
+              {String(mins).padStart(2,'0')}:{String(secs).padStart(2,'0')}
+            </div>
+            <div style={{ height: 3, borderRadius: 2, background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)', margin: '10px 0 0', overflow: 'hidden' }}>
+              <div style={{
+                height: '100%', borderRadius: 2, background: cfg.color,
+                width: `${progress * 100}%`, transition: running ? 'width 1s linear' : 'width 0.3s ease',
+                boxShadow: running ? `0 0 6px ${cfg.glow}` : 'none',
+              }} />
+            </div>
+          </div>
+
+          {/* Controls */}
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', alignItems: 'center', marginBottom: 12 }}>
+            <button onClick={reset}
+              style={{ width: 32, height: 32, borderRadius: '50%', border: 'none', cursor: 'pointer', background: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)', color: c.textTertiary, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}
+              onMouseEnter={e => e.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)'}
+              onMouseLeave={e => e.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)'}
+              title="Zurücksetzen">
+              <RotateCcw size={13} />
+            </button>
+            <button
+              onClick={() => setRunning(r => !r)}
+              style={{
+                width: 44, height: 44, borderRadius: '50%', border: 'none', cursor: 'pointer',
+                background: `linear-gradient(135deg, ${cfg.color}, ${cfg.color}bb)`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: `0 3px 16px ${cfg.glow}`,
+                transition: 'all 0.18s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.06)'; }}
+              onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
+            >
+              {running
+                ? <Square size={16} color="#fff" fill="#fff" />
+                : <Play size={16} color="#fff" fill="#fff" style={{ marginLeft: 2 }} />}
+            </button>
+            <div style={{ width: 32 }} />
+          </div>
+
+          {/* Session dots */}
+          <div style={{ display: 'flex', gap: 5, justifyContent: 'center', alignItems: 'center' }}>
+            {[...Array(4)].map((_, i) => (
+              <div key={i} style={{
+                width: 7, height: 7, borderRadius: '50%',
+                background: i < cyclePos ? '#FF453A' : (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'),
+                boxShadow: i < cyclePos ? '0 0 5px rgba(255,69,58,0.5)' : 'none',
+                transition: 'all 0.25s',
+              }} />
+            ))}
+            <span style={{ fontSize: 10, color: c.textTertiary, marginLeft: 4 }}>{sessions} heute</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function avatarColor(str = '') {
   const colors = ['#BF5AF2','var(--color-blue)','#34C759','#FF9500','#FF3B30','#5AC8FA','#AF52DE'];
@@ -95,22 +274,22 @@ export default function Sidebar() {
 
       {/* Logo */}
       <div style={{ padding: '18px 20px 6px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <img
-            src="/Logo-SM-JR.png"
-            alt="Vecturo"
-            style={{
-              width: 30, height: 30, borderRadius: 8,
-              objectFit: 'cover', flexShrink: 0,
-              boxShadow: isDark
-                ? '0 1px 2px rgba(0,0,0,0.4)'
-                : '0 1px 2px rgba(0,0,0,0.08)',
-            }}
-          />
-          <span style={{
-            fontSize: 15, fontWeight: 600, color: c.text,
-            letterSpacing: '-0.02em',
-          }}>Vecturo</span>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <img
+              src="/Logo-SM-JR.png"
+              alt="Vecturo"
+              style={{
+                width: 30, height: 30, borderRadius: 8,
+                objectFit: 'cover', flexShrink: 0,
+                boxShadow: isDark
+                  ? '0 1px 2px rgba(0,0,0,0.4)'
+                  : '0 1px 2px rgba(0,0,0,0.08)',
+              }}
+            />
+            <span style={{ fontSize: 15, fontWeight: 600, color: c.text, letterSpacing: '-0.02em' }}>Vecturo</span>
+          </div>
+          <MiniPomodoro isDark={isDark} c={c} />
         </div>
       </div>
 
