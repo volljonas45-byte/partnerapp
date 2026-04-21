@@ -872,6 +872,15 @@ export default function SalesEngine() {
                 <span style={{ fontSize: 12.5, fontWeight: 600, color: mot.type === 'urgent' ? '#FF3B30' : '#FF9500' }}>{mot.message}</span>
               </div>
             )}
+            {mot && (mot.type === 'success' || mot.type === 'excellent') && (
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', borderRadius: 10, marginBottom: 10,
+                background: 'rgba(52,199,89,0.08)', border: '1px solid rgba(52,199,89,0.2)',
+              }}>
+                <CheckCircle2 size={13} color="#34C759" />
+                <span style={{ fontSize: 12.5, fontWeight: 600, color: '#34C759' }}>{mot.message}</span>
+              </div>
+            )}
 
             {/* Tabs */}
             <div style={{ margin: '0 -16px', padding: '0 16px', overflowX: 'auto', scrollbarWidth: 'none' }}>
@@ -1304,7 +1313,7 @@ export default function SalesEngine() {
           background: 'rgba(52,199,89,0.08)', border: '1px solid rgba(52,199,89,0.2)',
         }}>
           <CheckCircle2 size={14} color="#34C759" />
-          <span style={{ fontSize: 13, fontWeight: 600, color: '#1A8F40' }}>{mot.message}</span>
+          <span style={{ fontSize: 13, fontWeight: 600, color: '#34C759' }}>{mot.message}</span>
         </div>
       )}
 

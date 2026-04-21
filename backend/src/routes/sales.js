@@ -76,11 +76,11 @@ async function getNextAvailableDay(workspaceUserId, ownerId) {
 
 function motivation(todayCalls, todayReached, todayClosings, targets) {
   const { daily_calls, daily_connects, daily_closings } = targets;
-  if (todayClosings >= daily_closings && todayCalls >= daily_calls) {
+  if (todayCalls >= daily_calls) {
     const over = todayCalls - daily_calls;
     return over > 0
-      ? { message: `Du bist heute on fire — ${over} Anrufe über dem Ziel!`, type: 'excellent' }
-      : { message: 'Tagesziel erreicht! Weiter so!', type: 'success' };
+      ? { message: `Du bist ${over} Calls über deinem Ziel — weiter so, das ist Klasse!`, type: 'excellent' }
+      : { message: 'Tagesziel erreicht! Stark gemacht, weiter geht\'s!', type: 'success' };
   }
   const remaining = daily_calls - todayCalls;
   if (remaining > daily_calls * 0.7) {
