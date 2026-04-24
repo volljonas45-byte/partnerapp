@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../context/AuthContext';
 
@@ -31,8 +31,6 @@ export default function Login() {
   const nav = useNavigate();
   const [error, setError]     = useState('');
   const [loading, setLoading] = useState(false);
-  const [mode, setMode]       = useState('login'); // 'login' | 'register'
-  const [name, setName]       = useState('');
   const [email, setEmail]     = useState('');
   const [password, setPassword] = useState('');
 
@@ -50,8 +48,7 @@ export default function Login() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (mode === 'login') run(() => loginWithEmail(email, password));
-    else run(() => register(name, email, password));
+    run(() => loginWithEmail(email, password));
   };
 
   return (
@@ -84,10 +81,6 @@ export default function Login() {
 
           {/* Email Form */}
           <form onSubmit={handleSubmit}>
-            {mode === 'register' && (
-              <Field label="Name" type="text" value={name}
-                onChange={e => setName(e.target.value)} required placeholder="Max Mustermann" />
-            )}
             <Field label="E-Mail" type="email" value={email}
               onChange={e => setEmail(e.target.value)} required placeholder="deine@email.de" />
             <Field label="Passwort" type="password" value={password}
@@ -99,18 +92,16 @@ export default function Login() {
               fontSize: 15, fontWeight: 700, cursor: loading ? 'default' : 'pointer',
               opacity: loading ? 0.6 : 1, marginTop: 6,
             }}>
-              {loading ? '…' : mode === 'login' ? 'Anmelden' : 'Registrieren'}
+              {loading ? '…' : 'Anmelden'}
             </button>
           </form>
 
-          {/* Switch mode */}
+          {/* Link to apply */}
           <p style={{ textAlign: 'center', marginTop: 18, fontSize: 13, color: D.text3 }}>
-            {mode === 'login' ? 'Noch kein Konto? ' : 'Bereits registriert? '}
-            <button onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError(''); }}
-              style={{ background: 'none', border: 'none', color: D.blue,
-                fontSize: 13, fontWeight: 600, cursor: 'pointer', padding: 0 }}>
-              {mode === 'login' ? 'Registrieren' : 'Anmelden'}
-            </button>
+            Noch kein Partner?{' '}
+            <Link to="/apply" style={{ color: D.blue, textDecoration: 'none', fontWeight: 600 }}>
+              Jetzt bewerben
+            </Link>
           </p>
 
           {/* Divider */}
