@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, ChevronLeft, Check, AlertTriangle } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
@@ -65,6 +65,7 @@ function Field({ label, required, children }) {
 
 export default function Apply() {
   const nav = useNavigate();
+  const [searchParams] = useSearchParams();
   const [step, setStep] = useState(0);
   const [dir,  setDir]  = useState(1);
   const [error, setError]   = useState('');
@@ -78,6 +79,25 @@ export default function Apply() {
     dsgvo: false, parentalConsent: false,
     googleCredential: null,
   });
+
+  // Pre-fill from Google redirect (came from login page with no account)
+  useEffect(() => {
+    const googleEmail      = searchParams.get('google_email');
+    const googleName       = searchParams.get('google_name');
+    const googleCredential = searchParams.get('google_credential');
+    if (googleEmail) {
+      const parts = (googleName || '').trim().split(' ');
+      setForm(p => ({
+        ...p,
+        email:            googleEmail,
+        first_name:       parts[0] || '',
+        last_name:        parts.slice(1).join(' ') || '',
+        googleCredential: googleCredential || null,
+      }));
+      // Jump straight to step 2 (credentials already filled via Google)
+      if (googleCredential) { setStep(2); }
+    }
+  }, []);
 
   const f = k => e => setForm(p => ({ ...p, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value }));
 

@@ -86,20 +86,12 @@ router.post('/google-auth', async (req, res) => {
       });
     }
 
-    // New user — create pending partner
-    const wid = workspace_owner_id || 1;
-    const newUser = await getOne(
-      `INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, '', 'partner') RETURNING id, name, email`,
-      [name, email]
-    );
-    await run(
-      `INSERT INTO partners (user_id, workspace_owner_id, status) VALUES (?, ?, 'pending')`,
-      [newUser.id, wid]
-    );
-
-    return res.json({
-      partnerStatus: 'new',
-      user: { id: newUser.id, name: newUser.name, email: newUser.email, partnerStatus: 'new' },
+    // No existing partner account — do NOT auto-create, redirect to apply wizard
+    return res.status(404).json({
+      error: 'no_account',
+      email,
+      name,
+      message: 'Kein Partner-Konto gefunden. Bitte bewerbe dich zuerst.',
     });
   } catch (err) {
     console.error('Google auth error:', err.message);
