@@ -39,7 +39,7 @@ export default function Sidebar() {
       </div>
 
       <nav style={{ flex: 1, padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: 1 }}>
-        {NAV.map(({ to, icon: Icon, label, accent }) => (
+        {NAV.map(({ to, icon: Icon, label, accent, accent2 }) => (
           <NavLink key={to} to={to} end={to === '/'} style={{ textDecoration: 'none' }}>
             {({ isActive }) => (
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px',
