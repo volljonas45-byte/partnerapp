@@ -35,20 +35,24 @@ export function AuthProvider({ children }) {
 
   const loginWithGoogle = async (credential) => {
     const WORKSPACE_ID = import.meta.env.VITE_WORKSPACE_OWNER_ID || 1;
-    const res = await api.post('/partner/google-auth', {
-      credential,
-      workspace_owner_id: Number(WORKSPACE_ID),
-    });
-    const data = res.data;
-    if (data.token) {
+    try {
+      const res = await api.post('/partner/google-auth', {
+        credential,
+        workspace_owner_id: Number(WORKSPACE_ID),
+      });
+      const data = res.data;
       localStorage.setItem('partner_token', data.token);
       localStorage.setItem('partner_user', JSON.stringify(data.user));
       setUser(data.user);
-    } else {
-      localStorage.setItem('partner_user', JSON.stringify({ ...data.user, partnerStatus: 'new' }));
-      setUser({ ...data.user, partnerStatus: 'new' });
+      return data.partnerStatus;
+    } catch (err) {
+      if (err.response?.status === 404 && err.response?.data?.error === 'no_account') {
+        // No partner account yet — redirect to apply with Google data pre-filled
+        const { email, name } = err.response.data;
+        return { redirect: `/apply?google_email=${encodeURIComponent(email)}&google_name=${encodeURIComponent(name || '')}&google_credential=${encodeURIComponent(credential)}` };
+      }
+      throw err;
     }
-    return data.partnerStatus;
   };
 
   const loginWithEmail = async (email, password) => {

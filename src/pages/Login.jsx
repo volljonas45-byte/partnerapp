@@ -38,6 +38,7 @@ export default function Login() {
     setLoading(true); setError('');
     try {
       const status = await fn();
+      if (status?.redirect) { nav(status.redirect); return; }
       if (status === 'approved') nav('/');
       else nav('/pending');
     }
