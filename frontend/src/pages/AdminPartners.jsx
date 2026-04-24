@@ -11,8 +11,8 @@ function useD() {
   const { isDark } = useTheme();
   return isDark ? {
     bg:    '#0D0D12', card: '#16161E', card2: '#1C1C26',
-    text:  '#F2F2F7', text2: '#AEAEB2', text3: '#636366',
-    border:'rgba(255,255,255,0.07)', blue: '#5B8CF5', blueL: '#5B8CF514',
+    text:  '#F2F2F7', text2: '#C7C7CC', text3: '#8E8E93',
+    border:'rgba(255,255,255,0.12)', blue: '#5B8CF5', blueL: '#5B8CF514',
     green: '#34D399', greenL: '#34D39914', red: '#FF453A', redL: '#FF453A14',
     orange:'#FF9F0A', orangeL:'#FF9F0A14', purple:'#BF5AF2', purpleL:'#BF5AF214',
     input: '#1C1C26', radius: 16,
@@ -36,22 +36,35 @@ function SegCtrl({ tabs, active, onChange }) {
     const el = refs.current[i];
     if (el) setPill({ left: el.offsetLeft, width: el.offsetWidth });
   }, [active, tabs]);
+  const { isDark } = useTheme();
+  const containerBg = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)';
+  const containerBorder = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)';
+  const pillBg = isDark
+    ? 'linear-gradient(135deg,#4F46E5 0%,#7C3AED 100%)'
+    : '#FFFFFF';
+  const pillShadow = isDark
+    ? '0 2px 16px rgba(124,58,237,0.45), 0 0 0 0.5px rgba(255,255,255,0.1) inset'
+    : '0 1px 4px rgba(0,0,0,0.15)';
+  const activeColor = isDark ? '#FFFFFF' : D.text;
   return (
-    <div style={{ position: 'relative', display: 'inline-flex', background: D.card2,
+    <div style={{ position: 'relative', display: 'inline-flex', background: containerBg,
+      border: `0.5px solid ${containerBorder}`,
       borderRadius: 12, padding: 3, gap: 2 }}>
       <div style={{ position: 'absolute', top: 3, height: 'calc(100% - 6px)',
         left: pill.left, width: pill.width,
-        background: D.card, borderRadius: 9,
-        boxShadow: '0 1px 4px rgba(0,0,0,0.15)',
+        background: pillBg, borderRadius: 9,
+        boxShadow: pillShadow,
         transition: 'left 0.28s cubic-bezier(0.22,1,0.36,1), width 0.28s cubic-bezier(0.22,1,0.36,1)',
         pointerEvents: 'none' }} />
       {tabs.map((t, i) => (
         <button key={t} ref={el => refs.current[i] = el}
           onClick={() => onChange(t)}
+          onMouseEnter={e => { if (active !== t) e.currentTarget.style.color = D.text; }}
+          onMouseLeave={e => { if (active !== t) e.currentTarget.style.color = D.text2; }}
           style={{ position: 'relative', zIndex: 1, padding: '7px 16px', border: 'none',
             background: 'none', borderRadius: 9, cursor: 'pointer', fontSize: 13,
-            fontWeight: active === t ? 600 : 400,
-            color: active === t ? D.text : D.text2,
+            fontWeight: active === t ? 700 : 500,
+            color: active === t ? activeColor : D.text2,
             transition: 'color 0.2s', whiteSpace: 'nowrap' }}>
           {t}
         </button>

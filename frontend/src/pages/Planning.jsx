@@ -438,8 +438,9 @@ function FbRow({ icon, label, text, color }) {
 function FbEmpty({ member, isMine, onFill }) {
   return (
     <div style={{
-      background: D.card, borderRadius: 18, border: `1px dashed ${D.border}`,
+      background: D.card2, borderRadius: 18, border: `1px dashed rgba(255,255,255,0.18)`,
       padding: '24px 16px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10,
+      boxShadow: '0 2px 10px rgba(0,0,0,0.35)',
     }}>
       <Av name={member.name} email={member.email} color={member.color} size={36} />
       <div style={{ textAlign: 'center' }}>
@@ -1631,8 +1632,8 @@ function SegCtrl({ tabs, active, onChange }) {
   return (
     <div ref={containerRef} style={{
       position: 'relative', display: 'inline-flex',
-      background: 'rgba(255,255,255,0.04)',
-      border: `0.5px solid ${D.border}`,
+      background: 'rgba(255,255,255,0.06)',
+      border: `0.5px solid ${D.borderB}`,
       borderRadius: 14, padding: 4, gap: 0,
     }}>
       {/* Sliding pill */}
@@ -1658,15 +1659,15 @@ function SegCtrl({ tabs, active, onChange }) {
             style={{
               position: 'relative',
               padding: '7px 18px', borderRadius: 10, border: 'none', cursor: 'pointer',
-              fontSize: 13, fontWeight: isActive ? 700 : 400,
+              fontSize: 13, fontWeight: isActive ? 700 : 500,
               fontFamily: 'inherit', letterSpacing: '-0.01em',
               background: 'transparent',
-              color: isActive ? '#fff' : D.text3,
+              color: isActive ? '#fff' : D.text2,
               transition: 'color 0.28s cubic-bezier(0.22,1,0.36,1)',
               whiteSpace: 'nowrap',
             }}
-            onMouseEnter={e => { if (!isActive) e.currentTarget.style.color = D.text2; }}
-            onMouseLeave={e => { if (!isActive) e.currentTarget.style.color = D.text3; }}
+            onMouseEnter={e => { if (!isActive) e.currentTarget.style.color = D.text; }}
+            onMouseLeave={e => { if (!isActive) e.currentTarget.style.color = D.text2; }}
           >
             {t.label}
           </button>
