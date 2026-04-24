@@ -224,7 +224,11 @@ router.get('/me', authenticatePartner, async (req, res) => {
     `SELECT p.*, u.name, u.email FROM partners p JOIN users u ON u.id = p.user_id WHERE p.id = ?`,
     [req.partnerId]
   );
-  res.json(partner);
+  const wsSettings = await getOne(
+    `SELECT email, phone, company_name FROM settings WHERE user_id = ?`,
+    [partner.workspace_owner_id]
+  );
+  res.json({ ...partner, ws_email: wsSettings?.email || '', ws_phone: wsSettings?.phone || '', ws_company: wsSettings?.company_name || '' });
 });
 
 // Leads
@@ -779,7 +783,7 @@ router.post('/demo-wizard', authenticatePartner, async (req, res) => {
   const lead = await getOne(
     `INSERT INTO partner_leads
        (workspace_owner_id, partner_id, company, contact_person, phone, email, website, city, industry, source, status, notes, commission_rate)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'own', ?, ?, ?) RETURNING *`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'demo_wizard', ?, ?, ?) RETURNING *`,
     [partner.workspace_owner_id, req.partnerId, company, contact_person || '', phone || '',
      email || '', website || '', city || '', industry || '', leadStatus, notes || '',
      partner.commission_rate_own]
@@ -814,6 +818,19 @@ router.post('/demo-wizard', authenticatePartner, async (req, res) => {
   }
 
   res.json({ success: true, lead, action: 'none' });
+});
+
+// Meine Kunden — leads submitted via demo wizard
+router.get('/customers', authenticatePartner, async (req, res) => {
+  const rows = await getAll(
+    `SELECT pl.*, pc.amount AS commission_amount, pc.status AS commission_status, pc.rate AS commission_rate_pct
+     FROM partner_leads pl
+     LEFT JOIN partner_commissions pc ON pc.lead_id = pl.id
+     WHERE pl.partner_id = ? AND pl.source = 'demo_wizard'
+     ORDER BY pl.updated_at DESC`,
+    [req.partnerId]
+  );
+  res.json(rows);
 });
 
 module.exports = router;

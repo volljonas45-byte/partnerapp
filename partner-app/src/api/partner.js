@@ -24,4 +24,5 @@ export const partnerApi = {
   createLeadRequest:  (d) => api.post('/partner/lead-requests', d).then(r => r.data),
   listLeadRequests:   () => api.get('/partner/lead-requests').then(r => r.data),
   demoWizard:         (d) => api.post('/partner/demo-wizard', d).then(r => r.data),
+  listCustomers:      () => api.get('/partner/customers').then(r => r.data),
 };

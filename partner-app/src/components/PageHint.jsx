@@ -33,6 +33,10 @@ const HINTS = {
     title: 'KI-Assistent',
     text: 'Stelle Fragen zu deinen Leads, lass dir Tipps für das nächste Gespräch geben oder frage nach der besten Strategie für einen Deal.',
   },
+  '/customers': {
+    title: 'Meine Kunden',
+    text: 'Hier siehst du alle Leads die du über den Demo-Wizard eingereicht hast — mit aktuellem Status und deiner Provision bei Abschluss.',
+  },
 };
 
 export default function PageHint() {
