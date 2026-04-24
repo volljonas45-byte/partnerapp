@@ -4,6 +4,7 @@ import { useMobile } from '../hooks/useMobile';
 import BottomNav from '../components/BottomNav';
 import MobileDrawer from '../components/MobileDrawer';
 import SharedSidebar from '../components/Sidebar';
+import AmbientGlow from '../components/AmbientGlow';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -206,12 +207,14 @@ export default function VecturoDashboard() {
     >
       {!isMobile && <SharedSidebar />}
 
-      <main className="flex-1 overflow-y-auto" style={{ paddingBottom: isMobile ? 'calc(62px + env(safe-area-inset-bottom) + 20px)' : 0 }}>
+      <main className="flex-1 overflow-y-auto" style={{ paddingBottom: isMobile ? 'calc(62px + env(safe-area-inset-bottom) + 20px)' : 0, position: 'relative' }}>
+        <AmbientGlow />
         <div
           className="max-w-[1200px] mx-auto animate-fade-in"
           style={{
             padding: isMobile ? '20px 16px 0' : '28px 32px 48px',
             paddingTop: isMobile ? 'calc(20px + env(safe-area-inset-top))' : '28px',
+            position: 'relative', zIndex: 1,
           }}
         >
 
@@ -220,7 +223,10 @@ export default function VecturoDashboard() {
             <div className="flex items-start justify-between gap-4 flex-wrap">
               <div>
                 <h1 style={{
-                  fontSize: 28, fontWeight: 700, color: c.text,
+                  fontSize: 28, fontWeight: 700,
+                  background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.55) 100%)',
+                  WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
                   letterSpacing: '-0.032em', lineHeight: 1.14, margin: 0,
                 }}>
                   {greeting}{first ? `, ${first}` : ''}
@@ -267,22 +273,29 @@ export default function VecturoDashboard() {
           {/* ── KPI ROW ────────────────────────────────────────── */}
           <section className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
             {/* Dark hero card */}
-            <div style={{
-              ...cardStyle,
-              background: isDark ? c.cardSecondary : c.text,
-              border: 'none',
-              padding: 20,
-            }}>
+            <div
+              style={{
+                ...cardStyle,
+                background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f172a 100%)',
+                border: '0.5px solid rgba(91,140,245,0.2)',
+                boxShadow: '0 0 0 0.5px rgba(91,140,245,0.1), 0 4px 24px rgba(91,140,245,0.12), 0 8px 40px rgba(0,0,0,0.4)',
+                padding: 20,
+                transition: 'transform 0.2s cubic-bezier(0.22,1,0.36,1), box-shadow 0.2s cubic-bezier(0.22,1,0.36,1)',
+                cursor: 'default',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 0 0 0.5px rgba(91,140,245,0.15), 0 8px 32px rgba(91,140,245,0.18), 0 16px 48px rgba(0,0,0,0.4)'; }}
+              onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 0 0 0.5px rgba(91,140,245,0.1), 0 4px 24px rgba(91,140,245,0.12), 0 8px 40px rgba(0,0,0,0.4)'; }}
+            >
               <div className="flex items-center justify-between mb-4">
-                <Globe size={15} color="rgba(255,255,255,0.35)" strokeWidth={1.75} />
-                <span style={{ fontSize: 11, fontWeight: 500, color: 'rgba(255,255,255,0.35)', letterSpacing: '-0.006em' }}>
+                <Globe size={15} color="rgba(91,140,245,0.6)" strokeWidth={1.75} />
+                <span style={{ fontSize: 11, fontWeight: 500, color: 'rgba(91,140,245,0.7)', letterSpacing: '-0.006em' }}>
                   Aktive Websites
                 </span>
               </div>
               <p style={{ fontSize: 32, fontWeight: 700, color: '#fff', letterSpacing: '-0.03em', lineHeight: 1 }}>
                 {activeProjects.length}
               </p>
-              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 8, letterSpacing: '-0.006em' }}>
+              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', marginTop: 8, letterSpacing: '-0.006em' }}>
                 {projects.length - activeProjects.length > 0
                   ? `+${projects.length - activeProjects.length} in Planung`
                   : `von ${projects.length} gesamt`}
@@ -292,7 +305,16 @@ export default function VecturoDashboard() {
             {/* Revenue card */}
             <div
               onClick={() => navigate('/invoices')}
-              style={{ ...cardStyle, padding: 20, cursor: 'pointer', transition: 'box-shadow 0.2s cubic-bezier(0.22,1,0.36,1)' }}
+              style={{
+                ...cardStyle,
+                background: 'linear-gradient(135deg, #16161E 0%, #1a1f2e 100%)',
+                border: '0.5px solid rgba(52,211,153,0.15)',
+                boxShadow: '0 0 0 0.5px rgba(52,211,153,0.08), 0 4px 20px rgba(52,211,153,0.08), 0 8px 32px rgba(0,0,0,0.35)',
+                padding: 20, cursor: 'pointer',
+                transition: 'transform 0.2s cubic-bezier(0.22,1,0.36,1), box-shadow 0.2s cubic-bezier(0.22,1,0.36,1)',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 0 0 0.5px rgba(52,211,153,0.12), 0 8px 28px rgba(52,211,153,0.12), 0 16px 40px rgba(0,0,0,0.35)'; }}
+              onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 0 0 0.5px rgba(52,211,153,0.08), 0 4px 20px rgba(52,211,153,0.08), 0 8px 32px rgba(0,0,0,0.35)'; }}
             >
               <div className="flex items-center justify-between mb-4">
                 <FileText size={15} color={c.textTertiary} strokeWidth={1.75} />
@@ -311,7 +333,20 @@ export default function VecturoDashboard() {
             </div>
 
             {/* Follow-ups card */}
-            <div style={{ ...cardStyle, padding: 20 }}>
+            <div
+              style={{
+                ...cardStyle,
+                background: 'linear-gradient(135deg, #16161E 0%, #1e1a2e 100%)',
+                border: `0.5px solid ${dueReminders.length > 0 ? 'rgba(251,146,60,0.18)' : 'rgba(155,114,242,0.15)'}`,
+                boxShadow: dueReminders.length > 0
+                  ? '0 0 0 0.5px rgba(251,146,60,0.08), 0 4px 20px rgba(251,146,60,0.1), 0 8px 32px rgba(0,0,0,0.35)'
+                  : '0 0 0 0.5px rgba(155,114,242,0.08), 0 4px 20px rgba(155,114,242,0.08), 0 8px 32px rgba(0,0,0,0.35)',
+                padding: 20,
+                transition: 'transform 0.2s cubic-bezier(0.22,1,0.36,1), box-shadow 0.2s cubic-bezier(0.22,1,0.36,1)',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; }}
+              onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; }}
+            >
               <div className="flex items-center justify-between mb-4">
                 <CheckCircle2 size={15} color={c.textTertiary} strokeWidth={1.75} />
                 <span style={{ fontSize: 11, fontWeight: 500, color: c.textTertiary, letterSpacing: '-0.006em' }}>

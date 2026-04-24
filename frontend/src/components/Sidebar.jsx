@@ -274,45 +274,44 @@ export default function Sidebar() {
     }}>
 
       {/* Logo */}
-      <div style={{ padding: '18px 20px 6px' }}>
+      <div style={{ padding: '18px 16px 6px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <img
-              src="/Logo-SM-JR.png"
-              alt="Vecturo"
-              style={{
-                width: 30, height: 30, borderRadius: 8,
-                objectFit: 'cover', flexShrink: 0,
-                boxShadow: isDark
-                  ? '0 1px 2px rgba(0,0,0,0.4)'
-                  : '0 1px 2px rgba(0,0,0,0.08)',
-              }}
-            />
-            <span style={{ fontSize: 15, fontWeight: 600, color: c.text, letterSpacing: '-0.02em' }}>Vecturo</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+            <div style={{
+              width: 32, height: 32, borderRadius: 10, flexShrink: 0, overflow: 'hidden',
+              boxShadow: '0 0 0 1px rgba(255,255,255,0.12), 0 2px 8px rgba(0,0,0,0.4)',
+            }}>
+              <img src="/Logo-SM-JR.png" alt="Vecturo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            </div>
+            <span style={{
+              fontSize: 15, fontWeight: 700, letterSpacing: '-0.025em',
+              background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.55) 100%)',
+              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+            }}>Vecturo</span>
           </div>
           <MiniPomodoro isDark={isDark} c={c} />
         </div>
       </div>
 
       {/* New project CTA */}
-      <div style={{ padding: '8px 14px 8px' }}>
+      <div style={{ padding: '8px 12px 8px' }}>
         <button
           onClick={() => navigate('/wizard')}
           style={{
             width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            gap: 5, padding: '7px 14px', fontSize: 13, fontWeight: 500,
-            letterSpacing: '-0.008em',
-            color: c.blue, background: c.blueLight,
-            border: 'none', borderRadius: 8,
-            cursor: 'pointer',
-            transition: 'background 0.15s cubic-bezier(0.22,1,0.36,1), transform 0.1s cubic-bezier(0.22,1,0.36,1)',
+            gap: 5, padding: '8px 14px', fontSize: 13, fontWeight: 700,
+            letterSpacing: '-0.01em', color: '#fff',
+            background: 'linear-gradient(135deg, #5B8CF5 0%, #7C5CF5 100%)',
+            border: 'none', borderRadius: 10, cursor: 'pointer',
+            boxShadow: '0 4px 16px rgba(91,140,245,0.3)',
+            transition: 'filter 0.15s, transform 0.12s',
           }}
-          onMouseEnter={e => e.currentTarget.style.background = c.blueMuted}
-          onMouseLeave={e => e.currentTarget.style.background = c.blueLight}
+          onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.1)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+          onMouseLeave={e => { e.currentTarget.style.filter = ''; e.currentTarget.style.transform = ''; }}
           onMouseDown={e => e.currentTarget.style.transform = 'scale(0.97)'}
           onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
         >
-          <Plus size={14} strokeWidth={2} />
+          <Plus size={14} strokeWidth={2.5} />
           Neues Projekt
         </button>
       </div>
@@ -323,38 +322,42 @@ export default function Sidebar() {
           <div key={gi}>
             {group.label && (
               <p style={{
-                padding: '16px 10px 5px', fontSize: 11, fontWeight: 600,
+                padding: '14px 10px 4px', fontSize: 10, fontWeight: 700,
                 color: c.textTertiary, textTransform: 'uppercase',
-                letterSpacing: '0.04em', userSelect: 'none', margin: 0,
+                letterSpacing: '0.08em', userSelect: 'none', margin: 0,
               }}>
                 {group.label}
               </p>
             )}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               {group.items.map(({ to, icon: Icon, label }) => (
                 <NavLink key={to} to={to} end={to === '/' || to === '/sales'} style={{ textDecoration: 'none' }}>
                   {({ isActive }) => (
                     <div style={{
-                      display: 'flex', alignItems: 'center', gap: 8,
-                      padding: '6px 10px', borderRadius: 8,
-                      fontSize: 13, letterSpacing: '-0.008em', cursor: 'pointer',
-                      transition: 'background 0.15s cubic-bezier(0.22,1,0.36,1), color 0.15s cubic-bezier(0.22,1,0.36,1)',
-                      background: isActive ? c.blueLight : 'transparent',
-                      color: isActive ? c.blue : c.textSecondary,
+                      display: 'flex', alignItems: 'center', gap: 9,
+                      padding: '7px 10px', borderRadius: 10,
+                      fontSize: 13, letterSpacing: '-0.01em', cursor: 'pointer',
+                      transition: 'background 0.18s cubic-bezier(0.22,1,0.36,1), color 0.18s cubic-bezier(0.22,1,0.36,1)',
+                      background: isActive ? 'rgba(91,140,245,0.14)' : 'transparent',
+                      color: isActive ? '#5B8CF5' : c.textSecondary,
                       fontWeight: isActive ? 600 : 400,
-                    }}>
+                      boxShadow: isActive ? '0 0 0 0.5px rgba(91,140,245,0.2)' : 'none',
+                    }}
+                    onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+                    onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
+                    >
                       <Icon
                         size={16}
-                        color={isActive ? c.blue : c.textTertiary}
-                        strokeWidth={isActive ? 2 : 1.5}
+                        color={isActive ? '#5B8CF5' : c.textTertiary}
+                        strokeWidth={isActive ? 2.2 : 1.5}
                       />
                       <span style={{ flex: 1 }}>{label}</span>
                       {to === '/intake' && unread?.count > 0 && (
                         <span style={{
                           minWidth: 18, height: 18, padding: '0 5px',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          borderRadius: 99, background: '#FF3B30',
-                          color: '#fff', fontSize: 11, fontWeight: 600,
+                          borderRadius: 99, background: '#F87171',
+                          color: '#fff', fontSize: 10, fontWeight: 700,
                           lineHeight: 1,
                         }}>
                           {unread.count > 99 ? '99+' : unread.count}
@@ -390,8 +393,9 @@ export default function Sidebar() {
             </div>
             <span style={{
               position: 'absolute', bottom: -1, right: -1,
-              width: 9, height: 9, background: '#34C759',
-              borderRadius: '50%', border: `2px solid ${isDark ? '#161618' : 'var(--color-card-secondary)'}`,
+              width: 9, height: 9, background: '#34D399',
+              borderRadius: '50%', border: '2px solid #16161E',
+              boxShadow: '0 0 6px rgba(52,211,153,0.6)',
             }} />
           </div>
           <div style={{ minWidth: 0, flex: 1 }}>

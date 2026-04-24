@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Upload, X, Save, Plus, Trash2, Pencil, Check, Building2, FileText, Layers, Mail, Users, UserCircle, KeyRound, Sun, Moon, SunMoon } from 'lucide-react';
+import { Upload, X, Save, Plus, Trash2, Pencil, Check, Building2, FileText, Layers, Mail, Users, UserCircle, KeyRound, Moon, SunMoon } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import toast from 'react-hot-toast';
 import { settingsApi } from '../api/settings';
@@ -478,7 +478,7 @@ export default function Settings() {
   const qc      = useQueryClient();
   const fileRef = useRef();
   const [activeTab, setActiveTab] = useState('personal');
-  const { theme, setTheme, c, isDark } = useTheme();
+  const { c } = useTheme();
 
   const { data: settings, isLoading } = useQuery({
     queryKey: ['settings'],
@@ -830,43 +830,36 @@ export default function Settings() {
           <div className="card space-y-6">
             <div>
               <h2 style={{ fontSize: 16, fontWeight: 700, color: c.text, marginBottom: 4 }}>Erscheinungsbild</h2>
-              <p style={{ fontSize: 13, color: c.textSecondary }}>Wähle zwischen hellem und dunklem Design.</p>
+              <p style={{ fontSize: 13, color: c.textSecondary }}>Das Design ist dauerhaft auf Dark Mode eingestellt.</p>
             </div>
 
-            {/* Theme Selector */}
-            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-              {[
-                { value: 'light', label: 'Hell',   icon: Sun,    desc: 'Immer helles Design' },
-                { value: 'auto',  label: 'System',  icon: SunMoon, desc: 'Folgt dem Gerät' },
-                { value: 'dark',  label: 'Dunkel',  icon: Moon,   desc: 'Immer dunkles Design' },
-              ].map(({ value, label, icon: Icon, desc }) => {
-                const isActive = theme === value;
-                return (
-                  <button
-                    key={value}
-                    onClick={() => setTheme(value)}
-                    style={{
-                      flex: '1 1 140px', padding: '16px', borderRadius: 14, border: `2px solid ${isActive ? c.blue : c.border}`,
-                      background: isActive ? c.blueLight : c.cardSecondary,
-                      cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s',
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-                      <Icon size={18} color={isActive ? c.blue : c.textSecondary} strokeWidth={1.75} />
-                      <span style={{ fontSize: 14, fontWeight: 600, color: isActive ? c.blue : c.text }}>{label}</span>
-                      {isActive && (
-                        <span style={{
-                          marginLeft: 'auto', width: 18, height: 18, borderRadius: '50%',
-                          background: c.blue, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        }}>
-                          <Check size={10} color="#fff" strokeWidth={3} />
-                        </span>
-                      )}
-                    </div>
-                    <p style={{ fontSize: 12, color: c.textTertiary, margin: 0 }}>{desc}</p>
-                  </button>
-                );
-              })}
+            {/* Dark-only notice */}
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 14,
+              padding: '16px 20px', borderRadius: 14,
+              background: 'linear-gradient(135deg, rgba(155,114,242,0.1) 0%, rgba(91,140,245,0.08) 100%)',
+              border: '0.5px solid rgba(155,114,242,0.2)',
+            }}>
+              <span style={{
+                width: 40, height: 40, borderRadius: 12, flexShrink: 0,
+                background: 'rgba(155,114,242,0.15)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <Moon size={18} color="#9B72F2" strokeWidth={1.75} />
+              </span>
+              <div>
+                <p style={{ fontSize: 14, fontWeight: 600, color: c.text, margin: 0 }}>Dark Mode aktiv</p>
+                <p style={{ fontSize: 12, color: c.textSecondary, marginTop: 2 }}>
+                  Vecturo verwendet ausschließlich das dunkle Premium-Design.
+                </p>
+              </div>
+              <span style={{
+                marginLeft: 'auto', padding: '3px 10px', borderRadius: 6,
+                fontSize: 11, fontWeight: 600,
+                background: 'rgba(155,114,242,0.15)', color: '#9B72F2',
+              }}>
+                Aktiv
+              </span>
             </div>
 
             {/* Preview */}
@@ -874,9 +867,9 @@ export default function Settings() {
               <p style={{ fontSize: 12, fontWeight: 600, color: c.textSecondary, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>Vorschau</p>
               <div style={{ borderRadius: 12, overflow: 'hidden', border: `0.5px solid ${c.borderSubtle}` }}>
                 <div style={{ background: c.bg, padding: 16 }}>
-                  <div style={{ background: c.card, borderRadius: 10, padding: '12px 16px', boxShadow: isDark ? '0 1px 4px rgba(0,0,0,0.2)' : '0 1px 4px var(--color-border-subtle)' }}>
+                  <div style={{ background: c.card, borderRadius: 10, padding: '12px 16px', boxShadow: '0 1px 4px rgba(0,0,0,0.2)' }}>
                     <div style={{ fontSize: 13, fontWeight: 600, color: c.text, marginBottom: 4 }}>Beispiel-Karte</div>
-                    <div style={{ fontSize: 11.5, color: c.textSecondary }}>So sehen Inhalte im {isDark ? 'dunklen' : 'hellen'} Modus aus.</div>
+                    <div style={{ fontSize: 11.5, color: c.textSecondary }}>So sehen Inhalte im dunklen Modus aus.</div>
                     <div style={{ marginTop: 10, display: 'flex', gap: 6 }}>
                       <span style={{ padding: '3px 10px', borderRadius: 6, fontSize: 11, fontWeight: 600, background: c.blueLight, color: c.blue }}>Aktiv</span>
                       <span style={{ padding: '3px 10px', borderRadius: 6, fontSize: 11, fontWeight: 600, background: c.inputBg, color: c.textSecondary }}>Normal</span>
