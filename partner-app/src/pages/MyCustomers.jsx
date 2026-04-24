@@ -1,6 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { Building2, CheckCircle2, Clock, XCircle, CalendarDays, Mail, Phone, MessageSquare } from 'lucide-react';
+import {
+  Building2, CheckCircle2, Clock, XCircle, CalendarDays,
+  Mail, Phone, MessageSquare, TrendingUp, Euro, Globe,
+} from 'lucide-react';
 import { partnerApi } from '../api/partner';
 
 const D = {
@@ -11,15 +14,22 @@ const D = {
   red: '#FF453A', redL: 'rgba(255,69,58,0.12)',
   purple: '#BF5AF2', purpleL: 'rgba(191,90,242,0.12)',
   border: 'rgba(255,255,255,0.06)',
+  borderSubtle: 'rgba(255,255,255,0.04)',
 };
 
 const STATUS_INFO = {
-  anrufen:        { label: 'In Bearbeitung — wir melden uns bald',           color: D.blue,   bg: D.blueL,   Icon: Clock },
-  kontaktiert:    { label: 'In Bearbeitung — wir melden uns bald',           color: D.blue,   bg: D.blueL,   Icon: Clock },
-  termin_gesetzt: { label: 'Demo-Termin vereinbart — wird vorbereitet',      color: D.purple, bg: D.purpleL, Icon: CalendarDays },
-  gewonnen:       { label: 'Kunde hat zugesagt! Provision wird ausgezahlt.', color: D.green,  bg: D.greenL,  Icon: CheckCircle2 },
-  verloren:       { label: 'Leider kein Abschluss bei diesem Lead',          color: D.red,    bg: D.redL,    Icon: XCircle },
+  anrufen:        { label: 'In Prüfung — wir melden uns bald',            color: D.blue,   bg: D.blueL,   Icon: Clock,         step: 1 },
+  kontaktiert:    { label: 'In Prüfung — wir melden uns bald',            color: D.blue,   bg: D.blueL,   Icon: Clock,         step: 1 },
+  termin_gesetzt: { label: 'Demo-Termin vereinbart — Projekt wird vorbereitet', color: D.purple, bg: D.purpleL, Icon: CalendarDays,  step: 2 },
+  gewonnen:       { label: 'Projekt gewonnen! Provision wird ausgezahlt.',  color: D.green,  bg: D.greenL,  Icon: CheckCircle2,  step: 3 },
+  verloren:       { label: 'Kein Abschluss bei diesem Lead',               color: D.red,    bg: D.redL,    Icon: XCircle,       step: -1 },
 };
+
+const STEPS = [
+  { label: 'Eingereicht', minStep: 1 },
+  { label: 'Demo-Termin', minStep: 2 },
+  { label: 'Gewonnen',    minStep: 3 },
+];
 
 function fmtDate(iso) {
   if (!iso) return '—';
@@ -31,11 +41,59 @@ function fmtEur(n) {
   return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n);
 }
 
+function ProgressBar({ step, lost }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 0, marginBottom: 14 }}>
+      {STEPS.map((s, i) => {
+        const done = !lost && step >= s.minStep;
+        const active = !lost && step === s.minStep;
+        const color = lost ? D.red : done ? D.green : D.border;
+        const textColor = lost && i === 0 ? D.red : done ? D.green : D.text3;
+        return (
+          <div key={s.label} style={{ display: 'flex', alignItems: 'center', flex: i < STEPS.length - 1 ? 1 : 'none' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+              <div style={{
+                width: 22, height: 22, borderRadius: '50%', flexShrink: 0,
+                background: done ? (lost ? D.redL : D.greenL) : 'rgba(255,255,255,0.04)',
+                border: `2px solid ${color}`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'all 0.3s',
+              }}>
+                {done && <div style={{ width: 8, height: 8, borderRadius: '50%', background: lost ? D.red : D.green }} />}
+              </div>
+              <span style={{ fontSize: 10, fontWeight: active ? 700 : 400, color: textColor, whiteSpace: 'nowrap' }}>
+                {lost && i === 0 ? 'Eingereicht' : lost && i > 0 ? (i === 1 ? 'Kein Termin' : 'Verloren') : s.label}
+              </span>
+            </div>
+            {i < STEPS.length - 1 && (
+              <div style={{
+                flex: 1, height: 2, margin: '0 6px', marginBottom: 18,
+                background: done && step > s.minStep ? (lost ? D.redL : `linear-gradient(90deg, ${D.green}, ${D.green}60)`) : D.borderSubtle,
+                borderRadius: 99, transition: 'background 0.3s',
+              }} />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function StatBadge({ label, value, color, bg }) {
+  if (!value) return null;
+  return (
+    <div style={{ padding: '6px 12px', borderRadius: 8, background: bg, border: `1px solid ${color}25`, textAlign: 'center' }}>
+      <div style={{ fontSize: 10, color, fontWeight: 600, marginBottom: 1, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
+      <div style={{ fontSize: 14, fontWeight: 800, color, letterSpacing: '-0.02em' }}>{value}</div>
+    </div>
+  );
+}
+
 export default function MyCustomers() {
   const { data: customers = [], isLoading } = useQuery({
     queryKey: ['my-customers'],
     queryFn: partnerApi.listCustomers,
-    refetchInterval: 60000,
+    refetchInterval: 30000,
   });
 
   const { data: me } = useQuery({
@@ -43,11 +101,19 @@ export default function MyCustomers() {
     queryFn: partnerApi.me,
   });
 
+  const totals = customers.reduce((acc, c) => {
+    acc.count++;
+    if (c.deal_value) acc.projectValue += parseFloat(c.deal_value);
+    if (c.status === 'gewonnen') acc.won++;
+    if (c.commission_amount) acc.commission += parseFloat(c.commission_amount);
+    return acc;
+  }, { count: 0, projectValue: 0, won: 0, commission: 0 });
+
   return (
-    <div style={{ padding: '28px 32px', maxWidth: 760, margin: '0 auto', boxSizing: 'border-box' }}>
+    <div style={{ padding: '28px 32px', maxWidth: 800, margin: '0 auto', boxSizing: 'border-box' }}>
 
       {/* Header */}
-      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: 28 }}>
+      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: 24 }}>
         <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 6px' }}>
           Übersicht
         </p>
@@ -60,6 +126,17 @@ export default function MyCustomers() {
           Alle Leads die du über den Demo-Wizard eingereicht hast
         </p>
       </motion.div>
+
+      {/* Summary stats */}
+      {customers.length > 0 && (
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+          style={{ display: 'flex', gap: 10, marginBottom: 24, flexWrap: 'wrap' }}>
+          <StatBadge label="Kunden gesamt" value={totals.count} color={D.blue} bg={D.blueL} />
+          <StatBadge label="Gewonnen" value={totals.won} color={D.green} bg={D.greenL} />
+          {totals.projectValue > 0 && <StatBadge label="Projektwert gesamt" value={fmtEur(totals.projectValue)} color={D.orange} bg={D.orangeL} />}
+          {totals.commission > 0 && <StatBadge label="Meine Provision" value={fmtEur(totals.commission)} color={D.purple} bg={D.purpleL} />}
+        </motion.div>
+      )}
 
       {/* Customer list */}
       {isLoading ? (
@@ -81,50 +158,106 @@ export default function MyCustomers() {
           </p>
         </motion.div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {customers.map((c, i) => {
             const info = STATUS_INFO[c.status] || STATUS_INFO.anrufen;
             const StatusIcon = info.Icon;
             const isWon = c.status === 'gewonnen';
+            const isLost = c.status === 'verloren';
+            const dealValue = c.deal_value ? parseFloat(c.deal_value) : null;
+            const commissionAmt = c.commission_amount ? parseFloat(c.commission_amount) : null;
+            const commissionPct = c.commission_rate_pct;
+            const calcCommission = dealValue && commissionPct && !commissionAmt
+              ? dealValue * (commissionPct / 100) : commissionAmt;
+
             return (
               <motion.div key={c.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
+                transition={{ delay: i * 0.06 }}
                 style={{
-                  padding: '18px 20px',
-                  background: isWon ? 'rgba(52,211,153,0.04)' : 'rgba(255,255,255,0.02)',
-                  border: `1px solid ${isWon ? 'rgba(52,211,153,0.2)' : D.border}`,
-                  borderRadius: 14,
+                  padding: '20px 22px',
+                  background: isWon ? 'rgba(52,211,153,0.03)' : isLost ? 'rgba(255,69,58,0.02)' : 'rgba(255,255,255,0.02)',
+                  border: `1px solid ${isWon ? 'rgba(52,211,153,0.18)' : isLost ? 'rgba(255,69,58,0.12)' : D.border}`,
+                  borderRadius: 16,
                 }}>
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+
+                {/* Card header */}
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 14 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: D.text, marginBottom: 4 }}>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: D.text, marginBottom: 4 }}>
                       {c.company}
                     </div>
-                    {(c.city || c.industry) && (
-                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
-                        {c.city && <span style={{ fontSize: 11.5, color: D.text3 }}>{c.city}</span>}
-                        {c.city && c.industry && <span style={{ fontSize: 11.5, color: D.text3 }}>·</span>}
-                        {c.industry && <span style={{ fontSize: 11.5, color: D.text3 }}>{c.industry}</span>}
-                      </div>
-                    )}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6,
-                      padding: '6px 10px', borderRadius: 8, background: info.bg, width: 'fit-content' }}>
-                      <StatusIcon size={13} color={info.color} />
-                      <span style={{ fontSize: 12.5, fontWeight: 600, color: info.color }}>{info.label}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                      {c.contact_person && <span style={{ fontSize: 12, color: D.text2 }}>{c.contact_person}</span>}
+                      {c.contact_person && (c.city || c.industry) && <span style={{ fontSize: 12, color: D.text3 }}>·</span>}
+                      {c.city && <span style={{ fontSize: 12, color: D.text3 }}>{c.city}</span>}
+                      {c.city && c.industry && <span style={{ fontSize: 12, color: D.text3 }}>·</span>}
+                      {c.industry && <span style={{ fontSize: 12, color: D.text3 }}>{c.industry}</span>}
                     </div>
                   </div>
-                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    {isWon && c.commission_amount && (
-                      <div style={{ padding: '4px 10px', borderRadius: 8, background: D.greenL,
-                        border: '1px solid rgba(52,211,153,0.2)', marginBottom: 6 }}>
-                        <div style={{ fontSize: 11.5, color: D.green, fontWeight: 700 }}>
-                          {c.commission_rate_pct ? `${c.commission_rate_pct}% · ` : ''}{fmtEur(c.commission_amount)}
-                        </div>
-                      </div>
-                    )}
-                    <div style={{ fontSize: 11, color: D.text3 }}>{fmtDate(c.created_at)}</div>
+                  <div style={{ fontSize: 11, color: D.text3, flexShrink: 0, textAlign: 'right' }}>
+                    Eingereicht<br />
+                    <span style={{ fontWeight: 600, color: D.text2 }}>{fmtDate(c.created_at)}</span>
                   </div>
                 </div>
+
+                {/* Progress bar */}
+                <ProgressBar step={info.step} lost={isLost} />
+
+                {/* Status badge */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '8px 12px', borderRadius: 9, background: info.bg,
+                  width: 'fit-content', marginBottom: 14 }}>
+                  <StatusIcon size={13} color={info.color} />
+                  <span style={{ fontSize: 12.5, fontWeight: 600, color: info.color }}>{info.label}</span>
+                </div>
+
+                {/* Value row */}
+                {(dealValue || calcCommission || c.phone || c.website) && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
+                    paddingTop: 12, borderTop: `1px solid ${D.borderSubtle}` }}>
+
+                    {dealValue && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 5,
+                        padding: '5px 10px', borderRadius: 8, background: D.orangeL,
+                        border: `1px solid rgba(255,159,10,0.2)` }}>
+                        <TrendingUp size={12} color={D.orange} />
+                        <span style={{ fontSize: 12.5, fontWeight: 700, color: D.orange }}>
+                          Projektwert: {fmtEur(dealValue)}
+                        </span>
+                      </div>
+                    )}
+
+                    {calcCommission && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 5,
+                        padding: '5px 10px', borderRadius: 8,
+                        background: isWon ? D.greenL : 'rgba(255,255,255,0.04)',
+                        border: `1px solid ${isWon ? 'rgba(52,211,153,0.2)' : D.border}` }}>
+                        <Euro size={12} color={isWon ? D.green : D.text3} />
+                        <span style={{ fontSize: 12.5, fontWeight: 700, color: isWon ? D.green : D.text3 }}>
+                          {commissionPct ? `${commissionPct}% · ` : ''}Provision: {fmtEur(calcCommission)}
+                        </span>
+                      </div>
+                    )}
+
+                    <div style={{ flex: 1 }} />
+
+                    {c.phone && (
+                      <a href={`tel:${c.phone}`}
+                        style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: D.text3,
+                          textDecoration: 'none' }}>
+                        <Phone size={11} /> {c.phone}
+                      </a>
+                    )}
+                    {c.website && (
+                      <a href={c.website.startsWith('http') ? c.website : `https://${c.website}`}
+                        target="_blank" rel="noopener noreferrer"
+                        style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: D.blue,
+                          textDecoration: 'none' }}>
+                        <Globe size={11} /> Website
+                      </a>
+                    )}
+                  </div>
+                )}
               </motion.div>
             );
           })}
