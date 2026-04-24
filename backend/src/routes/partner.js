@@ -8,6 +8,25 @@ const { getOne, getAll, run } = require('../db/pg');
 const authenticate = require('../middleware/auth');
 const { sendDemoEmail } = require('../services/emailService');
 
+// ── DB MIGRATION ──────────────────────────────────────────────────────────────
+(async () => {
+  try {
+    await run(`ALTER TABLE partner_leads ADD COLUMN IF NOT EXISTS milestones jsonb`);
+    await run(`ALTER TABLE partner_leads ADD COLUMN IF NOT EXISTS demo_link text`);
+    await run(`ALTER TABLE partner_leads ADD COLUMN IF NOT EXISTS agreed_budget decimal(12,2)`);
+    await run(`UPDATE partner_leads SET milestones = '[]' WHERE milestones IS NULL`);
+  } catch (e) { console.error('[partner migration]', e.message); }
+})();
+
+const MILESTONES_INIT = () => JSON.stringify([
+  { id: 'demo',   label: 'Demo vereinbart',  done: true,  done_at: new Date().toISOString() },
+  { id: 'offer',  label: 'Angebot erstellt', done: false, done_at: null },
+  { id: 'order',  label: 'Auftrag erteilt',  done: false, done_at: null },
+  { id: 'design', label: 'Konzept & Design', done: false, done_at: null },
+  { id: 'dev',    label: 'Entwicklung',      done: false, done_at: null },
+  { id: 'live',   label: 'Live geschaltet',  done: false, done_at: null },
+]);
+
 // ── PUBLIC ────────────────────────────────────────────────────────────────────
 
 // Google OAuth login/register
@@ -500,16 +519,105 @@ router.post('/admin/leads', async (req, res) => {
 });
 
 router.put('/admin/leads/:id', async (req, res) => {
-  const lead = await getOne('SELECT id FROM partner_leads WHERE id = ?', [req.params.id]);
-  if (!lead) return res.status(404).json({ error: 'Lead nicht gefunden.' });
-  const fields = ['company','contact_person','phone','email','website','city','industry','status','priority','deal_value','notes'];
-  const sets = fields.filter(f => req.body[f] !== undefined).map(f => `${f} = ?`).join(', ');
-  const vals = fields.filter(f => req.body[f] !== undefined).map(f => req.body[f]);
-  if (!sets) return res.status(400).json({ error: 'Keine Felder.' });
-  const updated = await getOne(
-    `UPDATE partner_leads SET ${sets}, updated_at = NOW() WHERE id = ? RETURNING *`,
-    [...vals, req.params.id]
+  const lead = await getOne(
+    `SELECT pl.*, u.email AS partner_email, u.name AS partner_name
+     FROM partner_leads pl
+     LEFT JOIN partners p ON p.id = pl.partner_id
+     LEFT JOIN users u ON u.id = p.user_id
+     WHERE pl.id = ?`,
+    [req.params.id]
   );
+  if (!lead) return res.status(404).json({ error: 'Lead nicht gefunden.' });
+
+  const scalarFields = ['company','contact_person','phone','email','website','city','industry',
+                        'status','priority','deal_value','notes','demo_link','agreed_budget'];
+  const sets = scalarFields.filter(f => req.body[f] !== undefined).map(f => `${f} = ?`).join(', ');
+  const vals = scalarFields.filter(f => req.body[f] !== undefined).map(f => req.body[f]);
+
+  const hasMilestones = req.body.milestones !== undefined;
+  const milestoneSet  = hasMilestones ? (sets ? ', milestones = ?' : 'milestones = ?') : '';
+  const milestoneVal  = hasMilestones ? [JSON.stringify(req.body.milestones)] : [];
+
+  const allSets = [sets, milestoneSet].filter(Boolean).join('');
+  if (!allSets) return res.status(400).json({ error: 'Keine Felder.' });
+
+  const updated = await getOne(
+    `UPDATE partner_leads SET ${allSets}, updated_at = NOW() WHERE id = ? RETURNING *`,
+    [...vals, ...milestoneVal, req.params.id]
+  );
+
+  // ── Notify partner ─────────────────────────────────────────────────────────
+  if (lead.partner_email) {
+    const sendMail = async (subject, html) => {
+      try {
+        const nodemailer = require('nodemailer');
+        const t = nodemailer.createTransport({
+          host: process.env.EMAIL_HOST, port: parseInt(process.env.EMAIL_PORT || '587'),
+          secure: process.env.EMAIL_SECURE === 'true',
+          auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
+        });
+        await t.sendMail({ from: process.env.EMAIL_FROM || process.env.EMAIL_USER, to: lead.partner_email, subject, html });
+      } catch (e) { console.error('[admin leads notify]', e.message); }
+    };
+
+    const wrap = (body) => `
+      <div style="font-family:sans-serif;max-width:480px;margin:0 auto;background:#0D0D12;color:#F2F2F7;border-radius:16px;padding:32px;">
+        <p style="color:#AEAEB2;margin:0 0 6px;font-size:13px;">${lead.company}</p>
+        ${body}
+      </div>`;
+
+    // Newly completed milestones
+    if (hasMilestones) {
+      const oldMs = Array.isArray(lead.milestones) ? lead.milestones : [];
+      const newMs = req.body.milestones;
+      const newlyDone = newMs.filter(nm => nm.done && !oldMs.find(om => om.id === nm.id && om.done));
+      for (const m of newlyDone) {
+        await sendMail(
+          `✅ Neuer Meilenstein: ${m.label} — ${lead.company}`,
+          wrap(`<h2 style="margin:0 0 12px;font-size:18px;color:#34D399;">✅ ${m.label}</h2>
+                <p style="color:#AEAEB2;font-size:14px;margin:0;line-height:1.6;">
+                  Gute Neuigkeiten! Für <strong style="color:#F2F2F7;">${lead.company}</strong>
+                  wurde der Meilenstein <strong style="color:#34D399;">${m.label}</strong> abgeschlossen.
+                  Melde dich gerne im Partner-Portal für den aktuellen Stand.
+                </p>`)
+        );
+      }
+    }
+
+    // Budget agreed
+    const newBudget = req.body.agreed_budget;
+    if (newBudget && parseFloat(newBudget) !== parseFloat(lead.agreed_budget || 0)) {
+      const fmt = (n) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n);
+      await sendMail(
+        `💰 Budget vereinbart: ${fmt(newBudget)} — ${lead.company}`,
+        wrap(`<h2 style="margin:0 0 12px;font-size:18px;color:#FF9F0A;">💰 Budget vereinbart</h2>
+              <p style="color:#AEAEB2;font-size:14px;margin:0 0 16px;line-height:1.6;">
+                Für <strong style="color:#F2F2F7;">${lead.company}</strong> wurde ein Projektbudget vereinbart.
+              </p>
+              <div style="background:#16161E;border-radius:12px;padding:16px;text-align:center;">
+                <div style="font-size:28px;font-weight:800;color:#FF9F0A;">${fmt(newBudget)}</div>
+                <div style="font-size:12px;color:#636366;margin-top:4px;">Vereinbartes Projektbudget</div>
+              </div>`)
+      );
+    }
+
+    // Demo link added
+    const newLink = req.body.demo_link;
+    if (newLink && newLink !== lead.demo_link) {
+      await sendMail(
+        `🔗 Demo-Link verfügbar — ${lead.company}`,
+        wrap(`<h2 style="margin:0 0 12px;font-size:18px;color:#5B8CF5;">🔗 Demo ist fertig!</h2>
+              <p style="color:#AEAEB2;font-size:14px;margin:0 0 16px;line-height:1.6;">
+                Die Demo-Website für <strong style="color:#F2F2F7;">${lead.company}</strong> ist verfügbar.
+              </p>
+              <a href="${newLink}" style="display:inline-block;padding:10px 20px;border-radius:10px;
+                background:#5B8CF5;color:#fff;text-decoration:none;font-weight:600;font-size:14px;">
+                Demo ansehen →
+              </a>`)
+      );
+    }
+  }
+
   res.json(updated);
 });
 
@@ -782,11 +890,11 @@ router.post('/demo-wizard', authenticatePartner, async (req, res) => {
   const leadStatus = action === 'appointment' ? 'termin_gesetzt' : 'kontaktiert';
   const lead = await getOne(
     `INSERT INTO partner_leads
-       (workspace_owner_id, partner_id, company, contact_person, phone, email, website, city, industry, source, status, notes, commission_rate)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'demo_wizard', ?, ?, ?) RETURNING *`,
+       (workspace_owner_id, partner_id, company, contact_person, phone, email, website, city, industry, source, status, notes, commission_rate, milestones)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'demo_wizard', ?, ?, ?, ?) RETURNING *`,
     [partner.workspace_owner_id, req.partnerId, company, contact_person || '', phone || '',
      email || '', website || '', city || '', industry || '', leadStatus, notes || '',
-     partner.commission_rate_own]
+     partner.commission_rate_own, MILESTONES_INIT()]
   );
 
   // Notify workspace owner
