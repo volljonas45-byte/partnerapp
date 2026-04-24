@@ -119,19 +119,39 @@ router.put('/profile', authenticatePartner, async (req, res) => {
 
 // Submit partner application (no auth required)
 router.post('/apply', async (req, res) => {
-  const { name, last_name, email, password, phone, birth_year, payout_method, payout_details, application_message, workspace_owner_id } = req.body;
-  if (!name || !email || !password || !workspace_owner_id) {
-    return res.status(400).json({ error: 'Name, E-Mail, Passwort und Workspace erforderlich.' });
+  const { name, last_name, email, password, google_credential, phone, birth_year, payout_method, payout_details, application_message, workspace_owner_id } = req.body;
+  if (!name || !email || !workspace_owner_id) {
+    return res.status(400).json({ error: 'Name, E-Mail und Workspace erforderlich.' });
   }
+  if (!google_credential && !password) {
+    return res.status(400).json({ error: 'Passwort oder Google-Anmeldung erforderlich.' });
+  }
+
+  // If Google credential provided, verify it
+  let googleId = null;
+  if (google_credential) {
+    try {
+      const gClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+      const ticket = await gClient.verifyIdToken({ idToken: google_credential, audience: process.env.GOOGLE_CLIENT_ID });
+      const payload = ticket.getPayload();
+      if (payload.email !== email) return res.status(400).json({ error: 'Google-E-Mail stimmt nicht überein.' });
+      googleId = payload.sub;
+    } catch (e) { return res.status(400).json({ error: 'Google-Verifizierung fehlgeschlagen.' }); }
+  }
+
   const existing = await getOne('SELECT id FROM users WHERE email = ?', [email]);
   if (existing) return res.status(409).json({ error: 'E-Mail bereits registriert.' });
 
-  const hash = await bcrypt.hash(password, 12);
+  const hash = google_credential ? '' : await bcrypt.hash(password, 12);
   const user = await getOne(
     `INSERT INTO users (name, email, password_hash, role, workspace_owner_id)
      VALUES (?, ?, ?, 'partner', NULL) RETURNING id`,
     [name, email, hash]
   );
+  if (googleId) {
+    await run(`ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id text`);
+    await run(`UPDATE users SET google_id = ? WHERE id = ?`, [googleId, user.id]);
+  }
   await run(
     `INSERT INTO partners (user_id, workspace_owner_id, phone, last_name, birth_year, payout_method, payout_details, application_message, dsgvo_consent_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
@@ -149,10 +169,16 @@ router.post('/apply', async (req, res) => {
         auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
       });
       const payoutLabel = payout_method === 'paypal' ? `PayPal (${payout_details})` : `Banküberweisung (${payout_details})`;
+      const age = birth_year ? new Date().getFullYear() - parseInt(birth_year) : null;
+      const isMinor = age !== null && age < 18 && age >= 16;
+      const minorNote = isMinor
+        ? `<div style="margin-top:12px;padding:12px 14px;background:rgba(255,159,10,0.12);border-radius:10px;border:1px solid rgba(255,159,10,0.3);">
+            <p style="margin:0;font-size:13px;color:#FF9F0A;font-weight:600;">Minderjährig (${age} Jahre) — elterliche Zustimmung wurde bestätigt. Bitte ggf. schriftlichen Nachweis anfordern.</p>
+           </div>` : '';
       await t.sendMail({
         from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
         to: owner.email,
-        subject: `Neue Partner-Bewerbung: ${name} ${last_name || ''}`,
+        subject: `Neue Partner-Bewerbung: ${name} ${last_name || ''}${isMinor ? ' ⚠️ Minderjährig' : ''}`,
         html: `
 <div style="background:#0D0D12;padding:32px;font-family:system-ui,sans-serif;min-height:100vh;">
 <div style="max-width:540px;margin:0 auto;background:#16161E;border-radius:16px;border:1px solid rgba(255,255,255,0.08);overflow:hidden;">
@@ -164,10 +190,12 @@ router.post('/apply', async (req, res) => {
       <tr><td style="padding:8px 0;color:#636366;font-size:13px;width:140px;vertical-align:top;">Name</td><td style="padding:8px 0;color:#F2F2F7;font-size:13px;font-weight:600;">${name} ${last_name || ''}</td></tr>
       <tr><td style="padding:8px 0;color:#636366;font-size:13px;">E-Mail</td><td style="padding:8px 0;color:#5B8CF5;font-size:13px;font-weight:600;">${email}</td></tr>
       <tr><td style="padding:8px 0;color:#636366;font-size:13px;">Telefon</td><td style="padding:8px 0;color:#F2F2F7;font-size:13px;">${phone || '—'}</td></tr>
-      <tr><td style="padding:8px 0;color:#636366;font-size:13px;">Geburtsjahr</td><td style="padding:8px 0;color:#F2F2F7;font-size:13px;">${birth_year || '—'}</td></tr>
+      <tr><td style="padding:8px 0;color:#636366;font-size:13px;">Geburtsjahr</td><td style="padding:8px 0;color:#F2F2F7;font-size:13px;">${birth_year || '—'}${age ? ` (${age} Jahre)` : ''}</td></tr>
+      <tr><td style="padding:8px 0;color:#636366;font-size:13px;">Konto</td><td style="padding:8px 0;color:#F2F2F7;font-size:13px;">${google_credential ? 'Google' : 'E-Mail & Passwort'}</td></tr>
       <tr><td style="padding:8px 0;color:#636366;font-size:13px;">Auszahlung</td><td style="padding:8px 0;color:#34D399;font-size:13px;font-weight:600;">${payoutLabel}</td></tr>
     </table>
-    <div style="margin-top:20px;padding:14px;background:rgba(91,140,245,0.1);border-radius:10px;border:1px solid rgba(91,140,245,0.2);">
+    ${minorNote}
+    <div style="margin-top:16px;padding:14px;background:rgba(91,140,245,0.1);border-radius:10px;border:1px solid rgba(91,140,245,0.2);">
       <p style="margin:0;font-size:13px;color:#AEAEB2;">Bitte prüfe die Bewerbung im Vecturo-Dashboard und gib den Partner frei oder lehne ab.</p>
     </div>
   </div>
