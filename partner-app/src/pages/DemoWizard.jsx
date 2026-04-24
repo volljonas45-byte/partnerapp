@@ -120,6 +120,122 @@ const COLOR_PRESETS = [
 
 const STEPS = ['Firmendaten', 'Website-Brief', 'Nächster Schritt'];
 
+const TIME_SLOTS = Array.from({ length: 37 }, (_, i) => {
+  const m = i * 15;
+  const h = Math.floor(m / 60) + 9;
+  const min = m % 60;
+  return `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
+});
+
+const MONTH_NAMES = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+const DAY_NAMES   = ['Mo','Di','Mi','Do','Fr','Sa','So'];
+
+function CalendarPicker({ selectedDate, onDateChange, selectedTime, onTimeChange }) {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const initMonth = selectedDate
+    ? (() => { const [y,m] = selectedDate.split('-'); return new Date(+y, +m-1, 1); })()
+    : new Date(today.getFullYear(), today.getMonth(), 1);
+  const [viewMonth, setViewMonth] = useState(initMonth);
+
+  const year  = viewMonth.getFullYear();
+  const month = viewMonth.getMonth();
+
+  const firstDow   = new Date(year, month, 1).getDay();
+  const startOffset = firstDow === 0 ? 6 : firstDow - 1;
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  const cells = [
+    ...Array(startOffset).fill(null),
+    ...Array.from({ length: daysInMonth }, (_, i) => new Date(year, month, i + 1)),
+  ];
+
+  const selObj = selectedDate
+    ? (() => { const [y,m,d] = selectedDate.split('-'); return new Date(+y, +m-1, +d); })()
+    : null;
+
+  function selectDay(d) {
+    if (!d || d < today) return;
+    onDateChange(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);
+  }
+
+  const timeRef = { current: null };
+
+  return (
+    <div style={{ display: 'flex', borderRadius: 14, overflow: 'hidden', border: `1px solid ${D.border}`, background: D.card }}>
+
+      {/* ── Calendar ── */}
+      <div style={{ flex: 1, padding: '16px 14px', minWidth: 0 }}>
+        {/* Nav */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <button onClick={() => setViewMonth(new Date(year, month-1, 1))}
+            style={{ width: 28, height: 28, borderRadius: 7, border: `1px solid ${D.border}`, background: 'none',
+              color: D.text2, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <ChevronLeft size={14} />
+          </button>
+          <span style={{ fontSize: 13, fontWeight: 700, color: D.text }}>
+            {MONTH_NAMES[month]} {year}
+          </span>
+          <button onClick={() => setViewMonth(new Date(year, month+1, 1))}
+            style={{ width: 28, height: 28, borderRadius: 7, border: `1px solid ${D.border}`, background: 'none',
+              color: D.text2, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <ChevronRight size={14} />
+          </button>
+        </div>
+
+        {/* Weekday headers */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, marginBottom: 4 }}>
+          {DAY_NAMES.map(d => (
+            <div key={d} style={{ textAlign: 'center', fontSize: 10, fontWeight: 600, color: D.text3 }}>{d}</div>
+          ))}
+        </div>
+
+        {/* Day grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2 }}>
+          {cells.map((d, i) => {
+            if (!d) return <div key={`e${i}`} />;
+            const isPast    = d < today;
+            const isToday   = d.getTime() === today.getTime();
+            const isSel     = selObj && d.getTime() === selObj.getTime();
+            return (
+              <button key={d.getTime()} onClick={() => selectDay(d)} disabled={isPast} style={{
+                width: '100%', aspectRatio: '1', borderRadius: 8, border: 'none',
+                fontSize: 12.5, cursor: isPast ? 'not-allowed' : 'pointer',
+                fontWeight: isSel ? 700 : 400,
+                background: isSel ? D.purple : isToday ? `${D.blue}25` : 'transparent',
+                color: isSel ? '#fff' : isPast ? D.text3 : isToday ? D.blue : D.text,
+                opacity: isPast ? 0.3 : 1, transition: 'background 0.1s, color 0.1s',
+              }}>{d.getDate()}</button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ── Divider ── */}
+      <div style={{ width: 1, background: D.border, flexShrink: 0 }} />
+
+      {/* ── Time slots ── */}
+      <div style={{ width: 100, overflowY: 'auto', maxHeight: 300, padding: '10px 8px',
+        display: 'flex', flexDirection: 'column', gap: 4, scrollbarWidth: 'thin' }}>
+        <div style={{ fontSize: 10, fontWeight: 700, color: D.text3, textTransform: 'uppercase',
+          letterSpacing: '0.06em', padding: '0 4px', marginBottom: 4, flexShrink: 0 }}>Uhrzeit</div>
+        {TIME_SLOTS.map(t => {
+          const isSel = selectedTime === t;
+          return (
+            <button key={t} onClick={() => onTimeChange(t)} style={{
+              padding: '6px 0', borderRadius: 7, flexShrink: 0,
+              border: `1px solid ${isSel ? D.purple : D.border}`,
+              background: isSel ? D.purpleL : 'transparent',
+              color: isSel ? D.purple : D.text2,
+              fontSize: 12, cursor: 'pointer', fontWeight: isSel ? 700 : 400,
+              transition: 'all 0.1s', textAlign: 'center',
+            }}>{t}</button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function buildBrief({ websiteGoal, pages, colorPreset, customColors, targetGroup, usp, hasWebsite, currentWebsite, hasLogo, inspirations }) {
   const lines = [];
   if (websiteGoal) lines.push(`🎯 Ziel: ${websiteGoal}`);
@@ -211,8 +327,8 @@ export default function DemoWizard() {
     setStep(0); setDone(null);
     setCompany(''); setContactPerson(''); setPhone(''); setEmail('');
     setWebsite(''); setCity(''); setIndustry(''); setNotes('');
-    setWebsiteGoal(''); setPages(['Startseite', 'Über uns', 'Leistungen', 'Kontakt']);
-    setDesignStyle(''); setColorPreset(''); setCustomColors('');
+    setWebsiteGoal(''); setPages(['Startseite', 'Über uns', 'Leistungen', 'Kontakt', 'Impressum / Datenschutz']);
+    setColorPreset(''); setCustomColors('');
     setTargetGroup(''); setUsp(''); setHasWebsite(null); setCurrentWebsite('');
     setHasLogo(null); setInspirations('');
     setAction(null); setScheduledDate(''); setScheduledTime('');
@@ -478,12 +594,29 @@ export default function DemoWizard() {
               {action === 'appointment' && (
                 <motion.div key="appt" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }} style={{ overflow: 'hidden', marginBottom: 16 }}>
-                  <div style={{ ...glass, padding: 18, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <div style={{ ...glass, padding: 18, display: 'flex', flexDirection: 'column', gap: 14 }}>
                     <p style={{ margin: 0, fontSize: 13, color: D.text2, fontWeight: 600 }}>Termin-Details</p>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                      <Field label="Datum" type="date" value={scheduledDate} onChange={setScheduledDate} required />
-                      <Field label="Uhrzeit" type="time" value={scheduledTime} onChange={setScheduledTime} required />
-                    </div>
+
+                    <CalendarPicker
+                      selectedDate={scheduledDate}
+                      onDateChange={setScheduledDate}
+                      selectedTime={scheduledTime}
+                      onTimeChange={setScheduledTime}
+                    />
+
+                    {scheduledDate && scheduledTime && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px',
+                        borderRadius: 10, background: D.purpleL, border: `1px solid rgba(191,90,242,0.25)` }}>
+                        <Calendar size={14} color={D.purple} />
+                        <span style={{ fontSize: 13, color: D.purple, fontWeight: 600 }}>
+                          {(() => {
+                            const [y,m,d] = scheduledDate.split('-');
+                            return new Date(+y, +m-1, +d).toLocaleDateString('de-DE', { weekday: 'long', day: '2-digit', month: 'long' });
+                          })()} um {scheduledTime} Uhr
+                        </span>
+                      </div>
+                    )}
+
                     <TextArea label="Demo-Ziel / Fokus" value={demoGoal} onChange={setDemoGoal}
                       placeholder="Was soll in der Demo gezeigt werden?" rows={2} />
                   </div>
