@@ -14,6 +14,9 @@ import Earnings from './pages/Earnings';
 import CompleteProfile from './pages/CompleteProfile';
 import AiChat from './pages/AiChat';
 import DemoWizard from './pages/DemoWizard';
+import { OnboardingProvider } from './context/OnboardingContext';
+import WelcomeModal from './components/WelcomeModal';
+import PageHint from './components/PageHint';
 
 const qc = new QueryClient();
 
@@ -43,7 +46,12 @@ function ProtectedRoute({ children, fixed = false }) {
   const { isAuthenticated, isApproved } = useAuth();
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (!isApproved) return <Navigate to="/pending" replace />;
-  return <Layout fixed={fixed}>{children}</Layout>;
+  return (
+    <Layout fixed={fixed}>
+      {children}
+      <PageHint />
+    </Layout>
+  );
 }
 
 function AppRoutes() {
@@ -73,7 +81,10 @@ export default function App() {
     <QueryClientProvider client={qc}>
       <BrowserRouter>
         <AuthProvider>
-          <AppRoutes />
+          <OnboardingProvider>
+            <WelcomeModal />
+            <AppRoutes />
+          </OnboardingProvider>
         </AuthProvider>
       </BrowserRouter>
     </QueryClientProvider>
