@@ -327,4 +327,167 @@ router.put('/feedback/:id', async (req, res) => {
   }
 });
 
+// ── GOALS ─────────────────────────────────────────────────────────────────────
+
+// Goals are joined with their linked KPI so current_value is automatically
+// in sync when a KPI is attached. Reviews are loaded as a nested array.
+router.get('/goals', async (req, res) => {
+  const { scope, year } = req.query;
+  try {
+    let sql = `
+      SELECT g.*, u.name AS owner_name, u.color AS owner_color,
+             k.title AS kpi_title, k.current_value AS kpi_current_value,
+             k.target_value AS kpi_target_value, k.unit AS kpi_unit
+      FROM planning_goals g
+      LEFT JOIN users u ON u.id = g.owner_id
+      LEFT JOIN planning_kpis k ON k.id = g.kpi_id
+      WHERE g.user_id = ?`;
+    const params = [req.workspaceUserId];
+    if (scope) { sql += ' AND g.scope = ?'; params.push(scope); }
+    if (year)  { sql += ' AND g.year = ?';  params.push(parseInt(year, 10)); }
+    sql += ` ORDER BY g.period DESC, g.quarter ASC NULLS FIRST, g.area, g.created_at DESC`;
+    const rows = await getAll(sql, params);
+
+    const ids = rows.map(r => r.id);
+    let reviewsByGoal = {};
+    if (ids.length) {
+      const placeholders = ids.map(() => '?').join(',');
+      const reviews = await getAll(
+        `SELECT * FROM planning_goal_reviews
+         WHERE user_id = ? AND goal_id IN (${placeholders})
+         ORDER BY week_start DESC`,
+        [req.workspaceUserId, ...ids]
+      );
+      reviewsByGoal = reviews.reduce((acc, r) => {
+        (acc[r.goal_id] = acc[r.goal_id] || []).push(r);
+        return acc;
+      }, {});
+    }
+    res.json(rows.map(r => ({ ...r, reviews: reviewsByGoal[r.id] || [] })));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+router.post('/goals', async (req, res) => {
+  const { scope, period, year, quarter, area, title, description,
+          target_value, current_value, unit, kpi_id, status, owner_id } = req.body;
+  try {
+    const { lastInsertRowid } = await run(
+      `INSERT INTO planning_goals
+         (user_id, owner_id, scope, period, year, quarter, area, title, description,
+          target_value, current_value, unit, kpi_id, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`,
+      [req.workspaceUserId, owner_id || null, scope || 'personal',
+       period || 'year', year || new Date().getFullYear(),
+       period === 'quarter' ? (quarter || 1) : null,
+       area || 'Allgemein', title, description || '',
+       target_value ?? null, current_value ?? 0, unit || '',
+       kpi_id || null, status || 'open']
+    );
+    const goal = await getOne(
+      `SELECT g.*, u.name AS owner_name, u.color AS owner_color,
+              k.title AS kpi_title, k.current_value AS kpi_current_value,
+              k.target_value AS kpi_target_value, k.unit AS kpi_unit
+       FROM planning_goals g
+       LEFT JOIN users u ON u.id = g.owner_id
+       LEFT JOIN planning_kpis k ON k.id = g.kpi_id
+       WHERE g.id = ?`,
+      [lastInsertRowid]
+    );
+    res.status(201).json({ ...goal, reviews: [] });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+router.put('/goals/:id', async (req, res) => {
+  const { scope, period, year, quarter, area, title, description,
+          target_value, current_value, unit, kpi_id, status, owner_id } = req.body;
+  try {
+    await run(
+      `UPDATE planning_goals
+       SET scope=?, period=?, year=?, quarter=?, area=?, title=?, description=?,
+           target_value=?, current_value=?, unit=?, kpi_id=?, status=?, owner_id=?,
+           updated_at=NOW()
+       WHERE id=? AND user_id=?`,
+      [scope, period, year, period === 'quarter' ? quarter : null,
+       area, title, description, target_value, current_value, unit,
+       kpi_id || null, status, owner_id || null,
+       req.params.id, req.workspaceUserId]
+    );
+    const goal = await getOne(
+      `SELECT g.*, u.name AS owner_name, u.color AS owner_color,
+              k.title AS kpi_title, k.current_value AS kpi_current_value,
+              k.target_value AS kpi_target_value, k.unit AS kpi_unit
+       FROM planning_goals g
+       LEFT JOIN users u ON u.id = g.owner_id
+       LEFT JOIN planning_kpis k ON k.id = g.kpi_id
+       WHERE g.id = ?`,
+      [req.params.id]
+    );
+    const reviews = await getAll(
+      `SELECT * FROM planning_goal_reviews
+       WHERE goal_id = ? AND user_id = ? ORDER BY week_start DESC`,
+      [req.params.id, req.workspaceUserId]
+    );
+    res.json({ ...goal, reviews });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+router.delete('/goals/:id', async (req, res) => {
+  try {
+    await run('DELETE FROM planning_goals WHERE id=? AND user_id=?',
+      [req.params.id, req.workspaceUserId]);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Weekly reviews per goal. Upsert on (goal_id, week_start).
+router.post('/goals/:id/reviews', async (req, res) => {
+  const { week_start, whats_working, whats_needs_change, rating } = req.body;
+  const weekStr = week_start || currentWeekStart();
+  try {
+    await run(
+      `INSERT INTO planning_goal_reviews
+         (user_id, goal_id, week_start, whats_working, whats_needs_change, rating)
+       VALUES (?, ?, ?, ?, ?, ?)
+       ON CONFLICT (goal_id, week_start)
+       DO UPDATE SET whats_working=EXCLUDED.whats_working,
+         whats_needs_change=EXCLUDED.whats_needs_change,
+         rating=EXCLUDED.rating, updated_at=NOW()`,
+      [req.workspaceUserId, req.params.id, weekStr,
+       whats_working || '', whats_needs_change || '', rating || null]
+    );
+    const entry = await getOne(
+      `SELECT * FROM planning_goal_reviews
+       WHERE goal_id = ? AND week_start = ? AND user_id = ?`,
+      [req.params.id, weekStr, req.workspaceUserId]
+    );
+    res.status(201).json(entry);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+router.delete('/goal-reviews/:id', async (req, res) => {
+  try {
+    await run('DELETE FROM planning_goal_reviews WHERE id=? AND user_id=?',
+      [req.params.id, req.workspaceUserId]);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 module.exports = router;

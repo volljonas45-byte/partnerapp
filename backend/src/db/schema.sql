@@ -625,6 +625,39 @@ CREATE TABLE IF NOT EXISTS planning_feedback (
   UNIQUE(user_id, author_id, week_start)
 );
 
+CREATE TABLE IF NOT EXISTS planning_goals (
+  id            SERIAL PRIMARY KEY,
+  user_id       INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  owner_id      INTEGER REFERENCES users(id),
+  scope         TEXT NOT NULL DEFAULT 'personal',
+  period        TEXT NOT NULL DEFAULT 'year',
+  year          INTEGER NOT NULL,
+  quarter       INTEGER CHECK (quarter BETWEEN 1 AND 4),
+  area          TEXT NOT NULL DEFAULT 'Allgemein',
+  title         TEXT NOT NULL,
+  description   TEXT DEFAULT '',
+  target_value  NUMERIC,
+  current_value NUMERIC DEFAULT 0,
+  unit          TEXT DEFAULT '',
+  kpi_id        INTEGER REFERENCES planning_kpis(id) ON DELETE SET NULL,
+  status        TEXT NOT NULL DEFAULT 'open',
+  created_at    TIMESTAMPTZ DEFAULT NOW(),
+  updated_at    TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS planning_goal_reviews (
+  id                  SERIAL PRIMARY KEY,
+  user_id             INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  goal_id             INTEGER NOT NULL REFERENCES planning_goals(id) ON DELETE CASCADE,
+  week_start          DATE NOT NULL,
+  whats_working       TEXT DEFAULT '',
+  whats_needs_change  TEXT DEFAULT '',
+  rating              INTEGER CHECK (rating >= 1 AND rating <= 5),
+  created_at          TIMESTAMPTZ DEFAULT NOW(),
+  updated_at          TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(goal_id, week_start)
+);
+
 -- ── FINANCE MODULE ────────────────────────────────────────────────────────────
 
 CREATE TABLE IF NOT EXISTS finance_setup (

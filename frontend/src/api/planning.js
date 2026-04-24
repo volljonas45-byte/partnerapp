@@ -24,4 +24,12 @@ export const planningApi = {
   listWeeks:      ()       => api.get('/api/planning/feedback/weeks').then(r => r.data),
   upsertFeedback: (data)   => api.post('/api/planning/feedback', data).then(r => r.data),
   updateFeedback: (id, data) => api.put(`/api/planning/feedback/${id}`, data).then(r => r.data),
+
+  // Goals
+  listGoals:      (params) => api.get('/api/planning/goals', { params }).then(r => r.data),
+  createGoal:     (data)   => api.post('/api/planning/goals', data).then(r => r.data),
+  updateGoal:     (id, data) => api.put(`/api/planning/goals/${id}`, data).then(r => r.data),
+  deleteGoal:     (id)     => api.delete(`/api/planning/goals/${id}`).then(r => r.data),
+  upsertGoalReview: (goalId, data) => api.post(`/api/planning/goals/${goalId}/reviews`, data).then(r => r.data),
+  deleteGoalReview: (id)   => api.delete(`/api/planning/goal-reviews/${id}`).then(r => r.data),
 };

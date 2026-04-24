@@ -41,6 +41,8 @@ async function migrate() {
     `UPDATE partner_commissions SET workspace_owner_id = 2 WHERE workspace_owner_id = 1`,
     `CREATE TABLE IF NOT EXISTS partner_lead_requests (id SERIAL PRIMARY KEY, partner_id INTEGER NOT NULL REFERENCES partners(id), workspace_owner_id INTEGER NOT NULL, industry TEXT NOT NULL, quantity INTEGER NOT NULL DEFAULT 1, message TEXT, status TEXT NOT NULL DEFAULT 'pending', created_at TIMESTAMPTZ DEFAULT NOW())`,
     `ALTER TABLE time_entries ADD COLUMN IF NOT EXISTS activity_tag TEXT DEFAULT NULL`,
+    `CREATE TABLE IF NOT EXISTS planning_goals (id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE, owner_id INTEGER REFERENCES users(id), scope TEXT NOT NULL DEFAULT 'personal', period TEXT NOT NULL DEFAULT 'year', year INTEGER NOT NULL, quarter INTEGER CHECK (quarter BETWEEN 1 AND 4), area TEXT NOT NULL DEFAULT 'Allgemein', title TEXT NOT NULL, description TEXT DEFAULT '', target_value NUMERIC, current_value NUMERIC DEFAULT 0, unit TEXT DEFAULT '', kpi_id INTEGER REFERENCES planning_kpis(id) ON DELETE SET NULL, status TEXT NOT NULL DEFAULT 'open', created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW())`,
+    `CREATE TABLE IF NOT EXISTS planning_goal_reviews (id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE, goal_id INTEGER NOT NULL REFERENCES planning_goals(id) ON DELETE CASCADE, week_start DATE NOT NULL, whats_working TEXT DEFAULT '', whats_needs_change TEXT DEFAULT '', rating INTEGER CHECK (rating >= 1 AND rating <= 5), created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW(), UNIQUE(goal_id, week_start))`,
   ];
   const client2 = await pool.connect();
   try {

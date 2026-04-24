@@ -44,11 +44,19 @@ const AREA_THEME = {
 
 const TABS = [
   { id: 'overview',   label: 'Übersicht'      },
+  { id: 'goals',      label: 'Ziele'          },
   { id: 'feedback',   label: 'Feedback'       },
   { id: 'kpis',       label: 'KPIs'           },
   { id: 'tasks',      label: 'Aufgaben'       },
   { id: 'decisions',  label: 'Entscheidungen' },
 ];
+
+const GOAL_STATUS = {
+  open:         { label: 'Offen',      color: '#9090B8' },
+  in_progress:  { label: 'In Arbeit',  color: '#5B8CF5' },
+  achieved:     { label: 'Erreicht',   color: '#34D399' },
+  missed:       { label: 'Verfehlt',   color: '#F87171' },
+};
 
 const AREAS = ['Vertrieb', 'Finanzen', 'Projekte', 'Team', 'Marketing', 'Operations', 'Allgemein'];
 
@@ -547,6 +555,438 @@ function FeedbackSheet({ open, onClose, onSave, initial, loading, weekLabel }) {
 // ─────────────────────────────────────────────────────────────────────────────
 // KPIs TAB
 // ─────────────────────────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GOALS TAB — Jahres- und Quartalsziele mit KPI-Anbindung und Weekly Reviews
+// ─────────────────────────────────────────────────────────────────────────────
+
+function GoalsTab({ teamMembers }) {
+  const qc = useQueryClient();
+  const year = new Date().getFullYear();
+  const [scope, setScope] = useState('personal');
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editGoal, setEditGoal] = useState(null);
+  const [modalDefaults, setModalDefaults] = useState(null);
+  const [reviewGoal, setReviewGoal] = useState(null);
+
+  const { data: goals = [], isLoading } = useQuery({
+    queryKey: ['planning-goals', scope, year],
+    queryFn: () => planningApi.listGoals({ scope, year }),
+  });
+  const { data: kpis = [] } = useQuery({ queryKey: ['planning-kpis'], queryFn: planningApi.listKpis });
+
+  const save = useMutation({
+    mutationFn: d => d.id ? planningApi.updateGoal(d.id, d) : planningApi.createGoal(d),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['planning-goals'] });
+      setModalOpen(false); setEditGoal(null); setModalDefaults(null);
+      toast.success('Ziel gespeichert');
+    },
+    onError: () => toast.error('Fehler'),
+  });
+  const del = useMutation({
+    mutationFn: planningApi.deleteGoal,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['planning-goals'] }),
+  });
+
+  const openCreate = (period, quarter) => {
+    setEditGoal(null);
+    setModalDefaults({ scope, period, year, quarter: quarter || null, area: 'Vertrieb', status: 'open', current_value: 0 });
+    setModalOpen(true);
+  };
+  const openEdit = (goal) => { setEditGoal(goal); setModalDefaults(null); setModalOpen(true); };
+
+  const yearGoals    = goals.filter(g => g.period === 'year');
+  const quarterGoals = q => goals.filter(g => g.period === 'quarter' && g.quarter === q);
+
+  return (
+    <div>
+      {/* Scope toggle + year badge */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
+        <SegCtrl
+          tabs={[{ id: 'personal', label: 'Persönlich' }, { id: 'company', label: 'Unternehmen' }]}
+          active={scope}
+          onChange={setScope}
+        />
+        <div style={{ padding: '6px 14px', borderRadius: 99, background: 'rgba(155,114,242,0.1)', border: '0.5px solid rgba(155,114,242,0.25)', fontSize: 12, fontWeight: 700, color: D.purple }}>
+          {year}
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(240px,1fr))', gap: 12 }}>
+          {[1,2,3,4].map(i => <Skel key={i} h={160} r={18} />)}
+        </div>
+      ) : (
+        <>
+          {/* Jahresziele */}
+          <div style={{ marginBottom: 36 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: D.purple, boxShadow: `0 0 8px ${D.purple}80` }} />
+                <span style={{ fontSize: 11, fontWeight: 800, color: D.purple, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Jahresziele {year}</span>
+              </div>
+              <DBtn onClick={() => openCreate('year')}><Plus size={13} /> Jahresziel</DBtn>
+            </div>
+            {yearGoals.length === 0 ? (
+              <EmptyCard text={`Noch keine Jahresziele für ${year}.`} onAdd={() => openCreate('year')} />
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: 12 }}>
+                {yearGoals.map(g => (
+                  <GoalCard key={g.id} goal={g}
+                    onEdit={() => openEdit(g)}
+                    onDelete={() => { if (confirm('Ziel löschen?')) del.mutate(g.id); }}
+                    onReview={() => setReviewGoal(g)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Quartale */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: D.blue, boxShadow: `0 0 8px ${D.blue}80` }} />
+            <span style={{ fontSize: 11, fontWeight: 800, color: D.blue, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Quartalsziele</span>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: 12 }}>
+            {[1,2,3,4].map(q => (
+              <QuarterColumn key={q} quarter={q} goals={quarterGoals(q)}
+                onAdd={() => openCreate('quarter', q)}
+                onEdit={openEdit}
+                onDelete={id => { if (confirm('Ziel löschen?')) del.mutate(id); }}
+                onReview={setReviewGoal}
+              />
+            ))}
+          </div>
+        </>
+      )}
+
+      <GoalModal
+        open={modalOpen}
+        onClose={() => { setModalOpen(false); setEditGoal(null); setModalDefaults(null); }}
+        onSave={save.mutate}
+        initial={editGoal || modalDefaults}
+        loading={save.isPending}
+        teamMembers={teamMembers || []}
+        kpis={kpis}
+        scope={scope}
+      />
+      <GoalReviewModal
+        goal={reviewGoal}
+        onClose={() => setReviewGoal(null)}
+      />
+    </div>
+  );
+}
+
+function EmptyCard({ text, onAdd }) {
+  return (
+    <div style={{ padding: 24, borderRadius: 18, background: D.card, border: `1px dashed ${D.borderB}`, textAlign: 'center' }}>
+      <p style={{ margin: '0 0 10px', fontSize: 13, color: D.text2 }}>{text}</p>
+      <DBtn variant="ghost" onClick={onAdd}><Plus size={13} /> Hinzufügen</DBtn>
+    </div>
+  );
+}
+
+function QuarterColumn({ quarter, goals, onAdd, onEdit, onDelete, onReview }) {
+  const now = new Date();
+  const currentQ = Math.floor(now.getMonth() / 3) + 1;
+  const isCurrent = quarter === currentQ;
+  return (
+    <div style={{
+      padding: 14, borderRadius: 18,
+      background: isCurrent ? 'linear-gradient(145deg,#0B1028 0%,#0D1840 100%)' : D.card,
+      border: `0.5px solid ${isCurrent ? D.blue + '40' : D.border}`,
+      boxShadow: isCurrent ? `0 0 32px rgba(91,140,245,0.12)` : 'none',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontSize: 14, fontWeight: 800, color: isCurrent ? D.blue : D.text, letterSpacing: '-0.02em' }}>Q{quarter}</span>
+          {isCurrent && <span style={{ fontSize: 9, fontWeight: 800, padding: '2px 6px', borderRadius: 5, background: `${D.blue}22`, color: D.blue, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Aktuell</span>}
+        </div>
+        <button onClick={onAdd} style={{ width: 26, height: 26, borderRadius: 8, border: 'none', background: 'rgba(255,255,255,0.06)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: D.text2 }}>
+          <Plus size={12} />
+        </button>
+      </div>
+      {goals.length === 0 ? (
+        <div style={{ padding: '20px 8px', textAlign: 'center', fontSize: 11, color: D.text3 }}>Keine Ziele</div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {goals.map(g => (
+            <GoalCard key={g.id} goal={g} compact
+              onEdit={() => onEdit(g)}
+              onDelete={() => onDelete(g.id)}
+              onReview={() => onReview(g)}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function GoalCard({ goal, compact, onEdit, onDelete, onReview }) {
+  const t = AREA_THEME[goal.area] || AREA_THEME.Allgemein;
+  // If KPI is linked, read live value from the KPI; otherwise use stored current_value.
+  const current = goal.kpi_id ? Number(goal.kpi_current_value || 0) : Number(goal.current_value || 0);
+  const target  = Number(goal.target_value || 0);
+  const pct = target > 0 ? Math.round((current / target) * 100) : null;
+  const status = GOAL_STATUS[goal.status] || GOAL_STATUS.open;
+  const unit = goal.kpi_id ? goal.kpi_unit : goal.unit;
+  const reviewCount = goal.reviews?.length || 0;
+
+  return (
+    <div style={{
+      background: t.bg,
+      borderRadius: compact ? 14 : 18,
+      border: `0.5px solid ${t.accent}35`,
+      boxShadow: `0 0 32px ${t.glow}, 0 1px 0 rgba(255,255,255,0.05) inset`,
+      padding: compact ? 12 : 16,
+      overflow: 'hidden',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 8 }}>
+        <div style={{ width: compact ? 22 : 28, height: compact ? 22 : 28, borderRadius: 7, background: `${t.accent}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <Target size={compact ? 11 : 13} color={t.accent} />
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ margin: 0, fontSize: compact ? 12.5 : 14, fontWeight: 700, color: D.text, letterSpacing: '-0.01em', lineHeight: 1.3, wordBreak: 'break-word' }}>
+            {goal.title}
+          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 10, fontWeight: 700, color: t.accent, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{goal.area}</span>
+            <span style={{ fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 4, background: `${status.color}20`, color: status.color }}>{status.label}</span>
+            {goal.kpi_id && (
+              <span style={{ fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 4, background: 'rgba(155,114,242,0.18)', color: D.purple }}>KPI</span>
+            )}
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 2 }}>
+          <button onClick={onEdit} style={{ width: 22, height: 22, borderRadius: 6, border: 'none', background: 'rgba(255,255,255,0.06)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: D.text2 }}><Edit3 size={10} /></button>
+          <button onClick={onDelete} style={{ width: 22, height: 22, borderRadius: 6, border: 'none', background: 'rgba(255,255,255,0.04)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: D.text3 }}><Trash2 size={10} /></button>
+        </div>
+      </div>
+
+      {target > 0 && (
+        <>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 4 }}>
+            <span style={{ fontSize: compact ? 20 : 26, fontWeight: 900, color: D.text, letterSpacing: '-0.03em', lineHeight: 1 }}>
+              {Number(current).toLocaleString('de-DE')}
+            </span>
+            <span style={{ fontSize: 11, color: D.text3 }}>/ {Number(target).toLocaleString('de-DE')} {unit || ''}</span>
+            {pct !== null && (
+              <span style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 700, padding: '2px 7px', borderRadius: 5, background: `${t.accent}18`, color: t.accent }}>{pct}%</span>
+            )}
+          </div>
+          <div style={{ height: 3, background: 'rgba(255,255,255,0.06)', borderRadius: 99, overflow: 'hidden', marginBottom: 8 }}>
+            <div style={{ height: '100%', borderRadius: 99, background: `linear-gradient(90deg, ${t.accent}70, ${t.accent})`, width: `${Math.min(pct || 0, 100)}%`, transition: 'width 0.7s cubic-bezier(0.22,1,0.36,1)' }} />
+          </div>
+        </>
+      )}
+
+      {!compact && goal.description && (
+        <p style={{ margin: '4px 0 10px', fontSize: 12, color: D.text2, lineHeight: 1.4 }}>{goal.description}</p>
+      )}
+
+      <button onClick={onReview} style={{
+        width: '100%', padding: '7px 10px', borderRadius: 8,
+        background: 'rgba(255,255,255,0.05)', border: `0.5px solid ${D.border}`,
+        color: D.text2, fontSize: 11, fontWeight: 600, cursor: 'pointer',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+      }}>
+        <MessageSquare size={11} /> Wochen-Review {reviewCount > 0 && `(${reviewCount})`}
+      </button>
+    </div>
+  );
+}
+
+function GoalModal({ open, onClose, onSave, initial, loading, teamMembers, kpis, scope }) {
+  const year = new Date().getFullYear();
+  const [f, setF] = useState({});
+  const s = (k, v) => setF(x => ({ ...x, [k]: v }));
+  useEffect(() => {
+    if (open) setF(initial ? { ...initial } : { scope, period: 'year', year, area: 'Vertrieb', status: 'open', current_value: 0 });
+  }, [open, initial, scope, year]);
+  const submit = e => {
+    e.preventDefault();
+    if (!f.title?.trim()) { toast.error('Titel erforderlich'); return; }
+    onSave(f);
+  };
+
+  return (
+    <DModal open={open} onClose={onClose} title={initial?.id ? 'Ziel bearbeiten' : 'Neues Ziel'} width={520}>
+      <form onSubmit={submit}>
+        <DField label="Titel">
+          <DInput value={f.title || ''} onChange={e => s('title', e.target.value)} placeholder="z.B. 100 neue Kunden" required />
+        </DField>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <DField label="Scope">
+            <DInput as="select" value={f.scope || 'personal'} onChange={e => s('scope', e.target.value)} style={{ appearance: 'none' }}>
+              <option value="personal" style={{ background: D.card }}>Persönlich</option>
+              <option value="company"  style={{ background: D.card }}>Unternehmen</option>
+            </DInput>
+          </DField>
+          <DField label="Bereich">
+            <DInput as="select" value={f.area || 'Allgemein'} onChange={e => s('area', e.target.value)} style={{ appearance: 'none' }}>
+              {AREAS.map(a => <option key={a} style={{ background: D.card }}>{a}</option>)}
+            </DInput>
+          </DField>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <DField label="Periode">
+            <DInput as="select" value={f.period || 'year'} onChange={e => s('period', e.target.value)} style={{ appearance: 'none' }}>
+              <option value="year"    style={{ background: D.card }}>Jahr</option>
+              <option value="quarter" style={{ background: D.card }}>Quartal</option>
+            </DInput>
+          </DField>
+          {f.period === 'quarter' ? (
+            <DField label="Quartal">
+              <DInput as="select" value={f.quarter || 1} onChange={e => s('quarter', parseInt(e.target.value, 10))} style={{ appearance: 'none' }}>
+                {[1,2,3,4].map(q => <option key={q} value={q} style={{ background: D.card }}>Q{q}</option>)}
+              </DInput>
+            </DField>
+          ) : <div />}
+        </div>
+        <DField label="KPI verknüpfen (optional)">
+          <DInput as="select" value={f.kpi_id || ''} onChange={e => s('kpi_id', e.target.value ? parseInt(e.target.value, 10) : null)} style={{ appearance: 'none' }}>
+            <option value="" style={{ background: D.card }}>Kein KPI (manuelle Werte)</option>
+            {kpis.map(k => <option key={k.id} value={k.id} style={{ background: D.card }}>{k.title} · {k.area}</option>)}
+          </DInput>
+        </DField>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+          <DField label="Zielwert">
+            <DInput type="number" value={f.target_value ?? ''} onChange={e => s('target_value', e.target.value === '' ? null : parseFloat(e.target.value))} />
+          </DField>
+          <DField label="Ist-Wert">
+            <DInput type="number" value={f.current_value ?? 0} onChange={e => s('current_value', parseFloat(e.target.value))} disabled={!!f.kpi_id} />
+          </DField>
+          <DField label="Einheit">
+            <DInput value={f.unit || ''} onChange={e => s('unit', e.target.value)} placeholder="€, Stk., %" disabled={!!f.kpi_id} />
+          </DField>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <DField label="Status">
+            <DInput as="select" value={f.status || 'open'} onChange={e => s('status', e.target.value)} style={{ appearance: 'none' }}>
+              {Object.entries(GOAL_STATUS).map(([k, v]) => <option key={k} value={k} style={{ background: D.card }}>{v.label}</option>)}
+            </DInput>
+          </DField>
+          {teamMembers.length > 0 && (
+            <DField label="Verantwortlich">
+              <DInput as="select" value={f.owner_id || ''} onChange={e => s('owner_id', e.target.value || null)} style={{ appearance: 'none' }}>
+                <option value="" style={{ background: D.card }}>Niemand</option>
+                {teamMembers.map(m => <option key={m.id} value={m.id} style={{ background: D.card }}>{m.name || m.email}</option>)}
+              </DInput>
+            </DField>
+          )}
+        </div>
+        <DField label="Beschreibung">
+          <DInput as="textarea" rows={2} value={f.description || ''} onChange={e => s('description', e.target.value)} placeholder="Was genau willst du erreichen?" style={{ resize: 'vertical' }} />
+        </DField>
+        <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+          <DBtn variant="ghost" onClick={onClose} style={{ flex: 1 }}>Abbrechen</DBtn>
+          <DBtn type="submit" disabled={loading} style={{ flex: 2 }}>{loading ? 'Speichern...' : initial?.id ? 'Aktualisieren' : 'Ziel erstellen'}</DBtn>
+        </div>
+      </form>
+    </DModal>
+  );
+}
+
+function GoalReviewModal({ goal, onClose }) {
+  const qc = useQueryClient();
+  const [f, setF] = useState({ whats_working: '', whats_needs_change: '', rating: 3 });
+  const s = (k, v) => setF(x => ({ ...x, [k]: v }));
+
+  useEffect(() => {
+    if (!goal) return;
+    // Pre-fill from this week's existing review if any
+    const weekStart = (() => {
+      const d = new Date();
+      const day = d.getDay() || 7;
+      d.setDate(d.getDate() - day + 1);
+      return d.toISOString().slice(0, 10);
+    })();
+    const thisWeek = goal.reviews?.find(r => r.week_start === weekStart || String(r.week_start).startsWith(weekStart));
+    if (thisWeek) setF({ whats_working: thisWeek.whats_working || '', whats_needs_change: thisWeek.whats_needs_change || '', rating: thisWeek.rating || 3 });
+    else setF({ whats_working: '', whats_needs_change: '', rating: 3 });
+  }, [goal]);
+
+  const upsert = useMutation({
+    mutationFn: data => planningApi.upsertGoalReview(goal.id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['planning-goals'] });
+      toast.success('Review gespeichert');
+      onClose();
+    },
+    onError: () => toast.error('Fehler'),
+  });
+  const delReview = useMutation({
+    mutationFn: planningApi.deleteGoalReview,
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['planning-goals'] }); toast.success('Gelöscht'); },
+  });
+
+  if (!goal) return null;
+
+  return (
+    <DModal open={!!goal} onClose={onClose} title={`Review: ${goal.title}`} width={560}>
+      <div>
+        <p style={{ margin: '0 0 14px', fontSize: 12, color: D.text3 }}>
+          Woche {(() => { const d = new Date(); const s = new Date(d.getFullYear(), 0, 1); return Math.ceil(((d - s) / 86400000 + s.getDay() + 1) / 7); })()} · Was läuft gut, was muss sich ändern?
+        </p>
+        <DField label="Was läuft gut?">
+          <DInput as="textarea" rows={3} value={f.whats_working} onChange={e => s('whats_working', e.target.value)} placeholder="Fortschritte, Erfolge, funktionierende Ansätze..." style={{ resize: 'vertical' }} />
+        </DField>
+        <DField label="Was muss sich ändern?">
+          <DInput as="textarea" rows={3} value={f.whats_needs_change} onChange={e => s('whats_needs_change', e.target.value)} placeholder="Blocker, Anpassungen, nächste Schritte..." style={{ resize: 'vertical' }} />
+        </DField>
+        <DField label="Bewertung">
+          <div style={{ display: 'flex', gap: 6 }}>
+            {RATINGS.map(r => (
+              <button key={r.value} type="button" onClick={() => s('rating', r.value)} style={{
+                flex: 1, padding: '8px 4px', borderRadius: 10,
+                background: f.rating === r.value ? `${r.color}22` : 'rgba(255,255,255,0.04)',
+                border: `0.5px solid ${f.rating === r.value ? r.color + '60' : D.border}`,
+                cursor: 'pointer', fontSize: 18, transition: 'all 0.2s',
+              }}>
+                <div>{r.emoji}</div>
+                <div style={{ fontSize: 9, fontWeight: 700, color: f.rating === r.value ? r.color : D.text3, marginTop: 2 }}>{r.label}</div>
+              </button>
+            ))}
+          </div>
+        </DField>
+
+        {/* Past reviews */}
+        {goal.reviews?.length > 0 && (
+          <div style={{ marginTop: 20 }}>
+            <p style={{ margin: '0 0 10px', fontSize: 11, fontWeight: 800, color: D.text3, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Vergangene Reviews</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 200, overflowY: 'auto' }}>
+              {goal.reviews.map(r => {
+                const rating = RATINGS.find(x => x.value === r.rating);
+                return (
+                  <div key={r.id} style={{ padding: 10, borderRadius: 10, background: D.card2, border: `0.5px solid ${D.border}` }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: D.text2 }}>
+                        {new Date(r.week_start).toLocaleDateString('de-DE', { day: '2-digit', month: 'short' })} {rating && rating.emoji}
+                      </span>
+                      <button onClick={() => delReview.mutate(r.id)} style={{ width: 20, height: 20, borderRadius: 5, border: 'none', background: 'transparent', cursor: 'pointer', color: D.text3 }}><Trash2 size={10} /></button>
+                    </div>
+                    {r.whats_working && <p style={{ margin: '2px 0', fontSize: 11, color: D.text }}><span style={{ color: D.green }}>+</span> {r.whats_working}</p>}
+                    {r.whats_needs_change && <p style={{ margin: '2px 0', fontSize: 11, color: D.text }}><span style={{ color: D.orange }}>→</span> {r.whats_needs_change}</p>}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+          <DBtn variant="ghost" onClick={onClose} style={{ flex: 1 }}>Abbrechen</DBtn>
+          <DBtn onClick={() => upsert.mutate(f)} disabled={upsert.isPending} style={{ flex: 2 }}>
+            {upsert.isPending ? 'Speichern...' : 'Review speichern'}
+          </DBtn>
+        </div>
+      </div>
+    </DModal>
+  );
+}
 
 function KpisTab({ teamMembers }) {
   const qc = useQueryClient();
@@ -1284,6 +1724,7 @@ export default function Planning() {
 
         {/* Tab Content — key forces remount → triggers entry animation */}
         <div key={activeTab} style={{ animation: 'tabIn 0.42s cubic-bezier(0.22,1,0.36,1) both' }}>
+          {activeTab === 'goals'     && <GoalsTab      teamMembers={teamMembers} />}
           {activeTab === 'feedback'  && <FeedbackTab  teamMembers={teamMembers} currentUser={user} />}
           {activeTab === 'kpis'      && <KpisTab       teamMembers={teamMembers} />}
           {activeTab === 'tasks'     && <TasksTab      teamMembers={teamMembers} />}
