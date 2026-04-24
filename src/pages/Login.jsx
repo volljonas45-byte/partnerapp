@@ -27,7 +27,7 @@ function Field({ label, ...props }) {
 }
 
 export default function Login() {
-  const { loginWithGoogle, loginWithEmail, register } = useAuth();
+  const { loginWithGoogle, loginWithEmail } = useAuth();
   const nav = useNavigate();
   const [error, setError]     = useState('');
   const [loading, setLoading] = useState(false);
@@ -118,7 +118,7 @@ export default function Login() {
               onError={() => setError('Google-Anmeldung fehlgeschlagen.')}
               theme="filled_black"
               size="large"
-              text={mode === 'register' ? 'signup_with' : 'signin_with'}
+              text="signin_with"
               shape="rectangular"
               width="344"
             />
