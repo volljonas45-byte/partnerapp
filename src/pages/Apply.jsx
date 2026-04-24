@@ -1,17 +1,21 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, ChevronLeft, Check } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Check, AlertTriangle } from 'lucide-react';
+import { GoogleLogin } from '@react-oauth/google';
 import { partnerApi } from '../api/partner';
 
 const D = {
   bg: '#0D0D12', card: '#16161E', border: 'rgba(255,255,255,0.08)',
   text: '#F2F2F7', text2: '#AEAEB2', text3: '#636366',
   blue: '#5B8CF5', blueL: 'rgba(91,140,245,0.15)', input: '#1C1C26',
-  red: '#FF453A', green: '#34D399',
+  red: '#FF453A', redL: 'rgba(255,69,58,0.12)',
+  green: '#34D399', greenL: 'rgba(52,211,153,0.12)',
+  orange: '#FF9F0A', orangeL: 'rgba(255,159,10,0.12)',
 };
 
 const WORKSPACE_OWNER_ID = import.meta.env.VITE_WORKSPACE_OWNER_ID || 1;
+const CURRENT_YEAR = new Date().getFullYear();
 
 const STEPS = [
   { title: 'Persönliche Daten', sub: 'Wie heißt du?' },
@@ -21,6 +25,17 @@ const STEPS = [
   { title: 'Datenschutz',       sub: 'Fast geschafft — bitte bestätigen' },
 ];
 
+function decodeGoogleJwt(token) {
+  try {
+    const payload = token.split('.')[1];
+    return JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
+  } catch { return null; }
+}
+
+function getAge(birthYear) {
+  return CURRENT_YEAR - parseInt(birthYear || 0);
+}
+
 function Label({ children, required }) {
   return (
     <label style={{ fontSize: 11, fontWeight: 700, color: D.text3, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
@@ -29,12 +44,13 @@ function Label({ children, required }) {
   );
 }
 
-function Inp({ value, onChange, type = 'text', placeholder }) {
+function Inp({ value, onChange, type = 'text', placeholder, readOnly }) {
   return (
-    <input type={type} value={value} onChange={onChange} placeholder={placeholder}
-      style={{ background: D.input, border: `0.5px solid ${D.border}`, borderRadius: 11,
-        padding: '12px 14px', fontSize: 14, color: D.text, outline: 'none',
-        width: '100%', boxSizing: 'border-box', fontFamily: 'inherit' }} />
+    <input type={type} value={value} onChange={onChange} placeholder={placeholder} readOnly={readOnly}
+      style={{ background: readOnly ? 'rgba(255,255,255,0.03)' : D.input,
+        border: `0.5px solid ${D.border}`, borderRadius: 11,
+        padding: '12px 14px', fontSize: 14, color: readOnly ? D.text2 : D.text,
+        outline: 'none', width: '100%', boxSizing: 'border-box', fontFamily: 'inherit' }} />
   );
 }
 
@@ -59,10 +75,30 @@ export default function Apply() {
     phone: '', birth_year: '',
     email: '', password: '', password2: '',
     payout_method: 'paypal', payout_details: '',
-    dsgvo: false,
+    dsgvo: false, parentalConsent: false,
+    googleCredential: null,
   });
 
   const f = k => e => setForm(p => ({ ...p, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value }));
+
+  function handleGoogleSuccess(cr) {
+    const payload = decodeGoogleJwt(cr.credential);
+    if (!payload) { setError('Google-Anmeldung fehlgeschlagen.'); return; }
+    setForm(p => ({
+      ...p,
+      email: payload.email || p.email,
+      first_name: p.first_name || payload.given_name || '',
+      last_name:  p.last_name  || payload.family_name || '',
+      googleCredential: cr.credential,
+      password: '', password2: '',
+    }));
+    setError('');
+  }
+
+  const age = getAge(form.birth_year);
+  const isMinor = form.birth_year.length === 4 && age >= 16 && age < 18;
+  const isTooYoung = form.birth_year.length === 4 && age < 16;
+  const googleLinked = !!form.googleCredential;
 
   function validate(s) {
     if (s === 0) {
@@ -72,12 +108,15 @@ export default function Apply() {
     if (s === 1) {
       if (!form.phone.trim()) return 'Bitte Telefonnummer eingeben.';
       const yr = parseInt(form.birth_year);
-      if (!yr || yr < 1920 || yr > 2007) return 'Bitte ein gültiges Geburtsjahr eingeben (mind. 18 Jahre).';
+      if (!yr || yr < 1920 || yr > CURRENT_YEAR - 1) return 'Bitte ein gültiges Geburtsjahr eingeben.';
+      if (isTooYoung) return 'Du musst mindestens 16 Jahre alt sein um dich zu bewerben.';
     }
     if (s === 2) {
       if (!form.email.trim()) return 'Bitte E-Mail eingeben.';
-      if ((form.password || '').length < 6) return 'Passwort muss mindestens 6 Zeichen haben.';
-      if (form.password !== form.password2) return 'Passwörter stimmen nicht überein.';
+      if (!googleLinked) {
+        if ((form.password || '').length < 6) return 'Passwort muss mindestens 6 Zeichen haben.';
+        if (form.password !== form.password2) return 'Passwörter stimmen nicht überein.';
+      }
     }
     if (s === 3) {
       if (!form.payout_details.trim())
@@ -85,6 +124,7 @@ export default function Apply() {
     }
     if (s === 4) {
       if (!form.dsgvo) return 'Bitte stimme der Datenschutzerklärung zu.';
+      if (isMinor && !form.parentalConsent) return 'Bitte bestätige die Zustimmung deiner Erziehungsberechtigten.';
     }
     return null;
   }
@@ -105,14 +145,15 @@ export default function Apply() {
     setLoading(true); setError('');
     try {
       await partnerApi.apply({
-        name:            form.first_name.trim(),
-        last_name:       form.last_name.trim(),
-        email:           form.email.trim(),
-        password:        form.password,
-        phone:           form.phone.trim(),
-        birth_year:      parseInt(form.birth_year),
-        payout_method:   form.payout_method,
-        payout_details:  form.payout_details.trim(),
+        name:              form.first_name.trim(),
+        last_name:         form.last_name.trim(),
+        email:             form.email.trim(),
+        password:          googleLinked ? '__google__' : form.password,
+        google_credential: form.googleCredential || undefined,
+        phone:             form.phone.trim(),
+        birth_year:        parseInt(form.birth_year),
+        payout_method:     form.payout_method,
+        payout_details:    form.payout_details.trim(),
         workspace_owner_id: Number(WORKSPACE_OWNER_ID),
       });
       nav('/pending');
@@ -140,19 +181,88 @@ export default function Apply() {
       <Field label="Geburtsjahr" required>
         <Inp value={form.birth_year} onChange={f('birth_year')} type="number" placeholder="1998" />
       </Field>
+
+      {/* Under-16 block */}
+      {isTooYoung && (
+        <div style={{ padding: '12px 14px', borderRadius: 10, background: D.redL,
+          border: `1px solid rgba(255,69,58,0.25)`, display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+          <AlertTriangle size={16} color={D.red} style={{ flexShrink: 0, marginTop: 1 }} />
+          <div>
+            <p style={{ margin: '0 0 4px', fontSize: 13, fontWeight: 600, color: D.red }}>
+              Mindestalter nicht erreicht
+            </p>
+            <p style={{ margin: 0, fontSize: 12.5, color: D.text2, lineHeight: 1.5 }}>
+              Für eine Bewerbung musst du mindestens 16 Jahre alt sein.
+              Bitte wende dich direkt per E-Mail an uns.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* 16–17 warning */}
+      {isMinor && (
+        <div style={{ padding: '12px 14px', borderRadius: 10, background: D.orangeL,
+          border: `1px solid rgba(255,159,10,0.25)`, display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+          <AlertTriangle size={16} color={D.orange} style={{ flexShrink: 0, marginTop: 1 }} />
+          <div>
+            <p style={{ margin: '0 0 4px', fontSize: 13, fontWeight: 600, color: D.orange }}>
+              Unter 18 — Zustimmung erforderlich
+            </p>
+            <p style={{ margin: 0, fontSize: 12.5, color: D.text2, lineHeight: 1.5 }}>
+              Da du noch minderjährig bist, benötigen wir die Zustimmung deiner Erziehungsberechtigten.
+              Du wirst im letzten Schritt gebeten, dies zu bestätigen.
+            </p>
+          </div>
+        </div>
+      )}
     </div>,
 
     // 2 — Zugangsdaten
     <div key="2" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      {/* Google option */}
+      {!googleLinked ? (
+        <>
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={() => setError('Google-Anmeldung fehlgeschlagen.')}
+              theme="filled_black" size="large" text="continue_with"
+              shape="rectangular" width="404"
+            />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ flex: 1, height: 0.5, background: D.border }} />
+            <span style={{ fontSize: 12, color: D.text3 }}>oder mit E-Mail</span>
+            <div style={{ flex: 1, height: 0.5, background: D.border }} />
+          </div>
+        </>
+      ) : (
+        <div style={{ padding: '10px 14px', borderRadius: 10, background: D.greenL,
+          border: `1px solid rgba(52,211,153,0.25)`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ fontSize: 13, color: D.green, fontWeight: 600 }}>Mit Google verknüpft</span>
+          <button type="button"
+            onClick={() => setForm(p => ({ ...p, googleCredential: null }))}
+            style={{ fontSize: 12, color: D.text3, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+            Trennen
+          </button>
+        </div>
+      )}
+
       <Field label="E-Mail" required>
-        <Inp value={form.email} onChange={f('email')} type="email" placeholder="max@beispiel.de" />
+        <Inp value={form.email} onChange={f('email')} type="email"
+          placeholder="max@beispiel.de" readOnly={googleLinked} />
       </Field>
-      <Field label="Passwort" required>
-        <Inp value={form.password} onChange={f('password')} type="password" placeholder="Min. 6 Zeichen" />
-      </Field>
-      <Field label="Passwort wiederholen" required>
-        <Inp value={form.password2} onChange={f('password2')} type="password" placeholder="••••••••" />
-      </Field>
+
+      {!googleLinked && (
+        <>
+          <Field label="Passwort" required>
+            <Inp value={form.password} onChange={f('password')} type="password" placeholder="Min. 6 Zeichen" />
+          </Field>
+          <Field label="Passwort wiederholen" required>
+            <Inp value={form.password2} onChange={f('password2')} type="password" placeholder="••••••••" />
+          </Field>
+        </>
+      )}
     </div>,
 
     // 3 — Auszahlung
@@ -174,8 +284,7 @@ export default function Apply() {
       </Field>
       <Field label={form.payout_method === 'paypal' ? 'PayPal E-Mail' : 'IBAN'} required>
         <Inp
-          value={form.payout_details}
-          onChange={f('payout_details')}
+          value={form.payout_details} onChange={f('payout_details')}
           type={form.payout_method === 'paypal' ? 'email' : 'text'}
           placeholder={form.payout_method === 'paypal' ? 'paypal@beispiel.de' : 'DE12 3456 7890 1234 5678 90'}
         />
@@ -183,16 +292,17 @@ export default function Apply() {
     </div>,
 
     // 4 — DSGVO
-    <div key="4" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+    <div key="4" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      {/* Summary */}
       <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 12, padding: '14px 16px',
-        display: 'flex', flexDirection: 'column', gap: 9,
-        border: `0.5px solid ${D.border}` }}>
+        display: 'flex', flexDirection: 'column', gap: 9, border: `0.5px solid ${D.border}` }}>
         {[
-          ['Name',       `${form.first_name} ${form.last_name}`],
-          ['Telefon',    form.phone],
+          ['Name',        `${form.first_name} ${form.last_name}`],
+          ['Telefon',     form.phone],
           ['Geburtsjahr', form.birth_year],
-          ['E-Mail',     form.email],
-          ['Auszahlung', form.payout_method === 'paypal' ? `PayPal · ${form.payout_details}` : `Bank · ${form.payout_details}`],
+          ['E-Mail',      form.email],
+          ['Konto',       googleLinked ? 'Google-Konto' : 'E-Mail & Passwort'],
+          ['Auszahlung',  form.payout_method === 'paypal' ? `PayPal · ${form.payout_details}` : `Bank · ${form.payout_details}`],
         ].map(([k, v]) => (
           <div key={k} style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
             <span style={{ fontSize: 13, color: D.text3, flexShrink: 0 }}>{k}</span>
@@ -202,6 +312,22 @@ export default function Apply() {
         ))}
       </div>
 
+      {/* Parental consent for minors */}
+      {isMinor && (
+        <label style={{ display: 'flex', alignItems: 'flex-start', gap: 12, cursor: 'pointer',
+          padding: '12px 14px', borderRadius: 10, background: D.orangeL,
+          border: `1px solid rgba(255,159,10,0.25)` }}>
+          <input type="checkbox" checked={form.parentalConsent} onChange={f('parentalConsent')}
+            style={{ width: 16, height: 16, marginTop: 3, cursor: 'pointer', accentColor: D.orange, flexShrink: 0 }} />
+          <span style={{ fontSize: 12.5, color: D.text2, lineHeight: 1.65 }}>
+            <strong style={{ color: D.orange }}>Elterliche Zustimmung:</strong>{' '}
+            Ich bestätige, dass meine Erziehungsberechtigten der Teilnahme am Partner-Programm zugestimmt haben
+            und bei Bedarf eine schriftliche Bestätigung vorlegen können.
+          </span>
+        </label>
+      )}
+
+      {/* DSGVO */}
       <label style={{ display: 'flex', alignItems: 'flex-start', gap: 12, cursor: 'pointer' }}>
         <input type="checkbox" checked={form.dsgvo} onChange={f('dsgvo')}
           style={{ width: 16, height: 16, marginTop: 3, cursor: 'pointer', accentColor: D.blue, flexShrink: 0 }} />
@@ -243,22 +369,18 @@ export default function Apply() {
           </div>
 
           <div style={{ padding: '28px 28px 24px' }}>
-
-            {/* Step header */}
             <div style={{ marginBottom: 22 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: D.text3,
-                  textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                  Schritt {step + 1} von {STEPS.length}
-                </span>
-              </div>
-              <h2 style={{ margin: '0 0 3px', fontSize: 18, fontWeight: 700, color: D.text }}>{s.title}</h2>
+              <span style={{ fontSize: 11, fontWeight: 700, color: D.text3,
+                textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                Schritt {step + 1} von {STEPS.length}
+              </span>
+              <h2 style={{ margin: '6px 0 3px', fontSize: 18, fontWeight: 700, color: D.text }}>{s.title}</h2>
               <p style={{ margin: 0, fontSize: 13, color: D.text3 }}>{s.sub}</p>
             </div>
 
             {error && (
               <div style={{ padding: '10px 14px', borderRadius: 10, marginBottom: 16,
-                background: '#FF453A14', border: '0.5px solid #FF453A30', color: D.red, fontSize: 13 }}>
+                background: D.redL, border: `0.5px solid rgba(255,69,58,0.3)`, color: D.red, fontSize: 13 }}>
                 {error}
               </div>
             )}
@@ -293,9 +415,13 @@ export default function Apply() {
                 </button>
               ) : (
                 <button type="button" onClick={() => go(step + 1)}
+                  disabled={isTooYoung && step === 1}
                   style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 22px',
-                    borderRadius: 11, border: 'none', background: D.blue, color: '#fff',
-                    fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+                    borderRadius: 11, border: 'none',
+                    background: isTooYoung && step === 1 ? 'rgba(255,255,255,0.08)' : D.blue,
+                    color: isTooYoung && step === 1 ? D.text3 : '#fff',
+                    fontSize: 14, fontWeight: 700,
+                    cursor: isTooYoung && step === 1 ? 'default' : 'pointer' }}>
                   Weiter <ChevronRight size={15} />
                 </button>
               )}
