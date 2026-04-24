@@ -100,7 +100,7 @@ function AppRoutes() {
       <Route path="/projects/new" element={<ProtectedRoute><NewProject /></ProtectedRoute>} />
       <Route path="/projects/:id" element={<ProtectedRoute><ProjectDetailGeneral /></ProtectedRoute>} />
 
-      <Route path="/websites"     element={<Navigate to="/work" replace />} />
+      <Route path="/websites"     element={<ProtectedRoute><Websites /></ProtectedRoute>} />
       <Route path="/websites/:id" element={<ProtectedRoute><ProjectDetail /></ProtectedRoute>} />
 
       <Route path="/time-tracking"  element={<ProtectedRoute><TimeTracking /></ProtectedRoute>} />
