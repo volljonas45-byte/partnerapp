@@ -6,6 +6,7 @@ const jwt     = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
 const { getOne, getAll, run } = require('../db/pg');
 const authenticate = require('../middleware/auth');
+const { sendDemoEmail } = require('../services/emailService');
 
 // ── PUBLIC ────────────────────────────────────────────────────────────────────
 
@@ -751,6 +752,68 @@ router.post('/ai-chat', authenticatePartner, async (req, res) => {
     }
     res.status(500).json({ error: 'KI-Anfrage fehlgeschlagen.' });
   }
+});
+
+// ── DEMO WIZARD ───────────────────────────────────────────────────────────────
+// Creates a lead and either books an appointment or sends a demo email.
+router.post('/demo-wizard', authenticatePartner, async (req, res) => {
+  const {
+    company, contact_person, phone, email, website, city, industry, notes,
+    action,        // 'appointment' | 'email' | 'none'
+    scheduled_at,  // ISO string — required when action === 'appointment'
+    demo_goal,     // optional text for appointment
+    demo_notes,    // optional text appended to demo email
+  } = req.body;
+
+  if (!company) return res.status(400).json({ error: 'Firmenname erforderlich.' });
+  if (action === 'appointment' && !scheduled_at) return res.status(400).json({ error: 'Termin-Datum erforderlich.' });
+  if (action === 'email' && !email) return res.status(400).json({ error: 'E-Mail-Adresse erforderlich.' });
+
+  const partner = await getOne(
+    `SELECT p.commission_rate_own, p.workspace_owner_id, u.name AS partner_name
+     FROM partners p JOIN users u ON u.id = p.user_id WHERE p.id = ?`,
+    [req.partnerId]
+  );
+
+  const leadStatus = action === 'appointment' ? 'termin_gesetzt' : 'kontaktiert';
+  const lead = await getOne(
+    `INSERT INTO partner_leads
+       (workspace_owner_id, partner_id, company, contact_person, phone, email, website, city, industry, source, status, notes, commission_rate)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'own', ?, ?, ?) RETURNING *`,
+    [partner.workspace_owner_id, req.partnerId, company, contact_person || '', phone || '',
+     email || '', website || '', city || '', industry || '', leadStatus, notes || '',
+     partner.commission_rate_own]
+  );
+
+  if (action === 'appointment') {
+    const appt = await getOne(
+      `INSERT INTO partner_appointments
+         (workspace_owner_id, partner_id, lead_id, scheduled_at, industry, demo_goal, status)
+       VALUES (?, ?, ?, ?, ?, ?, 'scheduled') RETURNING *`,
+      [partner.workspace_owner_id, req.partnerId, lead.id, scheduled_at, industry || '', demo_goal || '']
+    );
+    return res.json({ success: true, lead, appointment: appt, action: 'appointment' });
+  }
+
+  if (action === 'email') {
+    const settings = await getOne('SELECT company_name FROM settings WHERE user_id = ?', [partner.workspace_owner_id]);
+    const agencyName = settings?.company_name || 'Vecturo';
+    try {
+      await sendDemoEmail({
+        to: email,
+        contactPerson: contact_person,
+        company,
+        agencyName,
+        partnerName: partner.partner_name || '',
+        demoNotes: demo_notes || '',
+      });
+      return res.json({ success: true, lead, action: 'email', emailSent: true });
+    } catch (err) {
+      return res.json({ success: true, lead, action: 'email', emailSent: false, emailError: err.message });
+    }
+  }
+
+  res.json({ success: true, lead, action: 'none' });
 });
 
 module.exports = router;

@@ -13,6 +13,7 @@ import Appointments from './pages/Appointments';
 import Earnings from './pages/Earnings';
 import CompleteProfile from './pages/CompleteProfile';
 import AiChat from './pages/AiChat';
+import DemoWizard from './pages/DemoWizard';
 
 const qc = new QueryClient();
 
@@ -55,6 +56,7 @@ function AppRoutes() {
       <Route path="/complete-profile" element={<CompleteProfile />} />
 
       <Route path="/"             element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+      <Route path="/demo-wizard"  element={<ProtectedRoute><DemoWizard /></ProtectedRoute>} />
       <Route path="/leads/mine"   element={<ProtectedRoute><MyLeads /></ProtectedRoute>} />
       <Route path="/leads/pool"   element={<ProtectedRoute><LeadPool /></ProtectedRoute>} />
       <Route path="/appointments" element={<ProtectedRoute><Appointments /></ProtectedRoute>} />

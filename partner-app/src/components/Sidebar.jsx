@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Briefcase, Users, Calendar, DollarSign, LogOut, Sparkles } from 'lucide-react';
+import { LayoutDashboard, Briefcase, Users, Calendar, DollarSign, LogOut, Sparkles, Phone } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const D = {
@@ -7,11 +7,13 @@ const D = {
   text: '#F2F2F7', text2: '#AEAEB2', text3: '#636366',
   blue: '#5B8CF5', blueL: '#5B8CF514',
   violet: '#a78bfa', violetL: 'rgba(167,139,250,0.08)',
+  green: '#34D399', greenL: 'rgba(52,211,153,0.1)',
   card: '#16161E',
 };
 
 const NAV = [
   { to: '/',            icon: LayoutDashboard, label: 'Dashboard'    },
+  { to: '/demo-wizard', icon: Phone,           label: 'Demo-Wizard', accent2: true },
   { to: '/leads/mine',  icon: Briefcase,       label: 'Meine Leads'  },
   { to: '/leads/pool',  icon: Users,           label: 'Lead-Pool'    },
   { to: '/appointments',icon: Calendar,        label: 'Termine'      },
@@ -42,11 +44,11 @@ export default function Sidebar() {
             {({ isActive }) => (
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px',
                 borderRadius: 9, fontSize: 13, cursor: 'pointer',
-                background: isActive ? (accent ? D.violetL : D.blueL) : 'transparent',
-                color: isActive ? (accent ? D.violet : D.blue) : D.text2,
+                background: isActive ? (accent ? D.violetL : accent2 ? D.greenL : D.blueL) : 'transparent',
+                color: isActive ? (accent ? D.violet : accent2 ? D.green : D.blue) : D.text2,
                 fontWeight: isActive ? 600 : 400,
                 transition: 'background 0.15s, color 0.15s' }}>
-                <Icon size={16} color={isActive ? (accent ? D.violet : D.blue) : D.text3} strokeWidth={isActive ? 2 : 1.5} />
+                <Icon size={16} color={isActive ? (accent ? D.violet : accent2 ? D.green : D.blue) : D.text3} strokeWidth={isActive ? 2 : 1.5} />
                 {label}
               </div>
             )}
