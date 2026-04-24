@@ -172,13 +172,25 @@ router.get('/leads', async (req, res) => {
     }
 
     if (search) {
-      sql += ` AND (
-        COALESCE(sl.company_name, c.company_name) ILIKE ? OR
-        COALESCE(sl.contact_person, c.contact_person) ILIKE ? OR
-        COALESCE(sl.phone, c.phone) ILIKE ?
-      )`;
       const q = `%${search}%`;
-      params.push(q, q, q);
+      const digits = search.replace(/\D/g, '');
+      if (digits.length >= 3) {
+        // Phone-number style search: strip all non-digits on both sides and match the last digits,
+        // so "+49 123 456789", "0123-456789" and "0123 456789" all find each other.
+        sql += ` AND (
+          COALESCE(sl.company_name, c.company_name) ILIKE ? OR
+          COALESCE(sl.contact_person, c.contact_person) ILIKE ? OR
+          regexp_replace(COALESCE(sl.phone, c.phone, ''), '[^0-9]', '', 'g') LIKE ?
+        )`;
+        params.push(q, q, `%${digits}%`);
+      } else {
+        sql += ` AND (
+          COALESCE(sl.company_name, c.company_name) ILIKE ? OR
+          COALESCE(sl.contact_person, c.contact_person) ILIKE ? OR
+          COALESCE(sl.phone, c.phone) ILIKE ?
+        )`;
+        params.push(q, q, q);
+      }
     }
 
     sql += ' ORDER BY sl.priority DESC, sl.next_followup_date ASC NULLS LAST, sl.created_at DESC';
@@ -991,9 +1003,15 @@ router.get('/clients', async (req, res) => {
     const params = [req.workspaceUserId];
 
     if (search) {
-      sql += ` AND (c.company_name ILIKE ? OR c.contact_person ILIKE ? OR c.phone ILIKE ?)`;
       const q = `%${search}%`;
-      params.push(q, q, q);
+      const digits = search.replace(/\D/g, '');
+      if (digits.length >= 3) {
+        sql += ` AND (c.company_name ILIKE ? OR c.contact_person ILIKE ? OR regexp_replace(COALESCE(c.phone, ''), '[^0-9]', '', 'g') LIKE ?)`;
+        params.push(q, q, `%${digits}%`);
+      } else {
+        sql += ` AND (c.company_name ILIKE ? OR c.contact_person ILIKE ? OR c.phone ILIKE ?)`;
+        params.push(q, q, q);
+      }
     }
 
     sql += ' ORDER BY last_call_at DESC NULLS LAST, c.company_name ASC';
