@@ -107,13 +107,6 @@ const PAGES = [
   'Kontakt', 'Blog / News', 'FAQ', 'Team', 'Onlineshop', 'Karriere', 'Impressum / Datenschutz',
 ];
 
-const STYLES = [
-  { id: 'modern', label: 'Modern & Clean', desc: 'Klare Linien, viel Weißraum' },
-  { id: 'classic', label: 'Klassisch & Seriös', desc: 'Vertrauen, Professionalität' },
-  { id: 'minimal', label: 'Minimalistisch', desc: 'Weniger ist mehr' },
-  { id: 'creative', label: 'Kreativ & Dynamisch', desc: 'Mutig, auffällig, frisch' },
-  { id: 'technical', label: 'Technisch & Präzise', desc: 'Kompetenz, Details, Struktur' },
-];
 
 const COLOR_PRESETS = [
   { id: 'blue-white', label: 'Blau & Weiß', colors: ['#1E3A8A', '#FFFFFF'] },
@@ -127,14 +120,10 @@ const COLOR_PRESETS = [
 
 const STEPS = ['Firmendaten', 'Website-Brief', 'Nächster Schritt'];
 
-function buildBrief({ websiteGoal, pages, designStyle, colorPreset, customColors, targetGroup, usp, hasWebsite, currentWebsite, hasLogo, inspirations }) {
+function buildBrief({ websiteGoal, pages, colorPreset, customColors, targetGroup, usp, hasWebsite, currentWebsite, hasLogo, inspirations }) {
   const lines = [];
   if (websiteGoal) lines.push(`🎯 Ziel: ${websiteGoal}`);
   if (pages.length) lines.push(`📄 Seiten: ${pages.join(', ')}`);
-  if (designStyle) {
-    const s = STYLES.find(s => s.id === designStyle);
-    lines.push(`🎨 Stil: ${s ? s.label : designStyle}`);
-  }
   if (colorPreset || customColors) {
     const preset = COLOR_PRESETS.find(c => c.id === colorPreset);
     lines.push(`🎨 Farben: ${[preset?.label, customColors].filter(Boolean).join(' · ')}`);
@@ -168,8 +157,8 @@ export default function DemoWizard() {
 
   // Step 1 — Website-Brief
   const [websiteGoal, setWebsiteGoal]     = useState('');
-  const [pages, setPages]                 = useState(['Startseite', 'Über uns', 'Leistungen', 'Kontakt']);
-  const [designStyle, setDesignStyle]     = useState('');
+  const [pages, setPages]                 = useState(['Startseite', 'Über uns', 'Leistungen', 'Kontakt', 'Impressum / Datenschutz']);
+
   const [colorPreset, setColorPreset]     = useState('');
   const [customColors, setCustomColors]   = useState('');
   const [targetGroup, setTargetGroup]     = useState('');
@@ -197,11 +186,12 @@ export default function DemoWizard() {
   });
 
   function togglePage(p) {
+    if (p === 'Impressum / Datenschutz') return;
     setPages(prev => prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p]);
   }
 
   function submit() {
-    const brief = buildBrief({ websiteGoal, pages, designStyle, colorPreset, customColors, targetGroup, usp, hasWebsite, currentWebsite, hasLogo, inspirations });
+    const brief = buildBrief({ websiteGoal, pages, colorPreset, customColors, targetGroup, usp, hasWebsite, currentWebsite, hasLogo, inspirations });
     const combinedNotes = [notes, brief ? `\n--- Website-Brief ---\n${brief}` : ''].filter(Boolean).join('\n');
 
     const payload = {
@@ -345,32 +335,19 @@ export default function DemoWizard() {
               <div style={{ ...glass, padding: 20 }}>
                 <SectionLabel icon={Layout}>Welche Seiten soll die Website haben?</SectionLabel>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
-                  {PAGES.map(p => (
-                    <Chip key={p} label={p} active={pages.includes(p)} onClick={() => togglePage(p)} color={D.purple} />
-                  ))}
+                  {PAGES.map(p => {
+                    const locked = p === 'Impressum / Datenschutz';
+                    return (
+                      <Chip key={p} label={locked ? `${p} ✓` : p}
+                        active={pages.includes(p)}
+                        onClick={() => !locked && togglePage(p)}
+                        color={locked ? D.green : D.purple} />
+                    );
+                  })}
                 </div>
-              </div>
-
-              {/* Design-Stil */}
-              <div style={{ ...glass, padding: 20 }}>
-                <SectionLabel icon={Palette}>Design-Stil</SectionLabel>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {STYLES.map(s => (
-                    <button key={s.id} onClick={() => setDesignStyle(s.id)} style={{
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      padding: '10px 14px', borderRadius: 10, cursor: 'pointer', textAlign: 'left',
-                      border: `1px solid ${designStyle === s.id ? D.blue : D.border}`,
-                      background: designStyle === s.id ? D.blueL : D.card,
-                      transition: 'all 0.15s',
-                    }}>
-                      <div>
-                        <span style={{ fontSize: 13, fontWeight: 600, color: D.text }}>{s.label}</span>
-                        <span style={{ fontSize: 12, color: D.text3, marginLeft: 8 }}>{s.desc}</span>
-                      </div>
-                      {designStyle === s.id && <CheckCircle2 size={15} color={D.blue} />}
-                    </button>
-                  ))}
-                </div>
+                <p style={{ margin: '10px 0 0', fontSize: 11, color: D.text3 }}>
+                  Impressum & Datenschutz sind gesetzlich vorgeschrieben und immer enthalten.
+                </p>
               </div>
 
               {/* Farben */}
@@ -461,7 +438,7 @@ export default function DemoWizard() {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: D.text }}>{company}</p>
                 <p style={{ margin: 0, fontSize: 12, color: D.text3 }}>
-                  {[contactPerson, pages.length ? `${pages.length} Seiten` : '', designStyle ? STYLES.find(s => s.id === designStyle)?.label : ''].filter(Boolean).join(' · ')}
+                  {[contactPerson, pages.length ? `${pages.length} Seiten` : ''].filter(Boolean).join(' · ')}
                 </p>
               </div>
             </div>
