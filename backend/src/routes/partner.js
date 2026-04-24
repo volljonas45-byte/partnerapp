@@ -789,6 +789,53 @@ router.post('/demo-wizard', authenticatePartner, async (req, res) => {
      partner.commission_rate_own]
   );
 
+  // Notify workspace owner
+  try {
+    const owner = await getOne(`SELECT email FROM users WHERE id = ?`, [partner.workspace_owner_id]);
+    if (owner?.email) {
+      const nodemailer = require('nodemailer');
+      const transporter = nodemailer.createTransport({
+        host: process.env.EMAIL_HOST, port: parseInt(process.env.EMAIL_PORT || '587'),
+        secure: process.env.EMAIL_SECURE === 'true',
+        auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
+      });
+      const actionLabel = action === 'appointment'
+        ? '📅 Termin vereinbart'
+        : action === 'email'
+        ? '📧 Demo-Mail gesendet'
+        : '📋 Lead eingereicht';
+      const scheduledLine = action === 'appointment' && scheduled_at
+        ? `<tr><td style="padding:8px 0;color:#636366;font-size:13px;width:120px;">Termin</td><td style="padding:8px 0;color:#BF5AF2;font-size:13px;font-weight:600;">${new Date(scheduled_at).toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short' })}</td></tr>`
+        : '';
+      await transporter.sendMail({
+        from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+        to: owner.email,
+        subject: `🔔 Neuer Demo-Lead: ${company} (via ${partner.partner_name || 'Partner'})`,
+        html: `
+          <div style="font-family:sans-serif;max-width:480px;margin:0 auto;background:#0D0D12;color:#F2F2F7;border-radius:16px;padding:32px;">
+            <h2 style="margin:0 0 8px;font-size:20px;color:#ffffff;">Neuer Demo-Lead eingegangen</h2>
+            <p style="color:#AEAEB2;margin:0 0 24px;font-size:14px;">Ein Caller hat über den Demo-Wizard einen Lead eingereicht.</p>
+            <div style="background:#16161E;border-radius:12px;padding:20px;margin-bottom:20px;">
+              <table style="width:100%;border-collapse:collapse;">
+                <tr><td style="padding:8px 0;color:#636366;font-size:13px;width:120px;">Partner</td><td style="padding:8px 0;color:#F2F2F7;font-size:13px;font-weight:600;">${partner.partner_name || '—'}</td></tr>
+                <tr><td style="padding:8px 0;color:#636366;font-size:13px;">Firma</td><td style="padding:8px 0;color:#5B8CF5;font-size:13px;font-weight:600;">${company}</td></tr>
+                ${contact_person ? `<tr><td style="padding:8px 0;color:#636366;font-size:13px;">Kontakt</td><td style="padding:8px 0;color:#F2F2F7;font-size:13px;">${contact_person}</td></tr>` : ''}
+                ${phone ? `<tr><td style="padding:8px 0;color:#636366;font-size:13px;">Telefon</td><td style="padding:8px 0;color:#F2F2F7;font-size:13px;">${phone}</td></tr>` : ''}
+                ${email ? `<tr><td style="padding:8px 0;color:#636366;font-size:13px;">E-Mail</td><td style="padding:8px 0;color:#F2F2F7;font-size:13px;">${email}</td></tr>` : ''}
+                ${city ? `<tr><td style="padding:8px 0;color:#636366;font-size:13px;">Stadt</td><td style="padding:8px 0;color:#F2F2F7;font-size:13px;">${city}</td></tr>` : ''}
+                ${industry ? `<tr><td style="padding:8px 0;color:#636366;font-size:13px;">Branche</td><td style="padding:8px 0;color:#F2F2F7;font-size:13px;">${industry}</td></tr>` : ''}
+                <tr><td style="padding:8px 0;color:#636366;font-size:13px;">Aktion</td><td style="padding:8px 0;color:#34D399;font-size:13px;font-weight:600;">${actionLabel}</td></tr>
+                ${scheduledLine}
+              </table>
+            </div>
+            ${notes ? `<p style="color:#AEAEB2;font-size:13px;margin:0;line-height:1.6;"><strong style="color:#F2F2F7;">Notizen:</strong> ${notes}</p>` : ''}
+          </div>`,
+      }).catch(err => console.error('[demo-wizard notify]', err.message));
+    }
+  } catch (err) {
+    console.error('[demo-wizard notify]', err.message);
+  }
+
   if (action === 'appointment') {
     const appt = await getOne(
       `INSERT INTO partner_appointments
