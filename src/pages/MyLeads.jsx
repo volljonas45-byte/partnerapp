@@ -5,9 +5,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
   Phone, Search, Plus, X, ChevronDown, MapPin, Mail, Globe,
-  MousePointerClick, CalendarDays, Building2, CheckCircle2, PhoneCall, Camera, Inbox, Presentation,
+  MousePointerClick, CalendarDays, Building2, CheckCircle2, PhoneCall, Camera, Inbox, Presentation, HelpCircle,
 } from 'lucide-react';
 import { partnerApi } from '../api/partner';
+import LeadGuide from '../components/LeadGuide';
 
 const D = {
   bg: '#0D0D12', text: '#F2F2F7', text2: '#AEAEB2', text3: '#636366',
@@ -556,6 +557,8 @@ export default function MyLeads() {
   const [callLogLead, setCallLogLead]       = useState(null);
   const [apptLead, setApptLead]             = useState(null);
   const [notes, setNotes]                   = useState('');
+  const [showDemoTooltip, setShowDemoTooltip] = useState(false);
+  const [showLeadGuide, setShowLeadGuide]     = useState(false);
   const prevLeadIdRef                       = useRef(null);
 
   const { data: leads = [], isLoading: leadsLoading } = useQuery({
@@ -674,6 +677,13 @@ export default function MyLeads() {
 
         {/* Action buttons */}
         <motion.div style={{ display: 'flex', flexDirection: 'row', gap: 6, flexShrink: 0, alignItems: 'center' }} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
+          <button onClick={() => setShowLeadGuide(true)} style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32,
+            borderRadius: 9, border: `1px solid ${D.border}`,
+            background: 'rgba(255,255,255,0.03)', color: D.text3, cursor: 'pointer',
+          }}>
+            <HelpCircle size={14} />
+          </button>
           <button onClick={() => setShowLeadRequest(true)} style={{
             display: 'flex', alignItems: 'center', gap: 4, padding: '7px 12px', borderRadius: 9,
             fontSize: 12, fontWeight: 600, background: D.purpleL, color: D.purple,
@@ -784,13 +794,33 @@ export default function MyLeads() {
                     }}>
                       <CalendarDays size={12} /> Termin
                     </button>
-                    <button onClick={() => navigate('/demo-wizard', { state: { lead: selectedLead } })} style={{
-                      display: 'flex', alignItems: 'center', gap: 5, padding: '6px 11px', borderRadius: 8,
-                      fontSize: 11.5, fontWeight: 600, background: 'rgba(255,159,10,0.12)', color: '#FF9F0A',
-                      border: '1px solid rgba(255,159,10,0.2)', cursor: 'pointer',
-                    }}>
-                      <Presentation size={12} /> Demo
-                    </button>
+                    <div style={{ position: 'relative' }}
+                      onMouseEnter={() => setShowDemoTooltip(true)}
+                      onMouseLeave={() => setShowDemoTooltip(false)}>
+                      <button onClick={() => navigate('/demo-wizard', { state: { lead: selectedLead } })} style={{
+                        display: 'flex', alignItems: 'center', gap: 5, padding: '6px 11px', borderRadius: 8,
+                        fontSize: 11.5, fontWeight: 600, background: 'rgba(255,159,10,0.12)', color: '#FF9F0A',
+                        border: '1px solid rgba(255,159,10,0.2)', cursor: 'pointer',
+                      }}>
+                        <Presentation size={12} /> Demo
+                      </button>
+                      {showDemoTooltip && (
+                        <div style={{
+                          position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)',
+                          marginTop: 8, width: 240, background: '#1C1C28',
+                          border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10,
+                          padding: '10px 12px', zIndex: 100, boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
+                          pointerEvents: 'none',
+                        }}>
+                          <div style={{ fontSize: 12.5, fontWeight: 700, color: '#F2F2F7', marginBottom: 4 }}>
+                            Demo-Wizard starten
+                          </div>
+                          <div style={{ fontSize: 12, color: '#AEAEB2', lineHeight: 1.5 }}>
+                            Erfasse Firmendaten & Website-Wünsche, buche direkt einen Termin oder sende die Demo per E-Mail.
+                          </div>
+                        </div>
+                      )}
+                    </div>
                     <button onClick={() => handleCall(selectedLead)} disabled={!selectedLead.phone} style={{
                       display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 9,
                       fontSize: 13, fontWeight: 600, border: 'none', cursor: selectedLead.phone ? 'pointer' : 'not-allowed',
@@ -971,6 +1001,7 @@ export default function MyLeads() {
         {showAddLead && <LeadModal onClose={() => setShowAddLead(false)} onSave={data => createLead.mutate(data)} />}
         {callLogLead && <CallLogSheet lead={callLogLead} onClose={() => setCallLogLead(null)} />}
         {apptLead && <AppointmentModal lead={apptLead} onClose={() => setApptLead(null)} />}
+        {showLeadGuide && <LeadGuide onClose={() => setShowLeadGuide(false)} />}
       </AnimatePresence>
     </div>
   );
