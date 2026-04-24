@@ -39,6 +39,7 @@ function Layout({ children, fixed = false }) {
         {children}
       </main>
       <ChatBubble />
+      <WelcomeModal />
     </div>
   );
 }
@@ -84,7 +85,6 @@ export default function App() {
       <BrowserRouter>
         <AuthProvider>
           <OnboardingProvider>
-            <WelcomeModal />
             <AppRoutes />
           </OnboardingProvider>
         </AuthProvider>
