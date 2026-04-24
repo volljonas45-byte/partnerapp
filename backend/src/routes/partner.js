@@ -15,6 +15,11 @@ const { sendDemoEmail } = require('../services/emailService');
     await run(`ALTER TABLE partner_leads ADD COLUMN IF NOT EXISTS demo_link text`);
     await run(`ALTER TABLE partner_leads ADD COLUMN IF NOT EXISTS agreed_budget decimal(12,2)`);
     await run(`UPDATE partner_leads SET milestones = '[]' WHERE milestones IS NULL`);
+    await run(`ALTER TABLE partners ADD COLUMN IF NOT EXISTS last_name text DEFAULT ''`);
+    await run(`ALTER TABLE partners ADD COLUMN IF NOT EXISTS birth_year int`);
+    await run(`ALTER TABLE partners ADD COLUMN IF NOT EXISTS payout_method text DEFAULT ''`);
+    await run(`ALTER TABLE partners ADD COLUMN IF NOT EXISTS payout_details text DEFAULT ''`);
+    await run(`ALTER TABLE partners ADD COLUMN IF NOT EXISTS dsgvo_consent_at timestamptz`);
   } catch (e) { console.error('[partner migration]', e.message); }
 })();
 
@@ -114,7 +119,7 @@ router.put('/profile', authenticatePartner, async (req, res) => {
 
 // Submit partner application (no auth required)
 router.post('/apply', async (req, res) => {
-  const { name, email, password, phone, application_message, workspace_owner_id } = req.body;
+  const { name, last_name, email, password, phone, birth_year, payout_method, payout_details, application_message, workspace_owner_id } = req.body;
   if (!name || !email || !password || !workspace_owner_id) {
     return res.status(400).json({ error: 'Name, E-Mail, Passwort und Workspace erforderlich.' });
   }
@@ -128,10 +133,50 @@ router.post('/apply', async (req, res) => {
     [name, email, hash]
   );
   await run(
-    `INSERT INTO partners (user_id, workspace_owner_id, phone, application_message)
-     VALUES (?, ?, ?, ?)`,
-    [user.id, workspace_owner_id, phone || '', application_message || '']
+    `INSERT INTO partners (user_id, workspace_owner_id, phone, last_name, birth_year, payout_method, payout_details, application_message, dsgvo_consent_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+    [user.id, workspace_owner_id, phone || '', last_name || '', birth_year || null, payout_method || '', payout_details || '', application_message || '']
   );
+
+  // Notify workspace owner
+  try {
+    const owner = await getOne(`SELECT email FROM users WHERE id = ?`, [workspace_owner_id]);
+    if (owner?.email) {
+      const nodemailer = require('nodemailer');
+      const t = nodemailer.createTransport({
+        host: process.env.EMAIL_HOST, port: parseInt(process.env.EMAIL_PORT || '587'),
+        secure: process.env.EMAIL_SECURE === 'true',
+        auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
+      });
+      const payoutLabel = payout_method === 'paypal' ? `PayPal (${payout_details})` : `Banküberweisung (${payout_details})`;
+      await t.sendMail({
+        from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+        to: owner.email,
+        subject: `Neue Partner-Bewerbung: ${name} ${last_name || ''}`,
+        html: `
+<div style="background:#0D0D12;padding:32px;font-family:system-ui,sans-serif;min-height:100vh;">
+<div style="max-width:540px;margin:0 auto;background:#16161E;border-radius:16px;border:1px solid rgba(255,255,255,0.08);overflow:hidden;">
+  <div style="height:4px;background:linear-gradient(90deg,#5B8CF5,#34D399);"></div>
+  <div style="padding:28px 28px 24px;">
+    <p style="margin:0 0 6px;font-size:12px;font-weight:700;color:#636366;text-transform:uppercase;letter-spacing:0.08em;">Neue Bewerbung</p>
+    <h1 style="margin:0 0 20px;font-size:22px;font-weight:800;color:#F2F2F7;">Partner-Bewerbung eingegangen</h1>
+    <table style="width:100%;border-collapse:collapse;">
+      <tr><td style="padding:8px 0;color:#636366;font-size:13px;width:140px;vertical-align:top;">Name</td><td style="padding:8px 0;color:#F2F2F7;font-size:13px;font-weight:600;">${name} ${last_name || ''}</td></tr>
+      <tr><td style="padding:8px 0;color:#636366;font-size:13px;">E-Mail</td><td style="padding:8px 0;color:#5B8CF5;font-size:13px;font-weight:600;">${email}</td></tr>
+      <tr><td style="padding:8px 0;color:#636366;font-size:13px;">Telefon</td><td style="padding:8px 0;color:#F2F2F7;font-size:13px;">${phone || '—'}</td></tr>
+      <tr><td style="padding:8px 0;color:#636366;font-size:13px;">Geburtsjahr</td><td style="padding:8px 0;color:#F2F2F7;font-size:13px;">${birth_year || '—'}</td></tr>
+      <tr><td style="padding:8px 0;color:#636366;font-size:13px;">Auszahlung</td><td style="padding:8px 0;color:#34D399;font-size:13px;font-weight:600;">${payoutLabel}</td></tr>
+    </table>
+    <div style="margin-top:20px;padding:14px;background:rgba(91,140,245,0.1);border-radius:10px;border:1px solid rgba(91,140,245,0.2);">
+      <p style="margin:0;font-size:13px;color:#AEAEB2;">Bitte prüfe die Bewerbung im Vecturo-Dashboard und gib den Partner frei oder lehne ab.</p>
+    </div>
+  </div>
+</div>
+</div>`,
+      });
+    }
+  } catch (e) { console.error('[apply notify]', e.message); }
+
   res.status(201).json({ message: 'Bewerbung eingereicht.' });
 });
 
