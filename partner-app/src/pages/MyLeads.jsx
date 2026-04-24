@@ -2,9 +2,10 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import {
   Phone, Search, Plus, X, ChevronDown, MapPin, Mail, Globe,
-  MousePointerClick, CalendarDays, Building2, CheckCircle2, PhoneCall, Camera, Inbox,
+  MousePointerClick, CalendarDays, Building2, CheckCircle2, PhoneCall, Camera, Inbox, Presentation,
 } from 'lucide-react';
 import { partnerApi } from '../api/partner';
 
@@ -544,6 +545,7 @@ function LeadRequestModal({ onClose }) {
 
 export default function MyLeads() {
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const [tab, setTab]                       = useState('alle');
   const [search, setSearch]                 = useState('');
   const [selectedLeadId, setSelectedLeadId] = useState(null);
@@ -781,6 +783,13 @@ export default function MyLeads() {
                       border: `1px solid rgba(191,90,242,0.2)`, cursor: 'pointer',
                     }}>
                       <CalendarDays size={12} /> Termin
+                    </button>
+                    <button onClick={() => navigate('/demo-wizard', { state: { lead: selectedLead } })} style={{
+                      display: 'flex', alignItems: 'center', gap: 5, padding: '6px 11px', borderRadius: 8,
+                      fontSize: 11.5, fontWeight: 600, background: 'rgba(255,159,10,0.12)', color: '#FF9F0A',
+                      border: '1px solid rgba(255,159,10,0.2)', cursor: 'pointer',
+                    }}>
+                      <Presentation size={12} /> Demo
                     </button>
                     <button onClick={() => handleCall(selectedLead)} disabled={!selectedLead.phone} style={{
                       display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 9,

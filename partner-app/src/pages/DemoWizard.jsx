@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Phone, Building2, User, Mail, Globe, MapPin, Briefcase,
-  Calendar, Send, CheckCircle2, ChevronRight, ChevronLeft, X,
+  Calendar, Send, CheckCircle2, ChevronRight, ChevronLeft, ArrowLeft,
 } from 'lucide-react';
 import { partnerApi } from '../api/partner';
 
@@ -91,18 +92,22 @@ const STEPS = ['Firmendaten', 'Nächster Schritt', 'Abschluss'];
 
 export default function DemoWizard() {
   const qc = useQueryClient();
+  const navigate = useNavigate();
+  const { state } = useLocation();
+  const prefilled = state?.lead || {};
+
   const [step, setStep] = useState(0);
   const [done, setDone] = useState(null);
 
-  // Step 0 — company data
-  const [company, setCompany]           = useState('');
-  const [contactPerson, setContactPerson] = useState('');
-  const [phone, setPhone]               = useState('');
-  const [email, setEmail]               = useState('');
-  const [website, setWebsite]           = useState('');
-  const [city, setCity]                 = useState('');
-  const [industry, setIndustry]         = useState('');
-  const [notes, setNotes]               = useState('');
+  // Step 0 — company data (pre-filled from lead if coming from MyLeads)
+  const [company, setCompany]             = useState(prefilled.company || '');
+  const [contactPerson, setContactPerson] = useState(prefilled.contact_person || '');
+  const [phone, setPhone]                 = useState(prefilled.phone || '');
+  const [email, setEmail]                 = useState(prefilled.email || '');
+  const [website, setWebsite]             = useState(prefilled.website || '');
+  const [city, setCity]                   = useState(prefilled.city || '');
+  const [industry, setIndustry]           = useState(prefilled.industry || '');
+  const [notes, setNotes]                 = useState(prefilled.notes || '');
 
   // Step 1 — action
   const [action, setAction]             = useState(null); // 'appointment' | 'email' | 'none'
@@ -165,12 +170,24 @@ export default function DemoWizard() {
     <div style={{ padding: '32px 28px', maxWidth: 680, margin: '0 auto' }}>
       {/* Header */}
       <div style={{ marginBottom: 32 }}>
+        {prefilled.company && (
+          <button onClick={() => navigate('/leads/mine')}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 16,
+              background: 'none', border: 'none', color: D.text3, cursor: 'pointer', fontSize: 13, padding: 0 }}>
+            <ArrowLeft size={14} /> Zurück zu Meine Leads
+          </button>
+        )}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
           <div style={{ width: 36, height: 36, borderRadius: 10, background: D.blueL,
             display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Phone size={18} color={D.blue} />
           </div>
-          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: D.text }}>Demo-Wizard</h1>
+          <div>
+            <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: D.text }}>Demo-Wizard</h1>
+            {prefilled.company && (
+              <p style={{ margin: 0, fontSize: 13, color: D.blue }}>Daten von: {prefilled.company}</p>
+            )}
+          </div>
         </div>
         <p style={{ margin: 0, fontSize: 14, color: D.text3 }}>
           Für Anrufe beim potenziellen Kunden — Daten erfassen, Termin buchen oder Demo zusenden.
