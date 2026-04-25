@@ -37,7 +37,7 @@ export default function Dashboard() {
   const pending   = commData?.totals?.pending || 0;
 
   const METRICS = [
-    { icon: Briefcase,   label: 'Offene Leads',  value: openLeads,   color: '#5B8CF5', glow: 'rgba(91,140,245,0.15)' },
+    { icon: Briefcase,   label: 'Offene Leads',  value: openLeads,   color: '#FF9F0A', glow: 'rgba(255,159,10,0.15)' },
     { icon: Calendar,    label: 'Termine',        value: upcoming,    color: '#BF5AF2', glow: 'rgba(191,90,242,0.15)' },
     { icon: DollarSign,  label: 'Ausgezahlt',     value: fmt(earned), color: '#34D399', glow: 'rgba(52,211,153,0.15)' },
     { icon: TrendingUp,  label: 'Ausstehend',     value: fmt(pending),color: '#FF9F0A', glow: 'rgba(255,159,10,0.15)' },
@@ -51,7 +51,7 @@ export default function Dashboard() {
       {/* ambient glows */}
       <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0 }}>
         <div style={{ position: 'absolute', top: '-10%', left: '20%', width: 500, height: 500, background: 'rgba(139,92,246,0.07)', borderRadius: '50%', filter: 'blur(120px)' }} />
-        <div style={{ position: 'absolute', bottom: '10%', right: '10%', width: 400, height: 400, background: 'rgba(91,140,245,0.06)', borderRadius: '50%', filter: 'blur(100px)' }} />
+        <div style={{ position: 'absolute', bottom: '10%', right: '10%', width: 400, height: 400, background: 'rgba(255,159,10,0.06)', borderRadius: '50%', filter: 'blur(100px)' }} />
         <div style={{ position: 'absolute', top: '40%', left: '60%', width: 300, height: 300, background: 'rgba(52,211,153,0.05)', borderRadius: '50%', filter: 'blur(80px)' }} />
       </div>
 
@@ -128,7 +128,7 @@ export default function Dashboard() {
                   </div>
                   {a.google_meet_link && (
                     <a href={a.google_meet_link} target="_blank" rel="noreferrer"
-                      style={{ fontSize: 11, fontWeight: 600, color: '#5B8CF5', textDecoration: 'none', padding: '3px 8px', borderRadius: 6, background: 'rgba(91,140,245,0.1)', border: '1px solid rgba(91,140,245,0.2)' }}>
+                      style={{ fontSize: 11, fontWeight: 600, color: '#FF9F0A', textDecoration: 'none', padding: '3px 8px', borderRadius: 6, background: 'rgba(255,159,10,0.1)', border: '1px solid rgba(255,159,10,0.2)' }}>
                       Meet
                     </a>
                   )}
@@ -146,7 +146,7 @@ export default function Dashboard() {
               <motion.button
                 onClick={() => navigate('/leads/mine')}
                 whileHover={{ x: 2 }} whileTap={{ scale: 0.97 }}
-                style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#5B8CF5', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#FF9F0A', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
               >
                 Alle anzeigen <ArrowRight size={11} />
               </motion.button>

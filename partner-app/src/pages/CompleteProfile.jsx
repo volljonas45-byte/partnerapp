@@ -6,7 +6,7 @@ import { partnerApi } from '../api/partner';
 const D = {
   bg: '#0D0D12', card: '#16161E', border: 'rgba(255,255,255,0.08)',
   text: '#F2F2F7', text2: '#AEAEB2', text3: '#636366',
-  blue: '#5B8CF5', blueL: '#5B8CF520', input: '#1C1C26',
+  accent: '#FF9F0A', accentL: 'rgba(255,159,10,0.12)', input: '#1C1C26',
 };
 
 export default function CompleteProfile() {
@@ -34,7 +34,7 @@ export default function CompleteProfile() {
       display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div style={{ width: '100%', maxWidth: 420 }}>
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          <div style={{ width: 52, height: 52, borderRadius: 16, background: D.blue,
+          <div style={{ width: 52, height: 52, borderRadius: 16, background: D.accent,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: 24, fontWeight: 800, color: '#fff', margin: '0 auto 16px' }}>P</div>
           <h1 style={{ fontSize: 24, fontWeight: 800, color: D.text, margin: '0 0 6px', letterSpacing: '-0.03em' }}>
@@ -65,7 +65,7 @@ export default function CompleteProfile() {
           </div>
           <button type="submit" disabled={loading}
             style={{ padding: '12px', borderRadius: 11, border: 'none',
-              background: loading ? D.blueL : D.blue, color: loading ? D.blue : '#fff',
+              background: loading ? D.accentL : D.accent, color: loading ? D.accent : '#fff',
               fontSize: 15, fontWeight: 700, cursor: loading ? 'default' : 'pointer' }}>
             {loading ? 'Wird gespeichert…' : 'Bewerbung abschicken'}
           </button>

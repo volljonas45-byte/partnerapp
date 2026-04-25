@@ -5,7 +5,7 @@ import { partnerApi } from '../api/partner';
 const D = {
   bg:'#0D0D12', card:'#16161E', card2:'#1C1C26', border:'rgba(255,255,255,0.07)',
   text:'#F2F2F7', text2:'#AEAEB2', text3:'#636366',
-  blue:'#5B8CF5', blueL:'#5B8CF514', green:'#34D399', greenL:'#34D39914',
+  accent:'#FF9F0A', accentL:'rgba(255,159,10,0.12)', green:'#34D399', greenL:'#34D39914',
   orange:'#FF9F0A',
 };
 
@@ -40,7 +40,7 @@ export default function LeadPool() {
 
       <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))', gap:14 }}>
         {pool.map(lead => {
-          const pColor = PRIORITY_COLOR[lead.priority] || D.blue;
+          const pColor = PRIORITY_COLOR[lead.priority] || D.accent;
           return (
             <div key={lead.id} style={{ background:`linear-gradient(145deg,${pColor}0D 0%,${D.card} 65%)`,
               border:`0.5px solid ${pColor}25`, borderRadius:16, padding:'18px 18px 14px',
@@ -89,7 +89,7 @@ export default function LeadPool() {
               <button onClick={() => { if (confirm(`Lead "${lead.company}" übernehmen?`)) claim.mutate(lead.id); }}
                 disabled={claim.isPending}
                 style={{ width:'100%', padding:'9px', borderRadius:10, border:'none',
-                  background: D.blue, color:'#fff', cursor:'pointer',
+                  background: D.accent, color:'#fff', cursor:'pointer',
                   fontSize:13, fontWeight:700, display:'flex', alignItems:'center', justifyContent:'center', gap:6 }}>
                 <Download size={14} /> Lead übernehmen
               </button>

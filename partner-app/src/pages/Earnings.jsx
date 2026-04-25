@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 const D = {
   bg:'#0D0D12', card:'#16161E', card2:'#1C1C26', border:'rgba(255,255,255,0.07)',
   text:'#F2F2F7', text2:'#AEAEB2', text3:'#636366',
-  blue:'#5B8CF5', blueL:'#5B8CF514',
+  accent:'#FF9F0A', accentL:'rgba(255,159,10,0.12)',
   green:'#34D399', greenL:'#34D39914',
   orange:'#FF9F0A', orangeL:'#FF9F0A14',
   red:'#FF453A', redL:'#FF453A14',
@@ -38,7 +38,7 @@ export default function Earnings() {
       {totals && (
         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(180px,1fr))', gap:14, marginBottom:28 }}>
           {[
-            { icon: TrendingUp,   label:'Gesamt',     value: fmt((totals.open||0)+(totals.pending||0)+(totals.paid||0)), color:D.blue   },
+            { icon: TrendingUp,   label:'Gesamt',     value: fmt((totals.open||0)+(totals.pending||0)+(totals.paid||0)), color:D.accent   },
             { icon: DollarSign,   label:'Ausgezahlt', value: fmt(totals.paid),    color:D.green  },
             { icon: Clock,        label:'Ausstehend', value: fmt(totals.pending), color:D.orange },
             { icon: CheckCircle,  label:'Offen',      value: fmt(totals.open),    color:D.text3  },

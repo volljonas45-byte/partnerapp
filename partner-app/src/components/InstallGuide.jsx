@@ -6,7 +6,7 @@ import { X, Smartphone } from 'lucide-react';
 const D = {
   card: '#16161E', border: 'rgba(255,255,255,0.08)',
   text: '#F2F2F7', text2: '#AEAEB2', text3: '#636366',
-  blue: '#5B8CF5', blueL: 'rgba(91,140,245,0.15)',
+  accent: '#FF9F0A', accentL: 'rgba(255,159,10,0.15)',
   green: '#34D399', greenL: 'rgba(52,211,153,0.12)',
 };
 
@@ -39,15 +39,15 @@ export default function InstallGuide({ onClose }) {
           background: D.card, borderRadius: 20, border: `1px solid ${D.border}`,
           boxShadow: '0 40px 80px rgba(0,0,0,0.6)', overflow: 'hidden' }}>
 
-        <div style={{ height: 3, background: 'linear-gradient(90deg, #5B8CF5, #BF5AF2)' }} />
+        <div style={{ height: 3, background: 'linear-gradient(90deg, #FF9F0A, #BF5AF2)' }} />
 
         <div style={{ padding: '24px 24px 20px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: D.blueL,
-                border: `1px solid rgba(91,140,245,0.3)`,
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: D.accentL,
+                border: `1px solid rgba(255,159,10,0.3)`,
                 display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Smartphone size={18} color={D.blue} />
+                <Smartphone size={18} color={D.accent} />
               </div>
               <div>
                 <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: D.text }}>App installieren</h2>
@@ -84,7 +84,7 @@ export default function InstallGuide({ onClose }) {
               <button key={k} onClick={() => setTab(k)} style={{
                 flex: 1, padding: '7px 12px', borderRadius: 8, border: 'none', cursor: 'pointer',
                 fontSize: 12.5, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                background: tab === k ? D.blue : 'transparent',
+                background: tab === k ? D.accent : 'transparent',
                 color: tab === k ? '#fff' : D.text3, transition: 'all 0.2s',
               }}>{icon}{l}</button>
             ))}
@@ -93,10 +93,10 @@ export default function InstallGuide({ onClose }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {steps.map(({ n, title, text }) => (
               <div key={n} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                <div style={{ width: 28, height: 28, borderRadius: 8, background: D.blueL,
-                  border: `1px solid rgba(91,140,245,0.3)`,
+                <div style={{ width: 28, height: 28, borderRadius: 8, background: D.accentL,
+                  border: `1px solid rgba(255,159,10,0.3)`,
                   display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                  fontSize: 12, fontWeight: 700, color: D.blue }}>
+                  fontSize: 12, fontWeight: 700, color: D.accent }}>
                   {n}
                 </div>
                 <div>

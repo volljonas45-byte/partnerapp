@@ -13,7 +13,7 @@ import LeadGuide from '../components/LeadGuide';
 const D = {
   bg: '#0D0D12', text: '#F2F2F7', text2: '#AEAEB2', text3: '#636366',
   inputBg: 'rgba(255,255,255,0.04)',
-  blue: '#5B8CF5', blueL: 'rgba(91,140,245,0.12)',
+  accent: '#FF9F0A', accentL: 'rgba(255,159,10,0.12)',
   green: '#34D399', greenL: 'rgba(52,211,153,0.12)',
   orange: '#FF9F0A', orangeL: 'rgba(255,159,10,0.12)',
   red: '#FF453A', redL: 'rgba(255,69,58,0.12)',
@@ -44,11 +44,11 @@ const STATUS_LABEL = {
   termin_gesetzt: 'Termin gesetzt', gewonnen: 'Gewonnen', verloren: 'Verloren',
 };
 const STATUS_COLOR = {
-  anrufen: D.blue, kontaktiert: D.orange,
+  anrufen: D.accent, kontaktiert: D.orange,
   termin_gesetzt: D.purple, gewonnen: D.green, verloren: D.red,
 };
 const STATUS_BG = {
-  anrufen: D.blueL, kontaktiert: D.orangeL,
+  anrufen: D.accentL, kontaktiert: D.orangeL,
   termin_gesetzt: D.purpleL, gewonnen: D.greenL, verloren: D.redL,
 };
 
@@ -56,7 +56,7 @@ const OUTCOME_CFG = {
   reached:     { label: 'Erreicht',       color: '#34D399', bg: 'rgba(52,211,153,0.08)' },
   not_reached: { label: 'Nicht erreicht', color: D.text3,   bg: 'rgba(142,142,147,0.10)' },
   voicemail:   { label: 'Mailbox',        color: D.orange,  bg: D.orangeL },
-  callback:    { label: 'Rückruf',        color: D.blue,    bg: D.blueL },
+  callback:    { label: 'Rückruf',        color: D.accent,    bg: D.accentL },
 };
 
 const cardVariants = {
@@ -126,7 +126,7 @@ function ScreenshotImportModal({ onClose, onCreate }) {
         </div>
 
         <div onClick={() => fileRef.current?.click()} style={{
-          border: `1.5px dashed ${preview ? D.blue : D.border}`, borderRadius: 14,
+          border: `1.5px dashed ${preview ? D.accent : D.border}`, borderRadius: 14,
           padding: preview ? 0 : '32px 0', cursor: 'pointer', overflow: 'hidden',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           marginBottom: 14, background: preview ? 'none' : 'rgba(255,255,255,0.02)', transition: 'border-color 0.2s',
@@ -152,10 +152,10 @@ function ScreenshotImportModal({ onClose, onCreate }) {
         {preview && !extracted && (
           <button onClick={handleAnalyze} disabled={loading} style={{
             width: '100%', padding: '11px', borderRadius: 11, border: 'none',
-            background: `linear-gradient(135deg, ${D.blue}, #7B9FF5)`,
+            background: `linear-gradient(135deg, ${D.accent}, #7B9FF5)`,
             color: '#fff', cursor: loading ? 'not-allowed' : 'pointer',
             fontSize: 14, fontWeight: 700, marginBottom: 14, opacity: loading ? 0.7 : 1,
-            boxShadow: '0 4px 20px rgba(91,140,245,0.3)',
+            boxShadow: '0 4px 20px rgba(255,159,10,0.3)',
           }}>
             {loading ? 'Analysiere...' : 'Daten extrahieren'}
           </button>
@@ -176,7 +176,7 @@ function ScreenshotImportModal({ onClose, onCreate }) {
                 <div key={k}>
                   <label style={{ fontSize: 11, fontWeight: 600, color: D.text2, display: 'block', marginBottom: 4 }}>{l}</label>
                   <input value={extracted[k] || ''} onChange={e => f(k, e.target.value)}
-                    style={{ width: '100%', padding: '7px 10px', borderRadius: 8, fontSize: 13, border: `1px solid ${extracted[k] ? D.blue + '60' : D.border}`, outline: 'none', boxSizing: 'border-box', background: D.inputBg, color: D.text }} />
+                    style={{ width: '100%', padding: '7px 10px', borderRadius: 8, fontSize: 13, border: `1px solid ${extracted[k] ? D.accent + '60' : D.border}`, outline: 'none', boxSizing: 'border-box', background: D.inputBg, color: D.text }} />
                 </div>
               ))}
             </div>
@@ -237,7 +237,7 @@ function LeadModal({ lead, onClose, onSave }) {
         </div>
         <div style={{ display: 'flex', gap: 8, marginTop: 18, justifyContent: 'flex-end' }}>
           <button onClick={onClose} style={{ padding: '8px 16px', borderRadius: 9, border: `1px solid ${D.border}`, background: 'none', color: D.text2, cursor: 'pointer', fontSize: 13 }}>Abbrechen</button>
-          <button onClick={() => onSave(form)} style={{ padding: '8px 18px', borderRadius: 9, border: 'none', background: `linear-gradient(135deg, ${D.blue}, #7B9FF5)`, color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, boxShadow: '0 4px 16px rgba(91,140,245,0.3)' }}>Speichern</button>
+          <button onClick={() => onSave(form)} style={{ padding: '8px 18px', borderRadius: 9, border: 'none', background: `linear-gradient(135deg, ${D.accent}, #7B9FF5)`, color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, boxShadow: '0 4px 16px rgba(255,159,10,0.3)' }}>Speichern</button>
         </div>
       </motion.div>
     </motion.div>, document.body
@@ -274,9 +274,9 @@ function CallLogSheet({ lead, onClose }) {
             <button key={o.v} onClick={() => setOutcome(o.v)} style={{
               padding: 9, borderRadius: 10, fontSize: 13, cursor: 'pointer',
               fontWeight: outcome === o.v ? 600 : 400,
-              border: `1px solid ${outcome === o.v ? D.blue : D.border}`,
-              background: outcome === o.v ? D.blueL : 'rgba(255,255,255,0.02)',
-              color: outcome === o.v ? D.blue : D.text2, transition: 'all 0.15s',
+              border: `1px solid ${outcome === o.v ? D.accent : D.border}`,
+              background: outcome === o.v ? D.accentL : 'rgba(255,255,255,0.02)',
+              color: outcome === o.v ? D.accent : D.text2, transition: 'all 0.15s',
             }}>{o.l}</button>
           ))}
         </div>
@@ -291,9 +291,9 @@ function CallLogSheet({ lead, onClose }) {
           <button onClick={onClose} style={{ flex: 1, padding: 10, borderRadius: 10, border: `1px solid ${D.border}`, background: 'none', color: D.text2, cursor: 'pointer', fontSize: 14 }}>Abbrechen</button>
           <button onClick={() => log.mutate()} disabled={log.isPending} style={{
             flex: 2, padding: 10, borderRadius: 10, border: 'none',
-            background: `linear-gradient(135deg, ${D.blue}, #7B9FF5)`,
+            background: `linear-gradient(135deg, ${D.accent}, #7B9FF5)`,
             color: '#fff', cursor: 'pointer', fontSize: 14, fontWeight: 700,
-            boxShadow: '0 4px 16px rgba(91,140,245,0.3)',
+            boxShadow: '0 4px 16px rgba(255,159,10,0.3)',
           }}>
             {log.isPending ? 'Speichern...' : 'Eintragen'}
           </button>
@@ -363,8 +363,8 @@ function AppointmentModal({ lead, onClose }) {
 
 function LeadRow({ lead, isSelected, onClick, onCall, index }) {
   const [hovered, setHovered] = useState(false);
-  const sc = STATUS_COLOR[lead.status] || D.blue;
-  const sb = STATUS_BG[lead.status] || D.blueL;
+  const sc = STATUS_COLOR[lead.status] || D.accent;
+  const sb = STATUS_BG[lead.status] || D.accentL;
   return (
     <motion.div
       onClick={onClick}
@@ -376,8 +376,8 @@ function LeadRow({ lead, isSelected, onClick, onCall, index }) {
       style={{
         display: 'flex', alignItems: 'center', gap: 8, padding: '9px 14px',
         borderBottom: `1px solid ${D.borderSubtle}`, cursor: 'pointer',
-        background: isSelected ? 'rgba(91,140,245,0.08)' : hovered ? 'rgba(255,255,255,0.025)' : 'transparent',
-        borderLeft: isSelected ? `3px solid ${D.blue}` : '3px solid transparent',
+        background: isSelected ? 'rgba(255,159,10,0.08)' : hovered ? 'rgba(255,255,255,0.025)' : 'transparent',
+        borderLeft: isSelected ? `3px solid ${D.accent}` : '3px solid transparent',
         transition: 'background 0.15s',
       }}
     >
@@ -488,9 +488,9 @@ function LeadRequestModal({ onClose }) {
                 <input
                   value={industry} onChange={e => setIndustry(e.target.value)}
                   placeholder="z.B. Gastronomie, Handwerk, Industrie..."
-                  style={{ width: '100%', padding: '10px 12px', borderRadius: 10, fontSize: 14, border: `1px solid ${industry ? D.blue + '60' : D.border}`, outline: 'none', boxSizing: 'border-box', background: D.inputBg, color: D.text, fontFamily: 'inherit', transition: 'border-color 0.15s' }}
-                  onFocus={e => e.target.style.borderColor = D.blue}
-                  onBlur={e => e.target.style.borderColor = industry ? D.blue + '60' : D.border}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: 10, fontSize: 14, border: `1px solid ${industry ? D.accent + '60' : D.border}`, outline: 'none', boxSizing: 'border-box', background: D.inputBg, color: D.text, fontFamily: 'inherit', transition: 'border-color 0.15s' }}
+                  onFocus={e => e.target.style.borderColor = D.accent}
+                  onBlur={e => e.target.style.borderColor = industry ? D.accent + '60' : D.border}
                 />
               </div>
 
@@ -620,7 +620,7 @@ export default function MyLeads() {
   const TABS = [{ key: 'alle', label: 'Alle' }, ...STATUSES.map(s => ({ key: s, label: STATUS_LABEL[s] }))];
 
   const KPI_CARDS = [
-    { label: 'Gesamt',          value: counts.alle,           color: D.blue,   glow: 'rgba(91,140,245,0.15)',   icon: PhoneCall },
+    { label: 'Gesamt',          value: counts.alle,           color: D.accent,   glow: 'rgba(255,159,10,0.15)',   icon: PhoneCall },
     { label: 'Zu anrufen',      value: counts.anrufen,        color: D.orange, glow: 'rgba(255,159,10,0.15)',   icon: Phone },
     { label: 'Termine gesetzt', value: counts.termin_gesetzt, color: D.purple, glow: 'rgba(191,90,242,0.15)',   icon: CalendarDays },
     { label: 'Gewonnen',        value: counts.gewonnen,       color: D.green,  glow: 'rgba(52,211,153,0.15)',   icon: CheckCircle2 },
@@ -631,7 +631,7 @@ export default function MyLeads() {
 
       {/* ambient glows */}
       <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0 }}>
-        <div style={{ position: 'absolute', top: '-5%', left: '30%', width: 400, height: 400, background: 'rgba(91,140,245,0.06)', borderRadius: '50%', filter: 'blur(100px)' }} />
+        <div style={{ position: 'absolute', top: '-5%', left: '30%', width: 400, height: 400, background: 'rgba(255,159,10,0.06)', borderRadius: '50%', filter: 'blur(100px)' }} />
         <div style={{ position: 'absolute', bottom: '5%', right: '15%', width: 350, height: 350, background: 'rgba(191,90,242,0.05)', borderRadius: '50%', filter: 'blur(90px)' }} />
       </div>
 
@@ -701,8 +701,8 @@ export default function MyLeads() {
           <button onClick={() => setShowAddLead(true)} style={{
             display: 'flex', alignItems: 'center', gap: 5, padding: '7px 18px', borderRadius: 9,
             fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer',
-            background: `linear-gradient(135deg, ${D.blue}, #7B9FF5)`,
-            color: '#fff', boxShadow: '0 4px 16px rgba(91,140,245,0.3)',
+            background: `linear-gradient(135deg, ${D.accent}, #7B9FF5)`,
+            color: '#fff', boxShadow: '0 4px 16px rgba(255,159,10,0.3)',
           }}>
             <Plus size={14} /> Lead hinzufügen
           </button>
@@ -724,12 +724,12 @@ export default function MyLeads() {
                   <button key={tb.key} onClick={() => { setTab(tb.key); setSelectedLeadId(null); }} style={{
                     padding: '5px 9px', fontSize: 12, fontWeight: isActive ? 600 : 400,
                     color: isActive ? D.text : D.text2, background: 'none', border: 'none',
-                    borderBottom: isActive ? `2px solid ${D.blue}` : '2px solid transparent',
+                    borderBottom: isActive ? `2px solid ${D.accent}` : '2px solid transparent',
                     cursor: 'pointer', whiteSpace: 'nowrap', transition: 'color 0.15s', flexShrink: 0,
                   }}>
                     {tb.label}
                     {counts[tb.key] > 0 && (
-                      <span style={{ marginLeft: 4, fontSize: 10, color: isActive ? D.blue : D.text3 }}>{counts[tb.key]}</span>
+                      <span style={{ marginLeft: 4, fontSize: 10, color: isActive ? D.accent : D.text3 }}>{counts[tb.key]}</span>
                     )}
                   </button>
                 );
@@ -781,9 +781,9 @@ export default function MyLeads() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
                       {selectedLead.contact_person && <span style={{ fontSize: 12, color: D.text3 }}>{selectedLead.contact_person}</span>}
                       {selectedLead.city && <span style={{ fontSize: 12, color: D.text2, display: 'flex', alignItems: 'center', gap: 3 }}><MapPin size={11} />{selectedLead.city}</span>}
-                      {selectedLead.phone && <a href={`tel:${selectedLead.phone}`} style={{ fontSize: 12, color: D.blue, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 3 }}><Phone size={11} />{selectedLead.phone}</a>}
-                      {selectedLead.email && <a href={`mailto:${selectedLead.email}`} style={{ fontSize: 12, color: D.blue, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 3 }}><Mail size={11} />{selectedLead.email}</a>}
-                      {selectedLead.website && <a href={selectedLead.website.startsWith('http') ? selectedLead.website : `https://${selectedLead.website}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: D.blue, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 3 }}><Globe size={11} />Website</a>}
+                      {selectedLead.phone && <a href={`tel:${selectedLead.phone}`} style={{ fontSize: 12, color: D.accent, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 3 }}><Phone size={11} />{selectedLead.phone}</a>}
+                      {selectedLead.email && <a href={`mailto:${selectedLead.email}`} style={{ fontSize: 12, color: D.accent, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 3 }}><Mail size={11} />{selectedLead.email}</a>}
+                      {selectedLead.website && <a href={selectedLead.website.startsWith('http') ? selectedLead.website : `https://${selectedLead.website}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: D.accent, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 3 }}><Globe size={11} />Website</a>}
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: 6, flexShrink: 0, alignItems: 'center' }}>
@@ -839,8 +839,8 @@ export default function MyLeads() {
                     <button onClick={() => setShowStatusMenu(v => !v)} style={{
                       display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 99,
                       fontSize: 11.5, fontWeight: 600, cursor: 'pointer', border: 'none',
-                      background: STATUS_BG[selectedLead.status] || D.blueL,
-                      color: STATUS_COLOR[selectedLead.status] || D.blue,
+                      background: STATUS_BG[selectedLead.status] || D.accentL,
+                      color: STATUS_COLOR[selectedLead.status] || D.accent,
                     }}>
                       {STATUS_LABEL[selectedLead.status]} <ChevronDown size={11} />
                     </button>
@@ -877,7 +877,7 @@ export default function MyLeads() {
                     <textarea value={notes} onChange={e => setNotes(e.target.value)} onBlur={handleNotesBlur}
                       placeholder="Notizen zum Lead..."
                       style={{ width: '100%', minHeight: 120, padding: '10px 12px', borderRadius: 10, fontSize: 13, border: `1px solid ${D.border}`, outline: 'none', resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box', lineHeight: 1.5, color: D.text, background: D.inputBg }}
-                      onFocus={e => { e.target.style.borderColor = D.blue; }}
+                      onFocus={e => { e.target.style.borderColor = D.accent; }}
                       onBlurCapture={e => { e.target.style.borderColor = D.border; }}
                     />
                   </div>
