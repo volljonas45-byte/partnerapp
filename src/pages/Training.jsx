@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Play, CheckCircle2, ChevronLeft } from 'lucide-react';
+import { Play, CheckCircle2, ChevronLeft, Phone, Globe, BookOpen, Mic, Target, TrendingUp } from 'lucide-react';
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 const CURRICULA = [
@@ -73,42 +73,107 @@ const CURRICULA = [
 function totalVideos(c) { return c.blocks.reduce((s, b) => s + b.videos.length, 0); }
 function blockOffset(c, bi) { return c.blocks.slice(0, bi).reduce((s, b) => s + b.videos.length, 0); }
 
+// ─── Course card meta ─────────────────────────────────────────────────────────
+const COURSE_META = {
+  'cold-calling': {
+    Icon: Phone,
+    gradient: 'linear-gradient(135deg, #1a3a5c 0%, #0d2040 60%, #070C15 100%)',
+    iconBg: 'rgba(59,130,246,0.2)',
+    iconColor: '#60A5FA',
+    tag: 'Sales Skill',
+    desc: 'Lerne wie du täglich Termine buchst – von Mindset bis Live-Roleplay.',
+  },
+  'web-design': {
+    Icon: Globe,
+    gradient: 'linear-gradient(135deg, #2a1a5c 0%, #180d40 60%, #070C15 100%)',
+    iconBg: 'rgba(129,140,248,0.2)',
+    iconColor: '#A5B4FC',
+    tag: 'Pitch-Wissen',
+    desc: 'Verstehe was eine gute Website ausmacht – und pitch überzeugender.',
+  },
+};
+
 // ─── VIEW 1: Course Grid ──────────────────────────────────────────────────────
 function CourseGrid({ onSelect }) {
   return (
-    <div style={{ padding: '28px 24px' }}>
-      <h1 style={{ margin: '0 0 20px', fontSize: 22, fontWeight: 700, color: '#F2F2F7', letterSpacing: '-0.02em' }}>
-        Programme
+    <div style={{ padding: '32px 28px' }}>
+      <p style={{ margin: '0 0 4px', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>Weiterbildung</p>
+      <h1 style={{ margin: '0 0 28px', fontSize: 24, fontWeight: 700, color: '#F2F2F7', letterSpacing: '-0.02em' }}>
+        Training Programme
       </h1>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 12 }}>
-        {CURRICULA.map(c => (
-          <div
-            key={c.key}
-            onClick={() => onSelect(c.key)}
-            style={{
-              position: 'relative', borderRadius: 14, overflow: 'hidden',
-              aspectRatio: '3/2', cursor: 'pointer',
-              background: c.coverGradient,
-            }}
-          >
-            {/* Thumbnail from first video */}
-            <img
-              src={`https://img.youtube.com/vi/${c.blocks[0].videos[0].id}/maxresdefault.jpg`}
-              alt={c.title}
-              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.55 }}
-              onError={e => { e.currentTarget.style.display = 'none'; }}
-            />
-            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.1) 60%)' }} />
-            <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '16px' }}>
-              <div style={{ fontSize: 16, fontWeight: 800, color: '#fff', letterSpacing: '-0.01em', lineHeight: 1.2, textTransform: 'uppercase' }}>
-                {c.title}
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14, maxWidth: 780 }}>
+        {CURRICULA.map(c => {
+          const meta = COURSE_META[c.key];
+          const { Icon } = meta;
+          const total = totalVideos(c);
+          return (
+            <div
+              key={c.key}
+              onClick={() => onSelect(c.key)}
+              style={{
+                position: 'relative', borderRadius: 16, overflow: 'hidden',
+                background: meta.gradient,
+                border: '1px solid rgba(255,255,255,0.08)',
+                cursor: 'pointer',
+                padding: '28px 28px 24px',
+                display: 'flex', flexDirection: 'column', gap: 20,
+                minHeight: 220,
+                transition: 'border-color 0.15s, transform 0.15s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.18)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; e.currentTarget.style.transform = 'translateY(0)'; }}
+            >
+              {/* Subtle dot pattern overlay */}
+              <div style={{
+                position: 'absolute', inset: 0, opacity: 0.04,
+                backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)',
+                backgroundSize: '24px 24px',
+                pointerEvents: 'none',
+              }} />
+
+              {/* Top row: icon + tag */}
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                <div style={{
+                  width: 52, height: 52, borderRadius: 14,
+                  background: meta.iconBg,
+                  border: `1px solid ${meta.iconColor}33`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  flexShrink: 0,
+                }}>
+                  <Icon size={24} color={meta.iconColor} strokeWidth={1.75} />
+                </div>
+                <span style={{
+                  fontSize: 10, fontWeight: 700,
+                  color: meta.iconColor, background: meta.iconBg,
+                  border: `1px solid ${meta.iconColor}33`,
+                  padding: '3px 10px', borderRadius: 99,
+                  textTransform: 'uppercase', letterSpacing: '0.08em',
+                }}>
+                  {meta.tag}
+                </span>
               </div>
-              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', marginTop: 4 }}>
-                {c.blocks.length} Module · {totalVideos(c)} Lektionen
+
+              {/* Bottom: title + desc + meta */}
+              <div>
+                <div style={{ fontSize: 17, fontWeight: 700, color: '#F2F2F7', letterSpacing: '-0.01em', marginBottom: 6 }}>
+                  {c.title}
+                </div>
+                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', lineHeight: 1.55, marginBottom: 14 }}>
+                  {meta.desc}
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.5)', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)', padding: '3px 10px', borderRadius: 99 }}>
+                    {c.blocks.length} Module
+                  </span>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.5)', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)', padding: '3px 10px', borderRadius: 99 }}>
+                    {total} Lektionen
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
