@@ -9,7 +9,7 @@ const fmt = n => new Intl.NumberFormat('de-DE', { style: 'currency', currency: '
 const fmtDate = d => new Date(d).toLocaleDateString('de-DE', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 
 const STATUS_LABELS = { anrufen: 'Anrufen', kontaktiert: 'Kontaktiert', termin_gesetzt: 'Termin', gewonnen: 'Gewonnen', verloren: 'Verloren' };
-const STATUS_COLORS = { anrufen: '#5B8CF5', kontaktiert: '#4F6EF7', termin_gesetzt: '#BF5AF2', gewonnen: '#34D399', verloren: '#FF453A' };
+const STATUS_COLORS = { anrufen: '#5B8CF5', kontaktiert: '#F59E0B', termin_gesetzt: '#BF5AF2', gewonnen: '#34D399', verloren: '#FF453A' };
 
 const glass = {
   backdropFilter: 'blur(24px)',

@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 const D = {
   bg: '#0D0D12', border: 'rgba(255,255,255,0.08)',
   text: '#F2F2F7', text2: '#AEAEB2', text3: '#636366',
-  orange: '#4F6EF7', orangeL: 'rgba(79,110,247,0.12)',
+  orange: '#F59E0B', orangeL: 'rgba(79,110,247,0.12)',
 };
 
 export default function Pending() {

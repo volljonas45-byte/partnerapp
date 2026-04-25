@@ -1,15 +1,17 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Download, Building2, Phone, MapPin, Tag } from 'lucide-react';
+import { Download, Phone, MapPin, Tag } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { partnerApi } from '../api/partner';
 
 const D = {
   bg:'#0D0D12', card:'#16161E', card2:'#1C1C26', border:'rgba(255,255,255,0.07)',
   text:'#F2F2F7', text2:'#AEAEB2', text3:'#636366',
-  accent:'#4F6EF7', accentL:'rgba(79,110,247,0.12)', green:'#34D399', greenL:'#34D39914',
-  orange:'#4F6EF7',
+  accent:'#4F6EF7', accentL:'rgba(79,110,247,0.12)',
+  green:'#34D399', greenL:'#34D39914',
+  orange:'#F59E0B',
 };
 
-const PRIORITY_COLOR = { high: '#4F6EF7', medium: '#5B8CF5', low: '#636366' };
+const PRIORITY_COLOR = { high: '#F59E0B', medium: '#5B8CF5', low: '#636366' };
 
 export default function LeadPool() {
   const qc = useQueryClient();
@@ -24,27 +26,35 @@ export default function LeadPool() {
 
   return (
     <div style={{ padding:'32px 28px 64px', maxWidth:1000, margin:'0 auto' }}>
-      <p style={{ fontSize:11, fontWeight:800, color:D.text3, textTransform:'uppercase', letterSpacing:'0.1em', margin:'0 0 2px' }}>Vertrieb</p>
-      <h1 style={{ fontSize:26, fontWeight:900, color:D.text, margin:'0 0 6px', letterSpacing:'-0.03em' }}>Lead-Pool</h1>
-      <p style={{ fontSize:14, color:D.text3, margin:'0 0 24px' }}>
-        {pool.length} verfügbare Leads · 20% Provision bei Abschluss
-      </p>
+
+      {/* Header */}
+      <motion.div initial={{ opacity:0, y:-10 }} animate={{ opacity:1, y:0 }} transition={{ duration:0.4 }}>
+        <p style={{ fontSize:11, fontWeight:800, color:D.text3, textTransform:'uppercase', letterSpacing:'0.1em', margin:'0 0 2px' }}>Vertrieb</p>
+        <h1 style={{ fontSize:26, fontWeight:900, color:D.text, margin:'0 0 6px', letterSpacing:'-0.03em' }}>Lead-Pool</h1>
+        <p style={{ fontSize:14, color:D.text3, margin:'0 0 24px' }}>
+          {pool.length} verfügbare Leads · 20% Provision bei Abschluss
+        </p>
+      </motion.div>
 
       {isLoading && <p style={{ color:D.text3 }}>Lädt…</p>}
 
       {!isLoading && pool.length === 0 && (
-        <div style={{ textAlign:'center', padding:'60px 20px', color:D.text3 }}>
+        <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:0.2 }}
+          style={{ textAlign:'center', padding:'60px 20px', color:D.text3 }}>
           Aktuell keine Leads im Pool verfügbar.
-        </div>
+        </motion.div>
       )}
 
       <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))', gap:14 }}>
-        {pool.map(lead => {
+        {pool.map((lead, i) => {
           const pColor = PRIORITY_COLOR[lead.priority] || D.accent;
           return (
-            <div key={lead.id} style={{ background:`linear-gradient(145deg,${pColor}0D 0%,${D.card} 65%)`,
-              border:`0.5px solid ${pColor}25`, borderRadius:16, padding:'18px 18px 14px',
-              boxShadow:`0 0 24px ${pColor}08` }}>
+            <motion.div key={lead.id}
+              initial={{ opacity:0, y:16 }} animate={{ opacity:1, y:0 }}
+              transition={{ delay: 0.1 + i * 0.06, duration:0.35 }}
+              style={{ background:`linear-gradient(145deg,${pColor}0D 0%,${D.card} 65%)`,
+                border:`0.5px solid ${pColor}25`, borderRadius:16, padding:'18px 18px 14px',
+                boxShadow:`0 0 24px ${pColor}08` }}>
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:10 }}>
                 <div style={{ width:8, height:8, borderRadius:'50%', background:pColor, marginTop:5, flexShrink:0 }} />
                 <div style={{ flex:1, minWidth:0, margin:'0 10px' }}>
@@ -93,7 +103,7 @@ export default function LeadPool() {
                   fontSize:13, fontWeight:700, display:'flex', alignItems:'center', justifyContent:'center', gap:6 }}>
                 <Download size={14} /> Lead übernehmen
               </button>
-            </div>
+            </motion.div>
           );
         })}
       </div>

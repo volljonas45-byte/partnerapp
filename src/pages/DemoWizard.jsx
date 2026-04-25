@@ -16,7 +16,7 @@ const D = {
   accent: '#4F6EF7', accentL: 'rgba(79,110,247,0.12)',
   green: '#34D399', greenL: 'rgba(52,211,153,0.12)',
   purple: '#BF5AF2', purpleL: 'rgba(191,90,242,0.12)',
-  orange: '#4F6EF7', orangeL: 'rgba(79,110,247,0.12)',
+  orange: '#F59E0B', orangeL: 'rgba(79,110,247,0.12)',
   inputBg: 'rgba(255,255,255,0.04)',
 };
 

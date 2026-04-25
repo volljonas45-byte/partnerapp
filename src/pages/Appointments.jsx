@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Calendar, ExternalLink, CheckCircle, XCircle } from 'lucide-react';
+import { ExternalLink, CheckCircle, XCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { partnerApi } from '../api/partner';
 
 const D = {
@@ -12,10 +13,10 @@ const D = {
 };
 
 const STATUS_MAP = {
-  scheduled:  { label:'Geplant',       color: D.accent,   bg: D.accentL   },
-  completed:  { label:'Abgeschlossen', color: D.green,  bg: D.greenL  },
-  cancelled:  { label:'Abgesagt',      color: D.red,    bg: D.redL    },
-  no_show:    { label:'Nicht erschienen', color: D.text3, bg: D.card2  },
+  scheduled: { label:'Geplant',           color: D.accent, bg: D.accentL },
+  completed: { label:'Abgeschlossen',     color: D.green,  bg: D.greenL  },
+  cancelled: { label:'Abgesagt',          color: D.red,    bg: D.redL    },
+  no_show:   { label:'Nicht erschienen',  color: D.text3,  bg: D.card2   },
 };
 
 export default function Appointments() {
@@ -30,21 +31,24 @@ export default function Appointments() {
     weekday:'long', day:'2-digit', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit'
   });
 
-  const upcoming  = appts.filter(a => a.status === 'scheduled' && new Date(a.scheduled_at) >= new Date());
-  const past      = appts.filter(a => a.status !== 'scheduled' || new Date(a.scheduled_at) < new Date());
+  const upcoming = appts.filter(a => a.status === 'scheduled' && new Date(a.scheduled_at) >= new Date());
+  const past     = appts.filter(a => a.status !== 'scheduled' || new Date(a.scheduled_at) < new Date());
 
-  const Section = ({ title, items }) => (
+  const Section = ({ title, items, baseDelay = 0 }) => (
     <div style={{ marginBottom: 32 }}>
       <p style={{ fontSize:12, fontWeight:700, color:D.text3, textTransform:'uppercase',
         letterSpacing:'0.06em', margin:'0 0 12px' }}>{title}</p>
       {items.length === 0 && <p style={{ fontSize:13, color:D.text3 }}>Keine Einträge.</p>}
       <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
-        {items.map(a => {
+        {items.map((a, i) => {
           const s = STATUS_MAP[a.status] || STATUS_MAP.scheduled;
           const isUpcoming = a.status === 'scheduled' && new Date(a.scheduled_at) >= new Date();
           return (
-            <div key={a.id} style={{ background:`linear-gradient(145deg,${D.purple}0D 0%,${D.card} 60%)`,
-              border:`0.5px solid ${D.purple}25`, borderRadius:16, padding:'18px 20px' }}>
+            <motion.div key={a.id}
+              initial={{ opacity:0, y:12 }} animate={{ opacity:1, y:0 }}
+              transition={{ delay: baseDelay + i * 0.07, duration:0.35 }}
+              style={{ background:`linear-gradient(145deg,${D.purple}0D 0%,${D.card} 60%)`,
+                border:`0.5px solid ${D.purple}25`, borderRadius:16, padding:'18px 20px' }}>
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:12, flexWrap:'wrap' }}>
                 <div>
                   <p style={{ margin:'0 0 4px', fontSize:15, fontWeight:700, color:D.text }}>{a.company || '—'}</p>
@@ -74,13 +78,13 @@ export default function Appointments() {
                 )}
                 {isUpcoming && (
                   <>
-                    <button onClick={()=>update.mutate({ id:a.id, data:{ status:'completed' }})}
+                    <button onClick={() => update.mutate({ id:a.id, data:{ status:'completed' }})}
                       style={{ display:'flex', alignItems:'center', gap:5, padding:'7px 14px',
                         borderRadius:9, border:'none', background:D.greenL, color:D.green,
                         cursor:'pointer', fontSize:13, fontWeight:600 }}>
                       <CheckCircle size={13} /> Abgeschlossen
                     </button>
-                    <button onClick={()=>update.mutate({ id:a.id, data:{ status:'cancelled' }})}
+                    <button onClick={() => update.mutate({ id:a.id, data:{ status:'cancelled' }})}
                       style={{ display:'flex', alignItems:'center', gap:5, padding:'7px 14px',
                         borderRadius:9, border:'none', background:D.redL, color:D.red,
                         cursor:'pointer', fontSize:13, fontWeight:600 }}>
@@ -89,7 +93,7 @@ export default function Appointments() {
                   </>
                 )}
               </div>
-            </div>
+            </motion.div>
           );
         })}
       </div>
@@ -98,13 +102,17 @@ export default function Appointments() {
 
   return (
     <div style={{ padding:'32px 28px 64px', maxWidth:800, margin:'0 auto' }}>
-      <p style={{ fontSize:11, fontWeight:800, color:D.text3, textTransform:'uppercase', letterSpacing:'0.1em', margin:'0 0 2px' }}>Vertrieb</p>
-      <h1 style={{ fontSize:26, fontWeight:900, color:D.text, margin:'0 0 24px', letterSpacing:'-0.03em' }}>Meine Termine</h1>
+
+      {/* Header */}
+      <motion.div initial={{ opacity:0, y:-10 }} animate={{ opacity:1, y:0 }} transition={{ duration:0.4 }}>
+        <p style={{ fontSize:11, fontWeight:800, color:D.text3, textTransform:'uppercase', letterSpacing:'0.1em', margin:'0 0 2px' }}>Vertrieb</p>
+        <h1 style={{ fontSize:26, fontWeight:900, color:D.text, margin:'0 0 24px', letterSpacing:'-0.03em' }}>Meine Termine</h1>
+      </motion.div>
 
       {isLoading ? <p style={{ color:D.text3 }}>Lädt…</p> : (
         <>
-          <Section title={`Bevorstehend (${upcoming.length})`} items={upcoming} />
-          <Section title={`Vergangen (${past.length})`} items={past} />
+          <Section title={`Bevorstehend (${upcoming.length})`} items={upcoming} baseDelay={0.15} />
+          <Section title={`Vergangen (${past.length})`} items={past} baseDelay={0.2 + upcoming.length * 0.07} />
         </>
       )}
     </div>
