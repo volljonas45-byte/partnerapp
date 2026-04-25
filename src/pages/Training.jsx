@@ -1,5 +1,8 @@
 import { useState, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Play, CheckCircle2, ChevronLeft, Phone, Globe, BookOpen, Mic, Target, TrendingUp } from 'lucide-react';
+
+const fadeUp = { initial: { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: -8 }, transition: { duration: 0.35, ease: [0.16, 1, 0.3, 1] } };
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 const CURRICULA = [
@@ -96,20 +99,24 @@ const COURSE_META = {
 // ─── VIEW 1: Course Grid ──────────────────────────────────────────────────────
 function CourseGrid({ onSelect }) {
   return (
-    <div style={{ padding: '32px 28px' }}>
+    <motion.div {...fadeUp} style={{ padding: '32px 28px' }}>
       <p style={{ margin: '0 0 4px', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>Weiterbildung</p>
       <h1 style={{ margin: '0 0 28px', fontSize: 24, fontWeight: 700, color: '#F2F2F7', letterSpacing: '-0.02em' }}>
         Training Programme
       </h1>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14, maxWidth: 780 }}>
-        {CURRICULA.map(c => {
+        {CURRICULA.map((c, i) => {
           const meta = COURSE_META[c.key];
           const { Icon } = meta;
           const total = totalVideos(c);
           return (
-            <div
+            <motion.div
               key={c.key}
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35, delay: i * 0.08, ease: [0.16, 1, 0.3, 1] }}
+              whileHover={{ y: -3, borderColor: 'rgba(255,255,255,0.18)', transition: { duration: 0.15 } }}
               onClick={() => onSelect(c.key)}
               style={{
                 position: 'relative', borderRadius: 16, overflow: 'hidden',
@@ -119,10 +126,7 @@ function CourseGrid({ onSelect }) {
                 padding: '28px 28px 24px',
                 display: 'flex', flexDirection: 'column', gap: 20,
                 minHeight: 220,
-                transition: 'border-color 0.15s, transform 0.15s',
               }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.18)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; e.currentTarget.style.transform = 'translateY(0)'; }}
             >
               {/* Subtle dot pattern overlay */}
               <div style={{
@@ -171,11 +175,11 @@ function CourseGrid({ onSelect }) {
                   </span>
                 </div>
               </div>
-            </div>
+            </motion.div>
           );
         })}
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -199,7 +203,7 @@ function CourseDetail({ curriculum, watched, onSelectModule, onBack }) {
   const continueVideo = curriculum.blocks[continueBlock]?.videos[continueVid] || curriculum.blocks[0].videos[0];
 
   return (
-    <div style={{ padding: '0 0 64px' }}>
+    <motion.div {...fadeUp} style={{ padding: '0 0 64px' }}>
       {/* Back */}
       <div style={{ padding: '16px 24px 0' }}>
         <button
@@ -373,7 +377,7 @@ function CourseDetail({ curriculum, watched, onSelectModule, onBack }) {
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -405,7 +409,7 @@ function LessonPlayer({ curriculum, initialBlock, initialLesson, watched, onTogg
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '24px 48px', position: 'relative' }}>
+    <motion.div {...fadeUp} style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '24px 48px', position: 'relative' }}>
       {/* Back – fixed top left */}
       <div style={{ position: 'absolute', top: 20, left: 24 }}>
         <button
@@ -614,7 +618,7 @@ function LessonPlayer({ curriculum, initialBlock, initialLesson, watched, onTogg
           ))}
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
