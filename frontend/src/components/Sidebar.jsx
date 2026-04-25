@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Users, FileText, ClipboardList, Settings, LogOut,
@@ -207,6 +207,10 @@ export default function Sidebar() {
     return prefixes.some(p => location.pathname === p || location.pathname.startsWith(p + '/'));
   };
 
+  const navRef = useRef(null);
+  const itemRefs = useRef({});
+  const [pill, setPill] = useState({ top: 0, height: 0, visible: false });
+
   const NAV_GROUPS = [
     {
       label: null,
@@ -255,6 +259,26 @@ export default function Sidebar() {
   const displayName = user?.name || user?.email || '?';
   const initials = displayName.trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
   const bgColor  = user?.color || avatarColor(user?.email || '');
+
+  useLayoutEffect(() => {
+    let activeTo = null;
+    for (const g of NAV_GROUPS) {
+      for (const it of g.items) {
+        if (matchActive(it)) { activeTo = it.to; break; }
+      }
+      if (activeTo) break;
+    }
+    const el = activeTo ? itemRefs.current[activeTo] : null;
+    if (el && navRef.current) {
+      setPill(p => ({
+        top: el.offsetTop,
+        height: el.offsetHeight,
+        visible: true,
+      }));
+    } else {
+      setPill(p => ({ ...p, visible: false }));
+    }
+  }, [location.pathname, unread?.count, isAdmin, isPM]);
 
   return (
     <aside style={{
@@ -315,7 +339,23 @@ export default function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav style={{ flex: 1, overflowY: 'auto', padding: '4px 10px 8px' }}>
+      <nav ref={navRef} style={{ flex: 1, overflowY: 'auto', padding: '4px 10px 8px', position: 'relative' }}>
+        <div style={{
+          position: 'absolute',
+          left: 10,
+          right: 10,
+          top: pill.top,
+          height: pill.height,
+          background: 'rgba(91,140,245,0.14)',
+          borderRadius: 10,
+          boxShadow: '0 0 0 0.5px rgba(91,140,245,0.2)',
+          transition: pill.visible
+            ? 'top 0.28s cubic-bezier(0.22,1,0.36,1), height 0.28s cubic-bezier(0.22,1,0.36,1)'
+            : 'none',
+          opacity: pill.visible ? 1 : 0,
+          pointerEvents: 'none',
+          zIndex: 0,
+        }} />
         {NAV_GROUPS.map((group, gi) => (
           <div key={gi}>
             {group.label && (
@@ -334,15 +374,17 @@ export default function Sidebar() {
                     const { icon: Icon, label, to } = item;
                     const isActive = matchActive(item);
                     return (
-                    <div style={{
+                    <div
+                      ref={el => { if (el) itemRefs.current[item.to] = el; }}
+                      style={{
+                      position: 'relative', zIndex: 1,
                       display: 'flex', alignItems: 'center', gap: 9,
                       padding: '7px 10px', borderRadius: 10,
                       fontSize: 13, letterSpacing: '-0.01em', cursor: 'pointer',
                       transition: 'background 0.18s cubic-bezier(0.22,1,0.36,1), color 0.18s cubic-bezier(0.22,1,0.36,1)',
-                      background: isActive ? 'rgba(91,140,245,0.14)' : 'transparent',
+                      background: 'transparent',
                       color: isActive ? '#5B8CF5' : c.textSecondary,
                       fontWeight: isActive ? 600 : 400,
-                      boxShadow: isActive ? '0 0 0 0.5px rgba(91,140,245,0.2)' : 'none',
                     }}
                     onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
                     onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
