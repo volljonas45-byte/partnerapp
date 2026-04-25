@@ -4,14 +4,14 @@ import { motion } from 'framer-motion';
 import { partnerApi } from '../api/partner';
 
 const D = {
-  bg:'#0D0D12', card:'#16161E', card2:'#1C1C26', border:'rgba(255,255,255,0.07)',
+  bg:'#070C15', card:'#0D1525', card2:'#111D30', border:'rgba(255,255,255,0.07)',
   text:'#F2F2F7', text2:'#AEAEB2', text3:'#636366',
-  accent:'#4F6EF7', accentL:'rgba(79,110,247,0.12)',
+  accent:'#3B82F6', accentL:'rgba(59,130,246,0.12)',
   green:'#34D399', greenL:'#34D39914',
-  orange:'#F59E0B',
+  orange:'#64748B',
 };
 
-const PRIORITY_COLOR = { high: '#F59E0B', medium: '#5B8CF5', low: '#636366' };
+const PRIORITY_COLOR = { high: '#38BDF8', medium: '#3B82F6', low: '#636366' };
 
 export default function LeadPool() {
   const qc = useQueryClient();

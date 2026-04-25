@@ -10,13 +10,13 @@ import {
 import { partnerApi } from '../api/partner';
 
 const D = {
-  bg: '#0D0D12', card: '#16161E', card2: '#1C1C26',
-  border: 'rgba(255,255,255,0.07)', borderFocus: 'rgba(79,110,247,0.5)',
+  bg: '#070C15', card: '#0D1525', card2: '#111D30',
+  border: 'rgba(255,255,255,0.07)', borderFocus: 'rgba(59,130,246,0.5)',
   text: '#F2F2F7', text2: '#AEAEB2', text3: '#636366',
-  accent: '#4F6EF7', accentL: 'rgba(79,110,247,0.12)',
+  accent: '#3B82F6', accentL: 'rgba(59,130,246,0.12)',
   green: '#34D399', greenL: 'rgba(52,211,153,0.12)',
-  purple: '#BF5AF2', purpleL: 'rgba(191,90,242,0.12)',
-  orange: '#F59E0B', orangeL: 'rgba(79,110,247,0.12)',
+  purple: '#38BDF8', purpleL: 'rgba(56,189,248,0.12)',
+  orange: '#64748B', orangeL: 'rgba(59,130,246,0.12)',
   inputBg: 'rgba(255,255,255,0.04)',
 };
 
@@ -606,7 +606,7 @@ export default function DemoWizard() {
 
                     {scheduledDate && scheduledTime && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px',
-                        borderRadius: 10, background: D.purpleL, border: `1px solid rgba(191,90,242,0.25)` }}>
+                        borderRadius: 10, background: D.purpleL, border: `1px solid rgba(56,189,248,0.25)` }}>
                         <Calendar size={14} color={D.purple} />
                         <span style={{ fontSize: 13, color: D.purple, fontWeight: 600 }}>
                           {(() => {
@@ -646,7 +646,7 @@ export default function DemoWizard() {
             </AnimatePresence>
 
             {wizard.isError && (
-              <p style={{ margin: '0 0 10px', fontSize: 13, color: '#FF453A' }}>
+              <p style={{ margin: '0 0 10px', fontSize: 13, color: '#F87171' }}>
                 Fehler: {wizard.error?.response?.data?.error || wizard.error?.message}
               </p>
             )}

@@ -5,12 +5,12 @@ import { useAuth } from '../context/AuthContext';
 import InstallGuide from './InstallGuide';
 
 const D = {
-  bg: '#0D0D12', border: 'rgba(255,255,255,0.07)',
+  bg: '#070C15', border: 'rgba(255,255,255,0.07)',
   text: '#F2F2F7', text2: '#AEAEB2', text3: '#636366',
-  accent: '#4F6EF7', accentL: 'rgba(79,110,247,0.12)',
-  violet: '#a78bfa', violetL: 'rgba(167,139,250,0.08)',
+  accent: '#3B82F6', accentL: 'rgba(59,130,246,0.12)',
+  violet: '#38BDF8', violetL: 'rgba(56,189,248,0.1)',
   green: '#34D399', greenL: 'rgba(52,211,153,0.1)',
-  card: '#16161E',
+  card: '#0D1525',
 };
 
 const NAV = [

@@ -4,9 +4,9 @@ import { useAuth } from '../context/AuthContext';
 import { partnerApi } from '../api/partner';
 
 const D = {
-  bg: '#0D0D12', card: '#16161E', border: 'rgba(255,255,255,0.08)',
+  bg: '#070C15', card: '#0D1525', border: 'rgba(255,255,255,0.08)',
   text: '#F2F2F7', text2: '#AEAEB2', text3: '#636366',
-  accent: '#4F6EF7', accentL: 'rgba(79,110,247,0.12)', input: '#1C1C26',
+  accent: '#3B82F6', accentL: 'rgba(59,130,246,0.12)', input: '#111D30',
 };
 
 export default function CompleteProfile() {

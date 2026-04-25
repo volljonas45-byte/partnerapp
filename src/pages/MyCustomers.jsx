@@ -8,11 +8,11 @@ import { partnerApi } from '../api/partner';
 
 const D = {
   text: '#F2F2F7', text2: '#AEAEB2', text3: '#636366',
-  accent: '#4F6EF7', accentL: 'rgba(79,110,247,0.12)',
+  accent: '#3B82F6', accentL: 'rgba(59,130,246,0.12)',
   green: '#34D399', greenL: 'rgba(52,211,153,0.12)',
-  orange: '#F59E0B', orangeL: 'rgba(79,110,247,0.12)',
-  red: '#FF453A', redL: 'rgba(255,69,58,0.12)',
-  purple: '#BF5AF2', purpleL: 'rgba(191,90,242,0.12)',
+  orange: '#64748B', orangeL: 'rgba(59,130,246,0.12)',
+  red: '#F87171', redL: 'rgba(248,113,113,0.12)',
+  purple: '#38BDF8', purpleL: 'rgba(56,189,248,0.12)',
   border: 'rgba(255,255,255,0.06)',
   borderSubtle: 'rgba(255,255,255,0.04)',
 };
@@ -159,7 +159,7 @@ export default function MyCustomers() {
           style={{ textAlign: 'center', padding: '64px 24px',
             background: 'rgba(255,255,255,0.02)', border: `1px solid ${D.border}`, borderRadius: 16 }}>
           <div style={{ width: 56, height: 56, borderRadius: 16, background: D.accentL,
-            border: `1px solid rgba(79,110,247,0.3)`, display: 'flex', alignItems: 'center',
+            border: `1px solid rgba(59,130,246,0.3)`, display: 'flex', alignItems: 'center',
             justifyContent: 'center', margin: '0 auto 16px' }}>
             <Building2 size={26} color={D.accent} />
           </div>
@@ -189,8 +189,8 @@ export default function MyCustomers() {
                 transition={{ delay: i * 0.06 }}
                 style={{
                   padding: '20px 22px',
-                  background: isWon ? 'rgba(52,211,153,0.03)' : isLost ? 'rgba(255,69,58,0.02)' : 'rgba(255,255,255,0.02)',
-                  border: `1px solid ${isWon ? 'rgba(52,211,153,0.18)' : isLost ? 'rgba(255,69,58,0.12)' : D.border}`,
+                  background: isWon ? 'rgba(52,211,153,0.03)' : isLost ? 'rgba(248,113,113,0.02)' : 'rgba(255,255,255,0.02)',
+                  border: `1px solid ${isWon ? 'rgba(52,211,153,0.18)' : isLost ? 'rgba(248,113,113,0.12)' : D.border}`,
                   borderRadius: 16,
                 }}>
 
@@ -232,7 +232,7 @@ export default function MyCustomers() {
                   {budget && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 10px',
                       borderRadius: 8, background: c.agreed_budget ? D.greenL : D.orangeL,
-                      border: `1px solid ${c.agreed_budget ? 'rgba(52,211,153,0.25)' : 'rgba(79,110,247,0.25)'}` }}>
+                      border: `1px solid ${c.agreed_budget ? 'rgba(52,211,153,0.25)' : 'rgba(59,130,246,0.25)'}` }}>
                       <Euro size={12} color={c.agreed_budget ? D.green : D.orange} />
                       <span style={{ fontSize: 12.5, fontWeight: 700, color: c.agreed_budget ? D.green : D.orange }}>
                         {budgetLabel}: {fmtEur(budget)}
@@ -243,7 +243,7 @@ export default function MyCustomers() {
                   {commission && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 10px',
                       borderRadius: 8, background: isWon ? D.purpleL : 'rgba(255,255,255,0.04)',
-                      border: `1px solid ${isWon ? 'rgba(191,90,242,0.25)' : D.border}` }}>
+                      border: `1px solid ${isWon ? 'rgba(56,189,248,0.25)' : D.border}` }}>
                       <TrendingUp size={12} color={isWon ? D.purple : D.text3} />
                       <span style={{ fontSize: 12.5, fontWeight: 700, color: isWon ? D.purple : D.text3 }}>
                         {c.commission_rate_pct ? `${c.commission_rate_pct}% · ` : ''}Provision: {fmtEur(commission)}
@@ -256,7 +256,7 @@ export default function MyCustomers() {
                   {c.demo_link && (
                     <a href={c.demo_link} target="_blank" rel="noopener noreferrer"
                       style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px',
-                        borderRadius: 8, background: D.accentL, border: `1px solid rgba(79,110,247,0.3)`,
+                        borderRadius: 8, background: D.accentL, border: `1px solid rgba(59,130,246,0.3)`,
                         color: D.accent, fontSize: 12.5, fontWeight: 700, textDecoration: 'none' }}>
                       <ExternalLink size={12} /> Demo ansehen
                     </a>
@@ -294,7 +294,7 @@ export default function MyCustomers() {
           {me?.ws_email && (
             <a href={`mailto:${me.ws_email}`}
               style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 9,
-                background: D.accentL, border: `1px solid rgba(79,110,247,0.25)`,
+                background: D.accentL, border: `1px solid rgba(59,130,246,0.25)`,
                 color: D.accent, fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
               <Mail size={13} /> {me.ws_email}
             </a>

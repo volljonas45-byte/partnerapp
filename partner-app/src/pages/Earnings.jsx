@@ -5,12 +5,12 @@ import { partnerApi } from '../api/partner';
 import { useAuth } from '../context/AuthContext';
 
 const D = {
-  bg:'#0D0D12', card:'#16161E', card2:'#1C1C26', border:'rgba(255,255,255,0.07)',
+  bg:'#070C15', card:'#0D1525', card2:'#111D30', border:'rgba(255,255,255,0.07)',
   text:'#F2F2F7', text2:'#AEAEB2', text3:'#636366',
-  accent:'#4F6EF7', accentL:'rgba(79,110,247,0.12)',
+  accent:'#3B82F6', accentL:'rgba(59,130,246,0.12)',
   green:'#34D399', greenL:'#34D39914',
-  orange:'#F59E0B', orangeL:'rgba(245,158,11,0.12)',
-  red:'#FF453A', redL:'#FF453A14',
+  orange:'#64748B', orangeL:'rgba(100,116,139,0.12)',
+  red:'#F87171', redL:'#F8717114',
 };
 
 const fmt = (n) => new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR'}).format(n||0);

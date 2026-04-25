@@ -21,7 +21,7 @@ import PageHint from './components/PageHint';
 
 const qc = new QueryClient();
 
-const BG = '#0D0D12';
+const BG = '#070C15';
 
 function Layout({ children, fixed = false }) {
   return (

@@ -6,12 +6,12 @@ import { GoogleLogin } from '@react-oauth/google';
 import { partnerApi } from '../api/partner';
 
 const D = {
-  bg: '#0D0D12', border: 'rgba(255,255,255,0.08)',
+  bg: '#070C15', border: 'rgba(255,255,255,0.08)',
   text: '#F2F2F7', text2: '#AEAEB2', text3: '#636366',
-  accent: '#4F6EF7', accentL: 'rgba(79,110,247,0.15)',
-  red: '#FF453A', redL: 'rgba(255,69,58,0.12)',
+  accent: '#3B82F6', accentL: 'rgba(59,130,246,0.15)',
+  red: '#F87171', redL: 'rgba(248,113,113,0.12)',
   green: '#34D399', greenL: 'rgba(52,211,153,0.12)',
-  orange: '#F59E0B', orangeL: 'rgba(79,110,247,0.12)',
+  orange: '#64748B', orangeL: 'rgba(59,130,246,0.12)',
 };
 
 const glass = {
@@ -213,7 +213,7 @@ export default function Apply() {
       {/* Under-16 block */}
       {isTooYoung && (
         <div style={{ padding: '12px 14px', borderRadius: 10, background: D.redL,
-          border: `1px solid rgba(255,69,58,0.25)`, display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+          border: `1px solid rgba(248,113,113,0.25)`, display: 'flex', gap: 10, alignItems: 'flex-start' }}>
           <AlertTriangle size={16} color={D.red} style={{ flexShrink: 0, marginTop: 1 }} />
           <div>
             <p style={{ margin: '0 0 4px', fontSize: 13, fontWeight: 600, color: D.red }}>
@@ -230,7 +230,7 @@ export default function Apply() {
       {/* 16–17 warning */}
       {isMinor && (
         <div style={{ padding: '12px 14px', borderRadius: 10, background: D.orangeL,
-          border: `1px solid rgba(79,110,247,0.25)`, display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+          border: `1px solid rgba(59,130,246,0.25)`, display: 'flex', gap: 10, alignItems: 'flex-start' }}>
           <AlertTriangle size={16} color={D.orange} style={{ flexShrink: 0, marginTop: 1 }} />
           <div>
             <p style={{ margin: '0 0 4px', fontSize: 13, fontWeight: 600, color: D.orange }}>
@@ -344,7 +344,7 @@ export default function Apply() {
       {isMinor && (
         <label style={{ display: 'flex', alignItems: 'flex-start', gap: 12, cursor: 'pointer',
           padding: '12px 14px', borderRadius: 10, background: D.orangeL,
-          border: `1px solid rgba(79,110,247,0.25)` }}>
+          border: `1px solid rgba(59,130,246,0.25)` }}>
           <input type="checkbox" checked={form.parentalConsent} onChange={f('parentalConsent')}
             style={{ width: 16, height: 16, marginTop: 3, cursor: 'pointer', accentColor: D.orange, flexShrink: 0 }} />
           <span style={{ fontSize: 12.5, color: D.text2, lineHeight: 1.65 }}>
@@ -377,11 +377,11 @@ export default function Apply() {
       {/* Ambient glows */}
       <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0 }}>
         <div style={{ position: 'absolute', top: '-15%', right: '-5%', width: 600, height: 600,
-          background: 'rgba(79,110,247,0.08)', borderRadius: '50%', filter: 'blur(120px)' }} />
+          background: 'rgba(59,130,246,0.08)', borderRadius: '50%', filter: 'blur(120px)' }} />
         <div style={{ position: 'absolute', bottom: '-10%', left: '-5%', width: 500, height: 500,
-          background: 'rgba(139,92,246,0.07)', borderRadius: '50%', filter: 'blur(100px)' }} />
+          background: 'rgba(56,189,248,0.06)', borderRadius: '50%', filter: 'blur(100px)' }} />
         <div style={{ position: 'absolute', top: '40%', left: '40%', width: 350, height: 350,
-          background: 'rgba(52,211,153,0.05)', borderRadius: '50%', filter: 'blur(90px)' }} />
+          background: 'rgba(59,130,246,0.05)', borderRadius: '50%', filter: 'blur(90px)' }} />
       </div>
 
       <div style={{ width: '100%', maxWidth: 460, position: 'relative', zIndex: 1 }}>
@@ -390,7 +390,7 @@ export default function Apply() {
           <div style={{ width: 48, height: 48, borderRadius: 14, background: D.accent,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: 22, fontWeight: 800, color: '#fff', margin: '0 auto 14px',
-            boxShadow: '0 0 28px rgba(79,110,247,0.35)' }}>P</div>
+            boxShadow: '0 0 28px rgba(59,130,246,0.35)' }}>P</div>
           <h1 style={{
             fontSize: 24, fontWeight: 800, margin: '0 0 6px', letterSpacing: '-0.03em',
             background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.55) 100%)',
@@ -421,7 +421,7 @@ export default function Apply() {
 
             {error && (
               <div style={{ padding: '10px 14px', borderRadius: 10, marginBottom: 16,
-                background: D.redL, border: `0.5px solid rgba(255,69,58,0.3)`, color: D.red, fontSize: 13 }}>
+                background: D.redL, border: `0.5px solid rgba(248,113,113,0.3)`, color: D.red, fontSize: 13 }}>
                 {error}
               </div>
             )}

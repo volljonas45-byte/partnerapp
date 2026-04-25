@@ -4,9 +4,9 @@ import { motion } from 'framer-motion';
 import { X, HelpCircle, MapPin, Inbox } from 'lucide-react';
 
 const D = {
-  card: '#16161E', border: 'rgba(255,255,255,0.08)',
+  card: '#0D1525', border: 'rgba(255,255,255,0.08)',
   text: '#F2F2F7', text2: '#AEAEB2', text3: '#636366',
-  accent: '#4F6EF7', accentL: 'rgba(79,110,247,0.15)',
+  accent: '#3B82F6', accentL: 'rgba(59,130,246,0.15)',
   green: '#34D399', greenL: 'rgba(52,211,153,0.12)',
 };
 
@@ -59,13 +59,13 @@ export default function LeadGuide({ onClose }) {
           boxShadow: '0 40px 80px rgba(0,0,0,0.6)', overflow: 'hidden',
           maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
 
-        <div style={{ height: 3, background: 'linear-gradient(90deg, #4F6EF7, #34D399)', flexShrink: 0 }} />
+        <div style={{ height: 3, background: 'linear-gradient(90deg, #3B82F6, #34D399)', flexShrink: 0 }} />
 
         <div style={{ padding: '22px 24px 0', flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <div style={{ width: 36, height: 36, borderRadius: 10, background: D.accentL,
-                border: `1px solid rgba(79,110,247,0.3)`,
+                border: `1px solid rgba(59,130,246,0.3)`,
                 display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <HelpCircle size={18} color={D.accent} />
               </div>
@@ -102,7 +102,7 @@ export default function LeadGuide({ onClose }) {
           {tab === 'request' ? (
             <>
               <div style={{ padding: '12px 14px', borderRadius: 10, background: D.accentL,
-                border: `1px solid rgba(79,110,247,0.25)`, marginBottom: 4 }}>
+                border: `1px solid rgba(59,130,246,0.25)`, marginBottom: 4 }}>
                 <p style={{ margin: 0, fontSize: 12.5, color: D.accent, lineHeight: 1.5 }}>
                   Du kannst gezielt Leads anfordern — wir suchen dann passende Kontakte für dich heraus und weisen sie dir zu.
                 </p>
