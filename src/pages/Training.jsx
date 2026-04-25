@@ -405,9 +405,9 @@ function LessonPlayer({ curriculum, initialBlock, initialLesson, watched, onTogg
   };
 
   return (
-    <div style={{ padding: '0 0 64px' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '24px 48px' }}>
       {/* Back */}
-      <div style={{ padding: '16px 24px 0' }}>
+      <div style={{ marginBottom: 16 }}>
         <button
           onClick={onBack}
           style={{
@@ -421,7 +421,7 @@ function LessonPlayer({ curriculum, initialBlock, initialLesson, watched, onTogg
       </div>
 
       {/* Player + Sidebar */}
-      <div style={{ display: 'flex', gap: 20, padding: '16px 48px 0', alignItems: 'flex-start', justifyContent: 'center' }}>
+      <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start', justifyContent: 'center' }}>
 
         {/* Video column */}
         <div style={{ flex: 1, minWidth: 0, maxWidth: 900 }}>
