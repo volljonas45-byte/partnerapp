@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Sidebar from './Sidebar';
 import BottomNav from './BottomNav';
 import MobileDrawer from './MobileDrawer';
+import GlobalSearch from './GlobalSearch';
 import { useMobile } from '../hooks/useMobile';
 import { useTheme } from '../context/ThemeContext';
 
@@ -35,6 +36,8 @@ export default function Layout({ children }) {
       }}>
         {children}
       </main>
+
+      <GlobalSearch />
 
       {/* Bottom Navigation — nur Mobil */}
       {isMobile && (
