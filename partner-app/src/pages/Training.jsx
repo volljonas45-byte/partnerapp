@@ -421,19 +421,18 @@ function LessonPlayer({ curriculum, initialBlock, initialLesson, watched, onTogg
       </div>
 
       {/* Player + Sidebar */}
-      <div style={{ display: 'flex', gap: 0, padding: '16px 24px 0', alignItems: 'flex-start' }}>
+      <div style={{ display: 'flex', gap: 20, padding: '16px 24px 0', alignItems: 'flex-start' }}>
 
         {/* Video column */}
-        <div style={{ flex: 1, minWidth: 0, maxWidth: 'calc(100% - 320px)' }}>
+        <div style={{ flex: 1, minWidth: 0, maxWidth: 660 }}>
           {/* Video */}
           <div
             onClick={() => !playerActive && setPlayerActive(true)}
             style={{
-              position: 'relative', borderRadius: 12, overflow: 'hidden',
+              position: 'relative', borderRadius: 10, overflow: 'hidden',
               aspectRatio: '16/9', background: '#000',
-              maxHeight: 420,
               cursor: playerActive ? 'default' : 'pointer',
-              marginBottom: 20,
+              marginBottom: 16,
             }}
           >
             {playerActive ? (
@@ -526,11 +525,11 @@ function LessonPlayer({ curriculum, initialBlock, initialLesson, watched, onTogg
 
         {/* Lesson sidebar */}
         <div style={{
-          width: 300, flexShrink: 0, marginLeft: 20,
+          width: 260, flexShrink: 0,
           background: '#0D1525',
           border: '1px solid rgba(255,255,255,0.07)',
           borderRadius: 12, overflow: 'hidden',
-          maxHeight: 520, overflowY: 'auto',
+          maxHeight: 500, overflowY: 'auto',
           scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.06) transparent',
         }}>
           {/* Sidebar header */}
