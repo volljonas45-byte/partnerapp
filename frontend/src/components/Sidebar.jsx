@@ -212,7 +212,8 @@ export default function Sidebar() {
       label: null,
       items: [
         { to: '/',         icon: LayoutDashboard, label: 'Dashboard' },
-        { to: '/work',     icon: FolderKanban,    label: 'Projekte', match: ['/work', '/websites', '/timeline', '/planning'] },
+        { to: '/work',     icon: FolderKanban,    label: 'Projekte', match: ['/work', '/websites', '/timeline'] },
+        { to: '/planning', icon: Target,          label: 'Planung' },
         { to: '/calendar', icon: CalendarDays,    label: 'Zeit & Team', match: ['/calendar', '/time-tracking', '/team-dashboard'] },
       ],
     },

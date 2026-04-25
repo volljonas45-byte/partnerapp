@@ -104,18 +104,17 @@ function AppRoutes() {
       <Route path="/quotes/:id"      element={<ProtectedRoute><QuoteDetail /></ProtectedRoute>} />
       <Route path="/quotes/:id/edit" element={<ProtectedRoute><EditQuote /></ProtectedRoute>} />
 
-      {/* ── Hub: Projekte (Board | Websites | Timeline | Planung) ─────────── */}
+      {/* ── Hub: Projekte (Board | Websites | Timeline) ──────────────────── */}
       <Route element={<ProtectedRoute><HubLayout tabs={[
         { to: '/work',     label: 'Board'    },
         { to: '/websites', label: 'Websites' },
         { to: '/timeline', label: 'Timeline' },
-        { to: '/planning', label: 'Planung'  },
       ]} /></ProtectedRoute>}>
         <Route path="/work"     element={<WorkOverview />} />
         <Route path="/websites" element={<Websites />} />
         <Route path="/timeline" element={<Timeline />} />
-        <Route path="/planning" element={<Planning />} />
       </Route>
+      <Route path="/planning" element={<ProtectedRoute><Planning /></ProtectedRoute>} />
       <Route path="/projects"     element={<Navigate to="/work" replace />} />
       <Route path="/projects/new" element={<ProtectedRoute><NewProject /></ProtectedRoute>} />
       <Route path="/projects/:id" element={<ProtectedRoute><ProjectDetailGeneral /></ProtectedRoute>} />
