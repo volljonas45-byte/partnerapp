@@ -478,7 +478,7 @@ export default function Settings() {
   const qc      = useQueryClient();
   const fileRef = useRef();
   const [activeTab, setActiveTab] = useState('personal');
-  const { c } = useTheme();
+  const { c, isDark } = useTheme();
 
   const { data: settings, isLoading } = useQuery({
     queryKey: ['settings'],
