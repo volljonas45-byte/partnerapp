@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Briefcase, Users, DollarSign, LogOut, Sparkles, Building2, Smartphone } from 'lucide-react';
+import { LayoutDashboard, Briefcase, Users, DollarSign, LogOut, Sparkles, Building2, Smartphone, GraduationCap } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import InstallGuide from './InstallGuide';
 
@@ -19,6 +19,7 @@ const NAV = [
   { to: '/customers',    icon: Building2,       label: 'Meine Kunden' },
   { to: '/leads/pool',   icon: Users,           label: 'Lead-Pool'    },
   { to: '/earnings',     icon: DollarSign,      label: 'Verdienste'   },
+  { to: '/training',     icon: GraduationCap,   label: 'Training'     },
   { to: '/ai-chat',      icon: Sparkles,        label: 'KI-Assistent', accent: true },
 ];
 

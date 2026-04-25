@@ -14,6 +14,7 @@ import Earnings from './pages/Earnings';
 import CompleteProfile from './pages/CompleteProfile';
 import AiChat from './pages/AiChat';
 import MyCustomers from './pages/MyCustomers';
+import Training from './pages/Training';
 import DemoWizard from './pages/DemoWizard';
 import { OnboardingProvider } from './context/OnboardingContext';
 import WelcomeModal from './components/WelcomeModal';
@@ -72,6 +73,7 @@ function AppRoutes() {
       <Route path="/leads/pool"   element={<ProtectedRoute><LeadPool /></ProtectedRoute>} />
       <Route path="/appointments" element={<ProtectedRoute><Appointments /></ProtectedRoute>} />
       <Route path="/earnings"     element={<ProtectedRoute><Earnings /></ProtectedRoute>} />
+      <Route path="/training"      element={<ProtectedRoute><Training /></ProtectedRoute>} />
       <Route path="/ai-chat"      element={<ProtectedRoute fixed><AiChat /></ProtectedRoute>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
