@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Layout from './components/Layout';
+import HubLayout from './components/HubLayout';
 import LoadingSpinner from './components/LoadingSpinner';
 
 // Pages
@@ -87,32 +88,73 @@ function AppRoutes() {
       <Route path="/clients/new"     element={<ProtectedRoute><NewClient /></ProtectedRoute>} />
       <Route path="/clients/:id"     element={<ProtectedRoute><ClientDetail /></ProtectedRoute>} />
 
-      <Route path="/invoices"     element={<ProtectedRoute><Invoices /></ProtectedRoute>} />
+      {/* ── Hub: Finanzen (Übersicht | Rechnungen | Angebote) ─────────────── */}
+      <Route element={<ProtectedRoute><HubLayout tabs={[
+        { to: '/finance',  label: 'Übersicht'  },
+        { to: '/invoices', label: 'Rechnungen' },
+        { to: '/quotes',   label: 'Angebote'   },
+      ]} /></ProtectedRoute>}>
+        <Route path="/finance"  element={<Finance />} />
+        <Route path="/invoices" element={<Invoices />} />
+        <Route path="/quotes"   element={<Quotes />} />
+      </Route>
       <Route path="/invoices/new" element={<ProtectedRoute><NewInvoice /></ProtectedRoute>} />
       <Route path="/invoices/:id" element={<ProtectedRoute><InvoiceDetail /></ProtectedRoute>} />
-
-      <Route path="/quotes"          element={<ProtectedRoute><Quotes /></ProtectedRoute>} />
       <Route path="/quotes/new"      element={<ProtectedRoute><NewQuote /></ProtectedRoute>} />
       <Route path="/quotes/:id"      element={<ProtectedRoute><QuoteDetail /></ProtectedRoute>} />
       <Route path="/quotes/:id/edit" element={<ProtectedRoute><EditQuote /></ProtectedRoute>} />
 
+      {/* ── Hub: Projekte (Board | Websites | Timeline | Planung) ─────────── */}
+      <Route element={<ProtectedRoute><HubLayout tabs={[
+        { to: '/work',     label: 'Board'    },
+        { to: '/websites', label: 'Websites' },
+        { to: '/timeline', label: 'Timeline' },
+        { to: '/planning', label: 'Planung'  },
+      ]} /></ProtectedRoute>}>
+        <Route path="/work"     element={<WorkOverview />} />
+        <Route path="/websites" element={<Websites />} />
+        <Route path="/timeline" element={<Timeline />} />
+        <Route path="/planning" element={<Planning />} />
+      </Route>
       <Route path="/projects"     element={<Navigate to="/work" replace />} />
       <Route path="/projects/new" element={<ProtectedRoute><NewProject /></ProtectedRoute>} />
       <Route path="/projects/:id" element={<ProtectedRoute><ProjectDetailGeneral /></ProtectedRoute>} />
-
-      <Route path="/websites"     element={<ProtectedRoute><Websites /></ProtectedRoute>} />
       <Route path="/websites/:id" element={<ProtectedRoute><ProjectDetail /></ProtectedRoute>} />
 
-      <Route path="/time-tracking"  element={<ProtectedRoute><TimeTracking /></ProtectedRoute>} />
-      <Route path="/team-dashboard" element={<ProtectedRoute><TeamDashboard /></ProtectedRoute>} />
-      <Route path="/calendar"        element={<ProtectedRoute><CalendarPage /></ProtectedRoute>} />
-      <Route path="/timeline"       element={<ProtectedRoute><Timeline /></ProtectedRoute>} />
-      <Route path="/work"           element={<ProtectedRoute><WorkOverview /></ProtectedRoute>} />
-      <Route path="/sales"            element={<ProtectedRoute><SalesEngine /></ProtectedRoute>} />
-      <Route path="/sales/analytics"  element={<ProtectedRoute><SalesAnalytics /></ProtectedRoute>} />
+      {/* ── Hub: Zeit & Team (Kalender | Zeiterfassung | Workload) ────────── */}
+      <Route element={<ProtectedRoute><HubLayout tabs={[
+        { to: '/calendar',       label: 'Kalender'      },
+        { to: '/time-tracking',  label: 'Zeiterfassung' },
+        { to: '/team-dashboard', label: 'Workload'      },
+      ]} /></ProtectedRoute>}>
+        <Route path="/calendar"       element={<CalendarPage />} />
+        <Route path="/time-tracking"  element={<TimeTracking />} />
+        <Route path="/team-dashboard" element={<TeamDashboard />} />
+      </Route>
+
+      {/* ── Hub: Sales (Pipeline | Analytics) ─────────────────────────────── */}
+      <Route element={<ProtectedRoute><HubLayout tabs={[
+        { to: '/sales',           label: 'Pipeline'  },
+        { to: '/sales/analytics', label: 'Analytics' },
+      ]} /></ProtectedRoute>}>
+        <Route path="/sales"           element={<SalesEngine />} />
+        <Route path="/sales/analytics" element={<SalesAnalytics />} />
+      </Route>
       <Route path="/sales/leads/:id"  element={<ProtectedRoute><SalesLeadDetail /></ProtectedRoute>} />
-      <Route path="/planning"         element={<ProtectedRoute><Planning /></ProtectedRoute>} />
-      <Route path="/finance"          element={<ProtectedRoute><Finance /></ProtectedRoute>} />
+
+      {/* ── Hub: Workflow (Intake | Übergabe | Onboarding) ────────────────── */}
+      <Route element={<ProtectedRoute><HubLayout tabs={[
+        { to: '/intake',     label: 'Intake'     },
+        { to: '/delivery',   label: 'Übergabe'   },
+        { to: '/onboarding', label: 'Onboarding', match: ['/onboarding'] },
+      ]} /></ProtectedRoute>}>
+        <Route path="/intake"          element={<Intake />} />
+        <Route path="/delivery"        element={<Delivery />} />
+        <Route path="/onboarding"      element={<OnboardingTemplates />} />
+        <Route path="/onboarding/flows" element={<OnboardingFlows />} />
+      </Route>
+      <Route path="/onboarding/templates/:id" element={<ProtectedRoute><OnboardingTemplateBuilder /></ProtectedRoute>} />
+
       <Route path="/admin/partners"   element={<ProtectedRoute><AdminPartners /></ProtectedRoute>} />
       <Route path="/wizard"              element={<ProtectedRoute><Wizard /></ProtectedRoute>} />
       <Route path="/wizard/branding"     element={<ProtectedRoute><BrandingWizard /></ProtectedRoute>} />
@@ -121,13 +163,6 @@ function AppRoutes() {
       <Route path="/team"           element={<ProtectedRoute><Team /></ProtectedRoute>} />
       <Route path="/team/invite"    element={<ProtectedRoute><NewTeamMember /></ProtectedRoute>} />
       <Route path="/team/:id/edit"  element={<ProtectedRoute><EditTeamMember /></ProtectedRoute>} />
-
-      <Route path="/onboarding"                    element={<ProtectedRoute><OnboardingTemplates /></ProtectedRoute>} />
-      <Route path="/onboarding/templates/:id"       element={<ProtectedRoute><OnboardingTemplateBuilder /></ProtectedRoute>} />
-      <Route path="/onboarding/flows"               element={<ProtectedRoute><OnboardingFlows /></ProtectedRoute>} />
-
-      <Route path="/intake"    element={<ProtectedRoute><Intake /></ProtectedRoute>} />
-      <Route path="/delivery"  element={<ProtectedRoute><Delivery /></ProtectedRoute>} />
 
       {/* Public — no auth, no Layout */}
       <Route path="/onboarding/:token"    element={<OnboardingClient />} />

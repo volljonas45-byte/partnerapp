@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Users, FileText, ClipboardList, Settings, LogOut,
   Layers, ClipboardCheck, PackageCheck,
@@ -199,51 +199,48 @@ export default function Sidebar() {
   const { logout, user, isAdmin, isPM } = useAuth();
   const { c, isDark } = useTheme();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const matchActive = (item) => {
+    const prefixes = item.match || [item.to];
+    if (item.to === '/') return location.pathname === '/';
+    return prefixes.some(p => location.pathname === p || location.pathname.startsWith(p + '/'));
+  };
 
   const NAV_GROUPS = [
     {
       label: null,
       items: [
-        { to: '/',              icon: LayoutDashboard, label: 'Dashboard'     },
-        { to: '/work',          icon: FolderKanban,    label: 'Arbeit'        },
-        { to: '/websites',      icon: Globe,           label: 'Websites'      },
-        { to: '/calendar',      icon: CalendarDays,    label: 'Kalender'      },
-        { to: '/time-tracking', icon: Clock,           label: 'Zeiterfassung' },
-        { to: '/timeline',      icon: CalendarRange,   label: 'Timeline'      },
-        { to: '/team-dashboard',icon: BarChart2,       label: 'Team'          },
-        { to: '/planning',      icon: Target,          label: 'Planung'       },
+        { to: '/',         icon: LayoutDashboard, label: 'Dashboard' },
+        { to: '/work',     icon: FolderKanban,    label: 'Projekte', match: ['/work', '/websites', '/timeline', '/planning'] },
+        { to: '/calendar', icon: CalendarDays,    label: 'Zeit & Team', match: ['/calendar', '/time-tracking', '/team-dashboard'] },
       ],
     },
     {
       label: 'Vertrieb',
       items: [
-        { to: '/sales',           icon: Flame,     label: 'Sales Engine' },
-        { to: '/sales/analytics', icon: BarChart3,  label: 'Auswertung'  },
+        { to: '/sales', icon: Flame, label: 'Sales', match: ['/sales'] },
       ],
     },
     {
       label: 'Workflow',
       items: [
-        { to: '/intake',     icon: ClipboardCheck, label: 'Intake'     },
-        { to: '/delivery',   icon: PackageCheck,   label: 'Übergabe'   },
-        { to: '/onboarding', icon: Layers,         label: 'Onboarding' },
+        { to: '/intake', icon: ClipboardCheck, label: 'Workflow', match: ['/intake', '/delivery', '/onboarding'] },
+        { to: '/clients', icon: Users, label: 'Kunden' },
       ],
     },
     ...(isAdmin || isPM ? [{
       label: 'Finanzen',
       items: [
-        { to: '/finance',  icon: TrendingUp,    label: 'Finanzen'   },
-        { to: '/invoices', icon: FileText,      label: 'Rechnungen' },
-        { to: '/quotes',   icon: ClipboardList, label: 'Angebote'   },
+        { to: '/finance', icon: TrendingUp, label: 'Finanzen', match: ['/finance', '/invoices', '/quotes'] },
       ],
     }] : []),
     {
       label: 'Verwaltung',
       items: [
-        { to: '/clients',          icon: Users,      label: 'Kunden'          },
-        { to: '/team',             icon: UserCog,    label: 'Team'            },
+        { to: '/team',     icon: UserCog,   label: 'Team'          },
         ...(isAdmin ? [{ to: '/admin/partners', icon: Handshake, label: 'Partner' }] : []),
-        { to: '/settings',         icon: Settings,   label: 'Einstellungen'   },
+        { to: '/settings', icon: Settings,  label: 'Einstellungen' },
       ],
     },
   ];
@@ -330,9 +327,12 @@ export default function Sidebar() {
               </p>
             )}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {group.items.map(({ to, icon: Icon, label }) => (
-                <NavLink key={to} to={to} end={to === '/' || to === '/sales'} style={{ textDecoration: 'none' }}>
-                  {({ isActive }) => (
+              {group.items.map((item) => (
+                <NavLink key={item.to} to={item.to} style={{ textDecoration: 'none' }}>
+                  {() => {
+                    const { icon: Icon, label, to } = item;
+                    const isActive = matchActive(item);
+                    return (
                     <div style={{
                       display: 'flex', alignItems: 'center', gap: 9,
                       padding: '7px 10px', borderRadius: 10,
@@ -364,7 +364,8 @@ export default function Sidebar() {
                         </span>
                       )}
                     </div>
-                  )}
+                    );
+                  }}
                 </NavLink>
               ))}
             </div>
