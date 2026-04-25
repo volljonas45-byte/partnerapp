@@ -5,26 +5,7 @@ import { Users, TrendingUp, Calendar, Briefcase, Plus, Check, X, ChevronDown,
          Pencil, Trash2, DollarSign, Clock, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { partnerApi } from '../api/partner';
-
-// ── Design tokens ────────────────────────────────────────────────────────────
-function useD() {
-  const { isDark } = useTheme();
-  return isDark ? {
-    bg:    '#0D0D12', card: '#16161E', card2: '#1C1C26',
-    text:  '#F2F2F7', text2: '#C7C7CC', text3: '#8E8E93',
-    border:'rgba(255,255,255,0.12)', blue: '#5B8CF5', blueL: '#5B8CF514',
-    green: '#34D399', greenL: '#34D39914', red: '#FF453A', redL: '#FF453A14',
-    orange:'#FF9F0A', orangeL:'#FF9F0A14', purple:'#BF5AF2', purpleL:'#BF5AF214',
-    input: '#1C1C26', radius: 16,
-  } : {
-    bg:    '#F2F2F7', card: '#FFFFFF', card2: '#F2F2F7',
-    text:  '#1C1C1E', text2: '#636366', text3: '#AEAEB2',
-    border:'rgba(0,0,0,0.07)', blue: '#007AFF', blueL: '#007AFF14',
-    green: '#34C759', greenL: '#34C75914', red: '#FF3B30', redL: '#FF3B3014',
-    orange:'#FF9500', orangeL:'#FF950014', purple:'#AF52DE', purpleL:'#AF52DE14',
-    input: '#F2F2F7', radius: 16,
-  };
-}
+import { useD } from '../lib/designTokens';
 
 // ── Sliding SegCtrl ──────────────────────────────────────────────────────────
 function SegCtrl({ tabs, active, onChange }) {
