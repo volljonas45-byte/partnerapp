@@ -315,32 +315,6 @@ export default function Sidebar() {
         </div>
       </div>
 
-      {/* Global Search trigger */}
-      <div style={{ padding: '0 12px 8px' }}>
-        <button
-          onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true, bubbles: true }))}
-          style={{
-            width: '100%', display: 'flex', alignItems: 'center', gap: 8,
-            padding: '7px 12px', fontSize: 12, fontWeight: 500,
-            color: c.textTertiary, letterSpacing: '-0.01em',
-            background: c.inputBg, border: `0.5px solid ${c.borderSubtle}`,
-            borderRadius: 9, cursor: 'pointer',
-            transition: 'background 0.15s, border-color 0.15s',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.background = c.inputBgHover; e.currentTarget.style.borderColor = c.border; }}
-          onMouseLeave={e => { e.currentTarget.style.background = c.inputBg; e.currentTarget.style.borderColor = c.borderSubtle; }}
-        >
-          <Search size={13} strokeWidth={1.8} />
-          <span style={{ flex: 1, textAlign: 'left' }}>Suchen…</span>
-          <span style={{
-            display: 'flex', alignItems: 'center', gap: 2,
-            fontSize: 10, color: c.textTertiary, opacity: 0.7,
-          }}>
-            <span style={{ padding: '1px 4px', background: c.cardSecondary, borderRadius: 4, border: `0.5px solid ${c.borderSubtle}` }}>⌘K</span>
-          </span>
-        </button>
-      </div>
-
       {/* New project CTA */}
       <div style={{ padding: '0 12px 8px' }}>
         <button

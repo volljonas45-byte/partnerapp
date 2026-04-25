@@ -21,8 +21,8 @@ const GROUPS = [
 ];
 
 function score(text, q) {
-  if (!text) return 0;
-  const t = text.toLowerCase();
+  if (text === null || text === undefined) return 0;
+  const t = String(text).toLowerCase();
   const s = q.toLowerCase();
   if (t.startsWith(s)) return 3;
   if (t.includes(s)) return 2;
@@ -160,11 +160,42 @@ export default function GlobalSearch() {
   // Reset active index on query change
   useEffect(() => { setActiveIdx(0); }, [query]);
 
-  if (!open) return null;
-
   let flatIdx = 0;
 
-  return createPortal(
+  return (
+    <>
+      {/* Fixed top-right trigger button */}
+      <button
+        onClick={() => setOpen(true)}
+        title="Suchen (⌘K)"
+        style={{
+          position: 'fixed', top: 14, right: 16, zIndex: 900,
+          display: 'flex', alignItems: 'center', gap: 7,
+          padding: '7px 12px',
+          background: 'rgba(22,22,30,0.85)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          border: '0.5px solid rgba(255,255,255,0.1)',
+          borderRadius: 10,
+          cursor: 'pointer',
+          boxShadow: '0 2px 12px rgba(0,0,0,0.4)',
+          transition: 'background 0.15s, border-color 0.15s',
+          color: 'rgba(174,174,178,0.9)',
+        }}
+        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(30,30,40,0.95)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.18)'; }}
+        onMouseLeave={e => { e.currentTarget.style.background = 'rgba(22,22,30,0.85)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}
+      >
+        <Search size={14} strokeWidth={1.8} />
+        <span style={{ fontSize: 12, fontWeight: 500, letterSpacing: '-0.01em', fontFamily: 'inherit' }}>Suchen</span>
+        <kbd style={{
+          padding: '2px 6px', borderRadius: 5, fontSize: 10, fontFamily: 'inherit',
+          background: 'rgba(255,255,255,0.07)',
+          border: '0.5px solid rgba(255,255,255,0.1)',
+          color: 'rgba(174,174,178,0.7)',
+        }}>⌘K</kbd>
+      </button>
+
+      {open && createPortal(
     <div
       onClick={() => setOpen(false)}
       style={{
@@ -328,5 +359,7 @@ export default function GlobalSearch() {
       `}</style>
     </div>,
     document.body
+      )}
+    </>
   );
 }
