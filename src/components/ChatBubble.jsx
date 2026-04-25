@@ -4,7 +4,7 @@ import { partnerApi } from '../api/partner';
 
 const D = {
   bg: '#0D0D12', card: '#16161E', card2: '#1E1E28',
-  blue: '#5B8CF5', blueL: '#5B8CF514',
+  accent: '#FF9F0A', accentL: 'rgba(255,159,10,0.12)',
   text: '#F2F2F7', text2: '#AEAEB2', text3: '#636366',
   border: 'rgba(255,255,255,0.07)',
 };
@@ -71,7 +71,7 @@ export default function ChatBubble() {
             borderBottom: `1px solid ${D.border}`, background: D.card2,
           }}>
             <div style={{
-              width: 30, height: 30, borderRadius: 9, background: D.blue,
+              width: 30, height: 30, borderRadius: 9, background: D.accent,
               display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
             }}>
               <Bot size={16} color="#fff" />
@@ -96,7 +96,7 @@ export default function ChatBubble() {
               }}>
                 <div style={{
                   maxWidth: '82%', padding: '8px 11px', borderRadius: m.role === 'user' ? '12px 12px 4px 12px' : '12px 12px 12px 4px',
-                  background: m.role === 'user' ? D.blue : D.card2,
+                  background: m.role === 'user' ? D.accent : D.card2,
                   color: D.text, fontSize: 13, lineHeight: 1.45, whiteSpace: 'pre-wrap', wordBreak: 'break-word',
                 }}>
                   {m.text}
@@ -135,7 +135,7 @@ export default function ChatBubble() {
               }}
             />
             <button onClick={send} disabled={!input.trim() || loading} style={{
-              width: 36, height: 36, borderRadius: 10, background: input.trim() && !loading ? D.blue : D.card2,
+              width: 36, height: 36, borderRadius: 10, background: input.trim() && !loading ? D.accent : D.card2,
               border: 'none', cursor: input.trim() && !loading ? 'pointer' : 'default',
               display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
               transition: 'background 0.15s',
@@ -148,9 +148,9 @@ export default function ChatBubble() {
 
       {/* Toggle button */}
       <button onClick={() => setOpen(o => !o)} style={{
-        width: 52, height: 52, borderRadius: '50%', background: D.blue,
+        width: 52, height: 52, borderRadius: '50%', background: D.accent,
         border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        boxShadow: '0 4px 20px rgba(91,140,245,0.4)', transition: 'transform 0.15s, box-shadow 0.15s',
+        boxShadow: '0 4px 20px rgba(255,159,10,0.4)', transition: 'transform 0.15s, box-shadow 0.15s',
       }}
         onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.08)'}
         onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}

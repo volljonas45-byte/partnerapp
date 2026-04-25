@@ -83,14 +83,14 @@ export default function PageHint() {
             overflow: 'hidden',
           }}>
             {/* Top accent line */}
-            <div style={{ height: 3, background: 'linear-gradient(90deg, #5B8CF5, #BF5AF2)' }} />
+            <div style={{ height: 3, background: 'linear-gradient(90deg, #FF9F0A, #BF5AF2)' }} />
 
             <div style={{ padding: '14px 16px 16px' }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, marginBottom: 8 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div style={{ width: 26, height: 26, borderRadius: 8, background: 'rgba(91,140,245,0.15)',
+                  <div style={{ width: 26, height: 26, borderRadius: 8, background: 'rgba(255,159,10,0.15)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <Lightbulb size={13} color="#5B8CF5" />
+                    <Lightbulb size={13} color="#FF9F0A" />
                   </div>
                   <span style={{ fontSize: 13, fontWeight: 700, color: '#F2F2F7' }}>{hint.title}</span>
                 </div>
@@ -110,7 +110,7 @@ export default function PageHint() {
               <button onClick={dismiss}
                 style={{
                   width: '100%', padding: '8px', borderRadius: 9, border: 'none',
-                  background: 'rgba(91,140,245,0.12)', color: '#5B8CF5',
+                  background: 'rgba(255,159,10,0.12)', color: '#FF9F0A',
                   fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
                   transition: 'background 0.15s',
                 }}>

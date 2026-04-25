@@ -11,9 +11,9 @@ import { partnerApi } from '../api/partner';
 
 const D = {
   bg: '#0D0D12', card: '#16161E', card2: '#1C1C26',
-  border: 'rgba(255,255,255,0.07)', borderFocus: 'rgba(91,140,245,0.5)',
+  border: 'rgba(255,255,255,0.07)', borderFocus: 'rgba(255,159,10,0.5)',
   text: '#F2F2F7', text2: '#AEAEB2', text3: '#636366',
-  blue: '#5B8CF5', blueL: 'rgba(91,140,245,0.12)',
+  accent: '#FF9F0A', accentL: 'rgba(255,159,10,0.12)',
   green: '#34D399', greenL: 'rgba(52,211,153,0.12)',
   purple: '#BF5AF2', purpleL: 'rgba(191,90,242,0.12)',
   orange: '#FF9F0A', orangeL: 'rgba(255,159,10,0.12)',
@@ -31,7 +31,7 @@ function Field({ label, icon: Icon, value, onChange, placeholder, type = 'text',
     <div>
       <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600,
         color: D.text3, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
-        {Icon && <Icon size={12} />} {label} {required && <span style={{ color: D.blue }}>*</span>}
+        {Icon && <Icon size={12} />} {label} {required && <span style={{ color: D.accent }}>*</span>}
       </label>
       <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
         onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
@@ -70,7 +70,7 @@ function SectionLabel({ icon: Icon, children }) {
 }
 
 function Chip({ label, active, onClick, color }) {
-  const c = color || D.blue;
+  const c = color || D.accent;
   return (
     <button onClick={onClick} style={{
       padding: '5px 13px', borderRadius: 20, fontSize: 12, cursor: 'pointer',
@@ -201,8 +201,8 @@ function CalendarPicker({ selectedDate, onDateChange, selectedTime, onTimeChange
                 width: '100%', aspectRatio: '1', borderRadius: 8, border: 'none',
                 fontSize: 12.5, cursor: isPast ? 'not-allowed' : 'pointer',
                 fontWeight: isSel ? 700 : 400,
-                background: isSel ? D.purple : isToday ? `${D.blue}25` : 'transparent',
-                color: isSel ? '#fff' : isPast ? D.text3 : isToday ? D.blue : D.text,
+                background: isSel ? D.purple : isToday ? `${D.accent}25` : 'transparent',
+                color: isSel ? '#fff' : isPast ? D.text3 : isToday ? D.accent : D.text,
                 opacity: isPast ? 0.3 : 1, transition: 'background 0.1s, color 0.1s',
               }}>{d.getDate()}</button>
             );
@@ -356,13 +356,13 @@ export default function DemoWizard() {
           </button>
         )}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-          <div style={{ width: 36, height: 36, borderRadius: 10, background: D.blueL,
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: D.accentL,
             display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Phone size={18} color={D.blue} />
+            <Phone size={18} color={D.accent} />
           </div>
           <div>
             <h1 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: D.text }}>Demo-Wizard</h1>
-            {prefilled.company && <p style={{ margin: 0, fontSize: 12, color: D.blue }}>Daten von: {prefilled.company}</p>}
+            {prefilled.company && <p style={{ margin: 0, fontSize: 12, color: D.accent }}>Daten von: {prefilled.company}</p>}
           </div>
         </div>
         <p style={{ margin: 0, fontSize: 13, color: D.text3 }}>
@@ -379,7 +379,7 @@ export default function DemoWizard() {
                 <div style={{
                   width: 24, height: 24, borderRadius: '50%', fontSize: 11, fontWeight: 700,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: i < step ? D.green : i === step ? D.blue : D.card2,
+                  background: i < step ? D.green : i === step ? D.accent : D.card2,
                   color: i <= step ? '#fff' : D.text3,
                 }}>
                   {i < step ? <CheckCircle2 size={13} /> : i + 1}
@@ -428,7 +428,7 @@ export default function DemoWizard() {
               <button onClick={() => setStep(1)} disabled={!canStep0}
                 style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '11px 24px', borderRadius: 12,
                   fontSize: 14, fontWeight: 600, border: 'none', transition: 'all 0.15s', cursor: canStep0 ? 'pointer' : 'not-allowed',
-                  background: canStep0 ? D.blue : D.card2, color: canStep0 ? '#fff' : D.text3 }}>
+                  background: canStep0 ? D.accent : D.card2, color: canStep0 ? '#fff' : D.text3 }}>
                 Weiter <ChevronRight size={16} />
               </button>
             </div>
@@ -537,7 +537,7 @@ export default function DemoWizard() {
               </button>
               <button onClick={() => setStep(2)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '11px 24px',
                 borderRadius: 12, fontSize: 14, fontWeight: 600, border: 'none', cursor: 'pointer',
-                background: D.blue, color: '#fff' }}>
+                background: D.accent, color: '#fff' }}>
                 Weiter <ChevronRight size={16} />
               </button>
             </div>
@@ -566,7 +566,7 @@ export default function DemoWizard() {
               {[
                 { id: 'appointment', icon: Calendar, color: D.purple, colorL: D.purpleL,
                   label: 'Termin vereinbaren', desc: 'Datum & Uhrzeit für die Demo festlegen' },
-                { id: 'email', icon: Mail, color: D.blue, colorL: D.blueL,
+                { id: 'email', icon: Mail, color: D.accent, colorL: D.accentL,
                   label: 'Demo per E-Mail zusenden', desc: 'Kein Termin möglich — Demo direkt per Mail schicken' },
                 { id: 'none', icon: Briefcase, color: D.orange, colorL: D.orangeL,
                   label: 'Nur Lead & Brief speichern', desc: 'Kunde braucht Bedenkzeit — kein weiterer Schritt' },
@@ -630,9 +630,9 @@ export default function DemoWizard() {
                     <p style={{ margin: 0, fontSize: 13, color: D.text2, fontWeight: 600 }}>Demo-Mail</p>
                     {email ? (
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px',
-                        background: D.blueL, borderRadius: 9, border: `1px solid ${D.blue}30` }}>
-                        <Mail size={13} color={D.blue} />
-                        <span style={{ fontSize: 13, color: D.blue, fontWeight: 500 }}>{email}</span>
+                        background: D.accentL, borderRadius: 9, border: `1px solid ${D.accent}30` }}>
+                        <Mail size={13} color={D.accent} />
+                        <span style={{ fontSize: 13, color: D.accent, fontWeight: 500 }}>{email}</span>
                       </div>
                     ) : (
                       <Field label="E-Mail-Adresse" icon={Mail} value={email} onChange={setEmail}
@@ -660,7 +660,7 @@ export default function DemoWizard() {
                 display: 'flex', alignItems: 'center', gap: 8, padding: '11px 24px', borderRadius: 12,
                 fontSize: 14, fontWeight: 600, border: 'none', transition: 'all 0.15s',
                 cursor: canStep2 && !wizard.isPending ? 'pointer' : 'not-allowed',
-                background: canStep2 && !wizard.isPending ? D.blue : D.card2,
+                background: canStep2 && !wizard.isPending ? D.accent : D.card2,
                 color: canStep2 && !wizard.isPending ? '#fff' : D.text3,
               }}>
                 {wizard.isPending ? 'Wird gespeichert...' : action === 'email'
@@ -702,7 +702,7 @@ export default function DemoWizard() {
                   </p>
                 )}
                 {done.action === 'email' && done.emailSent && (
-                  <p style={{ margin: '6px 0 0', fontSize: 13, color: D.blue }}>
+                  <p style={{ margin: '6px 0 0', fontSize: 13, color: D.accent }}>
                     <Mail size={12} style={{ verticalAlign: 'middle', marginRight: 4 }} />
                     Demo-Mail gesendet an {done.lead?.email}
                   </p>
@@ -715,7 +715,7 @@ export default function DemoWizard() {
                   Zu Meine Leads
                 </button>
                 <button onClick={reset} style={{ padding: '11px 24px', borderRadius: 12, fontSize: 14, fontWeight: 600,
-                  background: D.blue, color: '#fff', border: 'none', cursor: 'pointer' }}>
+                  background: D.accent, color: '#fff', border: 'none', cursor: 'pointer' }}>
                   Neuen Call starten
                 </button>
               </div>

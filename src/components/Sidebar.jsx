@@ -7,7 +7,7 @@ import InstallGuide from './InstallGuide';
 const D = {
   bg: '#0D0D12', border: 'rgba(255,255,255,0.07)',
   text: '#F2F2F7', text2: '#AEAEB2', text3: '#636366',
-  blue: '#5B8CF5', blueL: '#5B8CF514',
+  accent: '#FF9F0A', accentL: 'rgba(255,159,10,0.12)',
   violet: '#a78bfa', violetL: 'rgba(167,139,250,0.08)',
   green: '#34D399', greenL: 'rgba(52,211,153,0.1)',
   card: '#16161E',
@@ -33,7 +33,7 @@ export default function Sidebar() {
         height: '100vh', background: D.bg, borderRight: `0.5px solid ${D.border}`, zIndex: 10 }}>
 
         <div style={{ padding: '20px 18px 8px', display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 32, height: 32, borderRadius: 9, background: D.blue,
+          <div style={{ width: 32, height: 32, borderRadius: 9, background: D.accent,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: 13, fontWeight: 800, color: '#fff' }}>P</div>
           <span style={{ fontSize: 15, fontWeight: 700, color: D.text, letterSpacing: '-0.02em' }}>
@@ -47,11 +47,11 @@ export default function Sidebar() {
               {({ isActive }) => (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px',
                   borderRadius: 9, fontSize: 13, cursor: 'pointer',
-                  background: isActive ? (accent ? D.violetL : D.blueL) : 'transparent',
-                  color: isActive ? (accent ? D.violet : D.blue) : D.text2,
+                  background: isActive ? (accent ? D.violetL : D.accentL) : 'transparent',
+                  color: isActive ? (accent ? D.violet : D.accent) : D.text2,
                   fontWeight: isActive ? 600 : 400,
                   transition: 'background 0.15s, color 0.15s' }}>
-                  <Icon size={16} color={isActive ? (accent ? D.violet : D.blue) : D.text3} strokeWidth={isActive ? 2 : 1.5} />
+                  <Icon size={16} color={isActive ? (accent ? D.violet : D.accent) : D.text3} strokeWidth={isActive ? 2 : 1.5} />
                   {label}
                 </div>
               )}
@@ -61,7 +61,7 @@ export default function Sidebar() {
 
         <div style={{ padding: '8px 10px 14px', borderTop: `0.5px solid ${D.border}` }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', marginBottom: 4 }}>
-            <div style={{ width: 28, height: 28, borderRadius: '50%', background: D.blue,
+            <div style={{ width: 28, height: 28, borderRadius: '50%', background: D.accent,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: 11, fontWeight: 700, color: '#fff', flexShrink: 0 }}>
               {initials}

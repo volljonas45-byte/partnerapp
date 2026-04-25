@@ -9,7 +9,7 @@ const D = {
   card: '#16161E',
   border: 'rgba(255,255,255,0.08)',
   text: '#F2F2F7', text2: '#AEAEB2', text3: '#636366',
-  blue: '#5B8CF5', blueL: 'rgba(91,140,245,0.15)',
+  accent: '#FF9F0A', accentL: 'rgba(255,159,10,0.15)',
   green: '#34D399', greenL: 'rgba(52,211,153,0.15)',
   orange: '#FF9F0A', orangeL: 'rgba(255,159,10,0.15)',
   purple: '#BF5AF2', purpleL: 'rgba(191,90,242,0.15)',
@@ -18,7 +18,7 @@ const D = {
 const STEPS = [
   {
     icon: Sparkles,
-    color: D.blue, colorL: D.blueL,
+    color: D.accent, colorL: D.accentL,
     title: 'Willkommen im Partner-Portal',
     text: 'Schön, dass du dabei bist! Wir zeigen dir in wenigen Schritten die wichtigsten Funktionen — dauert nur eine Minute.',
   },

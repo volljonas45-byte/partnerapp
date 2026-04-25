@@ -6,7 +6,7 @@ import { X, HelpCircle, MapPin, Inbox } from 'lucide-react';
 const D = {
   card: '#16161E', border: 'rgba(255,255,255,0.08)',
   text: '#F2F2F7', text2: '#AEAEB2', text3: '#636366',
-  blue: '#5B8CF5', blueL: 'rgba(91,140,245,0.15)',
+  accent: '#FF9F0A', accentL: 'rgba(255,159,10,0.15)',
   green: '#34D399', greenL: 'rgba(52,211,153,0.12)',
 };
 
@@ -59,15 +59,15 @@ export default function LeadGuide({ onClose }) {
           boxShadow: '0 40px 80px rgba(0,0,0,0.6)', overflow: 'hidden',
           maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
 
-        <div style={{ height: 3, background: 'linear-gradient(90deg, #5B8CF5, #34D399)', flexShrink: 0 }} />
+        <div style={{ height: 3, background: 'linear-gradient(90deg, #FF9F0A, #34D399)', flexShrink: 0 }} />
 
         <div style={{ padding: '22px 24px 0', flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: D.blueL,
-                border: `1px solid rgba(91,140,245,0.3)`,
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: D.accentL,
+                border: `1px solid rgba(255,159,10,0.3)`,
                 display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <HelpCircle size={18} color={D.blue} />
+                <HelpCircle size={18} color={D.accent} />
               </div>
               <div>
                 <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: D.text }}>Lead-Guide</h2>
@@ -89,7 +89,7 @@ export default function LeadGuide({ onClose }) {
               <button key={k} onClick={() => setTab(k)} style={{
                 flex: 1, padding: '7px 10px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12,
                 fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-                background: tab === k ? D.blue : 'transparent',
+                background: tab === k ? D.accent : 'transparent',
                 color: tab === k ? '#fff' : D.text3, transition: 'all 0.2s',
               }}>
                 <Icon size={12} /> {l}
@@ -101,13 +101,13 @@ export default function LeadGuide({ onClose }) {
         <div style={{ overflowY: 'auto', padding: '0 24px 24px', display: 'flex', flexDirection: 'column', gap: 12 }}>
           {tab === 'request' ? (
             <>
-              <div style={{ padding: '12px 14px', borderRadius: 10, background: D.blueL,
-                border: `1px solid rgba(91,140,245,0.25)`, marginBottom: 4 }}>
-                <p style={{ margin: 0, fontSize: 12.5, color: D.blue, lineHeight: 1.5 }}>
+              <div style={{ padding: '12px 14px', borderRadius: 10, background: D.accentL,
+                border: `1px solid rgba(255,159,10,0.25)`, marginBottom: 4 }}>
+                <p style={{ margin: 0, fontSize: 12.5, color: D.accent, lineHeight: 1.5 }}>
                   Du kannst gezielt Leads anfordern — wir suchen dann passende Kontakte für dich heraus und weisen sie dir zu.
                 </p>
               </div>
-              {REQUEST_STEPS.map(s => <Step key={s.n} {...s} color={D.blue} />)}
+              {REQUEST_STEPS.map(s => <Step key={s.n} {...s} color={D.accent} />)}
             </>
           ) : (
             <>

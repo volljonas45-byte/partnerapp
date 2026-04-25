@@ -8,7 +8,7 @@ import { partnerApi } from '../api/partner';
 
 const D = {
   text: '#F2F2F7', text2: '#AEAEB2', text3: '#636366',
-  blue: '#5B8CF5', blueL: 'rgba(91,140,245,0.12)',
+  accent: '#FF9F0A', accentL: 'rgba(255,159,10,0.12)',
   green: '#34D399', greenL: 'rgba(52,211,153,0.12)',
   orange: '#FF9F0A', orangeL: 'rgba(255,159,10,0.12)',
   red: '#FF453A', redL: 'rgba(255,69,58,0.12)',
@@ -18,8 +18,8 @@ const D = {
 };
 
 const STATUS_INFO = {
-  anrufen:        { label: 'In Prüfung — wir melden uns bald',                color: D.blue,   bg: D.blueL,   Icon: Clock },
-  kontaktiert:    { label: 'In Prüfung — wir melden uns bald',                color: D.blue,   bg: D.blueL,   Icon: Clock },
+  anrufen:        { label: 'In Prüfung — wir melden uns bald',                color: D.accent,   bg: D.accentL,   Icon: Clock },
+  kontaktiert:    { label: 'In Prüfung — wir melden uns bald',                color: D.accent,   bg: D.accentL,   Icon: Clock },
   termin_gesetzt: { label: 'Demo-Termin vereinbart — Projekt wird vorbereitet', color: D.purple, bg: D.purpleL, Icon: CalendarDays },
   gewonnen:       { label: 'Projekt gewonnen! Provision wird ausgezahlt.',      color: D.green,  bg: D.greenL,  Icon: CheckCircle2 },
   verloren:       { label: 'Kein Abschluss bei diesem Lead',                   color: D.red,    bg: D.redL,    Icon: XCircle },
@@ -144,7 +144,7 @@ export default function MyCustomers() {
       {customers.length > 0 && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}
           style={{ display: 'flex', gap: 10, marginBottom: 24, flexWrap: 'wrap' }}>
-          <Badge label="Kunden gesamt" value={totals.count} color={D.blue} bg={D.blueL} />
+          <Badge label="Kunden gesamt" value={totals.count} color={D.accent} bg={D.accentL} />
           <Badge label="Gewonnen" value={totals.won || null} color={D.green} bg={D.greenL} />
           {totals.budget > 0 && <Badge label="Projektvolumen" value={fmtEur(totals.budget)} color={D.orange} bg={D.orangeL} />}
           {totals.commission > 0 && <Badge label="Meine Provision" value={fmtEur(totals.commission)} color={D.purple} bg={D.purpleL} />}
@@ -158,10 +158,10 @@ export default function MyCustomers() {
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
           style={{ textAlign: 'center', padding: '64px 24px',
             background: 'rgba(255,255,255,0.02)', border: `1px solid ${D.border}`, borderRadius: 16 }}>
-          <div style={{ width: 56, height: 56, borderRadius: 16, background: D.blueL,
-            border: `1px solid rgba(91,140,245,0.3)`, display: 'flex', alignItems: 'center',
+          <div style={{ width: 56, height: 56, borderRadius: 16, background: D.accentL,
+            border: `1px solid rgba(255,159,10,0.3)`, display: 'flex', alignItems: 'center',
             justifyContent: 'center', margin: '0 auto 16px' }}>
-            <Building2 size={26} color={D.blue} />
+            <Building2 size={26} color={D.accent} />
           </div>
           <h3 style={{ fontSize: 16, fontWeight: 600, color: D.text, margin: '0 0 8px' }}>
             Noch keine Kunden eingereicht
@@ -256,8 +256,8 @@ export default function MyCustomers() {
                   {c.demo_link && (
                     <a href={c.demo_link} target="_blank" rel="noopener noreferrer"
                       style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px',
-                        borderRadius: 8, background: D.blueL, border: `1px solid rgba(91,140,245,0.3)`,
-                        color: D.blue, fontSize: 12.5, fontWeight: 700, textDecoration: 'none' }}>
+                        borderRadius: 8, background: D.accentL, border: `1px solid rgba(255,159,10,0.3)`,
+                        color: D.accent, fontSize: 12.5, fontWeight: 700, textDecoration: 'none' }}>
                       <ExternalLink size={12} /> Demo ansehen
                     </a>
                   )}
@@ -271,7 +271,7 @@ export default function MyCustomers() {
                   {c.website && (
                     <a href={c.website.startsWith('http') ? c.website : `https://${c.website}`}
                       target="_blank" rel="noopener noreferrer"
-                      style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: D.blue, textDecoration: 'none' }}>
+                      style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: D.accent, textDecoration: 'none' }}>
                       <Globe size={11} /> Website
                     </a>
                   )}
@@ -287,15 +287,15 @@ export default function MyCustomers() {
         style={{ marginTop: 32, padding: '22px 24px',
           background: 'rgba(255,255,255,0.02)', border: `1px solid ${D.border}`, borderRadius: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-          <MessageSquare size={16} color={D.blue} />
+          <MessageSquare size={16} color={D.accent} />
           <span style={{ fontSize: 14, fontWeight: 700, color: D.text }}>Fragen? Wir sind immer für dich da</span>
         </div>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           {me?.ws_email && (
             <a href={`mailto:${me.ws_email}`}
               style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 9,
-                background: D.blueL, border: `1px solid rgba(91,140,245,0.25)`,
-                color: D.blue, fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
+                background: D.accentL, border: `1px solid rgba(255,159,10,0.25)`,
+                color: D.accent, fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
               <Mail size={13} /> {me.ws_email}
             </a>
           )}

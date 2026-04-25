@@ -5,14 +5,14 @@ import { partnerApi } from '../api/partner';
 const D = {
   bg:'#0D0D12', card:'#16161E', card2:'#1C1C26', border:'rgba(255,255,255,0.07)',
   text:'#F2F2F7', text2:'#AEAEB2', text3:'#636366',
-  blue:'#5B8CF5', blueL:'#5B8CF514',
+  accent:'#FF9F0A', accentL:'rgba(255,159,10,0.12)',
   green:'#34D399', greenL:'#34D39914',
   red:'#FF453A', redL:'#FF453A14',
   purple:'#BF5AF2', purpleL:'#BF5AF214',
 };
 
 const STATUS_MAP = {
-  scheduled:  { label:'Geplant',       color: D.blue,   bg: D.blueL   },
+  scheduled:  { label:'Geplant',       color: D.accent,   bg: D.accentL   },
   completed:  { label:'Abgeschlossen', color: D.green,  bg: D.greenL  },
   cancelled:  { label:'Abgesagt',      color: D.red,    bg: D.redL    },
   no_show:    { label:'Nicht erschienen', color: D.text3, bg: D.card2  },
@@ -67,7 +67,7 @@ export default function Appointments() {
                 {a.google_meet_link && (
                   <a href={a.google_meet_link} target="_blank" rel="noreferrer"
                     style={{ display:'flex', alignItems:'center', gap:5, padding:'7px 14px',
-                      borderRadius:9, background:D.blueL, color:D.blue, textDecoration:'none',
+                      borderRadius:9, background:D.accentL, color:D.accent, textDecoration:'none',
                       fontSize:13, fontWeight:600 }}>
                     <ExternalLink size={13} /> Meet öffnen
                   </a>

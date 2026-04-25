@@ -6,12 +6,20 @@ import { GoogleLogin } from '@react-oauth/google';
 import { partnerApi } from '../api/partner';
 
 const D = {
-  bg: '#0D0D12', card: '#16161E', border: 'rgba(255,255,255,0.08)',
+  bg: '#0D0D12', border: 'rgba(255,255,255,0.08)',
   text: '#F2F2F7', text2: '#AEAEB2', text3: '#636366',
-  blue: '#5B8CF5', blueL: 'rgba(91,140,245,0.15)', input: '#1C1C26',
+  accent: '#FF9F0A', accentL: 'rgba(255,159,10,0.15)',
   red: '#FF453A', redL: 'rgba(255,69,58,0.12)',
   green: '#34D399', greenL: 'rgba(52,211,153,0.12)',
   orange: '#FF9F0A', orangeL: 'rgba(255,159,10,0.12)',
+};
+
+const glass = {
+  backdropFilter: 'blur(24px)',
+  WebkitBackdropFilter: 'blur(24px)',
+  background: 'rgba(255,255,255,0.025)',
+  border: '1px solid rgba(255,255,255,0.07)',
+  borderRadius: 22,
 };
 
 const WORKSPACE_OWNER_ID = import.meta.env.VITE_WORKSPACE_OWNER_ID || 1;
@@ -47,7 +55,7 @@ function Label({ children, required }) {
 function Inp({ value, onChange, type = 'text', placeholder, readOnly }) {
   return (
     <input type={type} value={value} onChange={onChange} placeholder={placeholder} readOnly={readOnly}
-      style={{ background: readOnly ? 'rgba(255,255,255,0.03)' : D.input,
+      style={{ background: readOnly ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.05)',
         border: `0.5px solid ${D.border}`, borderRadius: 11,
         padding: '12px 14px', fontSize: 14, color: readOnly ? D.text2 : D.text,
         outline: 'none', width: '100%', boxSizing: 'border-box', fontFamily: 'inherit' }} />
@@ -294,9 +302,9 @@ export default function Apply() {
               onClick={() => setForm(p => ({ ...p, payout_method: k, payout_details: '' }))}
               style={{ flex: 1, padding: '11px', borderRadius: 10, cursor: 'pointer',
                 fontSize: 13, fontWeight: 600, border: '1px solid',
-                borderColor: form.payout_method === k ? D.blue : D.border,
-                background: form.payout_method === k ? D.blueL : 'transparent',
-                color: form.payout_method === k ? D.blue : D.text3, transition: 'all 0.2s' }}>
+                borderColor: form.payout_method === k ? D.accent : D.border,
+                background: form.payout_method === k ? D.accentL : 'transparent',
+                color: form.payout_method === k ? D.accent : D.text3, transition: 'all 0.2s' }}>
               {l}
             </button>
           ))}
@@ -350,7 +358,7 @@ export default function Apply() {
       {/* DSGVO */}
       <label style={{ display: 'flex', alignItems: 'flex-start', gap: 12, cursor: 'pointer' }}>
         <input type="checkbox" checked={form.dsgvo} onChange={f('dsgvo')}
-          style={{ width: 16, height: 16, marginTop: 3, cursor: 'pointer', accentColor: D.blue, flexShrink: 0 }} />
+          style={{ width: 16, height: 16, marginTop: 3, cursor: 'pointer', accentColor: D.accent, flexShrink: 0 }} />
         <span style={{ fontSize: 12.5, color: D.text2, lineHeight: 1.65 }}>
           Ich stimme der Verarbeitung meiner personenbezogenen Daten zur Verwaltung des Partner-Programms
           gemäß der Datenschutzerklärung zu. Die Daten werden vertraulich behandelt und nicht an Dritte weitergegeben.
@@ -363,28 +371,41 @@ export default function Apply() {
   const isLast = step === STEPS.length - 1;
 
   return (
-    <div style={{ minHeight: '100vh', background: D.bg,
+    <div style={{ minHeight: '100vh', background: D.bg, position: 'relative', overflow: 'hidden',
       display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div style={{ width: '100%', maxWidth: 460 }}>
+
+      {/* Ambient glows */}
+      <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0 }}>
+        <div style={{ position: 'absolute', top: '-15%', right: '-5%', width: 600, height: 600,
+          background: 'rgba(255,159,10,0.08)', borderRadius: '50%', filter: 'blur(120px)' }} />
+        <div style={{ position: 'absolute', bottom: '-10%', left: '-5%', width: 500, height: 500,
+          background: 'rgba(139,92,246,0.07)', borderRadius: '50%', filter: 'blur(100px)' }} />
+        <div style={{ position: 'absolute', top: '40%', left: '40%', width: 350, height: 350,
+          background: 'rgba(52,211,153,0.05)', borderRadius: '50%', filter: 'blur(90px)' }} />
+      </div>
+
+      <div style={{ width: '100%', maxWidth: 460, position: 'relative', zIndex: 1 }}>
 
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          <div style={{ width: 48, height: 48, borderRadius: 14, background: D.blue,
+          <div style={{ width: 48, height: 48, borderRadius: 14, background: D.accent,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 22, fontWeight: 800, color: '#fff', margin: '0 auto 14px' }}>P</div>
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: D.text, margin: '0 0 6px', letterSpacing: '-0.03em' }}>
-            Als Partner bewerben
-          </h1>
+            fontSize: 22, fontWeight: 800, color: '#fff', margin: '0 auto 14px',
+            boxShadow: '0 0 28px rgba(255,159,10,0.35)' }}>P</div>
+          <h1 style={{
+            fontSize: 24, fontWeight: 800, margin: '0 0 6px', letterSpacing: '-0.03em',
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.55) 100%)',
+            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+          }}>Als Partner bewerben</h1>
           <p style={{ fontSize: 13.5, color: D.text3, margin: 0 }}>
             Verdiene 20–25% Provision auf jeden gewonnenen Kunden
           </p>
         </div>
 
-        <div style={{ background: D.card, borderRadius: 22, border: `0.5px solid ${D.border}`,
-          boxShadow: '0 24px 64px rgba(0,0,0,0.5)', overflow: 'hidden' }}>
+        <div style={{ ...glass, boxShadow: '0 24px 64px rgba(0,0,0,0.4)', overflow: 'hidden' }}>
 
           {/* Progress bar */}
           <div style={{ height: 3, background: 'rgba(255,255,255,0.05)' }}>
-            <div style={{ height: '100%', background: D.blue,
+            <div style={{ height: '100%', background: D.accent,
               width: `${((step + 1) / STEPS.length) * 100}%`, transition: 'width 0.4s ease' }} />
           </div>
 
@@ -428,8 +449,8 @@ export default function Apply() {
                 <button type="button" onClick={submit} disabled={loading}
                   style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 22px',
                     borderRadius: 11, border: 'none',
-                    background: loading ? D.blueL : D.blue,
-                    color: loading ? D.blue : '#fff',
+                    background: loading ? D.accentL : D.accent,
+                    color: loading ? D.accent : '#fff',
                     fontSize: 14, fontWeight: 700, cursor: loading ? 'default' : 'pointer' }}>
                   {loading ? 'Wird gesendet…' : <><Check size={15} /> Bewerbung absenden</>}
                 </button>
@@ -438,7 +459,7 @@ export default function Apply() {
                   disabled={isTooYoung && step === 1}
                   style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 22px',
                     borderRadius: 11, border: 'none',
-                    background: isTooYoung && step === 1 ? 'rgba(255,255,255,0.08)' : D.blue,
+                    background: isTooYoung && step === 1 ? 'rgba(255,255,255,0.08)' : D.accent,
                     color: isTooYoung && step === 1 ? D.text3 : '#fff',
                     fontSize: 14, fontWeight: 700,
                     cursor: isTooYoung && step === 1 ? 'default' : 'pointer' }}>
@@ -451,9 +472,10 @@ export default function Apply() {
 
         <p style={{ textAlign: 'center', marginTop: 18, fontSize: 13, color: D.text3 }}>
           Bereits Partner?{' '}
-          <Link to="/login" style={{ color: D.blue, textDecoration: 'none', fontWeight: 600 }}>Anmelden</Link>
+          <Link to="/login" style={{ color: D.accent, textDecoration: 'none', fontWeight: 600 }}>Anmelden</Link>
         </p>
       </div>
     </div>
   );
 }
+
