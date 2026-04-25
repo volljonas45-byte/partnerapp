@@ -405,9 +405,9 @@ function LessonPlayer({ curriculum, initialBlock, initialLesson, watched, onTogg
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '24px 48px' }}>
-      {/* Back */}
-      <div style={{ marginBottom: 16 }}>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '24px 48px', position: 'relative' }}>
+      {/* Back – fixed top left */}
+      <div style={{ position: 'absolute', top: 20, left: 24 }}>
         <button
           onClick={onBack}
           style={{
