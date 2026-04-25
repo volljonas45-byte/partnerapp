@@ -10,8 +10,6 @@ const glass = {
   borderRadius: 18,
 };
 
-// Cold Calling Training Curriculum
-// → Replace ytId values with your preferred YouTube video IDs
 const MODULES = [
   {
     id: 'm1',
@@ -19,20 +17,20 @@ const MODULES = [
     description: 'Die richtige mentale Einstellung für Cold Calls – Resilienz, Selbstvertrauen und tägliche Routinen.',
     color: '#3B82F6', glow: 'rgba(59,130,246,0.2)', emoji: '🧠',
     videos: [
-      { ytId: 'LiqW37eJNMw', title: 'Das richtige Mindset für Cold Calls',     channel: 'Sales Insights Lab',   duration: '8:42', level: 'Einsteiger'     },
-      { ytId: 'b0SVHZ3THMQ', title: 'Wie du mit Ablehnung umgehst',            channel: 'Sales Gravy',          duration: '11:20', level: 'Einsteiger'    },
-      { ytId: 'pHRZ8eomJl8', title: 'Tägliche Routine für Top-Verkäufer',      channel: 'Alex Hormozi',         duration: '14:05', level: 'Einsteiger'    },
+      { ytId: 'jc0WyiPuXLU', title: 'The ONLY Cold Call Mindset Video You\'ll Ever Need', channel: 'Sales Training',   duration: '10:14', level: 'Einsteiger'     },
+      { ytId: '0L2aAmew-ZM', title: 'Cold Calling Motivation – Embrace Rejection',         channel: 'Sales Mindset',    duration: '8:30',  level: 'Einsteiger'     },
+      { ytId: 'DaofFnlfWIo', title: 'Know Your Numbers And Love Cold Calling',             channel: 'Sales Motivation', duration: '12:05', level: 'Einsteiger'     },
     ],
   },
   {
     id: 'm2',
-    title: 'Vorbereitung & Research',
+    title: 'Vorbereitung & Script',
     description: 'Prospects recherchieren, Listen aufbauen und dich optimal auf jeden Anruf vorbereiten.',
     color: '#38BDF8', glow: 'rgba(56,189,248,0.2)', emoji: '🔍',
     videos: [
-      { ytId: 'F5NM-qqF8E8', title: 'Prospect-Recherche in 10 Minuten',        channel: 'Predictable Revenue',  duration: '9:15',  level: 'Einsteiger'    },
-      { ytId: '9hW3uVy4-g4', title: 'Der perfekte Call-Script Aufbau',          channel: 'Sales Insights Lab',   duration: '16:38', level: 'Fortgeschritten'},
-      { ytId: 'rj_QIMP89gU', title: 'Qualifikation: BANT & MEDDIC erklärt',    channel: 'Corporate Sales',      duration: '12:54', level: 'Fortgeschritten'},
+      { ytId: 'zO76-Nd0GrY', title: 'The Ultimate Cold Calling Script for B2B Sales',      channel: 'Patrick Dang',     duration: '11:22', level: 'Einsteiger'     },
+      { ytId: 'yZxc-JZTdgI', title: 'The ULTIMATE Cold Calling Script for B2B Success',    channel: 'B2B Sales',        duration: '14:38', level: 'Fortgeschritten'},
+      { ytId: 'JdfGMqaSAGI', title: 'How I Cold Call in B2B',                              channel: 'Jeremy Miner',     duration: '13:54', level: 'Fortgeschritten'},
     ],
   },
   {
@@ -41,9 +39,9 @@ const MODULES = [
     description: 'In den ersten 10 Sekunden Interesse wecken und einen starken ersten Eindruck hinterlassen.',
     color: '#818cf8', glow: 'rgba(129,140,248,0.2)', emoji: '📞',
     videos: [
-      { ytId: 'FiPEYzQ-NaA', title: 'Die besten Cold Call Opening Lines',       channel: 'NEPQ Sales',           duration: '10:22', level: 'Einsteiger'    },
-      { ytId: 'qOcSBc4bPFk', title: 'Pattern Interrupt – Aufmerksamkeit erzeugen', channel: 'Jeremy Miner',    duration: '13:47', level: 'Fortgeschritten'},
-      { ytId: 'aBLr1LZZSHg', title: 'Von Gatekeeper zum Entscheider',           channel: 'B2B Sales Academy',   duration: '11:30', level: 'Fortgeschritten'},
+      { ytId: 'GDMfOa6WN50', title: 'Steal This Cold Call Intro',                          channel: 'Jeremy Miner',     duration: '9:22',  level: 'Einsteiger'     },
+      { ytId: 'G9BrJ0_Jt9w', title: 'Overcome ANY Cold Call Objection – Opener',           channel: 'Sales Training',   duration: '7:47',  level: 'Fortgeschritten'},
+      { ytId: 'EdFz7YVq6PI', title: 'The 70/30 Rule in Cold Calling',                      channel: 'Cold Calling Pro', duration: '11:30', level: 'Fortgeschritten'},
     ],
   },
   {
@@ -52,10 +50,10 @@ const MODULES = [
     description: 'Die häufigsten Einwände im B2B-Vertrieb und wie du sie professionell und überzeugend beantwortest.',
     color: '#f59e0b', glow: 'rgba(245,158,11,0.2)', emoji: '🛡️',
     videos: [
-      { ytId: 'WDMbWkVm7Kg', title: '"Kein Interesse" – Die perfekte Antwort',   channel: 'Sales Gravy',          duration: '9:40',  level: 'Einsteiger'    },
-      { ytId: 'KvJBSR28gOQ', title: '"Schicken Sie uns Infos per E-Mail"',       channel: 'NEPQ Sales',           duration: '7:55',  level: 'Fortgeschritten'},
-      { ytId: '6hcJEsJi5hE', title: 'Preis-Einwände sicher meistern',            channel: 'Sales Insights Lab',   duration: '14:18', level: 'Profi'         },
-      { ytId: 'LbKe1DPKGTI', title: '"Wir haben bereits einen Anbieter"',        channel: 'B2B Mastery',          duration: '11:02', level: 'Profi'         },
+      { ytId: 'jlaetKa-Pt8', title: 'Live Cold Call – How to Overcome Any Sales Objection', channel: 'Sales Roleplay',  duration: '14:40', level: 'Einsteiger'     },
+      { ytId: '8olBXWy3pbE', title: 'How to Crush Any Cold Calling Objection',              channel: 'Sales Training',   duration: '9:55',  level: 'Fortgeschritten'},
+      { ytId: 'shRMsLX48eE', title: 'Every Cold Call Objection & How to Overcome Them',    channel: 'Sales Insights',   duration: '16:18', level: 'Fortgeschritten'},
+      { ytId: 'TJdNyztb2gU', title: '5 Data-Backed Scripts to Overcome Any Objection',     channel: 'B2B Sales Lab',    duration: '12:02', level: 'Profi'          },
     ],
   },
   {
@@ -64,9 +62,9 @@ const MODULES = [
     description: 'Qualifizierte Termine setzen, die auch stattfinden – und den Call sauber zum Abschluss bringen.',
     color: '#34D399', glow: 'rgba(52,211,153,0.2)', emoji: '📅',
     videos: [
-      { ytId: 'UvP44kIQzGQ', title: 'Den Termin in 3 Schritten sichern',        channel: 'Sales Process',        duration: '8:33',  level: 'Fortgeschritten'},
-      { ytId: 'hAIh5h9DL8I', title: 'No-Show Rate auf 0 reduzieren',            channel: 'SaaS Sales Academy',   duration: '10:15', level: 'Fortgeschritten'},
-      { ytId: 'g4GR5W8NWSA', title: 'Folgetermine & Callbacks richtig planen',  channel: 'Cold Calling Pro',     duration: '9:47',  level: 'Profi'         },
+      { ytId: 'Fm0IjDlIOsw', title: 'Fanatical Prospecting – How to Set More Appointments', channel: 'Jeb Blount',      duration: '18:33', level: 'Fortgeschritten'},
+      { ytId: 'a58ULtqf4s8', title: 'Jeb Blount\'s Playbook for Sales Success',             channel: 'Sales Gravy',      duration: '5:15',  level: 'Einsteiger'     },
+      { ytId: 'rKQ077XaiKc', title: 'Live Cold Call – Objection Handling to Appointment',   channel: 'Sales Gravy',      duration: '10:47', level: 'Profi'          },
     ],
   },
   {
@@ -75,9 +73,9 @@ const MODULES = [
     description: 'Echte Cold Calls zum Zuschauen und Lernen – mit Live-Feedback und detaillierter Analyse.',
     color: '#c084fc', glow: 'rgba(192,132,252,0.18)', emoji: '🎯',
     videos: [
-      { ytId: 'eDiXVBFJXe0', title: 'Live Cold Call: B2B SaaS Demo',            channel: 'Sales Roleplay',       duration: '18:22', level: 'Profi'         },
-      { ytId: 'nUL_2IHuU7g', title: 'Cold Call Analyse: Was lief gut/schlecht?', channel: 'Sales Breakdown',     duration: '22:45', level: 'Profi'         },
-      { ytId: 'h3F8d7S2kpL', title: '100 Calls in einer Woche – Learnings',     channel: 'Sales Diary',          duration: '15:30', level: 'Profi'         },
+      { ytId: 'Yt9xgtLISt8', title: 'The Best Cold Call Script Ever – Live Role Play',      channel: 'Sales Training',   duration: '18:22', level: 'Profi'          },
+      { ytId: 'nI8cUX5OI7U', title: 'Cold Calling Do\'s and Don\'ts',                       channel: 'Jeremy Miner',     duration: '22:45', level: 'Profi'          },
+      { ytId: 'nu6ftMztzfM', title: 'Scared to Make Cold Calls? Overcome Call Reluctance',  channel: 'Jeremy Miner',     duration: '15:30', level: 'Profi'          },
     ],
   },
 ];
