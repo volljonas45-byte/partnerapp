@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 const D = {
   bg: '#0D0D12', border: 'rgba(255,255,255,0.08)',
   text: '#F2F2F7', text2: '#AEAEB2', text3: '#636366',
-  accent: '#FF9F0A', red: '#FF453A',
+  accent: '#E07A00', red: '#FF453A',
 };
 
 const glass = {
@@ -66,7 +66,7 @@ export default function Login() {
       {/* Ambient glows */}
       <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0 }}>
         <div style={{ position: 'absolute', top: '-15%', left: '-5%', width: 600, height: 600,
-          background: 'rgba(255,159,10,0.08)', borderRadius: '50%', filter: 'blur(120px)' }} />
+          background: 'rgba(224,122,0,0.08)', borderRadius: '50%', filter: 'blur(120px)' }} />
         <div style={{ position: 'absolute', bottom: '-10%', right: '-5%', width: 500, height: 500,
           background: 'rgba(139,92,246,0.07)', borderRadius: '50%', filter: 'blur(100px)' }} />
         <div style={{ position: 'absolute', top: '50%', left: '55%', width: 350, height: 350,
@@ -80,7 +80,7 @@ export default function Login() {
           <div style={{ width: 52, height: 52, borderRadius: 16, background: D.accent,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: 24, fontWeight: 800, color: '#fff', margin: '0 auto 16px',
-            boxShadow: '0 0 32px rgba(255,159,10,0.35)' }}>P</div>
+            boxShadow: '0 0 32px rgba(224,122,0,0.35)' }}>P</div>
           <h1 style={{
             fontSize: 28, fontWeight: 900, margin: '0 0 6px', letterSpacing: '-0.03em',
             background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.55) 100%)',
@@ -112,7 +112,7 @@ export default function Login() {
               border: 'none', background: D.accent, color: '#fff',
               fontSize: 15, fontWeight: 700, cursor: loading ? 'default' : 'pointer',
               opacity: loading ? 0.6 : 1, marginTop: 6,
-              boxShadow: '0 4px 24px rgba(255,159,10,0.3)',
+              boxShadow: '0 4px 24px rgba(224,122,0,0.3)',
             }}>
               {loading ? '…' : 'Anmelden'}
             </button>

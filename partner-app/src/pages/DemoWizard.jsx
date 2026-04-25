@@ -11,12 +11,12 @@ import { partnerApi } from '../api/partner';
 
 const D = {
   bg: '#0D0D12', card: '#16161E', card2: '#1C1C26',
-  border: 'rgba(255,255,255,0.07)', borderFocus: 'rgba(255,159,10,0.5)',
+  border: 'rgba(255,255,255,0.07)', borderFocus: 'rgba(224,122,0,0.5)',
   text: '#F2F2F7', text2: '#AEAEB2', text3: '#636366',
-  accent: '#FF9F0A', accentL: 'rgba(255,159,10,0.12)',
+  accent: '#E07A00', accentL: 'rgba(224,122,0,0.12)',
   green: '#34D399', greenL: 'rgba(52,211,153,0.12)',
   purple: '#BF5AF2', purpleL: 'rgba(191,90,242,0.12)',
-  orange: '#FF9F0A', orangeL: 'rgba(255,159,10,0.12)',
+  orange: '#E07A00', orangeL: 'rgba(224,122,0,0.12)',
   inputBg: 'rgba(255,255,255,0.04)',
 };
 

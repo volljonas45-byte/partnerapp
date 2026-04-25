@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 const D = {
   bg: '#0D0D12', border: 'rgba(255,255,255,0.08)',
   text: '#F2F2F7', text2: '#AEAEB2', text3: '#636366',
-  orange: '#FF9F0A', orangeL: 'rgba(255,159,10,0.12)',
+  orange: '#E07A00', orangeL: 'rgba(224,122,0,0.12)',
 };
 
 export default function Pending() {
@@ -33,16 +33,16 @@ export default function Pending() {
       {/* Ambient glows */}
       <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0 }}>
         <div style={{ position: 'absolute', top: '-10%', right: '10%', width: 550, height: 550,
-          background: 'rgba(255,159,10,0.07)', borderRadius: '50%', filter: 'blur(120px)' }} />
+          background: 'rgba(224,122,0,0.07)', borderRadius: '50%', filter: 'blur(120px)' }} />
         <div style={{ position: 'absolute', bottom: '-10%', left: '-5%', width: 450, height: 450,
           background: 'rgba(139,92,246,0.06)', borderRadius: '50%', filter: 'blur(100px)' }} />
       </div>
 
       <div style={{ maxWidth: 420, textAlign: 'center', position: 'relative', zIndex: 1 }}>
         <div style={{ width: 72, height: 72, borderRadius: 20, background: D.orangeL,
-          border: '1px solid rgba(255,159,10,0.2)',
+          border: '1px solid rgba(224,122,0,0.2)',
           display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px',
-          boxShadow: '0 0 40px rgba(255,159,10,0.15)' }}>
+          boxShadow: '0 0 40px rgba(224,122,0,0.15)' }}>
           <Clock size={34} color={D.orange} />
         </div>
         <h1 style={{

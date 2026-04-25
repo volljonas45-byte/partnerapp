@@ -4,7 +4,7 @@ import { partnerApi } from '../api/partner';
 
 const D = {
   bg: '#0D0D12', card: '#16161E', card2: '#1E1E28',
-  accent: '#FF9F0A', accentL: 'rgba(255,159,10,0.12)',
+  accent: '#E07A00', accentL: 'rgba(224,122,0,0.12)',
   text: '#F2F2F7', text2: '#AEAEB2', text3: '#636366',
   border: 'rgba(255,255,255,0.07)',
 };
@@ -150,7 +150,7 @@ export default function ChatBubble() {
       <button onClick={() => setOpen(o => !o)} style={{
         width: 52, height: 52, borderRadius: '50%', background: D.accent,
         border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        boxShadow: '0 4px 20px rgba(255,159,10,0.4)', transition: 'transform 0.15s, box-shadow 0.15s',
+        boxShadow: '0 4px 20px rgba(224,122,0,0.4)', transition: 'transform 0.15s, box-shadow 0.15s',
       }}
         onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.08)'}
         onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}

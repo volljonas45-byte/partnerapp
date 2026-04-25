@@ -6,9 +6,9 @@ import { useAuth } from '../context/AuthContext';
 const D = {
   bg:'#0D0D12', card:'#16161E', card2:'#1C1C26', border:'rgba(255,255,255,0.07)',
   text:'#F2F2F7', text2:'#AEAEB2', text3:'#636366',
-  accent:'#FF9F0A', accentL:'rgba(255,159,10,0.12)',
+  accent:'#E07A00', accentL:'rgba(224,122,0,0.12)',
   green:'#34D399', greenL:'#34D39914',
-  orange:'#FF9F0A', orangeL:'#FF9F0A14',
+  orange:'#E07A00', orangeL:'#E07A0014',
   red:'#FF453A', redL:'#FF453A14',
 };
 

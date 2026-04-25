@@ -13,9 +13,9 @@ import LeadGuide from '../components/LeadGuide';
 const D = {
   bg: '#0D0D12', text: '#F2F2F7', text2: '#AEAEB2', text3: '#636366',
   inputBg: 'rgba(255,255,255,0.04)',
-  accent: '#FF9F0A', accentL: 'rgba(255,159,10,0.12)',
+  accent: '#E07A00', accentL: 'rgba(224,122,0,0.12)',
   green: '#34D399', greenL: 'rgba(52,211,153,0.12)',
-  orange: '#FF9F0A', orangeL: 'rgba(255,159,10,0.12)',
+  orange: '#E07A00', orangeL: 'rgba(224,122,0,0.12)',
   red: '#FF453A', redL: 'rgba(255,69,58,0.12)',
   purple: '#BF5AF2', purpleL: 'rgba(191,90,242,0.12)',
   border: 'rgba(255,255,255,0.06)',
@@ -155,7 +155,7 @@ function ScreenshotImportModal({ onClose, onCreate }) {
             background: `linear-gradient(135deg, ${D.accent}, #7B9FF5)`,
             color: '#fff', cursor: loading ? 'not-allowed' : 'pointer',
             fontSize: 14, fontWeight: 700, marginBottom: 14, opacity: loading ? 0.7 : 1,
-            boxShadow: '0 4px 20px rgba(255,159,10,0.3)',
+            boxShadow: '0 4px 20px rgba(224,122,0,0.3)',
           }}>
             {loading ? 'Analysiere...' : 'Daten extrahieren'}
           </button>
@@ -237,7 +237,7 @@ function LeadModal({ lead, onClose, onSave }) {
         </div>
         <div style={{ display: 'flex', gap: 8, marginTop: 18, justifyContent: 'flex-end' }}>
           <button onClick={onClose} style={{ padding: '8px 16px', borderRadius: 9, border: `1px solid ${D.border}`, background: 'none', color: D.text2, cursor: 'pointer', fontSize: 13 }}>Abbrechen</button>
-          <button onClick={() => onSave(form)} style={{ padding: '8px 18px', borderRadius: 9, border: 'none', background: `linear-gradient(135deg, ${D.accent}, #7B9FF5)`, color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, boxShadow: '0 4px 16px rgba(255,159,10,0.3)' }}>Speichern</button>
+          <button onClick={() => onSave(form)} style={{ padding: '8px 18px', borderRadius: 9, border: 'none', background: `linear-gradient(135deg, ${D.accent}, #7B9FF5)`, color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, boxShadow: '0 4px 16px rgba(224,122,0,0.3)' }}>Speichern</button>
         </div>
       </motion.div>
     </motion.div>, document.body
@@ -293,7 +293,7 @@ function CallLogSheet({ lead, onClose }) {
             flex: 2, padding: 10, borderRadius: 10, border: 'none',
             background: `linear-gradient(135deg, ${D.accent}, #7B9FF5)`,
             color: '#fff', cursor: 'pointer', fontSize: 14, fontWeight: 700,
-            boxShadow: '0 4px 16px rgba(255,159,10,0.3)',
+            boxShadow: '0 4px 16px rgba(224,122,0,0.3)',
           }}>
             {log.isPending ? 'Speichern...' : 'Eintragen'}
           </button>
@@ -376,7 +376,7 @@ function LeadRow({ lead, isSelected, onClick, onCall, index }) {
       style={{
         display: 'flex', alignItems: 'center', gap: 8, padding: '9px 14px',
         borderBottom: `1px solid ${D.borderSubtle}`, cursor: 'pointer',
-        background: isSelected ? 'rgba(255,159,10,0.08)' : hovered ? 'rgba(255,255,255,0.025)' : 'transparent',
+        background: isSelected ? 'rgba(224,122,0,0.08)' : hovered ? 'rgba(255,255,255,0.025)' : 'transparent',
         borderLeft: isSelected ? `3px solid ${D.accent}` : '3px solid transparent',
         transition: 'background 0.15s',
       }}
@@ -620,8 +620,8 @@ export default function MyLeads() {
   const TABS = [{ key: 'alle', label: 'Alle' }, ...STATUSES.map(s => ({ key: s, label: STATUS_LABEL[s] }))];
 
   const KPI_CARDS = [
-    { label: 'Gesamt',          value: counts.alle,           color: D.accent,   glow: 'rgba(255,159,10,0.15)',   icon: PhoneCall },
-    { label: 'Zu anrufen',      value: counts.anrufen,        color: D.orange, glow: 'rgba(255,159,10,0.15)',   icon: Phone },
+    { label: 'Gesamt',          value: counts.alle,           color: D.accent,   glow: 'rgba(224,122,0,0.15)',   icon: PhoneCall },
+    { label: 'Zu anrufen',      value: counts.anrufen,        color: D.orange, glow: 'rgba(224,122,0,0.15)',   icon: Phone },
     { label: 'Termine gesetzt', value: counts.termin_gesetzt, color: D.purple, glow: 'rgba(191,90,242,0.15)',   icon: CalendarDays },
     { label: 'Gewonnen',        value: counts.gewonnen,       color: D.green,  glow: 'rgba(52,211,153,0.15)',   icon: CheckCircle2 },
   ];
@@ -631,7 +631,7 @@ export default function MyLeads() {
 
       {/* ambient glows */}
       <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0 }}>
-        <div style={{ position: 'absolute', top: '-5%', left: '30%', width: 400, height: 400, background: 'rgba(255,159,10,0.06)', borderRadius: '50%', filter: 'blur(100px)' }} />
+        <div style={{ position: 'absolute', top: '-5%', left: '30%', width: 400, height: 400, background: 'rgba(224,122,0,0.06)', borderRadius: '50%', filter: 'blur(100px)' }} />
         <div style={{ position: 'absolute', bottom: '5%', right: '15%', width: 350, height: 350, background: 'rgba(191,90,242,0.05)', borderRadius: '50%', filter: 'blur(90px)' }} />
       </div>
 
@@ -694,7 +694,7 @@ export default function MyLeads() {
           <button onClick={() => setShowScreenshot(true)} style={{
             display: 'flex', alignItems: 'center', gap: 4, padding: '7px 12px', borderRadius: 9,
             fontSize: 12, fontWeight: 600, background: D.orangeL, color: D.orange,
-            border: `1px solid rgba(255,159,10,0.2)`, cursor: 'pointer', lineHeight: 1,
+            border: `1px solid rgba(224,122,0,0.2)`, cursor: 'pointer', lineHeight: 1,
           }}>
             <Camera size={13} /> Screenshot
           </button>
@@ -702,7 +702,7 @@ export default function MyLeads() {
             display: 'flex', alignItems: 'center', gap: 5, padding: '7px 18px', borderRadius: 9,
             fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer',
             background: `linear-gradient(135deg, ${D.accent}, #7B9FF5)`,
-            color: '#fff', boxShadow: '0 4px 16px rgba(255,159,10,0.3)',
+            color: '#fff', boxShadow: '0 4px 16px rgba(224,122,0,0.3)',
           }}>
             <Plus size={14} /> Lead hinzufügen
           </button>
@@ -799,8 +799,8 @@ export default function MyLeads() {
                       onMouseLeave={() => setShowDemoTooltip(false)}>
                       <button onClick={() => navigate('/demo-wizard', { state: { lead: selectedLead } })} style={{
                         display: 'flex', alignItems: 'center', gap: 5, padding: '6px 11px', borderRadius: 8,
-                        fontSize: 11.5, fontWeight: 600, background: 'rgba(255,159,10,0.12)', color: '#FF9F0A',
-                        border: '1px solid rgba(255,159,10,0.2)', cursor: 'pointer',
+                        fontSize: 11.5, fontWeight: 600, background: 'rgba(224,122,0,0.12)', color: '#E07A00',
+                        border: '1px solid rgba(224,122,0,0.2)', cursor: 'pointer',
                       }}>
                         <Presentation size={12} /> Demo
                       </button>

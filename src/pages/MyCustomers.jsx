@@ -8,9 +8,9 @@ import { partnerApi } from '../api/partner';
 
 const D = {
   text: '#F2F2F7', text2: '#AEAEB2', text3: '#636366',
-  accent: '#FF9F0A', accentL: 'rgba(255,159,10,0.12)',
+  accent: '#E07A00', accentL: 'rgba(224,122,0,0.12)',
   green: '#34D399', greenL: 'rgba(52,211,153,0.12)',
-  orange: '#FF9F0A', orangeL: 'rgba(255,159,10,0.12)',
+  orange: '#E07A00', orangeL: 'rgba(224,122,0,0.12)',
   red: '#FF453A', redL: 'rgba(255,69,58,0.12)',
   purple: '#BF5AF2', purpleL: 'rgba(191,90,242,0.12)',
   border: 'rgba(255,255,255,0.06)',
@@ -159,7 +159,7 @@ export default function MyCustomers() {
           style={{ textAlign: 'center', padding: '64px 24px',
             background: 'rgba(255,255,255,0.02)', border: `1px solid ${D.border}`, borderRadius: 16 }}>
           <div style={{ width: 56, height: 56, borderRadius: 16, background: D.accentL,
-            border: `1px solid rgba(255,159,10,0.3)`, display: 'flex', alignItems: 'center',
+            border: `1px solid rgba(224,122,0,0.3)`, display: 'flex', alignItems: 'center',
             justifyContent: 'center', margin: '0 auto 16px' }}>
             <Building2 size={26} color={D.accent} />
           </div>
@@ -232,7 +232,7 @@ export default function MyCustomers() {
                   {budget && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 10px',
                       borderRadius: 8, background: c.agreed_budget ? D.greenL : D.orangeL,
-                      border: `1px solid ${c.agreed_budget ? 'rgba(52,211,153,0.25)' : 'rgba(255,159,10,0.25)'}` }}>
+                      border: `1px solid ${c.agreed_budget ? 'rgba(52,211,153,0.25)' : 'rgba(224,122,0,0.25)'}` }}>
                       <Euro size={12} color={c.agreed_budget ? D.green : D.orange} />
                       <span style={{ fontSize: 12.5, fontWeight: 700, color: c.agreed_budget ? D.green : D.orange }}>
                         {budgetLabel}: {fmtEur(budget)}
@@ -256,7 +256,7 @@ export default function MyCustomers() {
                   {c.demo_link && (
                     <a href={c.demo_link} target="_blank" rel="noopener noreferrer"
                       style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px',
-                        borderRadius: 8, background: D.accentL, border: `1px solid rgba(255,159,10,0.3)`,
+                        borderRadius: 8, background: D.accentL, border: `1px solid rgba(224,122,0,0.3)`,
                         color: D.accent, fontSize: 12.5, fontWeight: 700, textDecoration: 'none' }}>
                       <ExternalLink size={12} /> Demo ansehen
                     </a>
@@ -294,7 +294,7 @@ export default function MyCustomers() {
           {me?.ws_email && (
             <a href={`mailto:${me.ws_email}`}
               style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 9,
-                background: D.accentL, border: `1px solid rgba(255,159,10,0.25)`,
+                background: D.accentL, border: `1px solid rgba(224,122,0,0.25)`,
                 color: D.accent, fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
               <Mail size={13} /> {me.ws_email}
             </a>
