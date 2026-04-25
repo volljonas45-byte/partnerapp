@@ -1,360 +1,620 @@
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Play, CheckCircle2, Clock, ChevronDown, ChevronUp, GraduationCap, X, Trophy } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Play, ChevronLeft, ChevronRight, Check, GraduationCap, BookOpen } from 'lucide-react';
 
-const glass = {
-  backdropFilter: 'blur(24px)',
-  WebkitBackdropFilter: 'blur(24px)',
-  background: 'rgba(255,255,255,0.025)',
-  border: '1px solid rgba(255,255,255,0.06)',
-  borderRadius: 18,
-};
+// ─── Data ────────────────────────────────────────────────────────────────────
 
-const MODULES = [
+const COLD_CALLING = [
   {
-    id: 'm1',
-    title: 'Mindset & Motivation',
-    description: 'Die richtige mentale Einstellung für Cold Calls – Resilienz, Selbstvertrauen und tägliche Routinen.',
-    color: '#3B82F6', glow: 'rgba(59,130,246,0.2)', emoji: '🧠',
+    block: 'Mindset & Grundlage',
+    color: '#7F77DD',
+    bg: 'rgba(127,119,221,0.12)',
+    dot: '#7F77DD',
     videos: [
-      { ytId: 'jc0WyiPuXLU', title: 'The ONLY Cold Call Mindset Video You\'ll Ever Need', channel: 'Sales Training',   duration: '10:14', level: 'Einsteiger'     },
-      { ytId: '0L2aAmew-ZM', title: 'Cold Calling Motivation – Embrace Rejection',         channel: 'Sales Mindset',    duration: '8:30',  level: 'Einsteiger'     },
-      { ytId: 'DaofFnlfWIo', title: 'Know Your Numbers And Love Cold Calling',             channel: 'Sales Motivation', duration: '12:05', level: 'Einsteiger'     },
+      { id: 'ikn-tetNHZw', title: 'Angst vorm Cold Calling überwinden', duration: '~14 min', desc: 'Fear & Anxiety auflösen – der essenzielle Einstieg für jeden Cold Caller.' },
+      { id: 'jc0WyiPuXLU', title: 'Das einzige Mindset-Video das du brauchst', duration: '~18 min', desc: 'Wie die besten Cold Caller über Ablehnung denken – .01% Mindset.' },
     ],
   },
   {
-    id: 'm2',
-    title: 'Vorbereitung & Script',
-    description: 'Prospects recherchieren, Listen aufbauen und dich optimal auf jeden Anruf vorbereiten.',
-    color: '#38BDF8', glow: 'rgba(56,189,248,0.2)', emoji: '🔍',
+    block: 'Script & Opener',
+    color: '#EF9F27',
+    bg: 'rgba(239,159,39,0.12)',
+    dot: '#EF9F27',
     videos: [
-      { ytId: 'zO76-Nd0GrY', title: 'The Ultimate Cold Calling Script for B2B Sales',      channel: 'Patrick Dang',     duration: '11:22', level: 'Einsteiger'     },
-      { ytId: 'yZxc-JZTdgI', title: 'The ULTIMATE Cold Calling Script for B2B Success',    channel: 'B2B Sales',        duration: '14:38', level: 'Fortgeschritten'},
-      { ytId: 'JdfGMqaSAGI', title: 'How I Cold Call in B2B',                              channel: 'Jeremy Miner',     duration: '13:54', level: 'Fortgeschritten'},
+      { id: 'f7ys83DQXGg', title: 'Der einzige Opener den du brauchst (2024)', duration: '~12 min', desc: 'Pattern Interrupt und der perfekte erste Satz – System für 1+ Meeting pro Tag.' },
+      { id: 'NdIPxKIPVc0', title: 'Die besten Opening Lines 2025', duration: '~20 min', desc: '8 Sales-Trainer zeigen ihre stärksten Opener im direkten Vergleich.' },
+      { id: 'yZxc-JZTdgI', title: 'Das ultimative B2B Cold Call Script', duration: '~22 min', desc: 'Vollständiges Script von der Begrüßung bis zur Terminvereinbarung.' },
     ],
   },
   {
-    id: 'm3',
-    title: 'Der perfekte Opener',
-    description: 'In den ersten 10 Sekunden Interesse wecken und einen starken ersten Eindruck hinterlassen.',
-    color: '#818cf8', glow: 'rgba(129,140,248,0.2)', emoji: '📞',
+    block: 'Einwandbehandlung',
+    color: '#E24B4A',
+    bg: 'rgba(226,75,74,0.12)',
+    dot: '#E24B4A',
     videos: [
-      { ytId: 'GDMfOa6WN50', title: 'Steal This Cold Call Intro',                          channel: 'Jeremy Miner',     duration: '9:22',  level: 'Einsteiger'     },
-      { ytId: 'G9BrJ0_Jt9w', title: 'Overcome ANY Cold Call Objection – Opener',           channel: 'Sales Training',   duration: '7:47',  level: 'Fortgeschritten'},
-      { ytId: 'EdFz7YVq6PI', title: 'The 70/30 Rule in Cold Calling',                      channel: 'Cold Calling Pro', duration: '11:30', level: 'Fortgeschritten'},
+      { id: '-m_pMr52b6M', title: 'Die 10 häufigsten Einwände & Antworten', duration: '~35 min', desc: 'Alle Standard-Einwände mit konkreten Antworten direkt aus der Praxis.' },
+      { id: 'NtrC9DK_qE8', title: '3-Schritt-Framework für jeden Einwand', duration: '~40 min', desc: 'Vollständiger Einwand-Kurs – ein Framework das auf jeden Einwand passt.' },
+      { id: '4Gwt4w4Ran4', title: '42 Min Einwand-Roleplays (Fortgeschritten)', duration: '~43 min', desc: 'Armand Farrokh, Jason Bay & Nick Cegelski in echten Live-Roleplays.' },
     ],
   },
   {
-    id: 'm4',
-    title: 'Einwandbehandlung',
-    description: 'Die häufigsten Einwände im B2B-Vertrieb und wie du sie professionell und überzeugend beantwortest.',
-    color: '#f59e0b', glow: 'rgba(245,158,11,0.2)', emoji: '🛡️',
+    block: 'Live Cold Calls',
+    color: '#1D9E75',
+    bg: 'rgba(29,158,117,0.12)',
+    dot: '#1D9E75',
     videos: [
-      { ytId: 'jlaetKa-Pt8', title: 'Live Cold Call – How to Overcome Any Sales Objection', channel: 'Sales Roleplay',  duration: '14:40', level: 'Einsteiger'     },
-      { ytId: '8olBXWy3pbE', title: 'How to Crush Any Cold Calling Objection',              channel: 'Sales Training',   duration: '9:55',  level: 'Fortgeschritten'},
-      { ytId: 'shRMsLX48eE', title: 'Every Cold Call Objection & How to Overcome Them',    channel: 'Sales Insights',   duration: '16:18', level: 'Fortgeschritten'},
-      { ytId: 'TJdNyztb2gU', title: '5 Data-Backed Scripts to Overcome Any Objection',     channel: 'B2B Sales Lab',    duration: '12:02', level: 'Profi'          },
+      { id: 'WDuflhD3JHQ', title: 'Live: Erfolgreicher Cold Call (2024)', duration: '~8 min', desc: 'Echter Anruf mit einem Sales Leader – Einwandbehandlung live beobachten.' },
+      { id: '2vivv2HeiBU', title: 'Masterclass mit echten Live-Calls', duration: '~30 min', desc: 'Perfektes Script + Live-Demos: 1 von 3 Gesprächen endet im Termin.' },
+      { id: 'DEt3IRqqUVs', title: '10 Live Calls von 6 verschiedenen Reps', duration: '~25 min', desc: 'Verschiedene Stile und Persönlichkeiten – was funktioniert wirklich?' },
     ],
   },
   {
-    id: 'm5',
-    title: 'Termin setzen & Abschluss',
-    description: 'Qualifizierte Termine setzen, die auch stattfinden – und den Call sauber zum Abschluss bringen.',
-    color: '#34D399', glow: 'rgba(52,211,153,0.2)', emoji: '📅',
+    block: 'Termin buchen & Abschluss',
+    color: '#378ADD',
+    bg: 'rgba(55,138,221,0.12)',
+    dot: '#378ADD',
     videos: [
-      { ytId: 'Fm0IjDlIOsw', title: 'Fanatical Prospecting – How to Set More Appointments', channel: 'Jeb Blount',      duration: '18:33', level: 'Fortgeschritten'},
-      { ytId: 'a58ULtqf4s8', title: 'Jeb Blount\'s Playbook for Sales Success',             channel: 'Sales Gravy',      duration: '5:15',  level: 'Einsteiger'     },
-      { ytId: 'rKQ077XaiKc', title: 'Live Cold Call – Objection Handling to Appointment',   channel: 'Sales Gravy',      duration: '10:47', level: 'Profi'          },
+      { id: 'dnOu6ysy7NU', title: 'Wie ich 3–5 Termine/Tag buche (B2B)', duration: '~18 min', desc: 'Konkretes System – Schritt für Schritt zur maximalen Buchungsrate.' },
+      { id: 'VorAlE7eRIk', title: 'B2B Appointment Setting meistern', duration: '~20 min', desc: 'Eric Watkins erklärt seine genaue Methode für konsistente Termin-Pipeline.' },
     ],
   },
   {
-    id: 'm6',
-    title: 'Praxis & Live Roleplay',
-    description: 'Echte Cold Calls zum Zuschauen und Lernen – mit Live-Feedback und detaillierter Analyse.',
-    color: '#c084fc', glow: 'rgba(192,132,252,0.18)', emoji: '🎯',
+    block: 'Masterclasses (Deep-Dive)',
+    color: '#639922',
+    bg: 'rgba(99,153,34,0.12)',
+    dot: '#639922',
     videos: [
-      { ytId: 'Yt9xgtLISt8', title: 'The Best Cold Call Script Ever – Live Role Play',      channel: 'Sales Training',   duration: '18:22', level: 'Profi'          },
-      { ytId: 'nI8cUX5OI7U', title: 'Cold Calling Do\'s and Don\'ts',                       channel: 'Jeremy Miner',     duration: '22:45', level: 'Profi'          },
-      { ytId: 'nu6ftMztzfM', title: 'Scared to Make Cold Calls? Overcome Call Reluctance',  channel: 'Jeremy Miner',     duration: '15:30', level: 'Profi'          },
+      { id: '17SF_CBE2Pg', title: '17-Min Cold Call Kurs für B2B Sales', duration: '~17 min', desc: 'Kompakter Gesamtkurs – alle wichtigen Strategien in einer Session.' },
+      { id: 'aW8jAYnvqyI', title: '35 Min Expert Cold Calling Tips (B2B)', duration: '~35 min', desc: 'B2B & Software Sales – ehrliche Tipps von erfahrenen Praktikern.' },
+      { id: 'A1dsYkSL7TM', title: '15+ Jahre No-BS Cold Calling Advice', duration: '~36 min', desc: 'Die direkteste und ehrlichste Cold Calling Zusammenfassung auf YouTube.' },
     ],
   },
 ];
 
-const LEVEL_STYLE = {
-  Einsteiger:      { color: '#34D399', bg: 'rgba(52,211,153,0.1)',  border: 'rgba(52,211,153,0.25)'  },
-  Fortgeschritten: { color: '#38BDF8', bg: 'rgba(56,189,248,0.1)',  border: 'rgba(56,189,248,0.25)'  },
-  Profi:           { color: '#c084fc', bg: 'rgba(192,132,252,0.1)', border: 'rgba(192,132,252,0.25)' },
+const WEB_DESIGN = [
+  {
+    block: 'Warum eine Website entscheidend ist',
+    color: '#378ADD',
+    bg: 'rgba(55,138,221,0.12)',
+    dot: '#378ADD',
+    videos: [
+      { id: 'SAGcWZVN5m0', title: 'Wie eine Website einem Unternehmen hilft', duration: '~10 min', desc: 'Web Designer müssen genau wissen, warum Unternehmen eine Website brauchen – perfekt für den Pitch.' },
+      { id: 'p8fjj6Lyexs', title: '9 Gründe warum dein Business eine Website braucht', duration: '~12 min', desc: 'Konkrete Argumente für Kunden: Credibility, Erreichbarkeit, Wachstum.' },
+      { id: 'NN7YEIlc-Oc', title: 'Warum eine Website das wichtigste digitale Asset ist', duration: '~8 min', desc: 'HubSpot erklärt kompakt: Website als zentraler Knotenpunkt des Marketings.' },
+    ],
+  },
+  {
+    block: 'Vertrauen & erste Eindrücke',
+    color: '#E24B4A',
+    bg: 'rgba(226,75,74,0.12)',
+    dot: '#E24B4A',
+    videos: [
+      { id: 'tqYkYk5nEu8', title: 'Warum manche Websites vertrauenswürdig wirken', duration: '~14 min', desc: 'Die psychologischen Faktoren hinter Trust – und was schlechte Websites falsch machen.' },
+      { id: 'sX-VHe9vyf0', title: '10 Website-Fehler die Credibility zerstören', duration: '~16 min', desc: 'Die häufigsten Design-Fehler und warum sie Kunden kosten.' },
+      { id: 'TKuFLxX94qU', title: 'Kann eine schlechte Website eine Marke ruinieren?', duration: '~11 min', desc: 'Direkte Antwort: Ja. Und hier ist warum – perfektes Argument für den Erstkontakt.' },
+    ],
+  },
+  {
+    block: 'Web Design Grundlagen',
+    color: '#7F77DD',
+    bg: 'rgba(127,119,221,0.12)',
+    dot: '#7F77DD',
+    videos: [
+      { id: 'q9nBRJo_Iss', title: 'Web Design Basics: 4 Prinzipien für Anfänger', duration: '~15 min', desc: 'Die vier Grundprinzipien guten Webdesigns – verständlich erklärt.' },
+      { id: 'Kt6qND056bM', title: '10 Web Design Fehler die Besucher vertreiben', duration: '~18 min', desc: '88% der Besucher kommen nach schlechter UX nicht zurück – diese Fehler kosten Leads.' },
+      { id: 'F4fbwKV9dBU', title: 'Alles über Web Design in 3 Minuten', duration: '~3 min', desc: 'Schneller animierter Überblick – ideal als Einstieg oder Refresher.' },
+    ],
+  },
+  {
+    block: 'Websites verkaufen & pitchen',
+    color: '#639922',
+    bg: 'rgba(99,153,34,0.12)',
+    dot: '#639922',
+    videos: [
+      { id: 'r1wujxdXB4I', title: 'Web Design Services verkaufen: 5 Tipps', duration: '~18 min', desc: 'Wie man hochwertige Web-Design-Kunden gewinnt – mit klarer Positionierung.' },
+      { id: 'W-_NGb2jchM', title: '30-Sekunden Sales Pitch für Websites', duration: '~8 min', desc: 'Was sagst du in 30 Sekunden am Telefon? Dieses Video liefert genau das.' },
+      { id: 'foX8YCcR1OY', title: 'Websites verkaufen mit der Mini-Audit Methode', duration: '~14 min', desc: 'Einfache Technik: Live-Analyse der Kunden-Website als Türöffner für Premium-Projekte.' },
+    ],
+  },
+];
+
+// ─── Styles ──────────────────────────────────────────────────────────────────
+
+const S = {
+  page: {
+    minHeight: '100%',
+    padding: '28px 24px 64px',
+    boxSizing: 'border-box',
+    maxWidth: 1100,
+    margin: '0 auto',
+  },
+  pageHeader: {
+    marginBottom: 24,
+  },
+  label: {
+    fontSize: 11,
+    fontWeight: 700,
+    color: 'rgba(255,255,255,0.28)',
+    textTransform: 'uppercase',
+    letterSpacing: '0.12em',
+    margin: '0 0 4px',
+  },
+  h1: {
+    margin: '0 0 4px',
+    fontSize: 24,
+    fontWeight: 700,
+    letterSpacing: '-0.03em',
+    color: 'rgba(255,255,255,0.92)',
+  },
+  subtitle: {
+    margin: 0,
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.32)',
+  },
+  // Tab switcher
+  tabRow: {
+    display: 'flex',
+    gap: 8,
+    marginBottom: 20,
+  },
+  tab: (active) => ({
+    display: 'flex',
+    alignItems: 'center',
+    gap: 7,
+    padding: '8px 16px',
+    borderRadius: 10,
+    border: `0.5px solid ${active ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.08)'}`,
+    background: active ? 'rgba(255,255,255,0.07)' : 'transparent',
+    color: active ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.38)',
+    fontSize: 13,
+    fontWeight: 500,
+    cursor: 'pointer',
+    transition: 'all 0.15s',
+  }),
+  // Player container
+  playerWrap: {
+    display: 'flex',
+    height: 600,
+    overflow: 'hidden',
+    border: '0.5px solid rgba(255,255,255,0.08)',
+    borderRadius: 16,
+    background: 'rgba(255,255,255,0.02)',
+  },
+  // Sidebar
+  sidebar: {
+    width: 258,
+    flexShrink: 0,
+    borderRight: '0.5px solid rgba(255,255,255,0.08)',
+    overflowY: 'auto',
+    scrollbarWidth: 'thin',
+    scrollbarColor: 'rgba(255,255,255,0.08) transparent',
+  },
+  blockHeader: (color) => ({
+    padding: '10px 14px 6px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 7,
+    position: 'sticky',
+    top: 0,
+    background: '#070C15',
+    zIndex: 1,
+  }),
+  blockDot: (color) => ({
+    width: 7,
+    height: 7,
+    borderRadius: '50%',
+    background: color,
+    flexShrink: 0,
+  }),
+  blockName: {
+    fontSize: 10,
+    fontWeight: 700,
+    color: 'rgba(255,255,255,0.35)',
+    textTransform: 'uppercase',
+    letterSpacing: '0.08em',
+    flex: 1,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+  },
+  blockCount: {
+    fontSize: 10,
+    color: 'rgba(255,255,255,0.2)',
+    flexShrink: 0,
+  },
+  videoItem: (active, watched) => ({
+    display: 'flex',
+    alignItems: 'center',
+    gap: 9,
+    padding: '8px 14px',
+    cursor: 'pointer',
+    background: active ? 'rgba(255,255,255,0.05)' : 'transparent',
+    borderLeft: `2px solid ${active ? 'rgba(255,255,255,0.25)' : 'transparent'}`,
+    transition: 'background 0.12s',
+  }),
+  numCircle: (active, watched, blockColor) => ({
+    width: 20,
+    height: 20,
+    borderRadius: '50%',
+    flexShrink: 0,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: 9,
+    fontWeight: 600,
+    background: watched ? 'rgba(29,158,117,0.22)' : active ? 'rgba(255,255,255,0.1)' : 'transparent',
+    border: `1px solid ${watched ? '#1D9E75' : active ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.1)'}`,
+    color: watched ? '#1D9E75' : active ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.3)',
+  }),
+  videoItemTitle: (active) => ({
+    fontSize: 12,
+    fontWeight: active ? 500 : 400,
+    color: active ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.45)',
+    lineHeight: 1.35,
+    overflow: 'hidden',
+    display: '-webkit-box',
+    WebkitLineClamp: 2,
+    WebkitBoxOrient: 'vertical',
+  }),
+  // Main area
+  main: {
+    flex: 1,
+    minWidth: 0,
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
+  },
+  // Header bar
+  playerHeader: {
+    padding: '0 18px',
+    height: 42,
+    display: 'flex',
+    alignItems: 'center',
+    gap: 14,
+    borderBottom: '0.5px solid rgba(255,255,255,0.08)',
+    flexShrink: 0,
+  },
+  headerTitle: {
+    fontSize: 13,
+    fontWeight: 500,
+    color: 'rgba(255,255,255,0.75)',
+    flex: 1,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+  },
+  progressTrack: {
+    width: 120,
+    height: 3,
+    background: 'rgba(255,255,255,0.07)',
+    borderRadius: 99,
+    flexShrink: 0,
+    overflow: 'hidden',
+  },
+  progressFill: (pct) => ({
+    height: '100%',
+    width: `${pct}%`,
+    background: '#1D9E75',
+    borderRadius: 99,
+    transition: 'width 0.3s',
+  }),
+  counter: {
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.3)',
+    flexShrink: 0,
+    fontVariantNumeric: 'tabular-nums',
+  },
+  // Video player
+  playerArea: {
+    position: 'relative',
+    aspectRatio: '16/9',
+    background: '#000',
+    flexShrink: 0,
+    cursor: 'pointer',
+    overflow: 'hidden',
+  },
+  thumbnail: {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
+    display: 'block',
+  },
+  overlay: {
+    position: 'absolute',
+    inset: 0,
+    background: 'linear-gradient(0deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.1) 60%)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  playBtn: {
+    width: 52,
+    height: 52,
+    borderRadius: '50%',
+    background: 'rgba(255,255,255,0.15)',
+    border: '1.5px solid rgba(255,255,255,0.4)',
+    backdropFilter: 'blur(8px)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iframe: {
+    width: '100%',
+    height: '100%',
+    border: 'none',
+    display: 'block',
+  },
+  // Video info
+  videoInfo: {
+    flex: 1,
+    minHeight: 0,
+    padding: '14px 18px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 8,
+    overflow: 'hidden',
+  },
+  chipRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+  },
+  chip: (color, bg) => ({
+    fontSize: 10,
+    fontWeight: 600,
+    color: color,
+    background: bg,
+    border: `0.5px solid ${color}44`,
+    padding: '2px 8px',
+    borderRadius: 99,
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+  }),
+  duration: {
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.28)',
+  },
+  videoTitle: {
+    fontSize: 15,
+    fontWeight: 500,
+    color: 'rgba(255,255,255,0.9)',
+    lineHeight: 1.4,
+    margin: 0,
+  },
+  videoDesc: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.38)',
+    lineHeight: 1.5,
+    margin: 0,
+  },
+  navRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 'auto',
+  },
+  navBtn: (disabled) => ({
+    display: 'flex',
+    alignItems: 'center',
+    gap: 5,
+    padding: '6px 12px',
+    borderRadius: 8,
+    border: '0.5px solid rgba(255,255,255,0.1)',
+    background: 'transparent',
+    color: disabled ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.55)',
+    fontSize: 12,
+    fontWeight: 500,
+    cursor: disabled ? 'default' : 'pointer',
+    transition: 'all 0.12s',
+  }),
+  watchedBtn: (isWatched) => ({
+    marginLeft: 'auto',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 6,
+    padding: '6px 14px',
+    borderRadius: 8,
+    border: `0.5px solid ${isWatched ? '#1D9E75' : 'rgba(255,255,255,0.1)'}`,
+    background: isWatched ? 'rgba(29,158,117,0.12)' : 'transparent',
+    color: isWatched ? '#1D9E75' : 'rgba(255,255,255,0.4)',
+    fontSize: 12,
+    fontWeight: 500,
+    cursor: 'pointer',
+    transition: 'all 0.15s',
+  }),
 };
 
-export default function Training() {
-  const [watched, setWatched] = useState(() => {
-    try { return new Set(JSON.parse(localStorage.getItem('vecturo_training_watched') || '[]')); }
-    catch { return new Set(); }
-  });
-  const [activeModule, setActiveModule] = useState('m1');
-  const [playingVideo, setPlayingVideo] = useState(null);
+// ─── CurriculumPlayer ────────────────────────────────────────────────────────
 
-  const toggleWatched = (ytId) => {
-    setWatched(prev => {
+function CurriculumPlayer({ curriculum, title }) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [watched, setWatched] = useState(new Set());
+  const [playerActive, setPlayerActive] = useState(false);
+
+  // Flatten all videos with block info
+  const flatVideos = useMemo(() => {
+    const list = [];
+    curriculum.forEach((block) => {
+      block.videos.forEach((v) => {
+        list.push({ ...v, block: block.block, color: block.color, bg: block.bg, dot: block.dot });
+      });
+    });
+    return list;
+  }, [curriculum]);
+
+  const total = flatVideos.length;
+  const watchedCount = watched.size;
+  const progressPct = total ? Math.round((watchedCount / total) * 100) : 0;
+
+  const current = flatVideos[currentIndex];
+
+  const goTo = (idx) => {
+    if (idx < 0 || idx >= total) return;
+    setCurrentIndex(idx);
+    setPlayerActive(false);
+  };
+
+  const toggleWatched = () => {
+    setWatched((prev) => {
       const next = new Set(prev);
-      next.has(ytId) ? next.delete(ytId) : next.add(ytId);
-      localStorage.setItem('vecturo_training_watched', JSON.stringify([...next]));
+      next.has(currentIndex) ? next.delete(currentIndex) : next.add(currentIndex);
       return next;
     });
   };
 
-  const totalVideos = MODULES.reduce((s, m) => s + m.videos.length, 0);
-  const watchedCount = MODULES.reduce((s, m) => s + m.videos.filter(v => watched.has(v.ytId)).length, 0);
-  const progressPct = totalVideos ? Math.round((watchedCount / totalVideos) * 100) : 0;
-  const circum = 2 * Math.PI * 18;
+  // Build block list with running index offset
+  let runningIdx = 0;
+  const blocks = curriculum.map((block) => {
+    const start = runningIdx;
+    const items = block.videos.map((v, i) => ({ ...v, flatIdx: start + i }));
+    runningIdx += block.videos.length;
+    const doneCount = items.filter((v) => watched.has(v.flatIdx)).length;
+    return { ...block, items, doneCount };
+  });
 
   return (
-    <div style={{ minHeight: '100%', padding: '28px 20px 64px', boxSizing: 'border-box', position: 'relative' }}>
-
-      {/* Ambient glows */}
-      <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0 }}>
-        <div style={{ position: 'absolute', top: '-10%', right: '10%', width: 500, height: 500, background: 'rgba(129,140,248,0.05)', borderRadius: '50%', filter: 'blur(120px)' }} />
-        <div style={{ position: 'absolute', bottom: '10%', left: '10%', width: 400, height: 400, background: 'rgba(59,130,246,0.05)', borderRadius: '50%', filter: 'blur(100px)' }} />
+    <div style={S.playerWrap}>
+      {/* Sidebar */}
+      <div style={S.sidebar}>
+        {blocks.map((block) => (
+          <div key={block.block}>
+            <div style={S.blockHeader(block.color)}>
+              <div style={S.blockDot(block.dot)} />
+              <span style={S.blockName}>{block.block}</span>
+              <span style={S.blockCount}>{block.doneCount}/{block.items.length}</span>
+            </div>
+            {block.items.map((v, localIdx) => {
+              const isActive = v.flatIdx === currentIndex;
+              const isWatched = watched.has(v.flatIdx);
+              return (
+                <div
+                  key={v.id}
+                  style={S.videoItem(isActive, isWatched)}
+                  onClick={() => goTo(v.flatIdx)}
+                >
+                  <div style={S.numCircle(isActive, isWatched, block.color)}>
+                    {isWatched ? <Check size={9} strokeWidth={3} /> : localIdx + 1}
+                  </div>
+                  <span style={S.videoItemTitle(isActive)}>{v.title}</span>
+                </div>
+              );
+            })}
+          </div>
+        ))}
       </div>
 
-      <div style={{ position: 'relative', zIndex: 1, maxWidth: 1100, margin: '0 auto' }}>
-
+      {/* Main */}
+      <div style={S.main}>
         {/* Header */}
-        <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
-          style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16, marginBottom: 24 }}>
-          <div>
-            <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 4px' }}>Weiterbildung</p>
-            <h1 style={{ margin: '0 0 4px', fontSize: 26, fontWeight: 700, letterSpacing: '-0.03em', color: 'rgba(255,255,255,0.92)' }}>
-              Cold Calling Programm
-            </h1>
-            <p style={{ margin: 0, fontSize: 13, color: 'rgba(255,255,255,0.32)' }}>
-              {totalVideos} Videos in {MODULES.length} Modulen · Werde zum Cold Calling Profi
-            </p>
+        <div style={S.playerHeader}>
+          <span style={S.headerTitle}>{title}</span>
+          <div style={S.progressTrack}>
+            <div style={S.progressFill(progressPct)} />
           </div>
-
-          {/* Progress ring */}
-          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }}
-            style={{ ...glass, padding: '14px 20px', display: 'flex', alignItems: 'center', gap: 14 }}>
-            <div style={{ position: 'relative', width: 48, height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <svg width="48" height="48" style={{ position: 'absolute', inset: 0, transform: 'rotate(-90deg)' }}>
-                <circle cx="24" cy="24" r="18" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="3" />
-                <motion.circle cx="24" cy="24" r="18" fill="none" stroke="#34D399" strokeWidth="3"
-                  strokeLinecap="round" strokeDasharray={circum}
-                  initial={{ strokeDashoffset: circum }}
-                  animate={{ strokeDashoffset: circum * (1 - progressPct / 100) }}
-                  transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-                />
-              </svg>
-              <span style={{ position: 'relative', fontSize: 11, fontWeight: 700, color: '#34D399' }}>{progressPct}%</span>
-            </div>
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.8)' }}>{watchedCount} / {totalVideos} Videos</div>
-              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginTop: 2 }}>abgeschlossen</div>
-            </div>
-          </motion.div>
-        </motion.div>
-
-        {/* Module grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 16 }}>
-          {MODULES.map((mod, i) => {
-            const modDone  = mod.videos.filter(v => watched.has(v.ytId)).length;
-            const modPct   = Math.round((modDone / mod.videos.length) * 100);
-            const isActive = activeModule === mod.id;
-            return (
-              <motion.div key={mod.id}
-                initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.06, duration: 0.4 }}
-                onClick={() => setActiveModule(isActive ? null : mod.id)}
-                style={{
-                  ...glass, padding: '14px 16px', cursor: 'pointer',
-                  borderColor: isActive ? `${mod.color}45` : 'rgba(255,255,255,0.06)',
-                  background: isActive ? 'rgba(255,255,255,0.038)' : 'rgba(255,255,255,0.025)',
-                  boxShadow: isActive ? `0 0 28px ${mod.glow}` : undefined,
-                }}
-                whileHover={{ y: -3, transition: { duration: 0.14 } }}
-                whileTap={{ scale: 0.98 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ fontSize: 18 }}>{mod.emoji}</span>
-                    <div>
-                      <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                        Modul {i + 1}
-                      </div>
-                      <div style={{ fontSize: 12, fontWeight: 600, color: isActive ? mod.color : 'rgba(255,255,255,0.6)' }}>
-                        {mod.title}
-                      </div>
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    {modPct === 100 && <Trophy size={13} color="#34D399" />}
-                    {isActive
-                      ? <ChevronUp size={14} color="rgba(255,255,255,0.3)" />
-                      : <ChevronDown size={14} color="rgba(255,255,255,0.3)" />}
-                  </div>
-                </div>
-                <div style={{ height: 2, background: 'rgba(255,255,255,0.06)', borderRadius: 99, overflow: 'hidden', marginBottom: 6 }}>
-                  <motion.div style={{ height: '100%', background: mod.color, borderRadius: 99 }}
-                    initial={{ width: 0 }} animate={{ width: `${modPct}%` }}
-                    transition={{ delay: 0.3 + i * 0.06, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                  />
-                </div>
-                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)' }}>
-                  {modDone}/{mod.videos.length} Videos · <span style={{ color: mod.color }}>{modPct}%</span>
-                </div>
-              </motion.div>
-            );
-          })}
+          <span style={S.counter}>{watchedCount} / {total}</span>
         </div>
 
-        {/* Active module video grid */}
-        <AnimatePresence mode="wait">
-          {activeModule && (() => {
-            const mod = MODULES.find(m => m.id === activeModule);
-            if (!mod) return null;
-            return (
-              <motion.div key={activeModule}
-                initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
-                transition={{ duration: 0.28 }}
-                style={{ marginBottom: 16 }}>
-                <div style={{ marginBottom: 12, padding: '0 2px' }}>
-                  <h2 style={{ margin: '0 0 2px', fontSize: 15, fontWeight: 700, color: 'rgba(255,255,255,0.85)' }}>
-                    {mod.emoji} {mod.title}
-                  </h2>
-                  <p style={{ margin: 0, fontSize: 12, color: 'rgba(255,255,255,0.32)', lineHeight: 1.5 }}>{mod.description}</p>
+        {/* Player */}
+        <div
+          style={S.playerArea}
+          onClick={() => !playerActive && setPlayerActive(true)}
+        >
+          {playerActive ? (
+            <iframe
+              style={S.iframe}
+              src={`https://www.youtube.com/embed/${current.id}?autoplay=1&rel=0`}
+              title={current.title}
+              allow="autoplay; encrypted-media; accelerometer; clipboard-write; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          ) : (
+            <>
+              <img
+                src={`https://img.youtube.com/vi/${current.id}/hqdefault.jpg`}
+                alt={current.title}
+                style={S.thumbnail}
+                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+              />
+              <div style={S.overlay}>
+                <div style={S.playBtn}>
+                  <Play size={20} color="#fff" fill="#fff" />
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
-                  {mod.videos.map((video, i) => {
-                    const isWatched = watched.has(video.ytId);
-                    const lvl = LEVEL_STYLE[video.level];
-                    return (
-                      <motion.div key={video.ytId}
-                        initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.07, duration: 0.35 }}
-                        style={{
-                          ...glass, overflow: 'hidden', cursor: 'pointer',
-                          borderColor: isWatched ? 'rgba(52,211,153,0.22)' : 'rgba(255,255,255,0.06)',
-                          boxShadow: isWatched ? '0 0 20px rgba(52,211,153,0.08)' : undefined,
-                        }}
-                        whileHover={{ y: -4, transition: { duration: 0.14 } }}
-                        whileTap={{ scale: 0.98 }}>
+              </div>
+            </>
+          )}
+        </div>
 
-                        {/* Thumbnail */}
-                        <div style={{ position: 'relative', aspectRatio: '16/9', background: '#0a1122', overflow: 'hidden' }}
-                          onClick={() => setPlayingVideo(video)}>
-                          <img
-                            src={`https://img.youtube.com/vi/${video.ytId}/hqdefault.jpg`}
-                            alt={video.title}
-                            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                            onError={e => { e.currentTarget.style.display = 'none'; }}
-                          />
-                          {/* Gradient overlay always visible */}
-                          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(0deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.1) 60%)' }} />
-                          {/* Play button */}
-                          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <motion.div whileHover={{ scale: 1.12 }}
-                              style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1.5px solid rgba(255,255,255,0.35)' }}>
-                              <Play size={17} color="#fff" fill="#fff" />
-                            </motion.div>
-                          </div>
-                          {/* Watched badge */}
-                          {isWatched && (
-                            <div style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(52,211,153,0.92)', borderRadius: '50%', width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              <CheckCircle2 size={13} color="#fff" />
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Info */}
-                        <div style={{ padding: '12px 14px 10px' }}>
-                          <p style={{ margin: '0 0 8px', fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.85)', lineHeight: 1.4 }} onClick={() => setPlayingVideo(video)}>
-                            {video.title}
-                          </p>
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                                <Clock size={10} color="rgba(255,255,255,0.28)" />
-                                <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.28)' }}>{video.duration}</span>
-                              </div>
-                              <span style={{ fontSize: 9, fontWeight: 600, color: lvl.color, background: lvl.bg, border: `1px solid ${lvl.border}`, padding: '1px 6px', borderRadius: 99 }}>
-                                {video.level}
-                              </span>
-                            </div>
-                            <button onClick={e => { e.stopPropagation(); toggleWatched(video.ytId); }}
-                              style={{ fontSize: 10, fontWeight: 600, color: isWatched ? '#34D399' : 'rgba(255,255,255,0.28)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, whiteSpace: 'nowrap' }}>
-                              {isWatched ? '✓ Gesehen' : 'Als gesehen markieren'}
-                            </button>
-                          </div>
-                          <div style={{ marginTop: 4, fontSize: 10, color: 'rgba(255,255,255,0.2)' }}>{video.channel}</div>
-                        </div>
-                      </motion.div>
-                    );
-                  })}
-                </div>
-              </motion.div>
-            );
-          })()}
-        </AnimatePresence>
-
-        {/* Tip banner */}
-        <motion.div
-          initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 0.4 }}
-          style={{ ...glass, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14 }}>
-          <div style={{ width: 38, height: 38, borderRadius: 10, background: 'rgba(59,130,246,0.14)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: '1px solid rgba(59,130,246,0.22)' }}>
-            <GraduationCap size={18} color="#3B82F6" />
+        {/* Video info */}
+        <div style={S.videoInfo}>
+          <div style={S.chipRow}>
+            <span style={S.chip(current.color, current.bg)}>{current.block}</span>
+            <span style={S.duration}>{current.duration}</span>
           </div>
-          <div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.72)', marginBottom: 2 }}>
-              Tipp: Täglich 1 Video = in 6 Wochen zum Cold Calling Profi
-            </div>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.28)' }}>
-              Starte mit Modul 1 · Markiere Videos als gesehen · Verfolge deinen Fortschritt
-            </div>
+          <p style={S.videoTitle}>{current.title}</p>
+          <p style={S.videoDesc}>{current.desc}</p>
+          <div style={S.navRow}>
+            <button
+              style={S.navBtn(currentIndex === 0)}
+              disabled={currentIndex === 0}
+              onClick={() => goTo(currentIndex - 1)}
+            >
+              <ChevronLeft size={14} />
+              Zurück
+            </button>
+            <button
+              style={S.navBtn(currentIndex === total - 1)}
+              disabled={currentIndex === total - 1}
+              onClick={() => goTo(currentIndex + 1)}
+            >
+              Weiter
+              <ChevronRight size={14} />
+            </button>
+            <button style={S.watchedBtn(watched.has(currentIndex))} onClick={toggleWatched}>
+              {watched.has(currentIndex) ? <><Check size={13} strokeWidth={2.5} /> Als gesehen markiert</> : 'Als gesehen markieren ✓'}
+            </button>
           </div>
-        </motion.div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Training Page ───────────────────────────────────────────────────────────
+
+const CURRICULA = [
+  { key: 'cold-calling', label: 'Cold Calling Training', icon: <GraduationCap size={14} />, data: COLD_CALLING },
+  { key: 'web-design',   label: 'Web Design für Caller',  icon: <BookOpen size={14} />,     data: WEB_DESIGN   },
+];
+
+export default function Training() {
+  const [activeCurriculum, setActiveCurriculum] = useState('cold-calling');
+  const active = CURRICULA.find((c) => c.key === activeCurriculum);
+
+  return (
+    <div style={S.page}>
+      <div style={S.pageHeader}>
+        <p style={S.label}>Weiterbildung</p>
+        <h1 style={S.h1}>Training</h1>
+        <p style={S.subtitle}>Lernprogramme für Cold Caller – Video für Video zum Profi</p>
       </div>
 
-      {/* Video Modal */}
-      <AnimatePresence>
-        {playingVideo && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.88)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
-            onClick={() => setPlayingVideo(null)}>
-            <motion.div
-              initial={{ scale: 0.92, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.92, opacity: 0 }}
-              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-              style={{ width: '100%', maxWidth: 920, background: '#0D1525', borderRadius: 20, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)' }}
-              onClick={e => e.stopPropagation()}>
-              {/* Modal header */}
-              <div style={{ padding: '13px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.85)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{playingVideo.title}</div>
-                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.32)', marginTop: 2 }}>{playingVideo.channel} · {playingVideo.duration}</div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, marginLeft: 16 }}>
-                  <button onClick={() => toggleWatched(playingVideo.ytId)}
-                    style={{ fontSize: 12, fontWeight: 600, color: watched.has(playingVideo.ytId) ? '#34D399' : 'rgba(255,255,255,0.45)', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, cursor: 'pointer', padding: '5px 12px', whiteSpace: 'nowrap' }}>
-                    {watched.has(playingVideo.ytId) ? '✓ Gesehen' : 'Als gesehen markieren'}
-                  </button>
-                  <button onClick={() => setPlayingVideo(null)}
-                    style={{ background: 'rgba(255,255,255,0.06)', border: 'none', borderRadius: 8, color: 'rgba(255,255,255,0.55)', cursor: 'pointer', padding: '6px 10px', display: 'flex', alignItems: 'center' }}>
-                    <X size={16} />
-                  </button>
-                </div>
-              </div>
-              {/* Iframe */}
-              <div style={{ aspectRatio: '16/9', background: '#000' }}>
-                <iframe
-                  src={`https://www.youtube.com/embed/${playingVideo.ytId}?autoplay=1&rel=0`}
-                  title={playingVideo.title}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
-                />
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <div style={S.tabRow}>
+        {CURRICULA.map((c) => (
+          <button
+            key={c.key}
+            style={S.tab(activeCurriculum === c.key)}
+            onClick={() => setActiveCurriculum(c.key)}
+          >
+            {c.icon}
+            {c.label}
+          </button>
+        ))}
+      </div>
+
+      <CurriculumPlayer
+        key={activeCurriculum}
+        curriculum={active.data}
+        title={active.label}
+      />
     </div>
   );
 }
