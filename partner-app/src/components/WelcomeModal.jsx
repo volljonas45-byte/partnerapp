@@ -9,9 +9,9 @@ const D = {
   card: '#16161E',
   border: 'rgba(255,255,255,0.08)',
   text: '#F2F2F7', text2: '#AEAEB2', text3: '#636366',
-  accent: '#E07A00', accentL: 'rgba(224,122,0,0.15)',
+  accent: '#4F6EF7', accentL: 'rgba(79,110,247,0.15)',
   green: '#34D399', greenL: 'rgba(52,211,153,0.15)',
-  orange: '#E07A00', orangeL: 'rgba(224,122,0,0.15)',
+  orange: '#4F6EF7', orangeL: 'rgba(79,110,247,0.15)',
   purple: '#BF5AF2', purpleL: 'rgba(191,90,242,0.15)',
 };
 

@@ -9,7 +9,7 @@ const fmt = n => new Intl.NumberFormat('de-DE', { style: 'currency', currency: '
 const fmtDate = d => new Date(d).toLocaleDateString('de-DE', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 
 const STATUS_LABELS = { anrufen: 'Anrufen', kontaktiert: 'Kontaktiert', termin_gesetzt: 'Termin', gewonnen: 'Gewonnen', verloren: 'Verloren' };
-const STATUS_COLORS = { anrufen: '#5B8CF5', kontaktiert: '#E07A00', termin_gesetzt: '#BF5AF2', gewonnen: '#34D399', verloren: '#FF453A' };
+const STATUS_COLORS = { anrufen: '#5B8CF5', kontaktiert: '#4F6EF7', termin_gesetzt: '#BF5AF2', gewonnen: '#34D399', verloren: '#FF453A' };
 
 const glass = {
   backdropFilter: 'blur(24px)',
@@ -37,10 +37,10 @@ export default function Dashboard() {
   const pending   = commData?.totals?.pending || 0;
 
   const METRICS = [
-    { icon: Briefcase,   label: 'Offene Leads',  value: openLeads,   color: '#E07A00', glow: 'rgba(224,122,0,0.15)' },
+    { icon: Briefcase,   label: 'Offene Leads',  value: openLeads,   color: '#4F6EF7', glow: 'rgba(79,110,247,0.15)' },
     { icon: Calendar,    label: 'Termine',        value: upcoming,    color: '#BF5AF2', glow: 'rgba(191,90,242,0.15)' },
     { icon: DollarSign,  label: 'Ausgezahlt',     value: fmt(earned), color: '#34D399', glow: 'rgba(52,211,153,0.15)' },
-    { icon: TrendingUp,  label: 'Ausstehend',     value: fmt(pending),color: '#E07A00', glow: 'rgba(224,122,0,0.15)' },
+    { icon: TrendingUp,  label: 'Ausstehend',     value: fmt(pending),color: '#4F6EF7', glow: 'rgba(79,110,247,0.15)' },
   ];
 
   const upcomingAppts = appts.filter(a => a.status === 'scheduled').slice(0, 5);
@@ -51,7 +51,7 @@ export default function Dashboard() {
       {/* ambient glows */}
       <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0 }}>
         <div style={{ position: 'absolute', top: '-10%', left: '20%', width: 500, height: 500, background: 'rgba(139,92,246,0.07)', borderRadius: '50%', filter: 'blur(120px)' }} />
-        <div style={{ position: 'absolute', bottom: '10%', right: '10%', width: 400, height: 400, background: 'rgba(224,122,0,0.06)', borderRadius: '50%', filter: 'blur(100px)' }} />
+        <div style={{ position: 'absolute', bottom: '10%', right: '10%', width: 400, height: 400, background: 'rgba(79,110,247,0.06)', borderRadius: '50%', filter: 'blur(100px)' }} />
         <div style={{ position: 'absolute', top: '40%', left: '60%', width: 300, height: 300, background: 'rgba(52,211,153,0.05)', borderRadius: '50%', filter: 'blur(80px)' }} />
       </div>
 
@@ -128,7 +128,7 @@ export default function Dashboard() {
                   </div>
                   {a.google_meet_link && (
                     <a href={a.google_meet_link} target="_blank" rel="noreferrer"
-                      style={{ fontSize: 11, fontWeight: 600, color: '#E07A00', textDecoration: 'none', padding: '3px 8px', borderRadius: 6, background: 'rgba(224,122,0,0.1)', border: '1px solid rgba(224,122,0,0.2)' }}>
+                      style={{ fontSize: 11, fontWeight: 600, color: '#4F6EF7', textDecoration: 'none', padding: '3px 8px', borderRadius: 6, background: 'rgba(79,110,247,0.1)', border: '1px solid rgba(79,110,247,0.2)' }}>
                       Meet
                     </a>
                   )}
@@ -146,7 +146,7 @@ export default function Dashboard() {
               <motion.button
                 onClick={() => navigate('/leads/mine')}
                 whileHover={{ x: 2 }} whileTap={{ scale: 0.97 }}
-                style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#E07A00', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#4F6EF7', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
               >
                 Alle anzeigen <ArrowRight size={11} />
               </motion.button>

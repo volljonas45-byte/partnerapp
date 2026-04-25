@@ -7,7 +7,7 @@ import InstallGuide from './InstallGuide';
 const D = {
   bg: '#0D0D12', border: 'rgba(255,255,255,0.07)',
   text: '#F2F2F7', text2: '#AEAEB2', text3: '#636366',
-  accent: '#E07A00', accentL: 'rgba(224,122,0,0.12)',
+  accent: '#4F6EF7', accentL: 'rgba(79,110,247,0.12)',
   violet: '#a78bfa', violetL: 'rgba(167,139,250,0.08)',
   green: '#34D399', greenL: 'rgba(52,211,153,0.1)',
   card: '#16161E',

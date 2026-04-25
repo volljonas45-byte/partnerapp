@@ -6,7 +6,7 @@ import { partnerApi } from '../api/partner';
 const D = {
   bg: '#0D0D12', card: '#16161E', border: 'rgba(255,255,255,0.08)',
   text: '#F2F2F7', text2: '#AEAEB2', text3: '#636366',
-  accent: '#E07A00', accentL: 'rgba(224,122,0,0.12)', input: '#1C1C26',
+  accent: '#4F6EF7', accentL: 'rgba(79,110,247,0.12)', input: '#1C1C26',
 };
 
 export default function CompleteProfile() {
