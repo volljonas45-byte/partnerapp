@@ -1,15 +1,13 @@
 import { useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Play, CheckCircle2, ChevronLeft, ChevronRight, Phone, BookOpen, ArrowLeft } from 'lucide-react';
+import { Play, CheckCircle2, ChevronLeft } from 'lucide-react';
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 const CURRICULA = [
   {
     key: 'cold-calling',
     title: 'Cold Calling Training',
-    subtitle: '6 Module · 16 Lektionen',
-    icon: Phone,
     accentColor: '#3B82F6',
+    coverGradient: 'linear-gradient(135deg, #1e3a5f 0%, #0f1f3d 100%)',
     blocks: [
       { title: 'Mindset & Grundlage', color: '#818CF8', videos: [
         { id: 'ikn-tetNHZw', title: 'Angst vorm Cold Calling überwinden',        duration: '14 min', desc: 'Fear & Anxiety auflösen – der essenzielle Einstieg für jeden Cold Caller.' },
@@ -44,9 +42,8 @@ const CURRICULA = [
   {
     key: 'web-design',
     title: 'Web Design für Caller',
-    subtitle: '4 Module · 12 Lektionen',
-    icon: BookOpen,
     accentColor: '#818CF8',
+    coverGradient: 'linear-gradient(135deg, #2d1f5e 0%, #160f3d 100%)',
     blocks: [
       { title: 'Warum eine Website entscheidend ist', color: '#38BDF8', videos: [
         { id: 'SAGcWZVN5m0', title: 'Wie eine Website einem Unternehmen hilft',            duration: '10 min', desc: 'Web Designer müssen genau wissen, warum Unternehmen eine Website brauchen – perfekt für den Pitch.' },
@@ -72,493 +69,530 @@ const CURRICULA = [
   },
 ];
 
-// ─── Course Overview ───────────────────────────────────────────────────────────
-function CourseOverview({ onSelect }) {
-  return (
-    <motion.div
-      key="overview"
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -8 }}
-      transition={{ duration: 0.22 }}
-    >
-      <div style={{ marginBottom: 32 }}>
-        <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase', letterSpacing: '0.14em', margin: '0 0 6px' }}>Weiterbildung</p>
-        <h1 style={{ margin: '0 0 4px', fontSize: 26, fontWeight: 700, letterSpacing: '-0.03em', color: '#F2F2F7' }}>Training</h1>
-        <p style={{ margin: 0, fontSize: 13, color: 'rgba(255,255,255,0.38)' }}>Wähle ein Programm und starte mit dem Training</p>
-      </div>
+// ─── helpers ──────────────────────────────────────────────────────────────────
+function totalVideos(c) { return c.blocks.reduce((s, b) => s + b.videos.length, 0); }
+function blockOffset(c, bi) { return c.blocks.slice(0, bi).reduce((s, b) => s + b.videos.length, 0); }
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 680 }}>
-        {CURRICULA.map((c, i) => {
-          const Icon = c.icon;
-          return (
-            <motion.div
-              key={c.key}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.07, duration: 0.28 }}
-              onClick={() => onSelect(c.key)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 20,
-                padding: '20px 24px',
-                background: '#0D1525',
-                border: '0.5px solid rgba(255,255,255,0.07)',
-                borderRadius: 14,
-                cursor: 'pointer',
-                transition: 'border-color 0.15s, background 0.15s',
-              }}
-              whileHover={{ borderColor: `${c.accentColor}44`, backgroundColor: '#111d30' }}
-            >
-              <div style={{
-                width: 48, height: 48, borderRadius: 12, flexShrink: 0,
-                background: `${c.accentColor}18`,
-                border: `1px solid ${c.accentColor}30`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                <Icon size={20} color={c.accentColor} />
+// ─── VIEW 1: Course Grid ──────────────────────────────────────────────────────
+function CourseGrid({ onSelect }) {
+  return (
+    <div style={{ padding: '28px 24px' }}>
+      <h1 style={{ margin: '0 0 20px', fontSize: 22, fontWeight: 700, color: '#F2F2F7', letterSpacing: '-0.02em' }}>
+        Programme
+      </h1>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 12 }}>
+        {CURRICULA.map(c => (
+          <div
+            key={c.key}
+            onClick={() => onSelect(c.key)}
+            style={{
+              position: 'relative', borderRadius: 14, overflow: 'hidden',
+              aspectRatio: '3/2', cursor: 'pointer',
+              background: c.coverGradient,
+            }}
+          >
+            {/* Thumbnail from first video */}
+            <img
+              src={`https://img.youtube.com/vi/${c.blocks[0].videos[0].id}/maxresdefault.jpg`}
+              alt={c.title}
+              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.55 }}
+              onError={e => { e.currentTarget.style.display = 'none'; }}
+            />
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.1) 60%)' }} />
+            <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '16px' }}>
+              <div style={{ fontSize: 16, fontWeight: 800, color: '#fff', letterSpacing: '-0.01em', lineHeight: 1.2, textTransform: 'uppercase' }}>
+                {c.title}
               </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 15, fontWeight: 600, color: '#F2F2F7', marginBottom: 3 }}>{c.title}</div>
-                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.38)' }}>{c.subtitle}</div>
+              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', marginTop: 4 }}>
+                {c.blocks.length} Module · {totalVideos(c)} Lektionen
               </div>
-              <div style={{
-                display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end', maxWidth: 320,
-              }}>
-                {c.blocks.map(b => (
-                  <span key={b.title} style={{
-                    fontSize: 10, fontWeight: 600,
-                    color: b.color, background: `${b.color}15`,
-                    border: `1px solid ${b.color}28`,
-                    padding: '3px 9px', borderRadius: 99,
-                    whiteSpace: 'nowrap',
-                  }}>
-                    {b.title}
-                  </span>
-                ))}
-              </div>
-              <ChevronRight size={16} color="rgba(255,255,255,0.25)" style={{ flexShrink: 0 }} />
-            </motion.div>
-          );
-        })}
+            </div>
+          </div>
+        ))}
       </div>
-    </motion.div>
+    </div>
   );
 }
 
-// ─── Module Overview ───────────────────────────────────────────────────────────
-function ModuleOverview({ curriculum, watched, onSelectModule, onBack }) {
-  const totalVideos = curriculum.blocks.reduce((s, b) => s + b.videos.length, 0);
-  const doneVideos  = curriculum.blocks.reduce((s, b, bi) => {
-    let offset = curriculum.blocks.slice(0, bi).reduce((x, bb) => x + bb.videos.length, 0);
-    return s + b.videos.filter((_, vi) => watched.has(offset + vi)).length;
-  }, 0);
-  const pct = totalVideos ? Math.round((doneVideos / totalVideos) * 100) : 0;
-  const Icon = curriculum.icon;
+// ─── VIEW 2: Course Detail (hero banner + module list) ────────────────────────
+function CourseDetail({ curriculum, watched, onSelectModule, onBack }) {
+  const total = totalVideos(curriculum);
+  const done  = curriculum.blocks.reduce((s, b, bi) =>
+    s + b.videos.filter((_, vi) => watched.has(blockOffset(curriculum, bi) + vi)).length, 0);
+  const pct = total ? Math.round((done / total) * 100) : 0;
 
-  let globalIdx = 0;
+  // find last watched video for "continue watching"
+  let continueBlock = 0, continueVid = 0, continueFlat = 0;
+  let found = false;
+  curriculum.blocks.forEach((b, bi) => {
+    b.videos.forEach((v, vi) => {
+      const fi = blockOffset(curriculum, bi) + vi;
+      if (watched.has(fi) && !found) { continueBlock = bi; continueVid = vi + 1; continueFlat = fi + 1; }
+      if (!watched.has(fi) && !found) { found = true; continueBlock = bi; continueVid = vi; continueFlat = fi; }
+    });
+  });
+  const continueVideo = curriculum.blocks[continueBlock]?.videos[continueVid] || curriculum.blocks[0].videos[0];
 
   return (
-    <motion.div
-      key="modules"
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -8 }}
-      transition={{ duration: 0.22 }}
-    >
-      {/* Back + Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 28 }}>
+    <div style={{ padding: '0 0 64px' }}>
+      {/* Back */}
+      <div style={{ padding: '16px 24px 0' }}>
         <button
           onClick={onBack}
           style={{
-            width: 34, height: 34, borderRadius: 9, flexShrink: 0,
-            background: '#0D1525', border: '0.5px solid rgba(255,255,255,0.07)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer', color: 'rgba(255,255,255,0.5)',
+            display: 'flex', alignItems: 'center', gap: 6,
+            background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)',
+            fontSize: 13, cursor: 'pointer', padding: '4px 0',
           }}
         >
-          <ArrowLeft size={15} />
+          <ChevronLeft size={16} /> Zurück
         </button>
-        <div style={{ flex: 1 }}>
-          <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 3px' }}>Weiterbildung</p>
-          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, letterSpacing: '-0.03em', color: '#F2F2F7' }}>{curriculum.title}</h1>
-        </div>
-        {/* Progress */}
-        <div style={{ textAlign: 'right', flexShrink: 0 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: pct === 100 ? '#34D399' : '#F2F2F7', marginBottom: 5 }}>
-            {doneVideos} / {totalVideos} Lektionen
-          </div>
-          <div style={{ width: 160, height: 4, background: 'rgba(255,255,255,0.07)', borderRadius: 99, overflow: 'hidden' }}>
-            <motion.div
-              animate={{ width: `${pct}%` }}
-              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-              style={{ height: '100%', background: pct === 100 ? '#34D399' : curriculum.accentColor, borderRadius: 99 }}
-            />
-          </div>
-        </div>
       </div>
 
-      {/* Modules */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxWidth: 720 }}>
-        {curriculum.blocks.map((block, bi) => {
-          const blockStart = globalIdx;
-          const blockDone  = block.videos.filter((_, vi) => watched.has(blockStart + vi)).length;
-          globalIdx += block.videos.length;
-          const allDone = blockDone === block.videos.length;
+      {/* Hero banner */}
+      <div style={{
+        position: 'relative', margin: '12px 24px 0',
+        borderRadius: 16, overflow: 'hidden', height: 220,
+        background: curriculum.coverGradient,
+      }}>
+        {/* bg thumbnail */}
+        <img
+          src={`https://img.youtube.com/vi/${continueVideo.id}/maxresdefault.jpg`}
+          alt=""
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.3 }}
+          onError={e => { e.currentTarget.style.display = 'none'; }}
+        />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(0,0,0,0.85) 40%, transparent 100%)' }} />
 
-          return (
-            <motion.div
-              key={block.title}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: bi * 0.05, duration: 0.25 }}
-              onClick={() => onSelectModule(bi)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 18,
-                padding: '16px 20px',
-                background: '#0D1525',
-                border: '0.5px solid rgba(255,255,255,0.07)',
-                borderRadius: 12, cursor: 'pointer',
-                transition: 'border-color 0.15s, background 0.15s',
-              }}
-              whileHover={{ borderColor: `${block.color}44`, backgroundColor: '#111d30' }}
-            >
-              {/* Module number / done indicator */}
+        <div style={{ position: 'absolute', inset: 0, padding: '28px 32px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <div>
+            <h1 style={{ margin: '0 0 12px', fontSize: 24, fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>
+              {curriculum.title}
+            </h1>
+            {/* Progress */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{
-                width: 38, height: 38, borderRadius: 10, flexShrink: 0,
-                background: allDone ? 'rgba(52,211,153,0.12)' : `${block.color}15`,
-                border: `1px solid ${allDone ? '#34D39944' : block.color + '30'}`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 14, fontWeight: 700,
-                color: allDone ? '#34D399' : block.color,
+                fontSize: 12, fontWeight: 600, color: '#fff',
+                background: 'rgba(255,255,255,0.15)', padding: '3px 10px', borderRadius: 99,
+                border: '1px solid rgba(255,255,255,0.2)',
               }}>
-                {allDone ? <CheckCircle2 size={17} strokeWidth={2} /> : bi + 1}
+                {done}/{total} Lektionen
               </div>
+              <div style={{ flex: 1, maxWidth: 220, height: 4, background: 'rgba(255,255,255,0.2)', borderRadius: 99, overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${pct}%`, background: '#fff', borderRadius: 99, transition: 'width 0.5s' }} />
+              </div>
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#fff' }}>{pct}%</span>
+            </div>
+          </div>
 
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 14, fontWeight: 600, color: '#F2F2F7', marginBottom: 3 }}>{block.title}</div>
-                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)' }}>
-                  {block.videos.length} {block.videos.length === 1 ? 'Lektion' : 'Lektionen'}
+          {/* Continue watching */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{ position: 'relative', width: 72, height: 48, borderRadius: 8, overflow: 'hidden', flexShrink: 0 }}>
+              <img
+                src={`https://img.youtube.com/vi/${continueVideo.id}/default.jpg`}
+                alt=""
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                onError={e => { e.currentTarget.style.display = 'none'; }}
+              />
+              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.4)' }}>
+                <div style={{
+                  fontSize: 20, fontWeight: 900, color: 'rgba(255,255,255,0.4)',
+                  position: 'absolute', right: 4, bottom: 0, lineHeight: 1,
+                }}>
+                  {continueFlat + 1}
                 </div>
               </div>
-
-              {/* Mini progress */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-                <span style={{ fontSize: 12, color: allDone ? '#34D399' : 'rgba(255,255,255,0.35)', fontWeight: allDone ? 600 : 400 }}>
-                  {blockDone}/{block.videos.length}
-                </span>
-                <ChevronRight size={15} color="rgba(255,255,255,0.22)" />
-              </div>
-            </motion.div>
-          );
-        })}
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', marginBottom: 6 }}>{continueVideo.title}</div>
+              <button
+                onClick={() => onSelectModule(continueBlock, continueVid)}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 7,
+                  background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)',
+                  border: '1px solid rgba(255,255,255,0.25)',
+                  borderRadius: 99, color: '#fff', fontSize: 12, fontWeight: 600,
+                  padding: '6px 16px', cursor: 'pointer',
+                }}
+              >
+                <Play size={12} fill="#fff" color="#fff" /> Weiter ansehen
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
-    </motion.div>
+
+      {/* Module list + sidebar */}
+      <div style={{ display: 'flex', gap: 24, padding: '24px 24px 0', alignItems: 'flex-start' }}>
+
+        {/* Module rows */}
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {curriculum.blocks.map((block, bi) => {
+            const off  = blockOffset(curriculum, bi);
+            const done = block.videos.filter((_, vi) => watched.has(off + vi)).length;
+            const firstVidId = block.videos[0].id;
+
+            return (
+              <div
+                key={block.title}
+                onClick={() => onSelectModule(bi, 0)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 16,
+                  padding: '14px 18px',
+                  background: '#141B2D',
+                  border: '1px solid rgba(255,255,255,0.06)',
+                  borderRadius: 12, cursor: 'pointer',
+                  transition: 'background 0.14s',
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = '#1a2540'}
+                onMouseLeave={e => e.currentTarget.style.background = '#141B2D'}
+              >
+                {/* Thumbnail with number */}
+                <div style={{ position: 'relative', width: 80, height: 52, borderRadius: 8, overflow: 'hidden', flexShrink: 0 }}>
+                  <img
+                    src={`https://img.youtube.com/vi/${firstVidId}/default.jpg`}
+                    alt=""
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.55)' }}
+                    onError={e => { e.currentTarget.style.display = 'none'; }}
+                  />
+                  <div style={{
+                    position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <span style={{ fontSize: 28, fontWeight: 900, color: 'rgba(255,255,255,0.35)', lineHeight: 1 }}>
+                      {bi + 1}
+                    </span>
+                  </div>
+                  {done === block.videos.length && (
+                    <div style={{ position: 'absolute', top: 4, right: 4 }}>
+                      <CheckCircle2 size={14} color="#34D399" strokeWidth={2.5} />
+                    </div>
+                  )}
+                </div>
+
+                {/* Info */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: '#F2F2F7', marginBottom: 4 }}>{block.title}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{
+                      fontSize: 11, color: '#9CA3AF',
+                      background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)',
+                      padding: '2px 9px', borderRadius: 99,
+                    }}>
+                      {block.videos.length} {block.videos.length === 1 ? 'Lektion' : 'Lektionen'}
+                    </span>
+                    {done > 0 && (
+                      <span style={{ fontSize: 11, color: '#34D399' }}>{done}/{block.videos.length} abgeschlossen</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Sidebar: What's included */}
+        <div style={{ width: 260, flexShrink: 0 }}>
+          <h3 style={{ margin: '0 0 12px', fontSize: 16, fontWeight: 700, color: '#F2F2F7' }}>Was ist enthalten?</h3>
+          <p style={{ margin: '0 0 16px', fontSize: 13, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6 }}>
+            {curriculum.key === 'cold-calling'
+              ? 'Dieses Programm bringt dir alles bei, was du für professionelles Cold Calling brauchst – von Mindset bis Masterclass.'
+              : 'Lerne alles über Web Design, das du brauchst, um im Verkaufsgespräch überzeugend zu pitchen.'}
+          </p>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 12, fontWeight: 600, color: '#F2F2F7', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', padding: '4px 12px', borderRadius: 99 }}>
+              {curriculum.blocks.length} Module
+            </span>
+            <span style={{ fontSize: 12, fontWeight: 600, color: '#F2F2F7', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', padding: '4px 12px', borderRadius: 99 }}>
+              {totalVideos(curriculum)} Lektionen
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
-// ─── Lesson Player ─────────────────────────────────────────────────────────────
-function LessonPlayer({ curriculum, blockIndex, watched, onToggleWatched, onBack }) {
-  const block = curriculum.blocks[blockIndex];
-
-  // flat offset for this block
-  const blockOffset = useMemo(
-    () => curriculum.blocks.slice(0, blockIndex).reduce((s, b) => s + b.videos.length, 0),
-    [curriculum, blockIndex]
-  );
-
-  const [localIndex, setLocalIndex] = useState(0);
+// ─── VIEW 3: Lesson Player ────────────────────────────────────────────────────
+function LessonPlayer({ curriculum, initialBlock, initialLesson, watched, onToggleWatched, onBack }) {
+  const [blockIdx, setBlockIdx] = useState(initialBlock);
+  const [lessonIdx, setLessonIdx] = useState(initialLesson);
   const [playerActive, setPlayerActive] = useState(false);
 
-  const total   = block.videos.length;
-  const current = block.videos[localIndex];
-  const flatIdx = blockOffset + localIndex;
+  const block   = curriculum.blocks[blockIdx];
+  const video   = block.videos[lessonIdx];
+  const flatIdx = blockOffset(curriculum, blockIdx) + lessonIdx;
   const isWatched = watched.has(flatIdx);
 
-  const goTo = (idx) => {
-    if (idx < 0 || idx >= total) return;
-    setLocalIndex(idx);
+  // flat navigation
+  const allVideos = useMemo(() => {
+    const list = [];
+    curriculum.blocks.forEach((b, bi) => b.videos.forEach((v, vi) => list.push({ v, bi, vi, fi: blockOffset(curriculum, bi) + vi })));
+    return list;
+  }, [curriculum]);
+  const flatPos = allVideos.findIndex(x => x.bi === blockIdx && x.vi === lessonIdx);
+
+  const goToFlat = (pos) => {
+    if (pos < 0 || pos >= allVideos.length) return;
+    const { bi, vi } = allVideos[pos];
+    setBlockIdx(bi);
+    setLessonIdx(vi);
     setPlayerActive(false);
   };
 
   return (
-    <motion.div
-      key="player"
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -8 }}
-      transition={{ duration: 0.22 }}
-    >
-      {/* Back + breadcrumb */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
+    <div style={{ padding: '0 0 64px' }}>
+      {/* Back */}
+      <div style={{ padding: '16px 24px 0' }}>
         <button
           onClick={onBack}
           style={{
-            width: 34, height: 34, borderRadius: 9, flexShrink: 0,
-            background: '#0D1525', border: '0.5px solid rgba(255,255,255,0.07)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer', color: 'rgba(255,255,255,0.5)',
+            display: 'flex', alignItems: 'center', gap: 6,
+            background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)',
+            fontSize: 13, cursor: 'pointer', padding: '4px 0',
           }}
         >
-          <ArrowLeft size={15} />
+          <ChevronLeft size={16} /> {curriculum.title}
         </button>
-        <div>
-          <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.28)' }}>
-            {curriculum.title} · <span style={{ color: block.color }}>{block.title}</span>
-          </p>
-        </div>
       </div>
 
-      {/* Player layout */}
-      <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+      {/* Player + Sidebar */}
+      <div style={{ display: 'flex', gap: 0, padding: '16px 24px 0', alignItems: 'flex-start' }}>
 
-        {/* Left: Video + info */}
+        {/* Video column */}
         <div style={{ flex: 1, minWidth: 0 }}>
           {/* Video */}
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={localIndex}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.18 }}
-              onClick={() => !playerActive && setPlayerActive(true)}
-              style={{
-                position: 'relative', borderRadius: 14, overflow: 'hidden',
-                background: '#000', cursor: playerActive ? 'default' : 'pointer',
-                aspectRatio: '16/9',
-                border: '0.5px solid rgba(255,255,255,0.07)',
-                marginBottom: 18,
-              }}
-            >
-              {playerActive ? (
-                <iframe
-                  style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
-                  src={`https://www.youtube.com/embed/${current.id}?autoplay=1&rel=0`}
-                  title={current.title}
-                  allow="autoplay; encrypted-media; accelerometer; clipboard-write; gyroscope; picture-in-picture"
-                  allowFullScreen
+          <div
+            onClick={() => !playerActive && setPlayerActive(true)}
+            style={{
+              position: 'relative', borderRadius: 12, overflow: 'hidden',
+              aspectRatio: '16/9', background: '#000',
+              cursor: playerActive ? 'default' : 'pointer',
+              marginBottom: 20,
+            }}
+          >
+            {playerActive ? (
+              <iframe
+                style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
+                src={`https://www.youtube.com/embed/${video.id}?autoplay=1&rel=0`}
+                title={video.title}
+                allow="autoplay; encrypted-media; accelerometer; clipboard-write; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            ) : (
+              <>
+                <img
+                  src={`https://img.youtube.com/vi/${video.id}/maxresdefault.jpg`}
+                  alt={video.title}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                  onError={e => { e.currentTarget.src = `https://img.youtube.com/vi/${video.id}/hqdefault.jpg`; }}
                 />
-              ) : (
-                <>
-                  <img
-                    src={`https://img.youtube.com/vi/${current.id}/maxresdefault.jpg`}
-                    alt={current.title}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                    onError={e => { e.currentTarget.src = `https://img.youtube.com/vi/${current.id}/hqdefault.jpg`; }}
-                  />
-                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(7,12,21,0.85) 0%, transparent 55%)' }} />
-                  <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <motion.div
-                      whileHover={{ scale: 1.06 }}
-                      whileTap={{ scale: 0.97 }}
-                      style={{
-                        width: 62, height: 62, borderRadius: '50%',
-                        background: curriculum.accentColor,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        boxShadow: `0 0 0 10px ${curriculum.accentColor}22, 0 16px 40px ${curriculum.accentColor}44`,
-                      }}
-                    >
-                      <Play size={24} color="#fff" fill="#fff" style={{ marginLeft: 3 }} />
-                    </motion.div>
+                <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.2)' }} />
+                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{
+                    width: 56, height: 56, borderRadius: '50%',
+                    background: 'rgba(255,255,255,0.92)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
+                  }}>
+                    <Play size={22} color="#111" fill="#111" style={{ marginLeft: 3 }} />
                   </div>
-                  {isWatched && (
-                    <div style={{
-                      position: 'absolute', top: 12, left: 12,
-                      display: 'flex', alignItems: 'center', gap: 5,
-                      fontSize: 11, fontWeight: 600, color: '#34D399',
-                      background: 'rgba(52,211,153,0.12)', backdropFilter: 'blur(6px)',
-                      padding: '4px 10px', borderRadius: 99,
-                      border: '0.5px solid rgba(52,211,153,0.3)',
-                    }}>
-                      <CheckCircle2 size={11} /> Abgeschlossen
-                    </div>
-                  )}
-                </>
-              )}
-            </motion.div>
-          </AnimatePresence>
+                </div>
+              </>
+            )}
+          </div>
 
-          {/* Info below player */}
-          <h2 style={{ margin: '0 0 6px', fontSize: 18, fontWeight: 700, color: '#F2F2F7', letterSpacing: '-0.02em', lineHeight: 1.3 }}>
-            {current.title}
+          {/* Below video */}
+          <h2 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 700, color: '#F2F2F7', letterSpacing: '-0.02em', lineHeight: 1.3 }}>
+            {video.title}
           </h2>
-          <p style={{ margin: '0 0 18px', fontSize: 13, color: 'rgba(255,255,255,0.45)', lineHeight: 1.6 }}>
-            {current.desc}
+          <p style={{ margin: '0 0 20px', fontSize: 13, color: 'rgba(255,255,255,0.5)', lineHeight: 1.65 }}>
+            {video.desc}
           </p>
 
-          {/* Controls */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {/* Nav + mark */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <button
-              disabled={localIndex === 0}
-              onClick={() => goTo(localIndex - 1)}
+              disabled={flatPos === 0}
+              onClick={() => goToFlat(flatPos - 1)}
               style={{
-                display: 'flex', alignItems: 'center', gap: 5,
-                padding: '8px 14px', borderRadius: 9,
-                border: '0.5px solid rgba(255,255,255,0.09)',
-                background: 'transparent',
-                color: localIndex === 0 ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.55)',
-                fontSize: 12, fontWeight: 500,
-                cursor: localIndex === 0 ? 'default' : 'pointer',
+                display: 'flex', alignItems: 'center', gap: 6,
+                padding: '8px 16px', borderRadius: 8,
+                background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
+                color: flatPos === 0 ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.6)',
+                fontSize: 13, fontWeight: 500, cursor: flatPos === 0 ? 'default' : 'pointer',
               }}
             >
               <ChevronLeft size={14} /> Zurück
             </button>
 
-            <motion.button
-              whileTap={{ scale: 0.97 }}
+            <button
               onClick={() => onToggleWatched(flatIdx)}
               style={{
-                display: 'flex', alignItems: 'center', gap: 7,
-                padding: '8px 18px', borderRadius: 9,
-                border: `0.5px solid ${isWatched ? '#34D399' : 'rgba(255,255,255,0.09)'}`,
-                background: isWatched ? 'rgba(52,211,153,0.1)' : 'rgba(255,255,255,0.04)',
-                color: isWatched ? '#34D399' : 'rgba(255,255,255,0.55)',
-                fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                transition: 'all 0.18s', whiteSpace: 'nowrap',
+                display: 'flex', alignItems: 'center', gap: 8,
+                padding: '8px 18px', borderRadius: 8,
+                background: isWatched ? 'rgba(52,211,153,0.12)' : 'rgba(255,255,255,0.06)',
+                border: `1px solid ${isWatched ? 'rgba(52,211,153,0.4)' : 'rgba(255,255,255,0.1)'}`,
+                color: isWatched ? '#34D399' : 'rgba(255,255,255,0.6)',
+                fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                transition: 'all 0.16s', whiteSpace: 'nowrap',
               }}
             >
-              <CheckCircle2 size={13} />
+              <CheckCircle2 size={14} strokeWidth={isWatched ? 2.5 : 1.5} />
               {isWatched ? 'Abgeschlossen' : 'Als abgeschlossen markieren'}
-            </motion.button>
+            </button>
 
-            <motion.button
-              whileTap={{ scale: 0.97 }}
-              disabled={localIndex === total - 1}
-              onClick={() => goTo(localIndex + 1)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 5,
-                padding: '8px 16px', borderRadius: 9,
-                border: `0.5px solid ${localIndex === total - 1 ? 'rgba(255,255,255,0.07)' : curriculum.accentColor}`,
-                background: localIndex === total - 1 ? 'transparent' : `${curriculum.accentColor}18`,
-                color: localIndex === total - 1 ? 'rgba(255,255,255,0.15)' : curriculum.accentColor,
-                fontSize: 12, fontWeight: 600,
-                cursor: localIndex === total - 1 ? 'default' : 'pointer',
-              }}
-            >
-              Nächste Lektion <ChevronRight size={14} />
-            </motion.button>
+            {flatPos < allVideos.length - 1 && (
+              <button
+                onClick={() => goToFlat(flatPos + 1)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '8px 18px', borderRadius: 8,
+                  background: curriculum.accentColor,
+                  border: 'none',
+                  color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                }}
+              >
+                Nächste Lektion <Play size={12} fill="#fff" color="#fff" />
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Right: Lesson list */}
+        {/* Lesson sidebar */}
         <div style={{
-          width: 300, flexShrink: 0,
+          width: 300, flexShrink: 0, marginLeft: 20,
           background: '#0D1525',
-          border: '0.5px solid rgba(255,255,255,0.07)',
-          borderRadius: 14, overflow: 'hidden',
+          border: '1px solid rgba(255,255,255,0.07)',
+          borderRadius: 12, overflow: 'hidden',
+          maxHeight: 520, overflowY: 'auto',
+          scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.06) transparent',
         }}>
-          <div style={{ padding: '14px 16px', borderBottom: '0.5px solid rgba(255,255,255,0.07)' }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 2 }}>
-              {block.title}
-            </div>
-            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)' }}>
-              {block.videos.filter((_, vi) => watched.has(blockOffset + vi)).length} / {total} abgeschlossen
-            </div>
+          {/* Sidebar header */}
+          <div style={{ padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.07)', position: 'sticky', top: 0, background: '#0D1525', zIndex: 1 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#F2F2F7' }}>{curriculum.title}</div>
           </div>
-          <div>
-            {block.videos.map((v, vi) => {
-              const fi = blockOffset + vi;
-              const isCurrent = vi === localIndex;
-              const isDone    = watched.has(fi);
-              return (
-                <div
-                  key={v.id}
-                  onClick={() => goTo(vi)}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 12,
-                    padding: '12px 16px',
-                    borderBottom: vi < total - 1 ? '0.5px solid rgba(255,255,255,0.04)' : 'none',
-                    borderLeft: `2px solid ${isCurrent ? curriculum.accentColor : 'transparent'}`,
-                    background: isCurrent ? `${curriculum.accentColor}0D` : 'transparent',
-                    cursor: 'pointer', transition: 'background 0.12s',
-                  }}
-                >
-                  {/* Thumbnail */}
-                  <div style={{ width: 56, height: 36, borderRadius: 6, overflow: 'hidden', flexShrink: 0, position: 'relative', background: '#000' }}>
-                    <img
-                      src={`https://img.youtube.com/vi/${v.id}/default.jpg`}
-                      alt=""
-                      style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', opacity: isDone ? 0.45 : 0.85 }}
-                    />
-                    {isDone && (
-                      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(52,211,153,0.25)' }}>
-                        <CheckCircle2 size={14} color="#34D399" strokeWidth={2.5} />
-                      </div>
-                    )}
-                    {isCurrent && !isDone && (
-                      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.35)' }}>
-                        <Play size={12} color="#fff" fill="#fff" />
-                      </div>
-                    )}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{
-                      fontSize: 12, fontWeight: isCurrent ? 600 : 400, lineHeight: 1.35,
-                      color: isCurrent ? '#F2F2F7' : isDone ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.7)',
-                      overflow: 'hidden', display: '-webkit-box',
-                      WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
-                    }}>
-                      {v.title}
-                    </div>
-                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.28)', marginTop: 2 }}>{v.duration}</div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
 
+          {/* All lessons flat */}
+          {curriculum.blocks.map((b, bi) => (
+            <div key={bi}>
+              {/* Block section header */}
+              <div style={{ padding: '10px 16px 6px', background: '#0a1020' }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                  {b.title}
+                </div>
+              </div>
+              {b.videos.map((v, vi) => {
+                const fi = blockOffset(curriculum, bi) + vi;
+                const isCur  = bi === blockIdx && vi === lessonIdx;
+                const isDone = watched.has(fi);
+                return (
+                  <div
+                    key={v.id}
+                    onClick={() => { setBlockIdx(bi); setLessonIdx(vi); setPlayerActive(false); }}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px',
+                      background: isCur ? 'rgba(255,255,255,0.06)' : 'transparent',
+                      borderLeft: `3px solid ${isCur ? curriculum.accentColor : 'transparent'}`,
+                      cursor: 'pointer', transition: 'background 0.12s',
+                    }}
+                  >
+                    {/* Thumbnail */}
+                    <div style={{ position: 'relative', width: 64, height: 40, borderRadius: 6, overflow: 'hidden', flexShrink: 0 }}>
+                      <img
+                        src={`https://img.youtube.com/vi/${v.id}/default.jpg`}
+                        alt=""
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', filter: isDone ? 'brightness(0.45)' : 'brightness(0.8)' }}
+                        onError={e => { e.currentTarget.style.background = '#1a2540'; e.currentTarget.style.display = 'none'; }}
+                      />
+                      {/* Big number watermark */}
+                      <div style={{
+                        position: 'absolute', right: 3, bottom: -2,
+                        fontSize: 22, fontWeight: 900, color: 'rgba(255,255,255,0.28)', lineHeight: 1,
+                        userSelect: 'none',
+                      }}>
+                        {fi + 1}
+                      </div>
+                      {isDone && (
+                        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(52,211,153,0.2)' }}>
+                          <CheckCircle2 size={16} color="#34D399" strokeWidth={2.5} />
+                        </div>
+                      )}
+                      {isCur && !isDone && (
+                        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.3)' }}>
+                          <Play size={14} fill="#fff" color="#fff" />
+                        </div>
+                      )}
+                    </div>
+                    {/* Title + duration */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{
+                        fontSize: 12, fontWeight: isCur ? 600 : 400, lineHeight: 1.35,
+                        color: isDone ? 'rgba(255,255,255,0.32)' : isCur ? '#F2F2F7' : 'rgba(255,255,255,0.7)',
+                        overflow: 'hidden', display: '-webkit-box',
+                        WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+                        marginBottom: 3,
+                      }}>
+                        {v.title}
+                      </div>
+                      <div style={{
+                        display: 'inline-block', fontSize: 10, fontWeight: 600,
+                        color: '#9CA3AF', background: 'rgba(255,255,255,0.07)',
+                        border: '1px solid rgba(255,255,255,0.08)', padding: '1px 7px', borderRadius: 99,
+                      }}>
+                        {v.duration}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+        </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
-// ─── Training (root) ──────────────────────────────────────────────────────────
+// ─── Root ─────────────────────────────────────────────────────────────────────
 export default function Training() {
-  const [view, setView]               = useState('overview');   // 'overview' | 'modules' | 'player'
-  const [selectedCurriculum, setSC]   = useState(null);
-  const [selectedBlock, setSB]        = useState(null);
-  const [watched, setWatched]         = useState(new Set());
+  const [view, setView]     = useState('grid');
+  const [selKey, setSelKey] = useState(null);
+  const [selBlock, setSelBlock] = useState(0);
+  const [selLesson, setSelLesson] = useState(0);
+  const [watched, setWatched] = useState(new Set());
 
-  const curriculum = CURRICULA.find(c => c.key === selectedCurriculum);
+  const curriculum = CURRICULA.find(c => c.key === selKey);
 
-  const toggleWatched = (idx) => {
-    setWatched(prev => {
-      const next = new Set(prev);
-      next.has(idx) ? next.delete(idx) : next.add(idx);
-      return next;
-    });
-  };
+  const toggleWatched = (idx) => setWatched(prev => {
+    const next = new Set(prev);
+    next.has(idx) ? next.delete(idx) : next.add(idx);
+    return next;
+  });
 
-  return (
-    <div style={{ minHeight: '100%', padding: '28px 28px 64px', boxSizing: 'border-box' }}>
-      <AnimatePresence mode="wait">
-        {view === 'overview' && (
-          <CourseOverview
-            key="overview"
-            onSelect={(key) => { setSC(key); setView('modules'); }}
-          />
-        )}
-        {view === 'modules' && curriculum && (
-          <ModuleOverview
-            key="modules"
-            curriculum={curriculum}
-            watched={watched}
-            onSelectModule={(bi) => { setSB(bi); setView('player'); }}
-            onBack={() => setView('overview')}
-          />
-        )}
-        {view === 'player' && curriculum && selectedBlock !== null && (
-          <LessonPlayer
-            key="player"
-            curriculum={curriculum}
-            blockIndex={selectedBlock}
-            watched={watched}
-            onToggleWatched={toggleWatched}
-            onBack={() => setView('modules')}
-          />
-        )}
-      </AnimatePresence>
-    </div>
-  );
+  if (view === 'grid') {
+    return <CourseGrid onSelect={key => { setSelKey(key); setView('detail'); }} />;
+  }
+  if (view === 'detail' && curriculum) {
+    return (
+      <CourseDetail
+        curriculum={curriculum}
+        watched={watched}
+        onSelectModule={(bi, vi = 0) => { setSelBlock(bi); setSelLesson(vi); setView('player'); }}
+        onBack={() => setView('grid')}
+      />
+    );
+  }
+  if (view === 'player' && curriculum) {
+    return (
+      <LessonPlayer
+        curriculum={curriculum}
+        initialBlock={selBlock}
+        initialLesson={selLesson}
+        watched={watched}
+        onToggleWatched={toggleWatched}
+        onBack={() => setView('detail')}
+      />
+    );
+  }
+  return null;
 }
