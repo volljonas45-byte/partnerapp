@@ -424,7 +424,7 @@ function LessonPlayer({ curriculum, initialBlock, initialLesson, watched, onTogg
       <div style={{ display: 'flex', gap: 20, padding: '16px 24px 0', alignItems: 'flex-start', justifyContent: 'center' }}>
 
         {/* Video column */}
-        <div style={{ flex: 1, minWidth: 0, maxWidth: 660 }}>
+        <div style={{ flex: 1, minWidth: 0, maxWidth: 820 }}>
           {/* Video */}
           <div
             onClick={() => !playerActive && setPlayerActive(true)}
