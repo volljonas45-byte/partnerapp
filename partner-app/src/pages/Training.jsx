@@ -359,13 +359,14 @@ function LessonPlayer({ curriculum, initialBlock, initialLesson, watched, onTogg
       <div style={{ display: 'flex', gap: 0, padding: '16px 24px 0', alignItems: 'flex-start' }}>
 
         {/* Video column */}
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ flex: 1, minWidth: 0, maxWidth: 'calc(100% - 320px)' }}>
           {/* Video */}
           <div
             onClick={() => !playerActive && setPlayerActive(true)}
             style={{
               position: 'relative', borderRadius: 12, overflow: 'hidden',
               aspectRatio: '16/9', background: '#000',
+              maxHeight: 420,
               cursor: playerActive ? 'default' : 'pointer',
               marginBottom: 20,
             }}
