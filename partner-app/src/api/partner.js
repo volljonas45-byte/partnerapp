@@ -25,4 +25,10 @@ export const partnerApi = {
   listLeadRequests:   () => api.get('/partner/lead-requests').then(r => r.data),
   demoWizard:         (d) => api.post('/partner/demo-wizard', d).then(r => r.data),
   listCustomers:      () => api.get('/partner/customers').then(r => r.data),
+
+  // Mail
+  listMails:    ()  => api.get('/partner/mail').then(r => r.data),
+  sendMail:     (d) => api.post('/partner/mail/send', d).then(r => r.data),
+  syncMails:    ()  => api.post('/partner/mail/sync').then(r => r.data),
+  getMailAlias: ()  => api.get('/partner/mail/alias').then(r => r.data),
 };

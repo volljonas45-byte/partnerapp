@@ -15,6 +15,7 @@ import CompleteProfile from './pages/CompleteProfile';
 import AiChat from './pages/AiChat';
 import MyCustomers from './pages/MyCustomers';
 import Training from './pages/Training';
+import Mail from './pages/Mail';
 import DemoWizard from './pages/DemoWizard';
 import { OnboardingProvider } from './context/OnboardingContext';
 import WelcomeModal from './components/WelcomeModal';
@@ -74,6 +75,7 @@ function AppRoutes() {
       <Route path="/appointments" element={<ProtectedRoute><Appointments /></ProtectedRoute>} />
       <Route path="/earnings"     element={<ProtectedRoute><Earnings /></ProtectedRoute>} />
       <Route path="/training"      element={<ProtectedRoute><Training /></ProtectedRoute>} />
+      <Route path="/mail"          element={<ProtectedRoute><Mail /></ProtectedRoute>} />
       <Route path="/ai-chat"      element={<ProtectedRoute fixed><AiChat /></ProtectedRoute>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />

@@ -20,6 +20,23 @@ const { sendDemoEmail } = require('../services/emailService');
     await run(`ALTER TABLE partners ADD COLUMN IF NOT EXISTS payout_method text DEFAULT ''`);
     await run(`ALTER TABLE partners ADD COLUMN IF NOT EXISTS payout_details text DEFAULT ''`);
     await run(`ALTER TABLE partners ADD COLUMN IF NOT EXISTS dsgvo_consent_at timestamptz`);
+    // Mail feature
+    await run(`ALTER TABLE partners ADD COLUMN IF NOT EXISTS email_alias text DEFAULT ''`);
+    await run(`
+      CREATE TABLE IF NOT EXISTS partner_emails (
+        id            SERIAL PRIMARY KEY,
+        partner_id    INTEGER NOT NULL REFERENCES partners(id) ON DELETE CASCADE,
+        direction     TEXT    NOT NULL DEFAULT 'out',  -- 'out' | 'in'
+        from_address  TEXT    NOT NULL DEFAULT '',
+        to_address    TEXT    NOT NULL DEFAULT '',
+        subject       TEXT    NOT NULL DEFAULT '',
+        body          TEXT    NOT NULL DEFAULT '',
+        gmail_msg_id  TEXT    DEFAULT '',
+        sent_at       TIMESTAMPTZ DEFAULT NOW(),
+        lead_id       INTEGER REFERENCES partner_leads(id) ON DELETE SET NULL
+      )
+    `);
+    await run(`CREATE INDEX IF NOT EXISTS idx_partner_emails_partner ON partner_emails(partner_id)`);
   } catch (e) { console.error('[partner migration]', e.message); }
 })();
 
