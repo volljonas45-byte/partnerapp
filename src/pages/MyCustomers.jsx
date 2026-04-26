@@ -1,8 +1,9 @@
+import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import {
   Building2, CheckCircle2, Clock, XCircle, CalendarDays,
-  Mail, Phone, MessageSquare, TrendingUp, Euro, Globe, ExternalLink,
+  Mail, Phone, MessageSquare, TrendingUp, Euro, Globe, ExternalLink, Search, X,
 } from 'lucide-react';
 import { partnerApi } from '../api/partner';
 
@@ -105,6 +106,8 @@ function Badge({ label, value, color, bg }) {
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function MyCustomers() {
+  const [search, setSearch] = useState('');
+
   const { data: customers = [], isLoading } = useQuery({
     queryKey: ['my-customers'],
     queryFn: partnerApi.listCustomers,
@@ -112,6 +115,17 @@ export default function MyCustomers() {
   });
 
   const { data: me } = useQuery({ queryKey: ['partner-me'], queryFn: partnerApi.me });
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return customers;
+    return customers.filter(c =>
+      (c.company || '').toLowerCase().includes(q) ||
+      (c.contact_person || '').toLowerCase().includes(q) ||
+      (c.phone || '').toLowerCase().includes(q) ||
+      (c.city || '').toLowerCase().includes(q)
+    );
+  }, [customers, search]);
 
   const totals = customers.reduce((acc, c) => {
     acc.count++;
@@ -139,6 +153,34 @@ export default function MyCustomers() {
           Alle Projekte die du über den Demo-Wizard eingereicht hast
         </p>
       </motion.div>
+
+      {/* Search */}
+      {customers.length > 0 && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.05 }}
+          style={{ position: 'relative', marginBottom: 20 }}>
+          <Search size={15} color={D.text3} style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Kunde, Ansprechpartner, Telefon oder Stadt suchen …"
+            style={{
+              width: '100%', boxSizing: 'border-box',
+              padding: '10px 38px 10px 38px',
+              background: 'rgba(255,255,255,0.04)',
+              border: `1px solid ${search ? 'rgba(59,130,246,0.35)' : D.border}`,
+              borderRadius: 11, color: D.text, fontSize: 13,
+              outline: 'none', transition: 'border-color 0.2s',
+            }}
+          />
+          {search && (
+            <button onClick={() => setSearch('')}
+              style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
+                background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: D.text3, display: 'flex' }}>
+              <X size={14} />
+            </button>
+          )}
+        </motion.div>
+      )}
 
       {/* Summary row */}
       {customers.length > 0 && (
@@ -170,9 +212,18 @@ export default function MyCustomers() {
             Starte den Demo-Wizard über einen Lead in "Meine Leads"
           </p>
         </motion.div>
+      ) : filtered.length === 0 ? (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+          style={{ textAlign: 'center', padding: '40px 24px',
+            background: 'rgba(255,255,255,0.02)', border: `1px solid ${D.border}`, borderRadius: 16 }}>
+          <Search size={22} color={D.text3} style={{ marginBottom: 10 }} />
+          <p style={{ fontSize: 13, color: D.text3, margin: 0 }}>
+            Keine Kunden für „{search}" gefunden
+          </p>
+        </motion.div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {customers.map((c, i) => {
+          {filtered.map((c, i) => {
             const info         = STATUS_INFO[c.status] || STATUS_INFO.anrufen;
             const StatusIcon   = info.Icon;
             const isWon        = c.status === 'gewonnen';
