@@ -22,6 +22,7 @@ const { sendDemoEmail } = require('../services/emailService');
     await run(`ALTER TABLE partners ADD COLUMN IF NOT EXISTS dsgvo_consent_at timestamptz`);
     // Mail feature
     await run(`ALTER TABLE partners ADD COLUMN IF NOT EXISTS email_alias text DEFAULT ''`);
+    await run(`ALTER TABLE settings ADD COLUMN IF NOT EXISTS website text DEFAULT ''`);
     await run(`
       CREATE TABLE IF NOT EXISTS partner_emails (
         id            SERIAL PRIMARY KEY,
@@ -326,10 +327,16 @@ router.get('/me', authenticatePartner, async (req, res) => {
     [req.partnerId]
   );
   const wsSettings = await getOne(
-    `SELECT email, phone, company_name FROM settings WHERE user_id = ?`,
+    `SELECT email, phone, company_name, website FROM settings WHERE user_id = ?`,
     [partner.workspace_owner_id]
   );
-  res.json({ ...partner, ws_email: wsSettings?.email || '', ws_phone: wsSettings?.phone || '', ws_company: wsSettings?.company_name || '' });
+  res.json({
+    ...partner,
+    ws_email:   wsSettings?.email        || '',
+    ws_phone:   wsSettings?.phone        || '',
+    ws_company: wsSettings?.company_name || '',
+    ws_website: wsSettings?.website      || '',
+  });
 });
 
 // Leads
