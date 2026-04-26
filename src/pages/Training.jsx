@@ -638,30 +638,31 @@ export default function Training() {
     return next;
   });
 
-  if (view === 'grid') {
-    return <CourseGrid onSelect={key => { setSelKey(key); setView('detail'); }} />;
-  }
-  if (view === 'detail' && curriculum) {
-    return (
-      <CourseDetail
-        curriculum={curriculum}
-        watched={watched}
-        onSelectModule={(bi, vi = 0) => { setSelBlock(bi); setSelLesson(vi); setView('player'); }}
-        onBack={() => setView('grid')}
-      />
-    );
-  }
-  if (view === 'player' && curriculum) {
-    return (
-      <LessonPlayer
-        curriculum={curriculum}
-        initialBlock={selBlock}
-        initialLesson={selLesson}
-        watched={watched}
-        onToggleWatched={toggleWatched}
-        onBack={() => setView('detail')}
-      />
-    );
-  }
-  return null;
+  return (
+    <AnimatePresence mode="wait">
+      {view === 'grid' && (
+        <CourseGrid key="grid" onSelect={key => { setSelKey(key); setView('detail'); }} />
+      )}
+      {view === 'detail' && curriculum && (
+        <CourseDetail
+          key={`detail-${selKey}`}
+          curriculum={curriculum}
+          watched={watched}
+          onSelectModule={(bi, vi = 0) => { setSelBlock(bi); setSelLesson(vi); setView('player'); }}
+          onBack={() => setView('grid')}
+        />
+      )}
+      {view === 'player' && curriculum && (
+        <LessonPlayer
+          key={`player-${selKey}-${selBlock}-${selLesson}`}
+          curriculum={curriculum}
+          initialBlock={selBlock}
+          initialLesson={selLesson}
+          watched={watched}
+          onToggleWatched={toggleWatched}
+          onBack={() => setView('detail')}
+        />
+      )}
+    </AnimatePresence>
+  );
 }
