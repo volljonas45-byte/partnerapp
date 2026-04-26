@@ -205,7 +205,11 @@ function CourseDetail({ curriculum, watched, onSelectModule, onBack }) {
   return (
     <motion.div {...fadeUp} style={{ padding: '0 0 64px' }}>
       {/* Back */}
-      <div style={{ padding: '16px 24px 0' }}>
+      <motion.div
+        initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+        style={{ padding: '16px 24px 0' }}
+      >
         <button
           onClick={onBack}
           style={{
@@ -216,10 +220,13 @@ function CourseDetail({ curriculum, watched, onSelectModule, onBack }) {
         >
           <ChevronLeft size={16} /> Zurück
         </button>
-      </div>
+      </motion.div>
 
       {/* Hero banner */}
-      <div style={{
+      <motion.div
+        initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
+        style={{
         position: 'relative', margin: '12px 24px 0',
         borderRadius: 16, overflow: 'hidden', height: 220,
         background: curriculum.coverGradient,
@@ -289,7 +296,7 @@ function CourseDetail({ curriculum, watched, onSelectModule, onBack }) {
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Module list + sidebar */}
       <div style={{ display: 'flex', gap: 24, padding: '24px 24px 0', alignItems: 'flex-start' }}>
@@ -306,7 +313,7 @@ function CourseDetail({ curriculum, watched, onSelectModule, onBack }) {
                 key={block.title}
                 initial={{ opacity: 0, x: 40 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.38, delay: bi * 0.07, ease: [0.16, 1, 0.3, 1] }}
+                transition={{ duration: 0.38, delay: 0.14 + bi * 0.07, ease: [0.16, 1, 0.3, 1] }}
                 onClick={() => onSelectModule(bi, 0)}
                 whileHover={{ backgroundColor: '#1a2540' }}
                 style={{
@@ -361,7 +368,11 @@ function CourseDetail({ curriculum, watched, onSelectModule, onBack }) {
         </div>
 
         {/* Sidebar: What's included */}
-        <div style={{ width: 260, flexShrink: 0 }}>
+        <motion.div
+          initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.4, delay: 0.18, ease: [0.16, 1, 0.3, 1] }}
+          style={{ width: 260, flexShrink: 0 }}
+        >
           <h3 style={{ margin: '0 0 12px', fontSize: 16, fontWeight: 700, color: '#F2F2F7' }}>Was ist enthalten?</h3>
           <p style={{ margin: '0 0 16px', fontSize: 13, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6 }}>
             {curriculum.key === 'cold-calling'
@@ -376,7 +387,7 @@ function CourseDetail({ curriculum, watched, onSelectModule, onBack }) {
               {totalVideos(curriculum)} Lektionen
             </span>
           </div>
-        </div>
+        </motion.div>
       </div>
     </motion.div>
   );
