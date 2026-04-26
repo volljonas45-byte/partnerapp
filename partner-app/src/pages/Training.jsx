@@ -423,7 +423,11 @@ function LessonPlayer({ curriculum, initialBlock, initialLesson, watched, onTogg
   return (
     <motion.div {...fadeUp} style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '24px 48px', position: 'relative' }}>
       {/* Back – fixed top left */}
-      <div style={{ position: 'absolute', top: 20, left: 24 }}>
+      <motion.div
+        initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+        style={{ position: 'absolute', top: 20, left: 24 }}
+      >
         <button
           onClick={onBack}
           style={{
@@ -434,7 +438,7 @@ function LessonPlayer({ curriculum, initialBlock, initialLesson, watched, onTogg
         >
           <ChevronLeft size={16} /> {curriculum.title}
         </button>
-      </div>
+      </motion.div>
 
       {/* Player + Sidebar */}
       <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start', justifyContent: 'center' }}>
@@ -442,7 +446,10 @@ function LessonPlayer({ curriculum, initialBlock, initialLesson, watched, onTogg
         {/* Video column */}
         <div style={{ flex: 1, minWidth: 0, maxWidth: 900 }}>
           {/* Video */}
-          <div
+          <motion.div
+            initial={{ opacity: 0, scale: 0.97, y: 16 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.45, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
             onClick={() => !playerActive && setPlayerActive(true)}
             style={{
               position: 'relative', borderRadius: 10, overflow: 'hidden',
@@ -480,18 +487,27 @@ function LessonPlayer({ curriculum, initialBlock, initialLesson, watched, onTogg
                 </div>
               </>
             )}
-          </div>
+          </motion.div>
 
           {/* Below video */}
-          <h2 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 700, color: '#F2F2F7', letterSpacing: '-0.02em', lineHeight: 1.3 }}>
-            {video.title}
-          </h2>
-          <p style={{ margin: '0 0 20px', fontSize: 13, color: 'rgba(255,255,255,0.5)', lineHeight: 1.65 }}>
-            {video.desc}
-          </p>
+          <motion.div
+            initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.38, delay: 0.18, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <h2 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 700, color: '#F2F2F7', letterSpacing: '-0.02em', lineHeight: 1.3 }}>
+              {video.title}
+            </h2>
+            <p style={{ margin: '0 0 20px', fontSize: 13, color: 'rgba(255,255,255,0.5)', lineHeight: 1.65 }}>
+              {video.desc}
+            </p>
+          </motion.div>
 
           {/* Nav + mark */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, delay: 0.26, ease: [0.16, 1, 0.3, 1] }}
+            style={{ display: 'flex', alignItems: 'center', gap: 10 }}
+          >
             <button
               disabled={flatPos === 0}
               onClick={() => goToFlat(flatPos - 1)}
@@ -536,18 +552,22 @@ function LessonPlayer({ curriculum, initialBlock, initialLesson, watched, onTogg
                 Nächste Lektion <Play size={12} fill="#fff" color="#fff" />
               </button>
             )}
-          </div>
+          </motion.div>
         </div>
 
         {/* Lesson sidebar */}
-        <div style={{
-          width: 260, flexShrink: 0,
-          background: '#0D1525',
-          border: '1px solid rgba(255,255,255,0.07)',
-          borderRadius: 12, overflow: 'hidden',
-          maxHeight: 500, overflowY: 'auto',
-          scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.06) transparent',
-        }}>
+        <motion.div
+          initial={{ opacity: 0, x: 32 }} animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.45, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
+          style={{
+            width: 260, flexShrink: 0,
+            background: '#0D1525',
+            border: '1px solid rgba(255,255,255,0.07)',
+            borderRadius: 12, overflow: 'hidden',
+            maxHeight: 500, overflowY: 'auto',
+            scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.06) transparent',
+          }}
+        >
           {/* Sidebar header */}
           <div style={{ padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.07)', position: 'sticky', top: 0, background: '#0D1525', zIndex: 1 }}>
             <div style={{ fontSize: 14, fontWeight: 700, color: '#F2F2F7' }}>{curriculum.title}</div>
@@ -628,7 +648,7 @@ function LessonPlayer({ curriculum, initialBlock, initialLesson, watched, onTogg
               })}
             </div>
           ))}
-        </div>
+        </motion.div>
       </div>
     </motion.div>
   );
