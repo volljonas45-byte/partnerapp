@@ -302,19 +302,20 @@ function CourseDetail({ curriculum, watched, onSelectModule, onBack }) {
             const firstVidId = block.videos[0].id;
 
             return (
-              <div
+              <motion.div
                 key={block.title}
+                initial={{ opacity: 0, x: 40 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.38, delay: bi * 0.07, ease: [0.16, 1, 0.3, 1] }}
                 onClick={() => onSelectModule(bi, 0)}
+                whileHover={{ backgroundColor: '#1a2540' }}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 16,
                   padding: '14px 18px',
                   background: '#141B2D',
                   border: '1px solid rgba(255,255,255,0.06)',
                   borderRadius: 12, cursor: 'pointer',
-                  transition: 'background 0.14s',
                 }}
-                onMouseEnter={e => e.currentTarget.style.background = '#1a2540'}
-                onMouseLeave={e => e.currentTarget.style.background = '#141B2D'}
               >
                 {/* Thumbnail with number */}
                 <div style={{ position: 'relative', width: 80, height: 52, borderRadius: 8, overflow: 'hidden', flexShrink: 0 }}>
@@ -354,7 +355,7 @@ function CourseDetail({ curriculum, watched, onSelectModule, onBack }) {
                     )}
                   </div>
                 </div>
-              </div>
+              </motion.div>
             );
           })}
         </div>
