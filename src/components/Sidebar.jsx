@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, Briefcase, Users, DollarSign, LogOut, Sparkles, Building2, Smartphone, GraduationCap } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import InstallGuide from './InstallGuide';
+import GlobalSearch from './GlobalSearch';
 
 const D = {
   bg: '#070C15', border: 'rgba(255,255,255,0.07)',
@@ -41,6 +42,8 @@ export default function Sidebar() {
             Partner-Portal
           </span>
         </div>
+
+        <GlobalSearch />
 
         <nav style={{ flex: 1, padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: 1 }}>
           {NAV.map(({ to, icon: Icon, label, accent }) => (
