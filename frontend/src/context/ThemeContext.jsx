@@ -1,33 +1,27 @@
 import { createContext, useContext, useEffect } from 'react';
+import { colors } from '../designTokens';
 
-// ─── Partner-App Dark Palette ──────────────────────────────────────────────────
+// ─── Vecturo Dark Palette ──────────────────────────────────────────────────────
+// Sources tokens from designTokens.js. Exposes both new tokens (primary, *Light, etc.)
+// and legacy aliases (blue, purple, etc.) for backwards-compatible page styling.
 const DARK = {
-  bg:              '#0D0D12',
-  card:            '#16161E',
-  cardSecondary:   '#1C1C26',
-  cardHover:       'rgba(255,255,255,0.04)',
-  text:            '#F2F2F7',
-  textSecondary:   '#AEAEB2',
-  textTertiary:    '#636366',
-  border:          '#2A2A3A',
-  borderSubtle:    'rgba(255,255,255,0.08)',
-  inputBg:         'rgba(255,255,255,0.05)',
-  inputBgHover:    'rgba(255,255,255,0.09)',
-  sidebarBg:       'rgba(13,13,18,0.85)',
-  overlayBg:       'rgba(0,0,0,0.75)',
-  blue:            '#5B8CF5',
-  blueLight:       'rgba(91,140,245,0.12)',
+  // ── New token names (primary source) ──
+  ...colors,
+
+  // ── Legacy aliases (kept for backwards compatibility with not-yet-migrated pages) ──
+  blue:            colors.info,
+  blueLight:       colors.infoLight,
   blueMuted:       'rgba(91,140,245,0.18)',
-  red:             '#F87171',
-  redLight:        'rgba(248,113,113,0.12)',
-  green:           '#34D399',
-  greenLight:      'rgba(52,211,153,0.12)',
+  red:             colors.danger,
+  redLight:        colors.dangerLight,
+  green:           colors.success,
+  greenLight:      colors.successLight,
   orange:          '#FB923C',
   orangeLight:     'rgba(251,146,60,0.12)',
-  purple:          '#9B72F2',
-  purpleLight:     'rgba(155,114,242,0.12)',
-  yellow:          '#FBBF24',
-  yellowLight:     'rgba(251,191,36,0.12)',
+  purple:          colors.primary,
+  purpleLight:     colors.primaryLight,
+  yellow:          colors.warning,
+  yellowLight:     colors.warningLight,
   shadow:          '0 0 0 0.5px rgba(255,255,255,0.06), 0 2px 8px rgba(0,0,0,0.35), 0 8px 24px rgba(0,0,0,0.4)',
   shadowSm:        '0 0 0 0.5px rgba(255,255,255,0.05), 0 1px 2px rgba(0,0,0,0.3)',
   shadowLg:        '0 0 0 0.5px rgba(255,255,255,0.05), 0 8px 48px rgba(0,0,0,0.6)',

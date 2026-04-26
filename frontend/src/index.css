@@ -588,3 +588,32 @@
   0%, 100% { opacity: 1; }
   50%       { opacity: 0.72; }
 }
+
+/* ─── Vecturo UI Kit — shared animations ─────────────────────────────────── */
+@keyframes vecFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes vecFadeInUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+
+@keyframes vecFadeInDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+@keyframes vecPulse {
+  0%, 100% { opacity: 0.55; transform: scale(1);    }
+  50%      { opacity: 1;    transform: scale(1.18); }
+}
+
+.vec-fade-in     { animation: vecFadeInDown 0.45s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.vec-fade-in-up  { animation: vecFadeInUp   0.5s  cubic-bezier(0.22, 1, 0.36, 1) both; }
+.vec-pulse       { animation: vecPulse      2.6s  ease-in-out infinite; }
+
+/* Page-level fade between routes (mounted in Layout) */
+.vec-page-fade { animation: vecFadeIn 0.3s ease-out both; }
+

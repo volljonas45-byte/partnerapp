@@ -8,18 +8,20 @@ import {
   Upload, FileText, Trash2, Edit2, Download, AlertCircle, CheckCircle, Info,
   BarChart3, PieChart, ArrowUpRight, ArrowDownRight, Receipt, Building2,
 } from 'lucide-react';
+import PageHeader from '../components/ui/PageHeader';
+import Button from '../components/ui/Button';
 
-// ── DESIGN TOKENS ──────────────────────────────────────────────────────────────
+// ── DESIGN TOKENS — aligned with global theme (Vecturo lila) ──────────────────
 const D = {
-  bg:      '#06060F',
-  card:    '#0D0D1E',
-  card2:   '#121228',
-  card3:   '#181838',
-  border:  'rgba(255,255,255,0.07)',
+  bg:      '#0D0D12',  // matches ThemeContext c.bg
+  card:    '#16161E',  // matches c.card
+  card2:   '#1C1C26',  // matches c.cardSecondary
+  card3:   '#22222E',
+  border:  'rgba(255,255,255,0.08)',
   borderB: 'rgba(255,255,255,0.14)',
-  text:    '#EEEEFF',
-  text2:   '#9090B8',
-  text3:   '#55557A',
+  text:    '#F2F2F7',
+  text2:   '#AEAEB2',
+  text3:   '#636366',
   green:   '#34D399',
   red:     '#F87171',
   blue:    '#5B8CF5',
@@ -30,9 +32,10 @@ const D = {
   pink:    '#F472B6',
 };
 
-const ACCENT = '#34D399';
-const ACCENT_GLOW = 'rgba(52,211,153,0.14)';
-const ACCENT_BG   = 'linear-gradient(145deg,#060F0B 0%,#0A2018 100%)';
+// Primary accent for Vecturo = Lila (replaces previous green ACCENT)
+const ACCENT = '#9B72F2';
+const ACCENT_GLOW = 'rgba(155,114,242,0.16)';
+const ACCENT_BG   = 'linear-gradient(145deg,#16111E 0%,#1A1430 100%)';
 
 // ── TABS ──────────────────────────────────────────────────────────────────────
 const TABS = [
@@ -803,8 +806,8 @@ function OverviewTab({ setup }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       {/* Period selector */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: D.text }}>Finanzübersicht</h2>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+        <h2 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: D.text, letterSpacing: '-0.01em' }}>Finanzübersicht</h2>
         <SegCtrl
           tabs={[{ id: 'month', label: 'Monat' }, { id: 'quarter', label: 'Quartal' }, { id: 'year', label: 'Jahr' }]}
           active={period}
@@ -812,11 +815,11 @@ function OverviewTab({ setup }) {
         />
       </div>
 
-      {/* Metric cards */}
+      {/* Metric cards — primary cards use lila accent */}
       <div className="anim-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14 }}>
-        <MetricCard icon={TrendingUp} label="Einnahmen" value={fmt(income)} color={D.green} sub={period === 'month' ? 'Dieser Monat' : period === 'quarter' ? 'Dieses Quartal' : 'Dieses Jahr'} />
+        <MetricCard icon={TrendingUp} label="Einnahmen" value={fmt(income)} color={ACCENT} sub={period === 'month' ? 'Dieser Monat' : period === 'quarter' ? 'Dieses Quartal' : 'Dieses Jahr'} />
         <MetricCard icon={TrendingDown} label="Ausgaben" value={fmt(expense)} color={D.red} />
-        <MetricCard icon={DollarSign} label="Gewinn" value={fmt(profit)} color={profit >= 0 ? D.blue : D.red} sub={profit < 0 ? 'Verlust' : 'Netto'} />
+        <MetricCard icon={DollarSign} label="Gewinn" value={fmt(profit)} color={profit >= 0 ? ACCENT : D.red} sub={profit < 0 ? 'Verlust' : 'Netto'} />
         {!isKlein && (
           <MetricCard icon={Percent} label="Steuerrücklage" value={fmt(taxRes)} color={D.orange} sub={`${taxReservePct}% des Gewinns`} />
         )}
@@ -1576,52 +1579,52 @@ export default function Finance() {
     );
   }
 
+  const subtitle = setup
+    ? `${setup.legal_form?.toUpperCase()} · ${setup.tax_mode === 'kleinunternehmer' ? 'Kleinunternehmer §19' : `USt ${setup.vat_rate}%`}`
+    : 'Setup ausstehend';
+
   return (
-    <div style={{ minHeight: '100vh', background: D.bg }}>
-    <div style={{ padding: '32px 32px 64px', maxWidth: 1200, margin: '0 auto' }}>
+    <div style={{ minHeight: '100%', background: D.bg }}>
+    <div style={{ padding: 'clamp(20px, 4vw, 32px) clamp(20px, 4vw, 32px) 64px', maxWidth: 1200, margin: '0 auto' }}>
       <style>{`
-        @keyframes slideUp {
-          from { opacity: 0; transform: translateY(20px) scale(0.97); filter: blur(3px); }
-          to   { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
-        }
         @keyframes cardIn {
-          from { opacity: 0; transform: translateY(18px) scale(0.97); }
+          from { opacity: 0; transform: translateY(14px); }
           to   { opacity: 1; transform: none; }
         }
         @keyframes tabIn {
-          from { opacity: 0; transform: translateY(14px); filter: blur(4px); }
-          to   { opacity: 1; transform: none; filter: none; }
+          from { opacity: 0; transform: translateY(10px); }
+          to   { opacity: 1; transform: none; }
         }
-        .anim-grid > * { animation: cardIn 0.38s cubic-bezier(0.22,1,0.36,1) both; }
+        .anim-grid > * { animation: cardIn 0.42s cubic-bezier(0.22,1,0.36,1) both; }
         .anim-grid > *:nth-child(1) { animation-delay: 0ms; }
-        .anim-grid > *:nth-child(2) { animation-delay: 55ms; }
-        .anim-grid > *:nth-child(3) { animation-delay: 110ms; }
-        .anim-grid > *:nth-child(4) { animation-delay: 165ms; }
-        .anim-grid > *:nth-child(5) { animation-delay: 220ms; }
-        .anim-grid > *:nth-child(6) { animation-delay: 275ms; }
-        .anim-grid > *:nth-child(7) { animation-delay: 330ms; }
-        .anim-grid > *:nth-child(8) { animation-delay: 385ms; }
+        .anim-grid > *:nth-child(2) { animation-delay: 60ms; }
+        .anim-grid > *:nth-child(3) { animation-delay: 120ms; }
+        .anim-grid > *:nth-child(4) { animation-delay: 180ms; }
+        .anim-grid > *:nth-child(5) { animation-delay: 240ms; }
+        .anim-grid > *:nth-child(6) { animation-delay: 300ms; }
+        .anim-grid > *:nth-child(7) { animation-delay: 360ms; }
+        .anim-grid > *:nth-child(8) { animation-delay: 420ms; }
         input[type=number]::-webkit-inner-spin-button,
         input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         input[type=date]::-webkit-calendar-picker-indicator { filter: invert(0.5); cursor: pointer; }
-        select option { background: #0D0D1E; color: #EEEEFF; }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 99px; }
+        select option { background: ${D.card}; color: ${D.text}; }
       `}</style>
 
       {wizardVisible && (
         <SetupWizard onComplete={() => setShowSetup(false)} />
       )}
 
-      {/* Page header */}
-      <div style={{ marginBottom: 32 }}>
-        <p style={{ margin: '0 0 4px', fontSize: 11, fontWeight: 800, color: D.text3, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Unternehmensfinanzen</p>
-        <h1 style={{ margin: '0 0 4px', fontSize: 34, fontWeight: 900, letterSpacing: '-0.04em', background: 'linear-gradient(135deg,#EEEEFF 30%,rgba(52,211,153,0.8) 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1.1 }}>Finanzen</h1>
-        <p style={{ margin: 0, fontSize: 13, color: D.text3 }}>
-          {setup ? `${setup.legal_form?.toUpperCase()} · ${setup.tax_mode === 'kleinunternehmer' ? 'Kleinunternehmer §19' : `USt ${setup.vat_rate}%`}` : 'Setup ausstehend'}
-        </p>
-      </div>
+      {/* Page header — uses the new shared design system */}
+      <PageHeader
+        eyebrow="UNTERNEHMENSFINANZEN"
+        title="Finanzen"
+        subtitle={subtitle}
+        rightSlot={
+          <Button variant="primary" icon={Plus} onClick={() => setTab('transactions')}>
+            Buchung
+          </Button>
+        }
+      />
 
       {/* Tab navigation */}
       <div style={{ marginBottom: 28 }}>
