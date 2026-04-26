@@ -587,8 +587,11 @@ function LessonPlayer({ curriculum, initialBlock, initialLesson, watched, onTogg
                 const isCur  = bi === blockIdx && vi === lessonIdx;
                 const isDone = watched.has(fi);
                 return (
-                  <div
+                  <motion.div
                     key={v.id}
+                    initial={{ opacity: 0, x: 24 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.32, delay: 0.18 + fi * 0.05, ease: [0.16, 1, 0.3, 1] }}
                     onClick={() => { setBlockIdx(bi); setLessonIdx(vi); setPlayerActive(false); }}
                     style={{
                       display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px',
@@ -643,7 +646,7 @@ function LessonPlayer({ curriculum, initialBlock, initialLesson, watched, onTogg
                         {v.duration}
                       </div>
                     </div>
-                  </div>
+                  </motion.div>
                 );
               })}
             </div>
